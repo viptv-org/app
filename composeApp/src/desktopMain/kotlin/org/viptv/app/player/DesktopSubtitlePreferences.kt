@@ -24,7 +24,7 @@ internal fun desktopSubtitleConfig(preferences: ProfilePreferences): SubtitleCon
 }
 
 // Preference colour format is #RRGGBB or Android #AARRGGBB, not CSS RGBA.
-private fun desktopCaptionColor(value: String): Int? {
+internal fun desktopCaptionColor(value: String): Int? {
     if (value.length !in setOf(7, 9) || value.firstOrNull() != '#' ||
         value.drop(1).any { it !in '0'..'9' && it !in 'a'..'f' && it !in 'A'..'F' }) return null
     val hex = value.drop(1).toLongOrNull(16) ?: return null

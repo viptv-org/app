@@ -91,6 +91,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
                         else player.seekToTime(CMTimeMakeWithSeconds(command.positionMillis.coerceAtLeast(0) / 1000.0, 600))
                     is PlayerCommand.Volume -> player.volume = command.value.coerceIn(0f, 1f)
                     is PlayerCommand.SubtitleSize -> captionScale = command.value.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
+                    is PlayerCommand.SubtitleBackground -> Unit
                     is PlayerCommand.SelectTrack -> {
                         // v1: provider sidecar subtitle rendering on AVPlayer is a
                         // follow-up (embedded HLS legible tracks render natively).

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.FocusRequester
 import org.viptv.app.connection.cardLookupKey
+import org.viptv.app.connection.ProfilePreferences
 import com.composables.icons.lucide.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -48,7 +49,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
     autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
-    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {}) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
@@ -252,7 +254,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     send(choice)
                     trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
                         .firstOrNull { it.id == choice.id }?.language)
-                }, { showTracks = false }, phone, subtitleSize, { send(PlayerCommand.SubtitleSize(it)) }, controlInsets, openSettings)
+                }, { showTracks = false }, phone, { send(PlayerCommand.SubtitleSize(it)) },
+                    preferences ?: rendering?.preferences ?: ProfilePreferences(), updatePreferences,
+                    { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, openSettings)
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

@@ -93,3 +93,26 @@ fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language:
         }
     }
 }
+
+// Inline player settings save to the profile without closing or reopening the player, like a track choice.
+fun ApplicationController.savePlaybackPreferences(preferences: ProfilePreferences) {
+    val snapshot = mutable.value.preferences ?: return
+    if (preferences == snapshot.preferences) return
+    val profile = mutable.value.selectedProfile ?: return
+    val remote = connection
+    val device = local
+    scope.launch {
+        try {
+            val saved = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
+                ?: remote?.updateProfilePreferences(profile, snapshot.revision, preferences) ?: return@launch
+            if (ownsProfile(profile, remote, device)) {
+                cancelNextEpisodePreparation()
+                updateState { it.copy(preferences = saved, preferencesError = null) }
+            }
+        } catch (error: CancellationException) { throw error }
+        catch (_: Exception) {
+            if (ownsProfile(profile, remote, device))
+                updateState { it.copy(preferencesError = "Could not save this subtitle setting to the profile.") }
+        }
+    }
+}

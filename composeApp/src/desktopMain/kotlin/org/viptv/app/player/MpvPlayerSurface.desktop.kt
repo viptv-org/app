@@ -156,6 +156,18 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                         is PlayerCommand.Volume -> session.property("volume", (command.value.coerceIn(0f, 1f) * 100).toString())
                         is PlayerCommand.Speed -> session.property("speed", command.value.coerceIn(.25, 2.0).toString())
                         is PlayerCommand.SubtitleSize -> session.property("sub-scale", command.value.coerceIn(.5f, 2f).toString())
+                        is PlayerCommand.SubtitleBackground -> {
+                            val color = command.color?.let(::desktopCaptionColor)
+                            if (color == null) {
+                                session.property("sub-ass-override", "no")
+                                session.property("sub-back-color", mpvSubtitleColour(0))
+                                session.property("sub-border-style", "outline-and-shadow")
+                            } else {
+                                session.property("sub-ass-override", "force")
+                                session.property("sub-back-color", mpvSubtitleColour(color))
+                                session.property("sub-border-style", "background-box")
+                            }
+                        }
                         is PlayerCommand.SelectTrack -> if (command.kind == PlaybackTrackKind.Audio) {
                             requiredAudio.userSelected()
                             session.property("aid", command.id?.toString() ?: "no")

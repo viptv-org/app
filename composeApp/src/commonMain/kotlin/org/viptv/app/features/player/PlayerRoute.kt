@@ -37,6 +37,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
         playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity, nextEpisodeLoading = state.nextEpisodeLoading,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
+        preferences = state.preferences?.preferences, updatePreferences = controller::savePlaybackPreferences,
         autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),
         fallback = fallbackNotice?.let { PlayerFallbackNotice(it.reason, it.next.label, it.next.fallbackFacts()) },
         stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
