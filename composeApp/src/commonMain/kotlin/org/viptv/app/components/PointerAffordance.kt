@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.semantics.Role
-import org.viptv.app.theme.Palette
 
 val LocalPointerHover = staticCompositionLocalOf { false }
 
@@ -203,13 +202,13 @@ object HoverFill {
     internal val focusLayer = Color.White.copy(alpha = .1f)
     val cardScrim = Color.Black.copy(alpha = .38f)
 
-    fun primary(rest: Color = Palette.accent): Color = Color(
+    fun primary(rest: Color): Color = Color(
         (rest.red * 1.08f).coerceAtMost(1f), (rest.green * 1.08f).coerceAtMost(1f),
         (rest.blue * 1.08f).coerceAtMost(1f), rest.alpha)
 
-    fun container(rest: Color): Color = when {
+    fun container(rest: Color, accent: Color): Color = when {
         rest.alpha == 0f -> wash
-        rest == Palette.accent -> primary(rest)
+        rest == accent -> primary(rest)
         rest.alpha < 1f -> rest.copy(alpha = (rest.alpha + wash.alpha).coerceAtMost(1f))
         rest.luminance() > .5f -> Color.White
         else -> surface4

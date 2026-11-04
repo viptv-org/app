@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import org.viptv.app.theme.LocalAccent
 
 internal object Motion {
     const val response = 120
@@ -37,9 +38,11 @@ internal object Motion {
 internal fun <T> responseSpec(): FiniteAnimationSpec<T> = motionSpec(tween(Motion.response, easing = Motion.standard))
 
 @Composable
-internal fun hoverFill(source: InteractionSource, rest: Color, hovered: Color = HoverFill.container(rest),
-    enabled: Boolean = true): Color =
-    animateColorAsState(if (enabled && source.pointerHovered()) hovered else rest, responseSpec(), label = "Hover fill").value
+internal fun hoverFill(source: InteractionSource, rest: Color, hovered: Color? = null,
+    enabled: Boolean = true): Color {
+    val target = hovered ?: HoverFill.container(rest, LocalAccent.current)
+    return animateColorAsState(if (enabled && source.pointerHovered()) target else rest, responseSpec(), label = "Hover fill").value
+}
 
 // A press that turns into a drag gives the scale back at once: a scroll must never read as a held control.
 @Composable
