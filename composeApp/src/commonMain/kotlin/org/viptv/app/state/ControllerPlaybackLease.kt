@@ -76,10 +76,12 @@ private suspend fun ApplicationController.reacquirePlayback(lease: RemotePlaybac
     val paused = mutable.value.paused && resumeAfterRenewal !== input
     resumeAfterRenewal = null
     if (!completionSeen) saveProgress(false)
-    // Open on the controller's job lane: opening releases the old lease, which cancels this renewal.
+    // Opening releases the old lease, which cancels this renewal.
     run {
-        val failure = retryTransient(REACQUIRE_RETRY_MILLIS) { openSourceNow(source, forceGateway, position, pausedAfterOpen = paused) }
-            ?: return@run
+        val failure = retryTransient(REACQUIRE_RETRY_MILLIS) {
+            val candidate = if (input.live) freshLiveCandidate(source) ?: source else source
+            openSourceNow(candidate, forceGateway, position, pausedAfterOpen = paused)
+        } ?: return@run
         if (failure is RemoteFailure && failure.status == 401) throw failure
         releaseRemotePlayback()
         val gone = failure is RemoteFailure && failure.status in listOf(404, 410)
@@ -87,4 +89,14 @@ private suspend fun ApplicationController.reacquirePlayback(lease: RemotePlaybac
             if (gone) "The server playback session ended and this source is no longer available. Choose the source again."
             else "The server playback session ended and could not be reopened. Check the connection and choose the source again.") }
     }
+}
+
+private suspend fun ApplicationController.freshLiveCandidate(source: SourceCandidate): SourceCandidate? {
+    val profile = mutable.value.selectedProfile ?: return null
+    val channel = livePlaybackChannel ?: return null
+    val remote = connection ?: return null
+    val fresh = remote.liveSources(profile, channel)
+    return fresh.firstOrNull { it.id == source.id }
+        ?: fresh.firstOrNull { it.provider_id == source.provider_id }
+        ?: fresh.firstOrNull()
 }

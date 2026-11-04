@@ -57,6 +57,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
+    internal var livePlaybackChannel: String? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
     internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
