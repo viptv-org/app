@@ -77,7 +77,8 @@ internal const val ADDON_INSTALL_TARGET = "Install add-on"
 
 fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Unit) {
     val target = MutationTarget(MutationKind.Addon, ADDON_INSTALL_TARGET)
-    if (mutable.value.mutations.isPending(target)) { completion(false); return }
+    // Another operation owns the controller job; a submission must not cancel or replace it.
+    if (mutable.value.busy || mutable.value.mutations.isPending(target)) { completion(false); return }
     val device = local
     val remote = connection
     val profile = mutable.value.selectedProfile
@@ -89,10 +90,18 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
         ownsControllerJob = true) {
         markAddonOperation()
         val owner = AddonOperationOwner(generation, device, remote, profile, currentCoroutineContext()[Job])
-        val selected = profile ?: throw LocalFailure("Choose a profile first.")
-        if (device != null) device.commitAddonInstallation(selected, url)
-        else requireNotNull(remote).installAddon(selected, url)
-        owner.requireCurrent(this)
+        try {
+            val selected = profile ?: throw LocalFailure("Choose a profile first.")
+            if (device != null) device.commitAddonInstallation(selected, url)
+            else requireNotNull(remote).installAddon(selected, url)
+            owner.requireCurrent(this)
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            // A replaced or cancelled operation must not publish a late failure: requireCurrent throws
+            // CancellationException instead, which mutate settles silently.
+            owner.requireCurrent(this)
+            throw error
+        }
         report(true)
         loadAddons(owner)
         updateAddonHome(owner)
