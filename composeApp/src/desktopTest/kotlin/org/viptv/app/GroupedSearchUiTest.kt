@@ -244,7 +244,7 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun idleDesktopSearchShowsRecentButNotTrending() {
+    @Test fun idleDesktopSearchAlsoShowsRecentAndTrending() {
         val scene = ImageComposeScene(1440, 1100, Density(1f)) {
             ViptvTheme {
                 Surface(Modifier.fillMaxSize(), color = Palette.background) {
@@ -258,8 +258,8 @@ class GroupedSearchUiTest {
             val texts = nodes(scene).map(::text)
             assertTrue(texts.contains("Recent"))
             assertTrue(texts.contains("monster"))
-            assertFalse(texts.contains("Trending searches"))
-            assertFalse(texts.contains("Mayday"))
+            assertTrue(texts.contains("Trending searches"))
+            assertTrue(texts.contains("Mayday"))
         } finally { scene.close() }
     }
 

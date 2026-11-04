@@ -103,6 +103,7 @@ fun ApplicationController.searchFilters(filters: Set<String>) = updateState { it
 fun ApplicationController.retrySearch() = search(mutable.value.searchTerm, retry = true)
 
 private const val MAX_RECENT_SEARCHES = 8
+private const val MAX_TRENDING_SEARCHES = 5
 
 private fun ApplicationController.recordSearch(term: String) {
     val normalized = term.trim()
@@ -129,15 +130,14 @@ fun ApplicationController.loadRecentSearches(profile: String) {
 }
 
 fun ApplicationController.loadTrendingSearches() {
-    if (mutable.value.localMode || mutable.value.trendingSearches.isNotEmpty()) return
-    val remote = connection ?: return
-    val operation = generation
-    scope.launch {
-        val terms = try { remote.trendingSearches() }
-        catch (error: CancellationException) { throw error }
-        catch (_: Exception) { emptyList() }
-        if (generation == operation && connection === remote) updateState { it.copy(trendingSearches = terms) }
-    }
+    if (mutable.value.trendingSearches.isNotEmpty()) return
+    val titles = mutable.value.home?.rows.orEmpty()
+        .firstOrNull { it.cards.isNotEmpty() }
+        ?.cards.orEmpty()
+        .mapNotNull { it.title.takeIf(String::isNotBlank) }
+        .distinctBy { it.lowercase() }
+        .take(MAX_TRENDING_SEARCHES)
+    if (titles.isNotEmpty()) updateState { it.copy(trendingSearches = titles) }
 }
 
 fun ApplicationController.search(term: String, retry: Boolean = false) {

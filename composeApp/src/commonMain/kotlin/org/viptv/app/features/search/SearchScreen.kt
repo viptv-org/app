@@ -96,7 +96,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         if (term.isBlank() && !busy && error == null) {
-            SearchIdle(recentSearches, if (phone) trendingSearches else emptyList(), gutter, query, Modifier.weight(1f))
+            SearchIdle(recentSearches, trendingSearches, gutter, query, Modifier.weight(1f))
         } else if (searchRows.isNotEmpty() || groups.size > 1) {
             val column = rememberLazyListState()
             val anchorGroup = remember(restore.lastKey, groups) {
