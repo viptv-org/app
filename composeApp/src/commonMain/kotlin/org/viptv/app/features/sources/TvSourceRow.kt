@@ -41,6 +41,8 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.PendingActionSpinner
+import org.viptv.app.components.isPlayPending
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
@@ -103,7 +105,8 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
             SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (28 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
             SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp)
         }
-        if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
+        if (source.isPlayPending()) PendingActionSpinner(Modifier.size(28.dp * scale), size = 28.dp * scale, strokeWidth = 3.dp * scale, color = color)
+        else if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
             Icon(Lucide.Check, "Selected source", Modifier.size(18.dp * scale), tint = Palette.text)
         }
     }

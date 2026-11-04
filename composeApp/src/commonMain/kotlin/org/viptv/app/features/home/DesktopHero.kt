@@ -20,6 +20,7 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.isPlayPending
 import org.viptv.engine.wire.Card
 
 internal const val HERO_ARTWORK_TAG = "hero-artwork"
@@ -88,7 +89,7 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
                         Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = if (short) 2 else 3,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
-                    DesktopHeroActions({ play(shown) }, { open(shown) }, { save(shown) }, saved)
+                    DesktopHeroActions({ play(shown) }, { open(shown) }, { save(shown) }, saved, pending = shown.isPlayPending())
                 }
             }
             carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
