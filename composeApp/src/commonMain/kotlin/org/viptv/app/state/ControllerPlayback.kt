@@ -26,16 +26,36 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
     pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None) {
+    sourceOpenJob?.cancel(); sourceOpenJob = null
     updateState { next -> next.copy(playingSource = source, openingSource = source) }
     run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
 }
 
+// Detached from run so discovery keeps ranking while this one opens; a manual pick or a better source cancels it.
+internal fun ApplicationController.openNow(source: SourceCandidate, ranked: RankedSources) {
+    val tried = (mutable.value.bestMatch?.tried.orEmpty() + source.id).distinct()
+    updateState { next -> next.copy(bestMatch = BestMatchSession(ranked.rows, tried = tried, playingId = source.id),
+        fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
+    sourceOpenJob?.cancel()
+    val operation = generation
+    sourceOpenJob = scope.launch {
+        try {
+            openSourceNow(source, forceGateway = false, positionMillis = null, pausedAfterOpen = false, choice = SourceChoice.None, keepFinding = true)
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            if (generation != operation) return@launch
+            sourceChoice = SourceChoice.None
+            updateState { next -> next.copy(error = failureMessage(error), errorCode = (error as? RemoteFailure)?.code, openingSource = null) }
+        }
+    }
+}
+
 internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
-    choice: SourceChoice = SourceChoice.None) {
+    choice: SourceChoice = SourceChoice.None, keepFinding: Boolean = false) {
     progressJob?.join()
     val stopping = releaseRemotePlayback()
     this.sourceChoice = choice
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = if (keepFinding) next.findingSources else false) }
     stopping?.join()
     val store = local
     val remote = connection
@@ -232,6 +252,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
+    sourceOpenJob?.cancel(); sourceOpenJob = null
     playbackSegmentsJob?.cancel()
     startDeadlineJob?.cancel(); startDeadlineJob = null
     clearBestMatchSession()
