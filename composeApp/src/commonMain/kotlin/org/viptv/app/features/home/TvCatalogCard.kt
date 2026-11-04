@@ -51,6 +51,7 @@ import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.theme.LocalShowRatings
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.NextEpisode
@@ -70,7 +71,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
     val shape = remember(scale) { RoundedCornerShape(10.dp * scale) }
     val nextEpisodes = LocalNextEpisodes.current
     val nextEpisode = remember(card, nextEpisodes) { if (card.isCaughtUp()) nextEpisodes[card] else null }
-    val showRatings = org.viptv.app.theme.LocalShowRatings.current
+    val showRatings = LocalShowRatings.current
     val states = remember(card, nextEpisode, showRatings) { TvCardStates.of(card, nextEpisode, showRatings) }
     val description = remember(card, states) { cardDescription(card, states) }
     Column(modifier.width(artworkWidth ?: (if (portrait) 232 else 384).dp * scale)
