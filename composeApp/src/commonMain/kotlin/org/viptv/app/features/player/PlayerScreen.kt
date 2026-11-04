@@ -49,7 +49,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
-    nextEpisodeLoading: Boolean = false, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
+    trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
@@ -271,19 +271,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                                 } else PlaybackTimeline(position, duration, ::seek, remaining = phone, skips = tvExtras.skips, buffered = buffered)
                             }
                             if (phone) {
-                                if (episodeTitle && next == null) Text(if (nextEpisodeLoading) "Finding next episode…" else "Next episode unavailable",
-                                    color = Palette.secondary, fontSize = 12.sp)
                                 PhonePlaybackToolbar(speed, { speed = it; send(PlayerCommand.Speed(it)) }, { locked = true }, { showTracks = true },
                                     episodes = openEpisodes,
                                     episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
-                                    next = if (episodeTitle) playNext else null,
+                                    next = if (episodeTitle && next != null) playNext else null,
                                     nextEnabled = nextEnabled, episodesFocus = episodesFocus, nextFocus = nextFocus,
                                     fill = fill, toggleFill = toggleFill)
                             }
                             else PlaybackButtons(paused, { interaction++; toggle() }, { seek(position + it) }, volume,
                                 { volume = it; send(PlayerCommand.Volume(it)) }, speed, { speed = it; send(PlayerCommand.Speed(it)) }, close, { showTracks = true }, seekEnabled = input?.live != true,
                                 streams = if (input?.live != true) chooseSources else null, streamLabel = tvExtras.sourceLabel,
-                                next = if (seriesEpisode) playNext else null, nextEnabled = nextEnabled,
+                                next = if (seriesEpisode && next != null) playNext else null, nextEnabled = nextEnabled,
                                 episodes = openEpisodes, episodesEnabled = episodes.isNotEmpty() && playEpisode != null,
                                 fill = fill, toggleFill = toggleFill,
                                 fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
