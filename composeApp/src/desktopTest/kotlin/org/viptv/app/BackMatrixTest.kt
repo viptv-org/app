@@ -27,7 +27,7 @@ class BackMatrixTest {
         navigateSystemBack(); return true
     }
 
-    private fun signedIn(screen: Screen, navBack: List<Screen> = emptyList()) =
+    private fun signedIn(screen: Screen, navBack: List<BackEntry> = emptyList()) =
         ApplicationState(screen = screen, navBack = navBack, selectedProfile = "1", localMode = true)
 
     private val pages = listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,
@@ -35,11 +35,11 @@ class BackMatrixTest {
 
     @Test fun everyPageGoesBackToTheScreenItCameFromOnEveryLayout() {
         for (page in pages) for (input in listOf("Android/TV Back", "navigateBack")) {
-            controller(signedIn(page, navBack = listOf(Screen.Home, Screen.Calendar))) { c ->
+            controller(signedIn(page, navBack = listOf(BackEntry(Screen.Home), BackEntry(Screen.Calendar)))) { c ->
                 assertTrue(c.state.value.canNavigateBack(), "$page offers no Back")
                 if (input == "navigateBack") c.navigateBack() else assertTrue(c.androidBack(), "$input left the app from $page")
                 assertEquals(Screen.Calendar, c.state.value.screen, "$input from $page")
-                assertEquals(listOf(Screen.Home), c.state.value.navBack, "$input from $page")
+                assertEquals(listOf(Screen.Home), c.state.value.navBack.map { it.screen }, "$input from $page")
             }
         }
     }
@@ -58,7 +58,7 @@ class BackMatrixTest {
             assertTrue(c.androidBack())
             assertEquals(Screen.Profiles, c.state.value.screen)
         }
-        controller(signedIn(Screen.Home, navBack = listOf(Screen.Movies))) { c ->
+        controller(signedIn(Screen.Home, navBack = listOf(BackEntry(Screen.Movies)))) { c ->
             assertTrue(c.state.value.canNavigateBack())
             c.navigateBack()
             assertEquals(Screen.Movies, c.state.value.screen)
@@ -82,7 +82,7 @@ class BackMatrixTest {
     }
 
     @Test fun profilesGoesBackToWhereTheViewerCameFromOnceAProfileIsChosen() {
-        controller(signedIn(Screen.Profiles, navBack = listOf(Screen.Settings))) { c ->
+        controller(signedIn(Screen.Profiles, navBack = listOf(BackEntry(Screen.Settings)))) { c ->
             assertTrue(c.androidBack(), "Android Back left the app from the profile switcher")
             assertEquals(Screen.Settings, c.state.value.screen)
         }
@@ -101,7 +101,7 @@ class BackMatrixTest {
 
     @Test fun manageProfilesClosesBeforeProfilesIsLeft() {
         for (selected in listOf(null, "1")) controller(ApplicationState(screen = Screen.Profiles, selectedProfile = selected,
-            managingProfiles = true, navBack = listOf(Screen.Home), localMode = true)) { c ->
+            managingProfiles = true, navBack = listOf(BackEntry(Screen.Home)), localMode = true)) { c ->
             assertTrue(c.androidBack(), "Android Back left the app from Manage profiles")
             assertEquals(Screen.Profiles, c.state.value.screen)
             assertFalse(c.state.value.managingProfiles)
@@ -111,11 +111,11 @@ class BackMatrixTest {
     @Test fun profilePinAndEditorGoUpToProfilesWhateverWasOpenBefore() {
         for (screen in listOf(Screen.ProfilePin, Screen.ProfileEdit)) for (selected in listOf(null, "1")) {
             controller(ApplicationState(screen = screen, selectedProfile = selected, profileToOpen = "2", profileToEdit = "2",
-                navBack = listOf(Screen.Home), localMode = true)) { c ->
+                navBack = listOf(BackEntry(Screen.Home)), localMode = true)) { c ->
                 assertTrue(c.state.value.canNavigateBack())
                 assertTrue(c.androidBack(), "Android Back left the app from $screen")
                 assertEquals(Screen.Profiles, c.state.value.screen, "from $screen")
-                assertEquals(listOf(Screen.Home), c.state.value.navBack, "from $screen")
+                assertEquals(listOf(Screen.Home), c.state.value.navBack.map { it.screen }, "from $screen")
             }
         }
     }
@@ -136,10 +136,10 @@ class BackMatrixTest {
         controller(signedIn(Screen.Sources).copy(sourceReturnScreen = Screen.Details)) { c ->
             assertTrue(c.androidBack()); assertEquals(Screen.Details, c.state.value.screen)
         }
-        controller(signedIn(Screen.Details, navBack = listOf(Screen.Search)).copy(detailReturnScreen = Screen.Search)) { c ->
+        controller(signedIn(Screen.Details, navBack = listOf(BackEntry(Screen.Search))).copy(detailReturnScreen = Screen.Search)) { c ->
             assertTrue(c.androidBack()); assertEquals(Screen.Search, c.state.value.screen)
         }
-        controller(signedIn(Screen.Settings, navBack = listOf(Screen.Home)).copy(settingsPage = SettingsPage("Add-ons", subpage = true))) { c ->
+        controller(signedIn(Screen.Settings, navBack = listOf(BackEntry(Screen.Home))).copy(settingsPage = SettingsPage("Add-ons", subpage = true))) { c ->
             assertTrue(c.state.value.canNavigateBack())
             assertTrue(c.androidBack())
             assertEquals(Screen.Settings, c.state.value.screen); assertEquals(SettingsPage(), c.state.value.settingsPage)

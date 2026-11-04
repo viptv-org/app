@@ -83,7 +83,7 @@ class HomeGenresTest {
             assertEquals(BrowseQuery("movie", "top", "addon:1", genre = "Comedy"), browsed.browseQuery)
             val discover = synchronized(requests) { requests.filter { it.encodedPath == "/api/discover" } }
             assertTrue(discover.isNotEmpty() && discover.all { it.parameters["genre"] == "Comedy" }, "every Browse request carries the genre: $discover")
-            assertEquals(listOf(Screen.Home), browsed.navBack)
+            assertEquals(listOf(Screen.Home), browsed.navBack.map { it.screen })
 
             controller.navigateBack()
             assertEquals(Screen.Home, controller.state.value.screen)

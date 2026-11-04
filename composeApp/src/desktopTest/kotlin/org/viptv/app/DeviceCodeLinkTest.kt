@@ -52,7 +52,7 @@ class DeviceCodeLinkTest {
             assertEquals("Add a device", controller.state.value.settingsEntrySection)
             assertTrue(controller.deviceLink.value!!.delivered)
             controller.deliverDeviceCode()
-            assertEquals(1, controller.state.value.navBack.count { it == Screen.Home }, "Delivery happens once")
+            assertEquals(1, controller.state.value.navBack.count { it.screen == Screen.Home }, "Delivery happens once")
             controller.consumeDeviceCode()
             assertNull(controller.deviceLink.value)
         } finally { scope.cancel() }

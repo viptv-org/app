@@ -73,24 +73,21 @@ class PhonePlayerActionsUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun unavailableEpisodeActionsAreDisabledAndMovieHasNoEpisodeControls() {
-        var loading by mutableStateOf(true)
+    @Test fun noFollowingEpisodeHidesNextAndMovieHasNoEpisodeControls() {
         var current by mutableStateOf(episode(1))
         var played = 0
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playEpisode = { played++ }, nextEpisodeLoading = loading)
+            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playEpisode = { played++ })
         } }
         try {
             frames(scene)
             assertTrue(action(scene, "Episodes").config.contains(SemanticsProperties.Disabled))
-            assertTrue(action(scene, "Next episode").config.contains(SemanticsProperties.Disabled))
-            assertTrue(nodes(scene).any { text(it) == "Finding next episode…" })
-            loading = false; frames(scene, 20)
-            assertTrue(nodes(scene).any { text(it) == "Next episode unavailable" })
+            assertFalse(nodes(scene).any { text(it) == "Next episode" }, "no next episode: the Next button is hidden")
+            assertFalse(nodes(scene).any { text(it) == "Finding next episode…" || text(it) == "Next episode unavailable" })
             nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.forEach {
                 assertTrue(it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= 390, "Phone action overflows")
             }
-            capture(scene, "phone-player-unavailable-portrait")
+            capture(scene, "phone-player-no-next-portrait")
             current = current.copy(identity = MediaIdentity("film", "movie", emptyList()), parent_identity = null); frames(scene, 40)
             assertFalse(nodes(scene).any { text(it) == "Next episode" || text(it) == "Episodes" }); assertEquals(0, played)
         } finally { scene.close() }
