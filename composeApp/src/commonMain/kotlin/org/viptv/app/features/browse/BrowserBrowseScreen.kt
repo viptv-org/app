@@ -41,7 +41,6 @@ import org.viptv.app.state.open
 import org.viptv.app.state.retryBrowse
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.ControlKind
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pageGutter
@@ -79,7 +78,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     PageRestore(grid, restore, target = { restore.anchor(cards.size) { cardLookupKey(cards[it]) } })
     AutomaticPage(cards.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     val facets = remember(controls, query, screen) { browseFacets(controls, query, screen == Screen.Discover) }
-    val applied = remember(facets, query) { browserApplied(facets, query) }
+    val applied = remember(facets, query) { appliedChips(facets, query) }
     val clearAll = { applyQuery(clearedFilters(query)) }
     val catalogOpen = remember { mutableStateOf(false) }
     val catalog = controls?.selectedCatalog(query)
@@ -109,25 +108,11 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     }
 }
 
-internal data class BrowserAppliedChip(val id: String, val value: String, val label: String, val multiple: Boolean)
-
-private fun browserApplied(facets: List<QueryControl>, query: BrowseQuery): List<BrowserAppliedChip> = appliedFacets(facets, query).flatMap { control ->
-    query.facetValues(control).map { value ->
-        BrowserAppliedChip(control.id, value, control.choices.find { it.value == value }?.label ?: value,
-            control.kind != ControlKind.SINGLECHOICE)
-    }
-}
-
 @Composable
-private fun BrowserBrowseEmpty(screen: Screen, source: String?, count: Int, newest: BrowserAppliedChip?,
+private fun BrowserBrowseEmpty(screen: Screen, source: String?, count: Int, newest: AppliedChip?,
     query: BrowseQuery, clearAll: () -> Unit, changed: (String, String) -> Unit,
     multipleChanged: (String, List<String>) -> Unit, openCatalog: () -> Unit) {
-    val noun = when (screen) {
-        Screen.Movies -> "movies"
-        Screen.Series -> "series"
-        Screen.Anime -> "anime"
-        else -> "titles"
-    }
+    val noun = browseNoun(screen)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Nothing matches these filters", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(source?.let { "$it has no $noun with all $count filters. Removing the newest one usually helps." }
