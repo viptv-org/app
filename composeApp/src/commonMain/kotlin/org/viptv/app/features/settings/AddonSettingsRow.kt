@@ -17,12 +17,17 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.TextButton
+import org.viptv.app.state.MutationKind
+import org.viptv.app.state.MutationTarget
 import org.viptv.app.components.Switch
 
 @Composable
 internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, busy: Boolean, manageable: Boolean,
     toggle: (Boolean) -> Unit, remove: () -> Unit, logo: String? = null) {
+    val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
     Surface(color = Palette.surface, shape = RoundedCornerShape(14.dp)) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -33,8 +38,11 @@ internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, bu
                 Text(if (!addon.enabled) "Disabled for this account" else addon.providesSummary(), fontSize = 13.sp,
                     color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (manageable) TextButton(onClick = remove, enabled = !busy) { Text("Remove", color = Palette.secondary) }
-            if (manageable) Switch(enabled, toggle, colors = SwitchDefaults.colors(checkedTrackColor = Palette.accent, checkedThumbColor = Palette.background), enabled = !busy && addon.enabled && addon.capabilities.isNotEmpty(), modifier = Modifier.semantics { contentDescription = "Enable ${addon.name} for this profile" })
+            if (pending) MutationSpinner(20.dp, color = Palette.secondary)
+            if (manageable) TextButton(onClick = remove, enabled = !busy && !pending) { Text("Remove", color = Palette.secondary) }
+            if (manageable) Switch(enabled, toggle, colors = SwitchDefaults.colors(checkedTrackColor = Palette.accent, checkedThumbColor = Palette.background),
+                enabled = !busy && !pending && addon.enabled && addon.capabilities.isNotEmpty(),
+                modifier = Modifier.semantics { contentDescription = "Enable ${addon.name} for this profile" })
         }
     }
 }
