@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
@@ -93,7 +94,9 @@ class DetailsStagedRenderTest {
             assertTrue(page.scene.shows(shortDescription), "the shell shows the card's short description")
             assertTrue(page.scene.loadingSkeleton(), "the meta-only parts are skeletons during the read")
 
-            page.detail = full.withCardPresentation(shell.item); page.busy = false
+            Snapshot.withMutableSnapshot {
+                page.detail = full.withCardPresentation(shell.item); page.busy = false
+            }
             page.renderUntil { page.scene.hasText("Gabby & Friends") && page.scene.shows(longDescription) &&
                 page.scene.shows(castLine) && page.scene.shows("1. Episode 1") && !page.scene.loadingSkeleton() }
 
@@ -104,7 +107,7 @@ class DetailsStagedRenderTest {
             assertTrue(page.scene.shows("1. Episode 1"), "the episode list replaces the skeleton")
             assertFalse(page.scene.loadingSkeleton(), "the skeleton is gone")
 
-            page.sourcePreview = preview
+            Snapshot.withMutableSnapshot { page.sourcePreview = preview }
             page.renderUntil { page.scene.mentions("Torrentio · 1 source") }
             assertTrue(page.scene.mentions("Torrentio · 1 source"), "the source summary fills in once")
         }
@@ -115,7 +118,9 @@ class DetailsStagedRenderTest {
             page.render()
             assertTrue(page.scene.hasText("Gabby & Friends"), "the TV shell draws the title")
 
-            page.detail = full.withCardPresentation(shell.item); page.busy = false
+            Snapshot.withMutableSnapshot {
+                page.detail = full.withCardPresentation(shell.item); page.busy = false
+            }
             page.renderUntil { page.scene.hasText("Gabby & Friends") && page.scene.shows(longDescription) &&
                 page.scene.shows(castLine) && !page.scene.loadingSkeleton() }
 
