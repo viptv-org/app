@@ -22,11 +22,14 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.features.home.BufferedArtwork
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
@@ -93,13 +96,16 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             DetailSourceSummary(sourcePreview, open = { chooseSource(resume ?: card) })
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
+                val mutations = LocalPendingMutation.current
+                val target = saveTarget(card)
                 Column(Modifier.width(76.dp).pointerClickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(if (saved) Lucide.Check else Lucide.Plus,
+                        if (mutations.isPending(target)) MutationSpinner(22.dp)
+                        else Icon(if (saved) Lucide.Check else Lucide.Plus,
                             if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
                     }
-                    Text("My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+                    Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
             card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,

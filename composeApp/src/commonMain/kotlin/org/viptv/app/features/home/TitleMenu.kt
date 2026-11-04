@@ -56,6 +56,9 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 import org.viptv.app.components.tvBackdropBlur
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.Motion
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -117,8 +120,11 @@ internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, actions
         }
         if (toggleSave != null || removal != null) {
             MenuDivider(scale)
-            if (toggleSave != null) MenuItem(if (saved) "In My List" else "Add to My List",
-                if (saved) Lucide.Check else Lucide.Plus, onDismiss, toggleSave, scale = scale)
+            if (toggleSave != null) {
+                val pending = LocalPendingMutation.current.isPending(saveTarget(card))
+                MenuItem(if (pending) "Saving…" else if (saved) "In My List" else "Add to My List",
+                    if (saved) Lucide.Check else Lucide.Plus, onDismiss, toggleSave, scale = scale, pending = pending)
+            }
             if (removal != null) MenuItem(removal.label, Lucide.Trash2, onDismiss, action = { removal.request(card) }, danger = true, scale = scale)
         }
         MenuDivider(scale)
@@ -134,7 +140,8 @@ private fun MenuDivider(scale: Float) {
 }
 
 @Composable
-private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit, danger: Boolean = false, scale: Float = 1f, requester: FocusRequester? = null) {
+private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, action: () -> Unit, danger: Boolean = false, scale: Float = 1f,
+    requester: FocusRequester? = null, pending: Boolean = false) {
     val interaction = remember { MutableInteractionSource() }
     var focused by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().height(34.dp * scale).pressScale(interaction, Motion.row)
@@ -145,10 +152,11 @@ private fun MenuItem(label: String, icon: ImageVector, dismiss: () -> Unit, acti
         .background(hoverFill(interaction, Color.Transparent, Color.White.copy(alpha = .12f)))
         .hoverable(interaction)
         .then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
-        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp * scale), hover = null) { dismiss(); action() }
+        .pointerClickable(interactionSource = interaction, indication = null, onClickLabel = label, shape = RoundedCornerShape(6.dp * scale), hover = null) { dismiss(); if (!pending) action() }
         .padding(horizontal = 10.dp * scale),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-        Icon(icon, null, Modifier.size(16.dp * scale), tint = if (danger) Palette.danger else Palette.text)
+        if (pending) MutationSpinner(16.dp, scale = scale)
+        else Icon(icon, null, Modifier.size(16.dp * scale), tint = if (danger) Palette.danger else Palette.text)
         Text(label, fontSize = 13.sp * scale, lineHeight = 16.sp * scale, fontWeight = FontWeight.Medium,
             color = if (danger) Palette.danger else Palette.text)
     }
