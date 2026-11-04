@@ -14,6 +14,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.ADDON_INSTALL_TARGET
+import org.viptv.app.state.MutationKind
+import org.viptv.app.state.MutationTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.components.Button
@@ -32,7 +37,10 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     var installing by remember { mutableStateOf(false) }
     var submission by remember { mutableStateOf<Any?>(null) }
     DisposableEffect(Unit) { onDispose { submission = null } }
-    val sheetBusy = busy || submission != null
+    val mutations = LocalPendingMutation.current
+    val installTarget = MutationTarget(MutationKind.Addon, ADDON_INSTALL_TARGET)
+    val installingPending = mutations.isPending(installTarget)
+    val sheetBusy = busy || submission != null || installingPending
     val closeInstall = { if (!busy && submission == null) { submission = null; installing = false } }
     val submitInstall = {
         if (!busy && submission == null && address.text.isNotBlank()) {
@@ -81,7 +89,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                     Icon(Lucide.Plus, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Add an add-on", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            if (!compact && managementAvailable) item { AddonInstallForm(address, busy, { install(address.text.toString().trim()) }) }
+            if (!compact && managementAvailable) item { AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) }) }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { item { Text(it, color = Palette.danger) } }
             if (addons.isNotEmpty()) item {
@@ -105,9 +113,13 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
             }
         }
         removing?.let { selected ->
-            AlertDialog(onDismissRequest = { if (!busy) removing = null }, title = { Text("Remove ${selected.name}?") },
+            val pending = mutations.isPending(MutationTarget(MutationKind.Addon, selected.id))
+            AlertDialog(onDismissRequest = { if (!busy && !pending) removing = null }, title = { Text("Remove ${selected.name}?") },
                 text = { Text(if (local) "This removes the add-on from every profile on this device." else "This removes the add-on from this account and its profiles.") },
-                confirmButton = { TextButton(onClick = { remove(selected.id); removing = null }, enabled = !busy) { Text("Remove", color = Palette.danger) } },
+                confirmButton = { TextButton(onClick = { if (!pending) { remove(selected.id); removing = null } }, enabled = !busy && !pending) {
+                    if (pending) { MutationSpinner(16.dp, color = Palette.danger); Spacer(Modifier.width(8.dp)); Text("Removing…", color = Palette.danger) }
+                    else Text("Remove", color = Palette.danger)
+                } },
                 dismissButton = { TextButton(onClick = { removing = null }, enabled = !busy) { Text("Cancel") } })
         }
     }

@@ -33,7 +33,7 @@ fun ApplicationController.configureSourceIntegration(plugin: String, configurati
     profileConfigurationChanged(owner)
 }
 
-fun ApplicationController.removeSourceIntegration(connectionId: String) = run {
+fun ApplicationController.removeSourceIntegration(connectionId: String) = mutate(MutationTarget(MutationKind.SourceIntegration, connectionId)) {
     val owner = addonOperationOwner()
     val profile = requireNotNull(owner.profile)
     val revision = mutable.value.sourceIntegrations.revision
