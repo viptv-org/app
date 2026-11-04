@@ -44,6 +44,7 @@ class Freshness(private val time: TimeSource = TimeSource.Monotonic, private val
     fun changed(observed: Revisions): Boolean = baseline != observed
     fun libraryChanged(observed: Revisions): Boolean = moved(observed, "library")
     fun addonsChanged(observed: Revisions): Boolean = moved(observed, "addons")
+    fun configurationChanged(observed: Revisions): Boolean = moved(observed, "configuration")
     private fun moved(observed: Revisions, token: String) = baseline?.let { it[token] != observed[token] } ?: true
 
     fun homeStale(): Boolean = builtAt?.let { it.elapsedNow() >= HOME_MAX_AGE } ?: false

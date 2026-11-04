@@ -60,6 +60,8 @@ class FreshnessTest {
         assertFalse(freshness.libraryChanged(base + ("addons" to "a2")))
         assertTrue(freshness.addonsChanged(base + ("addons" to "a2")))
         assertFalse(freshness.addonsChanged(base + ("library" to "5")), "Only the add-on token reloads add-ons")
+        assertTrue(freshness.configurationChanged(base + ("configuration" to "3")))
+        assertFalse(freshness.configurationChanged(base + ("library" to "5")), "Only the configuration token reloads the add-on assignment")
     }
 
     @Test fun withoutABaselineEveryObservationIsAChange() {

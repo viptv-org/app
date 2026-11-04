@@ -377,6 +377,34 @@ class QuietRefreshTest {
         }
     }
 
+    @Test fun aMovedConfigurationTokenReloadsTheAddOnListAndHome() = runBlocking<Unit> {
+        val moved = base + ("configuration" to "3")
+        for (screen in listOf(Screen.Settings, Screen.Discover)) {
+            var revisions = base
+            val server = Server { path ->
+                when (path) {
+                    "/api/profiles/12/revisions" -> json(revisionsJson(revisions))
+                    "/api/bootstrap" -> json(bootstrap(addonHome(7, 1), moved))
+                    "/api/profiles/12/integrations" -> json(integrationsJson(1))
+                    "/api/addons" -> json(addonsJson(1))
+                    else -> error("Unexpected $path")
+                }
+            }
+            val browsed = listOf(card("b1"))
+            controller(server, state = ApplicationState(screen = screen, selectedProfile = "12", home = addonHome(6, 1, 2),
+                addons = listOf(addon(1), addon(2)), enabledAddonIds = setOf("addon:1", "addon:2"), browseCards = browsed)).whileForeground {
+                returnAfter { revisions = moved }
+                val now = state.value
+                assertEquals(listOf("addon:1"), now.addons.map { it.id }, "The add-on list on $screen drops the disabled add-on")
+                assertEquals(setOf("addon:1"), now.enabledAddonIds)
+                assertEquals(listOf("continue", "addon:1"), now.home?.rows?.map { it.id }, "Home drops the disabled add-on's row")
+                assertEquals(screen, now.screen); assertFalse(now.busy); assertNull(now.error)
+                if (screen == Screen.Discover) assertEquals(browsed, now.browseCards, "The Browse page on display is not emptied")
+                else assertEquals(emptyList(), now.browseCards, "Browse loads the remaining add-ons on its next entry")
+            }
+        }
+    }
+
     @Test fun aMovedLibraryTokenAloneLeavesTheAddOnListAlone() = runBlocking<Unit> {
         val moved = base + ("library" to "5")
         var revisions = base

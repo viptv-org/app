@@ -123,7 +123,8 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
     progressJob?.join()
     val libraryMoved = observed?.let(freshness::libraryChanged) ?: true
     val addonsMoved = observed?.let(freshness::addonsChanged) ?: false
-    if (addonsMoved) addonOperation?.join()
+    val configurationMoved = observed?.let(freshness::configurationChanged) ?: false
+    if (addonsMoved || configurationMoved) addonOperation?.join()
     val device = owner.local
     if (device != null) {
         val home = device.refreshHome(owner.profile)
@@ -147,7 +148,7 @@ private suspend fun ApplicationController.refreshQuietly(owner: QuietOwner, obse
     }
     if (libraryMoved) reloadVisibleLibrary(owner)
     if (detail || (libraryMoved && mutable.value.screen in DETAIL_SCREENS)) reloadDetailQuietly(owner)
-    if (addonsMoved) reloadAddonsQuietly(owner)
+    if (addonsMoved || configurationMoved) reloadAddonsQuietly(owner)
 }
 
 private val DETAIL_SCREENS = setOf(Screen.Details, Screen.Sources)
