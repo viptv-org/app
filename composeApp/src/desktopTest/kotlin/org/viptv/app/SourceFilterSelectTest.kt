@@ -23,7 +23,7 @@ import kotlin.test.*
 class SourceFilterSelectTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun source(id: String, height: Long, provider: String) = SourceCandidate(id, "addon:$provider", "Stream $id",
-        detail = "Release $id", quality_height = height, presentation = SourcePresentation(provider_name = provider, source_id = provider))
+        detail = "[Stream $id] Release $id", quality_height = height, presentation = SourcePresentation(provider_name = provider, source_id = provider))
 
     private val mixed = listOf(source("a1", 2160, "Torrentio"), source("a2", 1080, "Torrentio"), source("a3", 1080, "Comet"),
         source("a4", 720, "Comet"), source("a5", 2160, "Comet"), source("a6", 1080, "Torrentio"), source("a7", 480, "Torrentio"))
@@ -111,8 +111,8 @@ class SourceFilterSelectTest {
         fun triggers() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }.sortedBy { it.boundsInRoot.left }
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
         fun streams() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
-            .filter { n -> text(n).matches(Regex("Release [a-z]\\d+")) }
-            .sortedBy { it.boundsInRoot.top }.map { text(it).replace("Release", "Stream") }
+            .filter { n -> text(n).matches(Regex("Stream [a-z]\\d+")) }
+            .sortedBy { it.boundsInRoot.top }.map { text(it) }
         private fun rows() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.RadioButton }.sortedBy { it.boundsInRoot.top }
         fun options() = rows().map { it.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text }
 

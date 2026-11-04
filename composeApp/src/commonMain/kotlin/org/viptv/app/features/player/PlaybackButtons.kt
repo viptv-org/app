@@ -33,7 +33,8 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     streams: (() -> Unit)? = null, streamLabel: String? = null,
     next: (() -> Unit)? = null, nextEnabled: Boolean = false,
     episodes: (() -> Unit)? = null, episodesEnabled: Boolean = false,
-    fill: Boolean = false, toggleFill: () -> Unit = {}) {
+    fill: Boolean = false, toggleFill: () -> Unit = {},
+    fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
     var speeds by remember { mutableStateOf(false) }
     val playPause: @Composable () -> Unit = {
         IconButton(onClick = toggle, pressedScale = Motion.control) {
@@ -85,6 +86,9 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     val closeAction: @Composable () -> Unit = {
         IconButton(onClick = close, pressedScale = Motion.control) { Icon(Lucide.X, "Close playback", Modifier.size(22.dp)) }
     }
+    val fullscreenAction: @Composable () -> Unit = {
+        toggleFullscreen?.let { PlaybackFullscreen(fullscreen, it) }
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < CompactButtonsBelow) Column {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -99,8 +103,25 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
             playPause(); skipBack(); skipForward(); nextAction(); muteAction()
             PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
             Spacer(Modifier.weight(1f))
-            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill); closeAction()
+            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill); fullscreenAction(); closeAction()
         }
+    }
+}
+
+@Composable
+internal fun PlaybackFullscreen(fullscreen: Boolean, toggle: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(if (fullscreen) Palette.accent.copy(alpha = 0.16f) else Color.Transparent)
+            .pressScale(interaction, Motion.control)
+            .pointerToggleable(fullscreen, interaction, null, shape = CircleShape, onValueChange = { toggle() }),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (fullscreen) Lucide.Minimize else Lucide.Maximize, if (fullscreen) "Exit fullscreen" else "Enter fullscreen",
+            Modifier.size(22.dp), tint = if (fullscreen) Palette.accent else Palette.text)
     }
 }
 

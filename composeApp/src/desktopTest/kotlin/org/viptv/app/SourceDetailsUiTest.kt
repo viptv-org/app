@@ -22,6 +22,7 @@ import org.viptv.app.features.sources.TvSourcesScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SourcePresentation
 import org.junit.Rule
 import kotlin.test.*
 
@@ -33,39 +34,41 @@ class SourceDetailsUiTest {
 
     @Test fun holdingOkOnATvRowOpensSourceDetailsAndBackReturnsToIt() = onEdt {
         var chosen: SourceCandidate? = null
-        val source = SourceCandidate("tv", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160)
+        val source = SourceCandidate("tv", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160,
+            presentation = SourcePresentation(provider_name = "Fixture Group"))
         Scene(1920, 1080, television = true) {
             TvSourcesScreen(null, listOf(source), false, null, { chosen = it }, {}, info = mapOf("tv" to TvSourceInfo("4K")))
         }.use { s ->
             s.frames(40)
-            assertTrue(s.text(s.focused()!!).contains("Torrentio 4K"), "the first row takes focus")
+            assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "the first row takes focus")
             s.keyDown(Key.DirectionCenter)
             s.waitFor("Source details") { s.hasDetails() }
             s.keyUp(Key.DirectionCenter)
             s.frames()
-            assertEquals(2, s.descriptionNodes(), "the row window and Source details both hold the full text")
+            assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
             assertNull(chosen, "a hold opens details instead of playing the source")
             s.keyDown(Key.Back); s.keyUp(Key.Back)
             s.waitFor("Source details to close") { !s.hasDetails() }
-            assertTrue(s.text(s.focused()!!).contains("Torrentio 4K"), "Back returns to the row it came from")
+            assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "Back returns to the row it came from")
             assertNull(chosen)
         }
     }
 
     @Test fun holdingEnterOnADesktopRowOpensSourceDetailsWithItsFullText() = onEdt {
-        val source = SourceCandidate("desktop", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160)
+        val source = SourceCandidate("desktop", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160,
+            presentation = SourcePresentation(provider_name = "Fixture Group"))
         Scene(1440, 900) { SourcesScreen(null, listOf(source), false, null, {}, {}) }.use { s ->
             s.frames(40)
-            assertTrue(s.row("Torrentio 4K").config[SemanticsActions.RequestFocus].action!!.invoke())
+            assertTrue(s.row("Fixture Group").config[SemanticsActions.RequestFocus].action!!.invoke())
             s.frames()
             s.keyDown(Key.Enter)
             s.waitFor("Source details") { s.hasDetails() }
             s.keyUp(Key.Enter)
             s.frames()
-            assertEquals(2, s.descriptionNodes(), "the row window and Source details both hold the full text")
+            assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
             s.keyDown(Key.Escape); s.keyUp(Key.Escape)
             s.waitFor("Source details to close") { !s.hasDetails() }
-            assertTrue(s.text(s.focused()!!).contains("Torrentio 4K"), "closing returns to the row")
+            assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "closing returns to the row")
         }
     }
 

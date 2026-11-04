@@ -153,7 +153,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 KeepSourceListPosition(listState, rows, focusedSource.takeIf { navigated }, headerHeight,
                     leading = (if (error != null) 1 else 0) + (if (notice != null) 1 else 0))
                 LazyColumn(Modifier.weight(1f), state = listState,
-                    verticalArrangement = Arrangement.spacedBy(10.dp * scale),
+                    verticalArrangement = Arrangement.spacedBy(8.dp * scale),
                     contentPadding = PaddingValues(bottom = 24.dp * scale)) {
                     error?.let {
                         item(key = "error") {

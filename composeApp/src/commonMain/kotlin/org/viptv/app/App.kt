@@ -69,6 +69,8 @@ fun App(
     imageDiagnostics: ((String) -> Unit)? = null,
     entryBackChanged: ((() -> Unit)?) -> Unit = {},
     defaultServer: String = "",
+    desktopFullscreen: Boolean = false,
+    toggleDesktopFullscreen: () -> Unit = {},
 ) {
     org.viptv.app.images.ConfigureImageLoading(imageDiagnostics)
     val scope = rememberCoroutineScope()
@@ -168,7 +170,8 @@ fun App(
                     editingCurrent = state.profileToEdit == state.selectedProfile, openSettings = controller::profileSettings,
                     language = state.preferences?.takeIf { state.profileToEdit == state.selectedProfile }?.preferences?.let { it.preferred_audio_language ?: "Original audio" },
                     maturity = state.profileManagement?.profiles?.find { it.id == state.profileToEdit }?.let { if(it.kids)it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction" })
-                Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged)
+                Screen.Player -> PlayerRoute(state, controller, television, !browser && !television && !desktopChrome, browser, entryBackChanged,
+                    fullscreen = desktopChrome && desktopFullscreen, toggleFullscreen = if (desktopChrome) toggleDesktopFullscreen else null)
                 else -> Box(Modifier.fillMaxSize()) {
                   val prefs = watchOnTvState.value
                   val remoteTvName = prefs.tvName

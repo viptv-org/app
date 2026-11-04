@@ -106,8 +106,14 @@ class DesktopShellHoverTest {
     }
 
     @Test fun theTitleBarSearchAndProfileAnswerHover() = shell {
-        assertHoverRepaints("title-bar search") { it.contains("Search movies, series and channels") }
+        assertHoverRepaints("title-bar search") { it.contains("Search movies and series") }
         assertHoverRepaints("Switch profile") { it.contains("Switch profile") }
+    }
+
+    @Test fun theTitleBarSearchShowsTheSpecPlaceholderWithoutAShortcutHint() = shell {
+        val texts = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
+        assertTrue(texts.contains("Search movies and series"), "the placeholder matches copy.md")
+        assertFalse(texts.any { it == "Ctrl K" || it == "⌘K" }, "no keyboard-shortcut hint badge")
     }
 
     @Test fun anEnabledRowChevronAnswersHover() = shell {
