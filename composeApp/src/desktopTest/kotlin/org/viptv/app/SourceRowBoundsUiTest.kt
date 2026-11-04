@@ -34,6 +34,7 @@ import org.viptv.app.features.sources.parseReleaseGroup
 import org.viptv.app.features.sources.parseTracker
 import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.features.sources.releaseGroupLabel
+import org.viptv.app.features.sources.seasonPack
 import org.viptv.app.features.sources.subtitleChips
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -67,6 +68,18 @@ class SourceRowBoundsUiTest {
         assertEquals(CacheChip(CacheKind.Instant, null), cacheChip("⚡ AniKage • English DUB", "direct"))
         assertNull(cacheChip("Torrentio\n1080p", "torrent"))
         assertNull(cacheChip("TorrentsDB\nbdrip", "torrent"))
+    }
+
+    @Test fun seasonPackMatchesBatchAndFullSeasonMarkers() {
+        fun packs(detail: String?) = SourceCandidate("a", "p", "A", detail = detail).seasonPack()
+        assertTrue(packs("Tensai Ouji no Akaji (2022) [Batch]"))
+        assertTrue(packs("Tensai Ouji no Akaji (2022) (Batch)"))
+        assertTrue(packs("Tensai Ouji no Akaji (2022) \"Batch\""))
+        assertTrue(packs("Tensai Ouji no Akaji S01 complete"))
+        assertTrue(packs("Tensai Ouji no Akaji Season 1-12"))
+        assertTrue(packs("Tensai Ouji no Akaji S01E01-E12"))
+        assertFalse(packs("Tensai Ouji no Akaji S01E03"))
+        assertFalse(packs("Oak Street (2022)"))
     }
 
     @Test fun audioAndSubtitleChipsInferFromFlags() {
@@ -121,7 +134,7 @@ class SourceRowBoundsUiTest {
 
     private fun phone(sources: List<SourceCandidate>, capturePath: String) {
         val scene = scene(390, 2400) {
-            Column(Modifier.width(390.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
+            Column(Modifier.width(390.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0, bestMatch = index == 0) } }
         }
         try {
             frames(scene, 4)
@@ -132,7 +145,7 @@ class SourceRowBoundsUiTest {
 
     private fun desktop(sources: List<SourceCandidate>, capturePath: String) {
         val scene = scene(1440, 1400) {
-            Column(Modifier.width(720.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
+            Column(Modifier.width(720.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0, bestMatch = index == 0) } }
         }
         try {
             frames(scene, 4)
