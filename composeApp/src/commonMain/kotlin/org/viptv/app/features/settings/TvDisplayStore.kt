@@ -1,5 +1,6 @@
 package org.viptv.app.features.settings
 
+import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -9,7 +10,6 @@ internal data class TvDisplayPreferences(
     val ratings: Boolean = true,
     val textSize: String = "Default",
     val reduceMotion: String = "Follow TV",
-    val screenSaver: String = "After 5 minutes",
     val fitToScreen: Boolean = false,
 )
 
@@ -28,3 +28,15 @@ internal fun reducedMotion(display: TvDisplayPreferences, system: Boolean): Bool
     "Off" -> false
     else -> system
 }
+
+internal fun accentColor(display: TvDisplayPreferences): Color = Color(display.accent)
+
+internal fun showRatings(display: TvDisplayPreferences): Boolean = display.ratings
+
+internal fun tvTextScale(display: TvDisplayPreferences): Float = when (display.textSize) {
+    "Large" -> 1.15f
+    "Larger" -> 1.3f
+    else -> 1f
+}
+
+internal fun fitToScreen(display: TvDisplayPreferences): Boolean = display.fitToScreen

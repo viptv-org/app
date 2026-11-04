@@ -109,6 +109,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     onHover: (Boolean) -> Unit = {},
     scale: Float = 1f) {
     var focused by remember { mutableStateOf(false) }
+    val accent = Palette.accent
     val actions = LocalCardActions.current
     val removal = LocalListRemoval.current
     val menu = actions != null || removal != null
@@ -183,7 +184,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(4.dp).drawBehind {
                     val bar = size.height
                     drawRoundRect(Palette.raised.copy(alpha = 0.9f), cornerRadius = CornerRadius(bar / 2), size = Size(size.width, bar))
-                    if (p > 0f) drawRoundRect(Palette.accent, cornerRadius = CornerRadius(bar / 2), size = Size(size.width * p, bar))
+                    if (p > 0f) drawRoundRect(accent, cornerRadius = CornerRadius(bar / 2), size = Size(size.width * p, bar))
                 })
             }
             // A focused card draws only its focus outline, never the hover ring as well.

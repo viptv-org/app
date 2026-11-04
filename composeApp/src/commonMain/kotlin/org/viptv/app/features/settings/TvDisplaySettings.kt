@@ -79,10 +79,6 @@ internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initia
         TvSettingsRow("Reduce motion", scale = scale, value = prefs.reduceMotion, left = sidebar) {
             choose("Reduce motion", listOf("Follow TV", "On", "Off")) { change(prefs.copy(reduceMotion = it)) }
         }
-        TvSettingsRow("Screen saver", scale = scale, value = prefs.screenSaver, left = sidebar) {
-            choose("Screen saver", listOf("Off", "After 5 minutes", "After 10 minutes", "After 30 minutes")) {
-                change(prefs.copy(screenSaver = it)) }
-        }
         TvSettingsRow("Fit to screen", "Use if the edges of the picture are cut off", scale, left = sidebar) {
             change(prefs.copy(fitToScreen = !prefs.fitToScreen))
         }

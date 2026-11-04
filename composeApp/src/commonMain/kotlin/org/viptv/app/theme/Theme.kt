@@ -6,6 +6,8 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
 
 object Palette {
@@ -16,7 +18,8 @@ object Palette {
     val body = Color(0xFFDAD8D3)
     val secondary = Color(0xFFB6B4AF)
     val tertiary = Color(0xFF8F8D89)
-    val accent = Color(0xFFF5C542)
+    val accent: Color
+        @Composable get() = LocalAccent.current
     val danger = Color(0xFFFF7A6E)
     val segmentIntro = Color(0xFF9AC7FF)
     val segmentRecap = Color(0xFFB79CFF)
@@ -28,10 +31,14 @@ fun ViptvTheme(television: Boolean = false,
     // Desktop and web only: hover visuals follow the mouse, never on TV.
     pointer: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = ViptvColors,
+        colorScheme = viptvColorScheme(),
         typography = viptvTypography(), content = {
             org.viptv.app.components.TvFocusEnvironment(television) {
+                val density = LocalDensity.current
+                val textScale = LocalTvTextScale.current
+                val scaledDensity = if (television && textScale != 1f) Density(density.density, density.fontScale * textScale) else density
                 CompositionLocalProvider(LocalContentColor provides Palette.text,
+                    LocalDensity provides scaledDensity,
                     org.viptv.app.components.LocalPointerHover provides (pointer && !television),
                     org.viptv.app.components.LocalCardOverflow provides (!pointer && !television)) {
                     if (television) CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(letterSpacing = 0.sp), content = content)

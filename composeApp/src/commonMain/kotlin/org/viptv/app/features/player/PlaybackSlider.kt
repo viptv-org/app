@@ -20,9 +20,10 @@ private val ThumbSize = 12.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Modifier, enabled: Boolean = true,
-    finish: (() -> Unit)? = null, accent: Color = Palette.accent, label: String = "Playback position",
+    finish: (() -> Unit)? = null, accent: Color? = null, label: String = "Playback position",
     segments: List<TimelineSegment> = emptyList(), buffered: List<BufferedRange> = emptyList(), duration: Long? = null) {
-    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = accent,
+    val accentColor = accent ?: Palette.accent
+    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = accentColor,
         inactiveTrackColor = Color.White.copy(alpha = 0.3f))
     val description = if (segments.isEmpty()) label else "$label. " + segments.joinToString(". ") { it.description }
     val bands = bufferedFractions(buffered, duration)
@@ -37,7 +38,7 @@ internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Mod
                     else {
                         TimelineBarSpan(0f, 1f, colors.inactiveTrackColor, RoundedCornerShape(TrackHeight / 2))
                         bands.forEach { (start, end) -> TimelineBarSpan(start, end, Color.White.copy(alpha = 0.5f)) }
-                        TimelineBarSpan(0f, state.coercedValueAsFraction, accent)
+                        TimelineBarSpan(0f, state.coercedValueAsFraction, accentColor)
                         segments.forEach { segment -> TimelineBarSpan(segment.startFraction, segment.endFraction, segment.color, RoundedCornerShape(2.dp)) }
                     }
                 }

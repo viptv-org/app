@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
+import org.viptv.app.theme.LocalFitToScreen
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.TvBackdrop
@@ -106,7 +107,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         val scale = maxWidth / 1920.dp
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (rendering != null) PlayerSurface(rendering, paused || input == null, false, Modifier.fillMaxSize(), {
+            if (rendering != null) PlayerSurface(rendering, paused || input == null, LocalFitToScreen.current, Modifier.fillMaxSize(), {
                 if (input === rendering) { state.observe(it); observe(it) }
             }, state.commands)
         }

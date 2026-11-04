@@ -11,12 +11,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.theme.LocalShowRatings
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
 internal fun TvMediaMetadata(card: Card, scale: Float, lineHeight: Float = 30f, subtitleParts: List<String>? = null) {
-    val parts = subtitleParts ?: card.metadataParts()
+    val parts = subtitleParts ?: card.metadataParts(includeRating = LocalShowRatings.current)
     val badges = card.presentationBadges()
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
         if (parts.isNotEmpty()) {

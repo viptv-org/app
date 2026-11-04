@@ -39,7 +39,7 @@ import kotlin.test.*
 class BufferedTimelineUiTest {
     @get:Rule val uiThread = UiThreadRule()
 
-    private val accent = Palette.accent.toArgb()
+    private val accent = Color(0xFFF5C542).toArgb()
     // White 50% over the inactive bar: .3 white over black for the pointer slider, .22 on the TV timeline.
     private val pointerBase = 0xFF4D4D4D.toInt()
     private val pointerBand = 0xFFA6A6A6.toInt()

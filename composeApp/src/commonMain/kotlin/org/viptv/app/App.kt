@@ -36,6 +36,10 @@ import org.viptv.app.features.settings.LocalTvDisplayState
 import org.viptv.app.features.settings.rememberSystemReducedMotion
 import org.viptv.app.features.settings.rememberTvDisplayState
 import org.viptv.app.features.settings.reducedMotion
+import org.viptv.app.features.settings.accentColor
+import org.viptv.app.features.settings.showRatings
+import org.viptv.app.features.settings.tvTextScale
+import org.viptv.app.features.settings.fitToScreen
 import org.viptv.app.features.settings.LocalWatchOnTv
 import org.viptv.app.features.settings.rememberWatchOnTvAvailable
 import org.viptv.app.features.settings.rememberWatchOnTvState
@@ -84,6 +88,10 @@ fun App(
     }
     val tvDisplay = rememberTvDisplayState()
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
+    val accent = accentColor(tvDisplay.value)
+    val ratings = showRatings(tvDisplay.value)
+    val textScale = tvTextScale(tvDisplay.value)
+    val fitScreen = fitToScreen(tvDisplay.value)
     val localMode = state.localMode
     val watchOnTvState = rememberWatchOnTvState()
     val watchOnTvPlatform = rememberWatchOnTvAvailable()
@@ -95,6 +103,8 @@ fun App(
             markWatched = if (localMode) null else controller::toggleWatched)
     }
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
+        LocalAccent provides accent, LocalShowRatings provides ratings,
+        LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
         LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
     ViptvTheme(television, pointer = browser || desktopChrome) {
         BoxWithConstraints(Modifier.fillMaxSize()
