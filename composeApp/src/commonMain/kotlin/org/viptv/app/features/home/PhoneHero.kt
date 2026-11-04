@@ -19,6 +19,9 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Check
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.MediaMetadata
 import org.jetbrains.compose.resources.painterResource
@@ -52,12 +55,15 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                             Spacer(Modifier.width(8.dp))
                             Text("Play", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
+                        val mutations = LocalPendingMutation.current
+                        val target = saveTarget(shown)
+                        val pending = mutations.isPending(target)
                         Button(onClick = { save(shown) }, modifier = Modifier.weight(1f).height(46.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                            Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(18.dp))
+                            if (pending) MutationSpinner(18.dp) else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text(if (pending) "Saving…" else "My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

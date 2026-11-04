@@ -77,6 +77,9 @@ import org.viptv.app.components.Motion
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberEnterLeaveMotion
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.state.saveTarget
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.LocalCardOverflow
@@ -390,8 +393,10 @@ private fun CardPreview(card: Card, saved: Boolean,
                     Text(if (card.progress != null) "Resume" else "Play", color = Palette.background,
                         fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                PreviewCircle(if (saved) "Remove from My List" else "Add to My List", onSave) {
-                    Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp), tint = Palette.text)
+                val saving = LocalPendingMutation.current.isPending(saveTarget(card))
+                PreviewCircle(if (saving) "Saving…" else if (saved) "Remove from My List" else "Add to My List", onSave) {
+                    if (saving) MutationSpinner(18.dp)
+                    else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp), tint = Palette.text)
                 }
                 Spacer(Modifier.weight(1f))
                 PreviewCircle("More info", onInfo) { Icon(Lucide.Info, null, Modifier.size(18.dp), tint = Palette.text) }

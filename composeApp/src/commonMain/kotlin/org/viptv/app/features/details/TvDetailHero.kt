@@ -20,10 +20,13 @@ import androidx.compose.material3.*
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.tvHold
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -77,7 +80,12 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
             }
-            TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            val mutations = LocalPendingMutation.current
+            val target = saveTarget(card)
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) {
+                if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
+                else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it)
+            }
             if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }
     }
