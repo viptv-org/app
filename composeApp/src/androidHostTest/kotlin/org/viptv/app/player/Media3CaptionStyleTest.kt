@@ -13,6 +13,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.viptv.app.connection.ProfilePreferences
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -24,13 +25,18 @@ import kotlin.test.assertTrue
 class Media3CaptionStyleTest {
     private fun layer() = SubtitleView(RuntimeEnvironment.getApplication())
 
-    private fun boxPixels(view: SubtitleView, width: Int = 1200, height: Int = 600): Int {
+    private fun boxPixels(view: SubtitleView, capture: String? = null, width: Int = 1200, height: Int = 600): Int {
         view.setStackedCues(listOf(Cue.Builder().setText("A caption line that needs a box").build()))
         view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
         view.layout(0, 0, width, height)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         view.draw(Canvas(bitmap))
+        capture?.let { name -> System.getenv("VIPTV_CAPTION_CAPTURE_DIR")?.let { dir ->
+            val framed = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            Canvas(framed).apply { drawColor(android.graphics.Color.DKGRAY); drawBitmap(bitmap, 0f, 0f, null) }
+            File(dir, "$name.png").outputStream().use { framed.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        } }
         val row = IntArray(width)
         var count = 0
         for (y in 0 until height) {
@@ -70,5 +76,16 @@ class Media3CaptionStyleTest {
         val restoredBox = layer()
         Media3CaptionStyle(ProfilePreferences(subtitle_background_color = "#B3FF0000")).attach(restoredBox)
         assertTrue(boxPixels(restoredBox) > 0)
+    }
+
+    /** PR evidence only: `VIPTV_CAPTION_CAPTURE_DIR=<dir>` writes the sidecar layer with None and with Box. */
+    @Test fun captureNoneAndBox() {
+        System.getenv("VIPTV_CAPTION_CAPTURE_DIR") ?: return
+        val view = layer()
+        val style = Media3CaptionStyle(ProfilePreferences(subtitle_background_color = "#B3000000"))
+        style.attach(view)
+        boxPixels(view, capture = "android-caption-background-box")
+        style.background(null)
+        boxPixels(view, capture = "android-caption-background-none")
     }
 }
