@@ -29,6 +29,10 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.ListEntrance
 import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.Button
+import org.viptv.app.components.ServerMessages
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.flow.first
 import org.viptv.app.state.RowSeeAll
 
 internal const val CONTINUE_ROW = "continue"
@@ -40,7 +44,8 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     play: (Card) -> Unit = open,
     gutter: Dp = 0.dp,
     seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
-    hover: (Card, Boolean) -> Unit = { _, _ -> }, entrance: ListEntrance) {
+    hover: (Card, Boolean) -> Unit = { _, _ -> }, entrance: ListEntrance,
+    more: ((String) -> Unit)? = null, appending: Boolean = false, appendError: String? = null) {
     if (row.state == RowState.EMPTY || row.state == RowState.FAILED) return
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -53,9 +58,18 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
     val cards = row.cards.distinctBy(::cardLookupKey)
         .distinctBy { it.title.trim().lowercase() to it.metadata?.year }
     val endCard = seeAllFor(row)
+    val trailing = if (appendError == null && more != null && (row.next_cursor != null || appending)) HOME_ROW_TRAILING else 0
     // onFocusChanged reports a card's focus only through a focus target in the row's chain: the focusGroup below.
     var rowFocused by remember { mutableStateOf(false) }
     FollowNewFirstCard(list, cards, rowFocused)
+    val loadPage = rememberUpdatedState(more)
+    LaunchedEffect(row.id, row.next_cursor, appending, appendError, cards.size) {
+        val request = loadPage.value ?: return@LaunchedEffect
+        if (row.next_cursor == null || appending || appendError != null || cards.isEmpty()) return@LaunchedEffect
+        snapshotFlow { list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+            .first { index -> index > cards.lastIndex }
+        request(row.id)
+    }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(0, entrance.animate), verticalAlignment = Alignment.CenterVertically) {
             Text(row.title, Modifier.weight(1f), fontSize = (if (television) 30 * scale else if (tablet) 20f else 18f).sp, lineHeight = (if (television) 36 * scale else if (tablet) 26f else 24f).sp, letterSpacing = (if (television) -0.3f * scale else if (tablet) -0.2f else -0.18f).sp, fontWeight = FontWeight.SemiBold)
@@ -114,6 +128,11 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                             if (it.isFocused && !television) scope.launch { bringIntoView.bringIntoView() }
                         })
                 }
+                if (appendError != null) item(key = "row-append") {
+                    RowMessageCard(width, portrait, appendError) { more?.invoke(row.id) }
+                } else items(trailing, key = { "append-$it" }) {
+                    RowSkeletonCard(width, portrait)
+                }
             }
             RowState.PENDING -> LazyRow(contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp * scale else if (tablet) 14.dp else 12.dp)) {
                 items(4) { Box(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
@@ -130,6 +149,30 @@ internal fun carouselPageTarget(info: LazyListLayoutInfo, forward: Boolean): Int
     val first = (whole.firstOrNull() ?: visible.first()).index
     val page = whole.size.coerceAtLeast(1)
     return if (forward) (first + page).coerceAtMost(info.totalItemsCount - 1) else (first - page).coerceAtLeast(0)
+}
+
+@Composable
+private fun RowSkeletonCard(width: Int, portrait: Boolean) {
+    Column(Modifier.width(width.dp)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9)
+            .clip(RoundedCornerShape(9.dp)).background(Palette.surface))
+        Spacer(Modifier.height(9.dp))
+        Box(Modifier.fillMaxWidth(0.8f).height(18.dp).clip(RoundedCornerShape(4.dp)).background(Palette.raised))
+    }
+}
+
+@Composable
+private fun RowMessageCard(width: Int, portrait: Boolean, message: String, retry: () -> Unit) {
+    Column(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
+        .clip(RoundedCornerShape(9.dp)).background(Palette.surface).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Couldn’t load more titles", fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 2,
+            overflow = TextOverflow.Ellipsis)
+        Text(ServerMessages.human(message, ServerMessages.ROW_FAILURE), color = Palette.secondary, fontSize = 12.sp, lineHeight = 15.sp,
+            maxLines = 3, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.weight(1f))
+        Button({ retry() }, Modifier.height(34.dp)) { Text("Try again") }
+    }
 }
 
 @Composable
