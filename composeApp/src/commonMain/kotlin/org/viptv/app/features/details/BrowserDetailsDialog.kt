@@ -37,10 +37,12 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
+import org.viptv.app.connection.AddonFailure
 import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
@@ -48,7 +50,8 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList()) {
     var dismissing by remember(detail?.item?.let { it.provider_id to it.identity }) { mutableStateOf(false) }
     val requestDismiss = { if (!dismissing) dismissing = true }
     InitialBrowserEscape(requestDismiss)
@@ -64,7 +67,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     val list = rememberLazyListState()
     val landing = if (detail != null) (if (focus != null) resume.indexIn(selected?.episodes) else null) ?: focus.episodeIn(selected) else null
     LandOnResume(seasonChoice, list, landing?.let { episode ->
-        (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 + 1 + episode }, selected)
+        (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 +
+            (if (failures.isNotEmpty() && !busy && error == null) 1 else 0) + 1 + episode }, selected)
     Dialog(onDismissRequest = requestDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val focusManager = LocalFocusManager.current
         // The window layer attaches a frame later, so retry until the button is placed.
@@ -101,6 +105,9 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                         MediaMetadata(card)
                                         card.description?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
                                     } }
+                                    if (failures.isNotEmpty()) item(key = "addon-failure") {
+                                        AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter))
+                                    }
                                     selected?.let { season ->
                                         item { Box(Modifier.padding(horizontal = gutter, vertical = 10.dp)) {
                                             DetailSeasonPicker(seasons, season, compact) {

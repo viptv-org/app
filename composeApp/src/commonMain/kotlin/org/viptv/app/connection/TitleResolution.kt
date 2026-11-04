@@ -10,7 +10,7 @@ import org.viptv.engine.wire.DetailSnapshot
 
 data class DetailFocus(val season: Long? = null, val episode: Long? = null)
 
-data class DetailRead(val detail: DetailSnapshot, val focus: DetailFocus? = null)
+data class DetailRead(val detail: DetailSnapshot, val focus: DetailFocus? = null, val failures: List<AddonFailure> = emptyList())
 
 data class TitleSearchRequest(val query: String, val type: String? = null, val season: Long? = null)
 

@@ -16,7 +16,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
     val operation = generation
     if (!append) {
         liveDirectoryRequest++; liveGuideRequest++; liveGuideJob?.cancel(); liveGuideFetchedAt.clear()
-        updateState { next -> next.copy(liveGuideLoading = false, liveGuideChannel = null, liveGuides = emptyMap()) }
+        updateState { next -> next.copy(liveGuideLoading = false, liveGuideChannel = null, liveGuides = emptyMap(), livePageError = null) }
     }
     val context = liveContext()
     var wanted = query
@@ -33,7 +33,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
             throw LocalFailure("The server returned channels from a different TV source. Refresh Live TV.")
         wanted = wanted.copy(connection_id = selected)
         channels = (channels + page.channels).distinctBy { it.id }
-        updateState { next -> next.copy(liveQuery = wanted, livePage = page.copy(channels = channels)) }
+        updateState { next -> next.copy(liveQuery = wanted, livePage = page.copy(channels = channels), livePageError = null) }
         if (!favoritesLoaded) { loadLiveFavorites(context); favoritesLoaded = true }
         if (!ownsLive(context) || generation != operation) throw CancellationException("Live TV selection changed")
         val state = mutable.value
@@ -68,7 +68,13 @@ fun ApplicationController.moreLive() = run {
     if (mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.all { id -> mutable.value.livePage?.channels?.any { it.id == id } == true }) return@run
     val offset = mutable.value.livePage?.next_cursor?.toIntOrNull() ?: return@run
     if (offset <= mutable.value.liveQuery.offset || offset > 10_000) throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
-    loadLive(mutable.value.liveQuery.copy(offset = offset), append = true)
+    try { loadLive(mutable.value.liveQuery.copy(offset = offset), append = true) }
+    catch (e: CancellationException) { throw e }
+    catch (e: LocalFailure) { throw e }
+    catch (e: Exception) {
+        if (e is RemoteFailure && e.sessionExpired) throw e
+        updateState { it.copy(livePageError = failureMessage(e) ?: "Could not load more.") }
+    }
 }
 fun ApplicationController.refreshLive() = run { loadLive(mutable.value.liveQuery.copy(offset = 0)) }
 fun ApplicationController.retryLiveGuide() { mutable.value.liveGuideChannel?.let { showLiveGuide(it, true) } }

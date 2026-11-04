@@ -5,7 +5,7 @@ import kotlinx.serialization.json.*
 import org.viptv.app.features.calendar.CalendarDay
 
 internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
-    val value = Json.parseToJsonElement(calendarWindowJson(offsetDays)).jsonObject
+    val value = Json.parseToJsonElement(calendarWindowJson(offsetDays, APP_DATE_LOCALE)).jsonObject
     val range = calendarRequestRange(value.getValue("center").jsonPrimitive.content)
     return CalendarWindow(range.start, range.end,
         value.getValue("days").jsonArray.map { raw -> val d = raw.jsonObject
@@ -17,14 +17,14 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
     val value = Json.parseToJsonElement(raw).jsonObject
     return CalendarLabel(value.getValue("day").jsonPrimitive.content, value.getValue("time").jsonPrimitive.content, value.getValue("aired").jsonPrimitive.boolean)
 }
-@JsFun("""(offsetDays) => {
+@JsFun("""(offsetDays, locale) => {
  const now = new Date(), id = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const shifted = n => new Date(now.getFullYear(),now.getMonth(),now.getDate()+offsetDays+n);
  return JSON.stringify({center:id(shifted(0)),days:Array.from({length:7},(_,i) => {
-  const n=i-3,d=shifted(n); return {id:id(d),weekday:d.toLocaleDateString(undefined,{weekday:'short'}),number:String(d.getDate()),label:id(d)===id(now)?'Today':d.toLocaleDateString(undefined,{weekday:'long'}),fullDate:d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})};
+  const n=i-3,d=shifted(n); return {id:id(d),weekday:d.toLocaleDateString(locale,{weekday:'short'}),number:String(d.getDate()),label:id(d)===id(now)?'Today':d.toLocaleDateString(locale,{weekday:'long'}),fullDate:d.toLocaleDateString(locale,{year:'numeric',month:'short',day:'numeric'})};
  })});
 }""")
-private external fun calendarWindowJson(offsetDays: Int): String
+private external fun calendarWindowJson(offsetDays: Int, locale: String): String
 @JsFun("""(value) => {
  const plain = /^\d{4}-\d{2}-\d{2}$/.test(value);
  if (plain) {
