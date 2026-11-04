@@ -9,6 +9,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.contentOrNull
+import org.viptv.app.components.ServerMessages
 import org.viptv.engine.wire.Card
 
 @Serializable
@@ -73,6 +74,6 @@ private fun decodeRow(data: String?): SearchResultRow? = data?.let {
 private fun decodeStreamError(data: String?): RemoteFailure {
     val value = data?.let { runCatching { searchCodec.parseToJsonElement(it) }.getOrNull() }?.jsonObject ?: JsonObject(emptyMap())
     val status = value["status"]?.jsonPrimitive?.intOrNull ?: 502
-    val message = value["error"]?.jsonPrimitive?.contentOrNull ?: "The search could not finish. Try again."
+    val message = ServerMessages.human(value["error"]?.jsonPrimitive?.contentOrNull, "The search could not finish. Try again.")
     return RemoteFailure(status, message)
 }
