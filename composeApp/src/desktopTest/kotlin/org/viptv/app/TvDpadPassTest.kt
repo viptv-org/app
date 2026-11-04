@@ -92,7 +92,7 @@ class TvDpadPassTest {
         vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
         busy: () -> Boolean = { false }, toggle: (String, Boolean) -> Unit = { _, _ -> }): @Composable () -> Unit = {
         TvSettingsScreen(false, addons, addons.map { it.id }.toSet(), busy(), null, null, {}, toggle, {}, {}, PreviewData.profile,
-            initialSection = section, prefs = TvSettingsPreferences(), change = {}, gateways = gateways, xtream = xtream, vodMatches = vodMatches)
+            initialSection = section, prefs = TvSettingsPreferences(), change = { _, _ -> }, gateways = gateways, xtream = xtream, vodMatches = vodMatches)
     }
 
     @Test fun playerPillsAreChainedSoSourceAndNextEpisodeAreReachable() = onEdt {

@@ -39,7 +39,8 @@ fun ApplicationController.changeParentPin(current: String, next: String) {
             if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
             if (next.isEmpty() && it.parentSettings?.profiles.orEmpty().any { profile -> profile.kids })
                 throw LocalFailure("Turn off kids restrictions on every profile before removing the parent PIN.")
-        }) {
+        },
+        ownsControllerJob = true) {
         parentRequest(if (next.isEmpty()) "Parent PIN removed." else "Parent PIN saved.", "The current parent PIN was not accepted. Check it and try again.") { remote ->
             remote.saveParentPin(current, next)
             remote.profileManagement()
@@ -65,7 +66,8 @@ fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) 
                 throw LocalFailure("Choose one of the movie rating limits this server offers.")
             if (policy.series_rating != null && ratings != null && ratings.series.none { limit -> limit.label == policy.series_rating })
                 throw LocalFailure("Choose one of the series rating limits this server offers.")
-        }) {
+        },
+        ownsControllerJob = true) {
         val operation = generation
         var saved: KidsPolicy? = null
         parentRequest("Profile restrictions saved.") { remote ->
@@ -100,7 +102,8 @@ fun ApplicationController.changeProfileLeavePin(profile: String, current: String
             if (it.parentControls[profile]?.leavePin != false && !validParentPin(current))
                 throw LocalFailure("Enter the profile’s current PIN.")
             if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
-        }) {
+        },
+        ownsControllerJob = true) {
         parentRequest(if (next.isEmpty()) "Leave PIN removed." else "Leave PIN saved.",
             "The current PIN for this profile was not accepted. Check it and try again.") { remote ->
             remote.saveProfilePin(profile, current, next)

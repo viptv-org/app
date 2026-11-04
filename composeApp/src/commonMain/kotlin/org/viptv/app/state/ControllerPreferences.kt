@@ -43,7 +43,8 @@ fun ApplicationController.updatePreferences(preferences: ProfilePreferences, tar
     mutate(preferenceTarget(target),
         optimistic = { it.copy(preferences = it.preferences?.copy(preferences = preferences), preferencesError = null) },
         revert = { it.withPreferences(snapshot).copy(preferencesError = PREFERENCES_FAILED) },
-        message = { PREFERENCES_FAILED }) {
+        message = { PREFERENCES_FAILED },
+        ownsControllerJob = true) {
         val updated = device?.updateProfilePreferences(profile, snapshot.revision, preferences)
             ?: requireNotNull(remote).updateProfilePreferences(profile, snapshot.revision, preferences)
         if (ownsProfile(profile, remote, device)) {

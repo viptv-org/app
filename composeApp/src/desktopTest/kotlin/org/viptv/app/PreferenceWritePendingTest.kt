@@ -8,6 +8,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import kotlin.test.*

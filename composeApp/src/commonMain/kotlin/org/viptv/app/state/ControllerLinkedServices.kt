@@ -21,7 +21,8 @@ fun ApplicationController.unlinkLinkedService() {
     val before = mutable.value
     mutate(preferenceTarget(UNLINK_SERVICE_TARGET),
         optimistic = { state -> state.copy(simkl = state.simkl?.copy(linked = false)) },
-        revert = { it.copy(simkl = before.simkl) }) {
+        revert = { it.copy(simkl = before.simkl) },
+        ownsControllerJob = true) {
         val profile = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
         val remote = connection ?: throw LocalFailure("Connect to your account to link services.")
         val owner = generation
