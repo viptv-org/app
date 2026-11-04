@@ -27,6 +27,7 @@ internal fun ApplicationController.mutate(
     revert: (ApplicationState) -> ApplicationState = { it },
     message: (Exception) -> String? = ::failureMessage,
     prepare: (ApplicationState) -> Unit = {},
+    ownsControllerJob: Boolean = false,
     operation: suspend () -> Unit,
 ) {
     if (mutable.value.mutations.isPending(target)) return
@@ -62,13 +63,15 @@ internal fun ApplicationController.mutate(
         }
     }
     mutationJobs[target] = task
+    if (ownsControllerJob) claimOperation(task)
     task.start()
 }
 
 fun ApplicationController.retryMutation(target: MutationTarget) {
     if (mutable.value.mutations.failure(target) == null) return
     val retry = mutationRetries[target] ?: return
-    mutate(target, retry.optimistic, retry.revert, retry.message, retry.operation)
+    mutate(target, optimistic = retry.optimistic, revert = retry.revert, message = retry.message,
+        operation = retry.operation)
 }
 
 fun ApplicationController.dismissMutationFailure(target: MutationTarget) = updateState {
