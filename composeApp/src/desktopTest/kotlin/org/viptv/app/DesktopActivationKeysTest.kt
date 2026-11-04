@@ -32,12 +32,13 @@ class DesktopActivationKeysTest {
 
     private fun provided(television: Boolean, activationKeys: Boolean = true): Boolean {
         var seen = false
-        ImageComposeScene(320, 200, Density(1f)) {
+        val scene = ImageComposeScene(320, 200, Density(1f)) {
             ViptvTheme(television = television, activationKeys = activationKeys) {
                 seen = LocalActivationKeys.current
                 Box(Modifier)
             }
-        }.use { it.render(0).close() }
+        }
+        try { scene.render(0).close() } finally { scene.close() }
         return seen
     }
 }
