@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LIST_TITLES
@@ -41,8 +42,10 @@ import org.viptv.app.state.browseFilter
 import org.viptv.app.state.browseMore
 import org.viptv.app.state.browseSelections
 import org.viptv.app.state.open
+import org.viptv.app.state.openAddonsSettings
 import org.viptv.app.state.retryBrowse
 import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
@@ -68,14 +71,15 @@ internal fun BrowserBrowseRoute(state: ApplicationState, controller: Application
         more = if (state.browseNext != null) controller::browseMore else null,
         open = controller::open, changed = controller::browseFilter,
         multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse, retry = controller::retryBrowse,
-        pageError = state.browsePageError)
+        pageError = state.browsePageError, failures = state.browseFailures, manageAddons = controller::openAddonsSettings)
 }
 
 @Composable
 internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: DiscoveryControls?, query: BrowseQuery,
     busy: Boolean, error: String?, more: (() -> Unit)?, open: (Card) -> Unit,
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit,
-    applyQuery: (BrowseQuery) -> Unit, retry: () -> Unit = {}, pageError: String? = null) {
+    applyQuery: (BrowseQuery) -> Unit, retry: () -> Unit = {}, pageError: String? = null,
+    failures: List<AddonFailure> = emptyList(), manageAddons: () -> Unit = {}) {
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore("browse")
     val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
@@ -95,6 +99,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
         Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
             if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
+            if (cards.isNotEmpty() && failures.isNotEmpty()) AddonFailureNotice(failures, manageAddons)
             if (busy && cards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog, retry)
             else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)

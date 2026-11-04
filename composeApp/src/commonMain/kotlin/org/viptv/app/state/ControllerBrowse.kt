@@ -48,6 +48,7 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     val scoped = controls ?: (local?.discoveryControls(profile, query.type) ?: requireNotNull(connection).discoveryControls(query.type, query.genre))
     if (scoped.discovery.availability != "Available") {
         updateState { next -> next.copy(browseQuery = query, browseControls = scoped, browseCards = emptyList(), browseNext = null,
+            browseFailures = emptyList(),
             error = ServerMessages.human(scoped.discovery.message, "Configure a browsing integration for this profile.")) }
         return
     }
@@ -61,7 +62,7 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     val selected = scopedQuery.withDefaultCatalog(scoped)
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
         browseCards = if (append) next.browseCards else emptyList(), browseNext = if (append) next.browseNext else null,
-        browsePageError = null) }
+        browseFailures = if (append) next.browseFailures else emptyList(), browsePageError = null) }
     val required = scoped.missingRequired(selected)
     if (required.isNotEmpty()) {
         updateState { next -> next.copy(error = "Choose the required filters: ${required.joinToString()}.") }
@@ -79,5 +80,6 @@ internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append
     }
     updateState { next -> next.copy(browseQuery = selected, browseControls = scoped,
         browseCards = ((if (append) next.browseCards else emptyList()) + page.cards).distinctBy(::cardLookupKey),
-        browseNext = page.next_cursor) }
+        browseNext = page.next_cursor,
+        browseFailures = if (append) next.browseFailures else page.failures) }
 }

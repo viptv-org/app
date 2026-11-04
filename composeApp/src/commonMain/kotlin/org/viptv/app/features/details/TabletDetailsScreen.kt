@@ -30,12 +30,14 @@ import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
-    continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null) {
+    continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
+    manageAddons: () -> Unit = {}) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -77,6 +79,9 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 }
                                 FavoriteAction(card, saved, save)
                             }
+                        }
+                        if (detail?.failures.orEmpty().isNotEmpty() && !busy) item(key = "addon-failure") {
+                            AddonFailureNotice(detail?.failures.orEmpty(), manageAddons, Modifier.padding(horizontal = 32.dp))
                         }
                         if (detail.recommendations.isNotEmpty()) item(key = "related") { RelatedTitles(detail.recommendations, open, gutter = 32.dp) }
                     }

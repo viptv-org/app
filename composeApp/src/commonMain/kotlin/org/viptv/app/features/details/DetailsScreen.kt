@@ -20,6 +20,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.PinnedHeaderSurface
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
@@ -37,7 +38,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     focus: DetailFocus? = null,
     sourcePreview: DetailSourcePreview? = null,
     previewSources: ((Card) -> Unit)? = null,
-    cancelSourcesPreview: (() -> Unit)? = null) {
+    cancelSourcesPreview: (() -> Unit)? = null,
+    manageAddons: () -> Unit = {}) {
     if (television) {
         TvDetailsScreen(detail, busy, error, sources, chooseSource = chooseSource, extras = remember(detail, continuing) { detailExtras(detail, continuing) }, open = open, save = save, saved = saved, loadPage = loadPage, playFromStart = playFromStart, back = back,
             continuing = continuing, shown = paging, playTap = playTap, retry = retry, pageError = pageError, retryPage = retryPage, focus = focus)
@@ -48,8 +50,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back, retry)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -80,7 +82,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         val landing = if (!episodesShown) null
             else (if (playTap || focus != null) resume.indexIn(selected?.episodes) else null) ?: focus.episodeIn(selected)
         val resumeIndex = landing?.let { episode ->
-            (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 + (if (desktop) 0 else 1) + 1 + episode }
+            (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 1 +
+                (if (detail?.failures.orEmpty().isNotEmpty() && !busy && error == null) 1 else 0) +
+                (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val reveal = rememberContentReveal(!busy)
         val scrolled by remember(phone) { derivedStateOf {
@@ -97,6 +101,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
                     } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
+                }
+                if (value.failures.isNotEmpty() && !busy && error == null) item(key = "addon-failure") {
+                    AddonFailureNotice(value.failures, manageAddons, Modifier.padding(horizontal = gutter, vertical = 4.dp))
                 }
                 when {
                     !busy && error != null -> item(key = "failure") {

@@ -19,6 +19,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SearchX
 import com.composables.icons.lucide.TriangleAlert
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.features.home.TvCatalogCard
@@ -31,6 +32,7 @@ import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
 
 @Composable
@@ -38,13 +40,15 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     controls: DiscoveryControls? = null, query: BrowseQuery = BrowseQuery("movie"),
     filterChanged: (String, String) -> Unit = { _, _ -> }, multipleChanged: (String, List<String>) -> Unit = { _, _ -> },
     more: (() -> Unit)? = null, error: String? = null, applyQuery: (BrowseQuery) -> Unit = {},
-    retry: (() -> Unit)? = null, pageError: String? = null) {
+    retry: (() -> Unit)? = null, pageError: String? = null,
+    failures: List<AddonFailure> = emptyList(), manageAddons: () -> Unit = {}) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
     val restore = rememberPageRestore("browse")
     val anchored = restore.landing(selected.size) { cardLookupKey(selected[it]) }
     val chromeFocus = remember { FocusRequester() }
     val gridFocus = remember { FocusRequester() }
+    val noticeFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(selected.size) { cardLookupKey(selected[it]) } })
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -56,7 +60,8 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                     val catalogOpen = remember { mutableStateOf(false) }
                     Box(Modifier.focusGroup().focusRequester(chromeFocus).focusProperties { onEnter = { chromeFocus.requestFocus() } }) {
                         BrowseFilterBar(controls, query, showType = false, changed = filterChanged, multipleChanged = multipleChanged,
-                            applyQuery = applyQuery, catalogOpen = catalogOpen, down = gridFocus)
+                            applyQuery = applyQuery, catalogOpen = catalogOpen,
+                            down = if (selected.isNotEmpty() && failures.isNotEmpty() && !busy) noticeFocus else gridFocus)
                     }
                 }
                 Spacer(Modifier.height(40.dp * scale))
@@ -73,6 +78,10 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                     } else {
                         if (error != null) Text(error, color = Palette.danger, fontSize = (22 * scale).sp,
                             modifier = Modifier.padding(bottom = 12.dp * scale))
+                        if (selected.isNotEmpty() && failures.isNotEmpty()) {
+                            AddonFailureNotice(failures, manageAddons, Modifier.padding(bottom = 20.dp * scale),
+                                television = true, scale = scale, focus = noticeFocus)
+                        }
 
                         LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                             horizontalArrangement = Arrangement.spacedBy(16.dp * scale),
@@ -85,7 +94,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                                         .then(if (index == 0) Modifier.focusRequester(gridFocus) else Modifier)
                                         .pageAnchor(restore, key, index, target = anchored == index)
                                         .focusProperties {
-                                            if (index < 7) up = chromeFocus
+                                            if (index < 7) up = if (selected.isNotEmpty() && failures.isNotEmpty() && !busy) noticeFocus else chromeFocus
                                             if (index % 7 == 6) { if (rtl) left = FocusRequester.Cancel else right = FocusRequester.Cancel }
                                         },
                                     {}, { restore.mark(key, index); open(it) }, focusedCaptions = true)

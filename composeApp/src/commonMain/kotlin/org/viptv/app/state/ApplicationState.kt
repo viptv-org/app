@@ -4,6 +4,7 @@ import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.SourceCandidate
@@ -75,6 +76,7 @@ data class ApplicationState(
     val browseControls: DiscoveryControls? = null,
     val browseCards: List<Card> = emptyList(),
     val browseNext: String? = null,
+    val browseFailures: List<AddonFailure> = emptyList(),
     val browsePageError: String? = null,
     val homeGenres: HomeGenres? = null,
     val livePage: LiveCatalogPage? = null,

@@ -217,7 +217,8 @@ fun App(
                                 routes.SaveableStateProvider("${state.selectedProfile}:browse:${current.name}") {
                                     if (browser) org.viptv.app.features.browse.BrowserBrowseRoute(state, controller)
                                     else BrowseScreen(current, state.home, television, controller::open, state.browseCards, state.browseControls, state.browseQuery, state.busy, state.error, controller::browseFilter, if (state.browseNext != null) controller::browseMore else null,
-                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse, pageError = state.browsePageError)
+                                        multipleChanged = controller::browseSelections, browser = browser, applyQuery = controller::applyBrowse, pageError = state.browsePageError,
+                                        failures = state.browseFailures, manageAddons = controller::openAddonsSettings)
                                 }
                             Screen.Search -> routes.SaveableStateProvider("${state.selectedProfile}:search") {
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
@@ -360,7 +361,8 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             focus = state.detailFocus,
             sourcePreview = state.detailSourcePreview,
             previewSources = controller::previewDetailSources,
-            cancelSourcesPreview = controller::cancelDetailSourcePreview)
+            cancelSourcesPreview = controller::cancelDetailSourcePreview,
+            manageAddons = controller::openAddonsSettings)
         if (drawerShown) {
             val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings) }
             // Over the Details dialog the drawer needs a window layer of its own.
