@@ -40,7 +40,7 @@ import org.viptv.app.components.TextButton
 @Composable
 internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, open: (Card) -> Unit,
     clear: () -> Unit, back: () -> Unit = {}, correct: (HistoryDisplay, HistoryCorrection) -> Unit = { _, _ -> },
-    localMode: Boolean = false) {
+    localMode: Boolean = false, retry: () -> Unit = {}) {
     var confirm by remember { mutableStateOf(false) }
     var lastFocused by remember { mutableStateOf<HistoryDisplay?>(null) }
     var resuming by remember { mutableStateOf<HistoryDisplay?>(null) }
@@ -79,7 +79,10 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             }
             Spacer(Modifier.height(32.dp * scale))
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            error?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
+            error?.let {
+                if (history.isEmpty()) TvHistoryFailure(it, retry, scale, requester = if (!attached) first else null)
+                else Text(it, color = Palette.danger, fontSize = (24 * scale).sp)
+            }
             if (localMode) Text("Progress corrections need a server.", color = Palette.secondary, fontSize = (24 * scale).sp)
             if (!busy && history.isEmpty() && error == null) {
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
@@ -138,6 +141,18 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
     resuming?.let { display ->
         ResumePositionDialog(display.position.toLong(), display.duration, onDismiss = { resuming = null },
             onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) })
+    }
+}
+
+@Composable
+private fun TvHistoryFailure(reason: String, retry: () -> Unit, scale: Float, requester: FocusRequester?) {
+    Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
+        Text("Couldn’t load history", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
+        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
+            activate = retry, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 

@@ -214,7 +214,7 @@ fun App(
                             Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
                                 CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
                                     type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
-                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser)
+                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser, retry = controller::retryCalendar)
                             }
                             Screen.Live -> routes.SaveableStateProvider("${state.selectedProfile}:live") {
                                 org.viptv.app.features.live.LiveRoute(state, controller, television)
@@ -228,9 +228,9 @@ fun App(
                             Screen.History -> routes.SaveableStateProvider("${state.selectedProfile}:history") {
                                 if (television) org.viptv.app.features.history.TvHistoryScreen(state.history, state.busy, state.error,
                                     controller::open, controller::clearHistory, { controller.navigate(Screen.Home) },
-                                    correct = controller::correctHistory, localMode = state.localMode)
+                                    correct = controller::correctHistory, localMode = state.localMode, retry = controller::retryHistory)
                                 else HistoryScreen(state.history, state.busy, state.error, controller::open, controller::clearHistory, controller::navigateBack,
-                                    correct = controller::correctHistory, localMode = state.localMode)
+                                    correct = controller::correctHistory, localMode = state.localMode, retry = controller::retryHistory)
                             }
                             Screen.Settings -> org.viptv.app.features.settings.SettingsRoute(state, controller, browser, television, compact, desktop = desktopChrome,
                                 entryBackChanged = entryBackChanged)

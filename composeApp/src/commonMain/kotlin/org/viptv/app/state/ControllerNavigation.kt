@@ -75,13 +75,22 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     if (screen == Screen.Library) run { loadLibraryPage() }
     if (screen == Screen.ContinueWatching) loadContinueWatching(navigation)
     if (screen == Screen.Calendar && connection != null) run { loadCalendar() }
-    if (screen == Screen.History) runPage {
+    if (screen == Screen.History) loadHistory(navigation)
+    rememberNavigation()
+}
+
+internal fun ApplicationController.loadHistory(navigation: Long = navigationGeneration) {
+    runPage {
         progressJob?.join()
         val profile = requireNotNull(mutable.value.selectedProfile)
         val history = readCurrentPage(navigation) { local?.history(profile) ?: requireNotNull(connection).history(profile) } ?: return@runPage
         updateState { it.copy(history = history) }
     }
-    rememberNavigation()
+}
+
+fun ApplicationController.retryHistory() {
+    if (mutable.value.screen != Screen.History) return
+    loadHistory()
 }
 
 fun ApplicationController.backDetails() {

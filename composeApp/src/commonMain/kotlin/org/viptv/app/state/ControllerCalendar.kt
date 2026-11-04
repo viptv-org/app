@@ -14,6 +14,11 @@ fun ApplicationController.calendarCategory(type: String) {
     run { loadCalendar() }
 }
 
+fun ApplicationController.retryCalendar() {
+    if (mutable.value.screen != Screen.Calendar) return
+    run { loadCalendar() }
+}
+
 fun ApplicationController.calendarWeek(change: Int) {
     if (change !in -1..1) return
     val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-CALENDAR_WEEK_LIMIT, CALENDAR_WEEK_LIMIT)
