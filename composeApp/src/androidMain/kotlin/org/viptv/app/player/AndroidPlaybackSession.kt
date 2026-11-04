@@ -26,7 +26,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         .setMediaSourceFactory(sourceFactory)
         .build()
     var view: PlayerView? = null
-        set(value) { field = value; subtitles.bind(value); value?.subtitleView?.profileStyle(input.preferences, subtitleScale) }
+        set(value) { field = value; subtitles.bind(value); applySubtitleStyle() }
     private val tracks = Media3Tracks(player, input, ::emit)
     private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, ::titlePositionMillis) { error, chosen ->
         input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) ::emit else null)
@@ -35,6 +35,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private var videoDecoder = "pending"
     private var presented = false
     private var subtitleScale = input.preferences.subtitle_font_scale.toFloat().coerceIn(.5f, 2f)
+    private var subtitleBackground = input.preferences.subtitle_background_color
     private var closed = false
     private var opened = false
     private var mediaTransitions = 0
@@ -135,6 +136,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         command(PlayerCommand.Seek(progress.durationMillis?.let { target.coerceIn(0, it) } ?: target.coerceAtLeast(0)))
     }
     private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), subtitleScale))
+    private fun applySubtitleStyle() = view?.subtitleView?.profileStyle(input.preferences.copy(subtitle_background_color = subtitleBackground), subtitleScale)
     suspend fun command(command: PlayerCommand) {
         try { when (command) {
             is PlayerCommand.Seek -> if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
@@ -143,9 +145,13 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             is PlayerCommand.Speed -> player.setPlaybackSpeed(command.value.toFloat().coerceIn(.25f, 2f))
             is PlayerCommand.SubtitleSize -> {
                 subtitleScale = command.value.coerceIn(.5f, 2f)
-                view?.subtitleView?.profileStyle(input.preferences, subtitleScale)
+                applySubtitleStyle()
                 subtitles.size(subtitleScale)
                 properties()
+            }
+            is PlayerCommand.SubtitleBackground -> {
+                subtitleBackground = command.color ?: "#00000000"
+                applySubtitleStyle()
             }
             is PlayerCommand.SelectTrack -> {
                 if (command.kind == PlaybackTrackKind.Subtitle) subtitles.select(command.id)

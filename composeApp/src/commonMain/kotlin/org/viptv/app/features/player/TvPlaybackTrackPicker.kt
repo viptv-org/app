@@ -46,8 +46,8 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 .padding(start = 76.dp * scale, top = 48.dp * scale, bottom = if (openSettings != null) 28.dp * scale else 0.dp)) {
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
                     TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
-                        if (tracks.audio.isEmpty()) item { Text("No audio tracks available", color = Palette.secondary, fontSize = (24 * scale).sp) }
-                        items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
+                        if (tracks.audio.size <= 1) item { Text("Default audio", color = Palette.secondary, fontSize = (24 * scale).sp) }
+                        else items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
                             if (preferAudio && track.id == audioFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
                     }
                     TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {

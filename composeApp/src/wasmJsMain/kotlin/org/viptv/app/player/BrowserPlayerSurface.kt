@@ -29,6 +29,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
     val captionId = remember(video) { "viptv-caption-${++nextCaptionStyle}" }
     val captionStyle = remember(video) { document.createElement("style") as HTMLStyleElement }
     var captionScale by remember { mutableStateOf(input.preferences.subtitle_font_scale.toFloat().takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f) }
+    var captionBackground by remember(video) { mutableStateOf(input.preferences.subtitle_background_color) }
     val tracks = remember(video) { mutableMapOf<Int, HTMLTrackElement>() }
     val blobs = remember(video) { mutableListOf<String>() }
     var selected by remember(video) { mutableStateOf<String?>(null) }
@@ -39,8 +40,8 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
     var audioLanguage by remember(video) { mutableStateOf<String?>(null) }
     val latestObserve by rememberUpdatedState(observe)
     LaunchedEffect(video, fill) { video.style.objectFit = if (fill) "cover" else "contain" }
-    LaunchedEffect(captionStyle, captionScale, input.preferences) {
-        val declarations = browserCaptionDeclarations(input.preferences, captionScale)
+    LaunchedEffect(captionStyle, captionScale, captionBackground, input.preferences) {
+        val declarations = browserCaptionDeclarations(input.preferences.copy(subtitle_background_color = captionBackground), captionScale)
         captionStyle.textContent = if (declarations.isEmpty()) "" else "#$captionId::cue {$declarations}"
         tracks.values.forEach { liftProviderCues(it, providerCueLine(captionScale)) }
         latestObserve(PlayerFact.Properties(video.volume.toFloat(), video.playbackRate, captionScale))
@@ -167,6 +168,7 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
                         else video.currentTime = command.positionMillis.coerceAtLeast(0) / 1000.0
                     is PlayerCommand.Volume -> video.volume = command.value.coerceIn(0f, 1f).toDouble()
                     is PlayerCommand.SubtitleSize -> captionScale = command.value.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
+                    is PlayerCommand.SubtitleBackground -> captionBackground = command.color ?: "#00000000"
                     is PlayerCommand.SelectTrack -> when (command.kind) {
                         PlaybackTrackKind.Subtitle -> {
                             val candidate = command.id?.let { requireNotNull(input.providerSubtitle(it)) }

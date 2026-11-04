@@ -276,6 +276,21 @@ class PlayerSettingsVisitTest {
         controller.closePlayer()
     }
 
+    @Test fun anInlineSettingSavesToTheProfileWithoutReopeningThePlayer() = runTest {
+        val server = Server()
+        val controller = controller(server)
+        play(controller)
+        val input = assertNotNull(controller.state.value.playback)
+        val current = assertNotNull(controller.state.value.preferences).preferences
+        controller.savePlaybackPreferences(current.copy(subtitle_font_scale = 1.25, subtitle_background_color = "#B3000000", subtitle_mode = "foreign")); runCurrent()
+        assertEquals(1.25, server.preferences.preferences.subtitle_font_scale)
+        assertEquals("#B3000000", server.preferences.preferences.subtitle_background_color)
+        assertEquals("foreign", server.preferences.preferences.subtitleMode)
+        assertSame(input, controller.state.value.playback, "The inline setting never reopens the stream")
+        assertNull(controller.state.value.preferencesError)
+        controller.closePlayer()
+    }
+
     @Test fun theLinkDoesNothingWithoutAPlayer() = runTest {
         val server = Server()
         val controller = controller(server)
