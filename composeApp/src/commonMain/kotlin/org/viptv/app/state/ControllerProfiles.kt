@@ -11,12 +11,12 @@ fun ApplicationController.selectProfile(id: String) {
     run { openProfile(id) }
 }
 
-fun ApplicationController.submitProfilePin(pin: String) = profileMutation {
+fun ApplicationController.submitProfilePin(pin: String) = run {
     val id = mutable.value.profileToOpen ?: throw LocalFailure("Choose a profile first.")
     if (mutable.value.leavePinFrom != null) {
         if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
         openProfile(id, pin)
-        return@profileMutation
+        return@run
     }
     if (local != null) {
         if (!requireNotNull(local).verifyProfilePin(id, pin)) throw LocalFailure("Incorrect PIN or too many attempts. Try again later.")
@@ -73,27 +73,27 @@ fun ApplicationController.stopManagingProfiles() { updateState { next -> next.co
 
 fun ApplicationController.editProfile(id: String) { updateState { next -> next.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) } }
 
-fun ApplicationController.createProfile(name: String) = profileMutation {
+fun ApplicationController.createProfile(name: String) = profileMutation(PROFILE_CREATE) {
     if (local != null) requireNotNull(local).createProfile(name) else requireNotNull(connection).createProfile(name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,error=null) }
 }
 
-fun ApplicationController.renameProfile(name: String, pin: String) = profileMutation {
+fun ApplicationController.renameProfile(name: String, pin: String) = profileMutation(PROFILE_RENAME) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).renameProfile(id,name,pin) else requireNotNull(connection).renameProfile(id,name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true) }
 }
 
-fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String) = profileMutation {
+fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String) = profileMutation(PROFILE_AVATAR) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).setProfileAvatar(id,style,choice,pin) else requireNotNull(connection).setProfileAvatar(id,style,choice)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement) }
 }
 
-fun ApplicationController.deleteProfile(pin: String) = profileMutation {
+fun ApplicationController.deleteProfile(pin: String) = profileMutation(PROFILE_DELETE) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     if (local != null) requireNotNull(local).deleteProfile(id,pin) else requireNotNull(connection).deleteProfile(id)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
@@ -107,7 +107,7 @@ fun ApplicationController.deleteProfile(pin: String) = profileMutation {
         screen=Screen.Profiles,managingProfiles=true,profileToEdit=null,profileToOpen=null) }
 }
 
-fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profileMutation {
+fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profileMutation(PROFILE_PIN) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
     val device = local ?: throw LocalFailure("This server uses an account parent PIN. Open Parental controls to manage it.")
     device.setProfilePin(id,oldPin,newPin)
@@ -115,10 +115,17 @@ fun ApplicationController.setProfilePin(oldPin: String, newPin: String) = profil
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true) }
 }
 
-private fun ApplicationController.profileMutation(operation: suspend () -> Unit) {
-    if (mutable.value.busy) return
-    run(operation)
-}
+// The dialog that was confirmed names the write, so its button draws the pending state and a repeat press is dropped.
+internal fun ApplicationController.profileMutation(action: String, operation: suspend () -> Unit) =
+    mutate(profileMutationTarget(action), operation = operation)
+
+internal fun profileMutationTarget(action: String) = MutationTarget(MutationKind.Profile, action)
+
+internal const val PROFILE_CREATE = "Create profile"
+internal const val PROFILE_RENAME = "Rename profile"
+internal const val PROFILE_AVATAR = "Set avatar"
+internal const val PROFILE_DELETE = "Delete profile"
+internal const val PROFILE_PIN = "Profile PIN"
 
 fun ApplicationController.profileSettings(section: String) {
     if (mutable.value.busy || section !in listOf("Subtitles & audio", "Parental controls")) return

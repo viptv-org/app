@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 
@@ -28,10 +29,11 @@ internal fun AccountSignOutButton(label: String, busy: Boolean, compact: Boolean
 }
 
 @Composable
-internal fun AccountDeviceConfirmation(name: String?, all: Boolean, busy: Boolean, error: String?, dismiss: () -> Unit, confirm: () -> Unit) {
+internal fun AccountDeviceConfirmation(name: String?, all: Boolean, busy: Boolean, error: String?, dismiss: () -> Unit, confirm: () -> Unit,
+    pending: Boolean = false) {
     var submitting by remember { mutableStateOf(false) }
     LaunchedEffect(busy, error) { if (!busy && error != null) submitting = false }
-    val locked = busy || submitting
+    val locked = busy || submitting || pending
     AlertDialog(onDismissRequest = { if (!busy && !submitting) dismiss() }, containerColor = Palette.surface,
         title = { Text(if (all) "Sign out of all devices?" else "Sign out $name?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -40,6 +42,9 @@ internal fun AccountDeviceConfirmation(name: String?, all: Boolean, busy: Boolea
             error?.let { Text(it, color = Palette.danger) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         } },
-        confirmButton = { TextButton({ if (!busy && !submitting) { submitting = true; confirm() } }, enabled = !locked) { Text(if (all) "Sign out of all devices" else "Sign out", color = Palette.danger) } },
+        confirmButton = { TextButton({ if (!locked) { submitting = true; confirm() } }, enabled = !locked) {
+            if (locked) { MutationSpinner(16.dp); Spacer(Modifier.width(8.dp)); Text("Signing out…", color = Palette.danger) }
+            else Text(if (all) "Sign out of all devices" else "Sign out", color = Palette.danger)
+        } },
         dismissButton = { TextButton({ if (!busy && !submitting) dismiss() }, enabled = !locked) { Text("Cancel") } })
 }
