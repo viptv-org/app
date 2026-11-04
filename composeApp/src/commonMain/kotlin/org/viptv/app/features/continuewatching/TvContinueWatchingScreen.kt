@@ -14,6 +14,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
@@ -71,7 +73,6 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
             Text("Everything you’re in the middle of, most recent first.", color = Palette.secondary,
                 fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
             Spacer(Modifier.height(32.dp * scale))
-            if (page.busy && page.loaded) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             page.error?.takeIf { page.loaded }?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
             when {
                 page.loading -> Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
@@ -101,6 +102,13 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                                 continueWatchingActivation(play, open),
                                 artworkWidth = CARD_WIDTH.dp * scale,
                                 info = open)
+                        }
+                        if (page.loaded && !page.busy && page.pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (page.loaded && page.busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
+                        } else if (page.loaded && !page.busy && page.pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                            ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
                     if (remove != null) TvRemovalBar(scale, target, undo, undoFocus, removal, request = { confirming = it }, undoRemove = undoRemove)

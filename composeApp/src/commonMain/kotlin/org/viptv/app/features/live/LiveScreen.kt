@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -24,9 +25,9 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null, sources: Map<String, String> = emptyMap(), selectedSource: String? = null,
     sourceChanged: ((String) -> Unit)? = null, emptyReason: String? = null, spread: LiveSpread = LiveSpread.Channels,
     noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null,
-    statusNotice: String? = null, noticeRetry: (() -> Unit)? = null) {
+    statusNotice: String? = null, noticeRetry: (() -> Unit)? = null, pageError: String? = null) {
     val restore = rememberPageRestore("live")
-    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore); return }
+    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore, pageError = pageError); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
@@ -77,13 +78,20 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
                 else TextButton(manage) { Text("Manage add-ons") }
             } else if (!phone && start != null && visible.any { it.programs.isNotEmpty() }) {
                 Box(Modifier.weight(1f)) { LiveGuide(visible, start, now, television, scale,
-                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy, restore = restore) }
+                    { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy, restore = restore, pageError = pageError) }
             } else {
                 PageRestore(channelList, restore, target = { restore.anchor(visible.size) { visible[it].key() } })
                 LazyColumn(state = channelList, modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 24.dp)) {
                     itemsIndexed(visible, key = { _, channel -> channel.key() }) { index, channel ->
                         LiveChannelRow(channel, now, { restore.mark(channel.key(), index); watch(channel) }, favoriteChanged?.let { save -> { save(channel) } },
                             modifier = Modifier.pageAnchor(restore, channel.key(), index, target = anchored == index).listItemEntrance(index, entrance.animate))
+                    }
+                    if (visible.isNotEmpty() && !busy && pageError != null) item(key = "footer") {
+                        ListEndFooter(failed = true, retry = more, noun = "channels", modifier = Modifier.fillMaxWidth())
+                    } else if (visible.isNotEmpty() && busy) item(key = "footer") {
+                        ListEndFooter(loading = true, noun = "channels", modifier = Modifier.fillMaxWidth())
+                    } else if (visible.isNotEmpty() && !busy && pageError == null && more == null) item(key = "footer") {
+                        ListEndFooter(ended = true, noun = "channels", modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

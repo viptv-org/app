@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.pageAnchor
@@ -34,7 +35,7 @@ import org.viptv.app.components.pointerClickable
 internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, television: Boolean, scale: Float,
     select: (LiveChannel, LiveProgram?) -> Unit, watch: (LiveChannel) -> Unit,
     first: FocusRequester? = null, up: FocusRequester? = null, more: (() -> Unit)? = null, busy: Boolean = false,
-    restore: PageRestoreState = rememberPageRestore("live")) {
+    restore: PageRestoreState = rememberPageRestore("live"), pageError: String? = null) {
     val rows = rememberLazyListState()
     val entrance = rememberListEntrance(channels.isNotEmpty())
     AutomaticPage(channels.size, busy, more) { rows.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -96,6 +97,13 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             }
                         }
                     }
+                }
+                if (channels.isNotEmpty() && !busy && pageError != null) item(key = "footer") {
+                    ListEndFooter(failed = true, retry = more, noun = "channels", modifier = Modifier.fillMaxWidth(), television = television, scale = scale)
+                } else if (channels.isNotEmpty() && busy) item(key = "footer") {
+                    ListEndFooter(loading = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = television, scale = scale)
+                } else if (channels.isNotEmpty() && !busy && pageError == null && more == null) item(key = "footer") {
+                    ListEndFooter(ended = true, noun = "channels", modifier = Modifier.fillMaxWidth(), television = television, scale = scale)
                 }
             }
         }

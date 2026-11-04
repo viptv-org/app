@@ -53,6 +53,8 @@ internal class TvGridFocus(private val state: LazyGridState, private val scope: 
         val targetRow = from / columns + if (info.reverseLayout) -delta else delta
         if (targetRow < 0 || targetRow * columns >= info.totalItemsCount) return pendingIndex != null
         val target = minOf(targetRow * columns + from % columns, info.totalItemsCount - 1)
+        // A full-line item (the end-of-list footer) is not a card and never takes card focus.
+        if (columns > 1 && info.visibleItemsInfo.firstOrNull { it.index == target }?.span == columns) { cancel(); return false }
         fun request() = items[target]?.focus?.requestPlacedFocus() == true
         if (request()) { cancel(); return true }
         val source = items[index] ?: return false

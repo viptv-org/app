@@ -56,7 +56,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason, spread = spread,
                 noChannelsReason = emptyReason,
                 noChannelsRetry = retry, sourceIntegrations = if (mayManageSources) ({ controller.openLiveSetup(LiveSourceIntegrationsSection) }) else null,
-                statusNotice = notice, noticeRetry = retry)
+                statusNotice = notice, noticeRetry = retry, pageError = state.livePageError)
             if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
     }
