@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
+import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.MediaMetadata
 import org.jetbrains.compose.resources.painterResource
@@ -56,8 +57,8 @@ internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save
 
 @Composable
 private fun DetailArtwork(card: Card, modifier: Modifier, portrait: Boolean = false) {
-    if (portrait) AsyncImage(card.poster, null, modifier.background(Palette.surface), contentScale = ContentScale.Crop)
-    else AsyncImage(card.landscape ?: card.poster, null, modifier.background(Palette.surface), contentScale = ContentScale.Crop)
+    if (portrait) BufferedArtwork(card.poster, modifier.background(Palette.surface))
+    else BufferedArtwork(card.landscape ?: card.poster, modifier.background(Palette.surface))
 }
 
 @Composable

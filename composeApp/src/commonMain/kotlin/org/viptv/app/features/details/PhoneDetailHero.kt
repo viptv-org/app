@@ -27,6 +27,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
@@ -44,7 +45,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
             if (art != null) {
-                AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                BufferedArtwork(art, Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
                     0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
                     .55f to Color.Transparent, 1f to Palette.background)))

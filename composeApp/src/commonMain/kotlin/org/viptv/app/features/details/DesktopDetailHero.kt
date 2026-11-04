@@ -30,6 +30,7 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
+import org.viptv.app.features.home.BufferedArtwork
 
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
@@ -54,7 +55,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
             art?.let { url ->
                 Box(Modifier.width(682.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp))
                     .background(Palette.surface)) {
-                    AsyncImage(url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    BufferedArtwork(url, Modifier.fillMaxSize())
                 }
             }
         }
