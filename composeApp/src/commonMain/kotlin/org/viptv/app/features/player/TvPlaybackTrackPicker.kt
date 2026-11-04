@@ -30,7 +30,8 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
     close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit,
-    openSettings: (() -> Unit)? = null) {
+    openSettings: (() -> Unit)? = null, pendingSubtitle: SubtitleSelection? = null,
+    subtitleError: SubtitleSelection? = null, pendingAudio: Int? = null, audioError: Int? = null) {
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
     val preferAudio = tracks.subtitles.isEmpty() && tracks.audio.isNotEmpty()
@@ -47,14 +48,24 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
                     TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
                         if (tracks.audio.size <= 1) item { Text("Default audio", color = Palette.secondary, fontSize = (24 * scale).sp) }
-                        else items(tracks.audio, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                            if (preferAudio && track.id == audioFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
+                        else items(tracks.audio, key = { it.id }) { track ->
+                            val pending = pendingAudio == track.id
+                            val failed = audioError == track.id
+                            TvTrackRow(track.label, (track.selected && pendingAudio == null) || pending, scale,
+                            if (preferAudio && track.id == audioFocus?.id) initial else null, pending = pending,
+                            error = if (failed) audioTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
                     }
                     TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {
-                        item { TvTrackRow("Off", tracks.subtitles.none { it.selected }, scale,
-                            if (!preferAudio && subtitleFocus == null) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
-                        items(tracks.subtitles, key = { it.id }) { track -> TvTrackRow(track.label, track.selected, scale,
-                            if (!preferAudio && track.id == subtitleFocus?.id) initial else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
+                        item { TvTrackRow("Off", tracks.subtitles.none { it.selected } && pendingSubtitle == null || pendingSubtitle is SubtitleSelection.Off, scale,
+                            if (!preferAudio && subtitleFocus == null) initial else null,
+                            pending = pendingSubtitle is SubtitleSelection.Off,
+                            error = if (subtitleError is SubtitleSelection.Off) subtitleTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, null)) } }
+                        items(tracks.subtitles, key = { it.id }) { track ->
+                            val pending = (pendingSubtitle as? SubtitleSelection.Track)?.id == track.id
+                            val failed = (subtitleError as? SubtitleSelection.Track)?.id == track.id
+                            TvTrackRow(track.label, (track.selected && pendingSubtitle == null) || pending, scale,
+                            if (!preferAudio && track.id == subtitleFocus?.id) initial else null, pending = pending,
+                            error = if (failed) subtitleTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
                     }
                     TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
                         items(listOf("Small" to 0.8f, "Medium" to 1f, "Large" to 1.25f, "Extra large" to 1.5f)) { (label, value) ->
@@ -85,12 +96,23 @@ private fun TvTrackColumn(label: String, modifier: Modifier, scale: Float, conte
 }
 
 @Composable
-private fun TvTrackRow(label: String, selected: Boolean, scale: Float, requester: FocusRequester?, choose: () -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale, requester = requester, activate = choose,
+private fun TvTrackRow(label: String, selected: Boolean, scale: Float, requester: FocusRequester?,
+    pending: Boolean = false, error: String? = null, choose: () -> Unit) {
+    val highlighted = selected && !pending
+    TvAction(Modifier.fillMaxWidth().height((64 * scale).dp), scale, requester = requester, activate = choose,
         background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
-        Box(Modifier.width(40.dp * scale)) { if (selected) Icon(Lucide.Check, null, Modifier.size(24.dp * scale), tint) }
-        Text(label, color = if (!selected && tint == Palette.text) Color(0xFFDAD8D3) else tint,
+        Box(Modifier.width(40.dp * scale)) {
+            when {
+                pending -> CircularProgressIndicator(Modifier.size(22.dp * scale), strokeWidth = 2.dp, color = Palette.text)
+                highlighted -> Icon(Lucide.Check, null, Modifier.size(24.dp * scale), tint)
+            }
+        }
+        Text(label, color = if (!highlighted && tint == Palette.text) Color(0xFFDAD8D3) else tint,
             fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
+        if (error != null) {
+            Spacer(Modifier.width(16.dp * scale))
+            Text(error, color = Palette.danger, fontSize = (18 * scale).sp, lineHeight = (25 * scale).sp, maxLines = 1)
+        }
     }
 }
