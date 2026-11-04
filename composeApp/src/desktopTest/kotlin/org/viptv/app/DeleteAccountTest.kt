@@ -10,6 +10,7 @@ import org.viptv.app.state.*
 import kotlin.test.*
 
 class DeleteAccountTest {
+    private fun deleteTarget() = MutationTarget(MutationKind.Account, DELETE_ACCOUNT_TARGET)
     private class Store : RemoteSessionStore {
         var saved: SavedRemoteSession? = SavedRemoteSession("https://watch.example", "fixture-refresh")
         var cleared = false
@@ -71,7 +72,8 @@ class DeleteAccountTest {
                 parentSettings = management)
             controller.deleteAccount("viewer", "fixture-password", "2468")
             controller.job?.join()
-            assertEquals("Other accounts still need an owner. Have them delete their accounts first.", controller.state.value.error)
+            assertEquals("Other accounts still need an owner. Have them delete their accounts first.",
+                controller.state.value.mutations.failure(deleteTarget()))
             assertEquals(Screen.Settings, controller.state.value.screen)
             assertSame(remote, controller.connection)
             assertFalse(store.cleared)
@@ -96,7 +98,7 @@ class DeleteAccountTest {
                 parentSettings = management)
             controller.deleteAccount("viewer", "fixture-password", "0000")
             controller.job?.join()
-            assertEquals("The parent PIN is not correct.", controller.state.value.error)
+            assertEquals("The parent PIN is not correct.", controller.state.value.mutations.failure(deleteTarget()))
             assertEquals(Screen.Settings, controller.state.value.screen)
             assertSame(remote, controller.connection)
             assertFalse(store.cleared)
