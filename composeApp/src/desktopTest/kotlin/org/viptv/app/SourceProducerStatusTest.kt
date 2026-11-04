@@ -24,7 +24,7 @@ class SourceProducerStatusTest {
     @get:Rule val uiThread = UiThreadRule()
 
     private fun source(id: String, providerId: String, label: String) = SourceCandidate(id, providerId, "Stream $id",
-        detail = "Release $id", quality_height = 1080, presentation = SourcePresentation(provider_name = label))
+        detail = "[Stream $id] Release $id", quality_height = 1080, presentation = SourcePresentation(provider_name = label))
     private val torrentio = source("a1", "addon:1", "Torrentio")
     private val comet = SourceProducerOutcome("addon:2", "Comet")
     private val unsupported = SourceProducerOutcome("addon:9", "Annatar", errorCode = SOURCE_FORMAT_UNSUPPORTED)

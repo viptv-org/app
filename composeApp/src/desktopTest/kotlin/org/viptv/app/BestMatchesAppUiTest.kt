@@ -118,7 +118,7 @@ class BestMatchesAppUiTest {
         val RELEASE_ORDER = listOf("web_dl", "bluray", "webrip", "dvd")
 
         fun card(stream: Stream) = buildJsonObject {
-            put("id", stream.id); put("name", "Source ${stream.id}"); put("description", stream.detail)
+            put("id", stream.id); put("name", "Source ${stream.id}"); put("description", "[Source ${stream.id}] ${stream.detail}")
             put("quality_height", stream.height); put("release_type", stream.releaseType); put("delivery", "direct")
         }
 
