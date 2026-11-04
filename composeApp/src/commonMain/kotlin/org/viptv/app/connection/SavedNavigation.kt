@@ -16,3 +16,6 @@ data class SavedNavigation(
 
 @Serializable
 internal data class SavedNavigationBook(val profiles: Map<String, SavedNavigation> = emptyMap())
+
+@Serializable
+internal data class SavedRecentSearchesBook(val profiles: Map<String, List<String>> = emptyMap())

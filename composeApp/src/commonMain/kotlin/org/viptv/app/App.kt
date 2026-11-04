@@ -223,7 +223,9 @@ fun App(
                                 SearchScreen(state.searchTerm, state.results, state.addons, state.busy, state.error, desktopChrome,
                                     controller::search, controller::open, television, controller::editSearch, searchRows = state.searchRows,
                                     filters = state.searchFilters, filterChanged = controller::searchFilters,
-                                    focusResults = state.searchFocusResults, retry = controller::retrySearch)
+                                    focusResults = state.searchFocusResults, retry = controller::retrySearch,
+                                    recentSearches = state.recentSearches, trendingSearches = state.trendingSearches,
+                                    clearRecents = controller::clearRecentSearches)
                             }
                             // The details page stays composed under the sources sheet, so nothing reloads or flashes behind it.
                             Screen.Details, Screen.Sources -> routes.SaveableStateProvider("detail:${state.selectedProfile}") {
