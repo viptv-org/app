@@ -73,15 +73,23 @@ internal suspend fun ApplicationController.updateAddonHome(operation: AddonOpera
 
 fun ApplicationController.installAddon(url: String) = installAddon(url) {}
 
+internal const val ADDON_INSTALL_TARGET = "Install add-on"
+
 fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Unit) {
-    if (mutable.value.busy) { completion(false); return }
+    val target = MutationTarget(MutationKind.Addon, ADDON_INSTALL_TARGET)
+    // Another operation owns the controller job; a submission must not cancel or replace it.
+    if (mutable.value.busy || mutable.value.mutations.isPending(target)) { completion(false); return }
     val device = local
     val remote = connection
     val profile = mutable.value.selectedProfile
-    val expectedGeneration = generation + 1
-    run {
+    var reported = false
+    fun report(success: Boolean) { if (!reported) { reported = true; completion(success) } else Unit }
+    mutate(target,
+        revert = { report(false); it },
+        message = { error -> report(false); failureMessage(error) ?: COULD_NOT_SAVE },
+        ownsControllerJob = true) {
         markAddonOperation()
-        val owner = AddonOperationOwner(expectedGeneration, device, remote, profile, currentCoroutineContext()[Job])
+        val owner = AddonOperationOwner(generation, device, remote, profile, currentCoroutineContext()[Job])
         try {
             val selected = profile ?: throw LocalFailure("Choose a profile first.")
             if (device != null) device.commitAddonInstallation(selected, url)
@@ -89,11 +97,29 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
             owner.requireCurrent(this)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {
+            // A replaced or cancelled operation must not publish a late failure: requireCurrent throws
+            // CancellationException instead, which mutate settles silently.
             owner.requireCurrent(this)
-            completion(false)
             throw error
         }
-        completion(true)
+        report(true)
+        loadAddons(owner)
+        updateAddonHome(owner)
+        loadSourceIntegrations(owner)
+        reloadLiveIfVisible()
+    }
+}
+
+fun ApplicationController.toggleAddon(id: String, enabled: Boolean) {
+    val before = mutable.value
+    mutate(MutationTarget(MutationKind.Addon, id),
+        optimistic = { state -> state.copy(enabledAddonIds = if (enabled) state.enabledAddonIds + id else state.enabledAddonIds - id) },
+        revert = { it.copy(enabledAddonIds = before.enabledAddonIds) },
+        ownsControllerJob = true) {
+        val owner = beginAddonOperation()
+        val profile = requireNotNull(owner.profile)
+        if (owner.device != null) owner.device.setAddonEnabled(profile, id, enabled)
+        else requireNotNull(owner.remote).setAddonEnabled(profile, id, enabled)
         owner.requireCurrent(this)
         loadAddons(owner)
         updateAddonHome(owner)
@@ -102,24 +128,19 @@ fun ApplicationController.installAddon(url: String, completion: (Boolean) -> Uni
     }
 }
 
-fun ApplicationController.toggleAddon(id: String, enabled: Boolean) = run {
-    val owner = beginAddonOperation()
-    val profile = requireNotNull(owner.profile)
-    if (owner.device != null) owner.device.setAddonEnabled(profile, id, enabled)
-    else requireNotNull(owner.remote).setAddonEnabled(profile, id, enabled)
-    owner.requireCurrent(this)
-    loadAddons(owner)
-    updateAddonHome(owner)
-    loadSourceIntegrations(owner)
-    reloadLiveIfVisible()
-}
-
-fun ApplicationController.removeAddon(id: String) = run {
-    val owner = beginAddonOperation()
-    if (owner.device != null) owner.device.removeAddon(id) else requireNotNull(owner.remote).removeAddon(id)
-    owner.requireCurrent(this)
-    loadAddons(owner)
-    updateAddonHome(owner)
-    loadSourceIntegrations(owner)
-    reloadLiveIfVisible()
+fun ApplicationController.removeAddon(id: String) {
+    val before = mutable.value
+    mutate(MutationTarget(MutationKind.Addon, id),
+        optimistic = { state -> state.copy(addons = state.addons.filterNot { it.id == id },
+            enabledAddonIds = state.enabledAddonIds - id) },
+        revert = { it.copy(addons = before.addons, enabledAddonIds = before.enabledAddonIds) },
+        ownsControllerJob = true) {
+        val owner = beginAddonOperation()
+        if (owner.device != null) owner.device.removeAddon(id) else requireNotNull(owner.remote).removeAddon(id)
+        owner.requireCurrent(this)
+        loadAddons(owner)
+        updateAddonHome(owner)
+        loadSourceIntegrations(owner)
+        reloadLiveIfVisible()
+    }
 }
