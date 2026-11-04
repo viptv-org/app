@@ -215,28 +215,6 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     rememberNavigation()
 }
 
-// A later, sparser meta keeps the first-painted art and never removes the better description.
-internal fun org.viptv.engine.wire.DetailSnapshot.withCardPresentation(card: Card): org.viptv.engine.wire.DetailSnapshot {
-    val merged = item.copy(
-        description = bestDescription(item.description, card.description),
-        landscape = card.landscape ?: item.landscape,
-        poster = card.poster ?: item.poster,
-        logo = card.logo ?: item.logo,
-    )
-    return if (merged == item) this else copy(item = merged)
-}
-
-private fun bestDescription(loaded: String?, card: String?): String? {
-    val loaded = loaded?.takeIf { it.isNotBlank() }
-    val card = card?.takeIf { it.isNotBlank() }
-    return when {
-        loaded == null -> card
-        card == null -> loaded
-        loaded.length > card.length -> loaded
-        else -> card
-    }
-}
-
 internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card): org.viptv.engine.wire.DetailSnapshot {
     val progress = card.progress?.takeIf { it > 0.0 && it < 1.0 } ?: return this
     val coordinates = card.identity.episode

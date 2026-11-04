@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.first
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
-private const val HOME_ROW_TRAILING = 6
+internal const val HOME_ROW_TRAILING = 6
 
 @Composable
 private fun TvRowMessageCard(scale: Float, title: String, message: String?, retry: () -> Unit) {

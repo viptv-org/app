@@ -10,22 +10,24 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.*
-import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.components.tvHold
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -42,15 +44,14 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
             downAction(); true
         } else false
     }) {
-        if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
+        TitleLogo(card.logo, card.title,
             Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
-                .width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale)
-                ,
-            alignment = Alignment.BottomStart, contentScale = ContentScale.Fit)
-        else Box(Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
-            .size(800.dp * scale, (if (series) 134 else 190).dp * scale)) {
-            Text(card.title, Modifier.align(Alignment.BottomStart), fontSize = (52 * scale).sp,
-                lineHeight = (60 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                .size(800.dp * scale, (if (series) 134 else 190).dp * scale),
+            contentAlignment = Alignment.BottomStart,
+            logoModifier = Modifier.width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale),
+            logoAlignment = Alignment.BottomStart) {
+            Text(card.title, fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp,
+                fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
             TvDetailMetadata(card, scale)
@@ -81,7 +82,12 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
             }
-            TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) { Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it) }
+            val mutations = LocalPendingMutation.current
+            val target = saveTarget(card)
+            TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = save) {
+                if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
+                else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it)
+            }
             if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
         }
     }

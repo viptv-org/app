@@ -22,14 +22,19 @@ import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.kindLabel
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
+import org.viptv.app.state.saveTarget
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
+import org.viptv.app.components.TitleLogo
+import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
 
@@ -56,7 +61,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
             art?.let { url ->
                 Box(Modifier.width(682.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp))
                     .background(Palette.surface)) {
-                    AsyncImage(url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    BufferedArtwork(url, Modifier.fillMaxSize())
                 }
             }
         }
@@ -65,12 +70,10 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
 
 @Composable
 private fun DesktopTitleArt(card: Card) {
-    if (card.logo != null) {
-        AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-            Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp), contentScale = ContentScale.Fit,
-            alignment = Alignment.CenterStart)
-    } else Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
-        color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 320.dp).heightIn(max = 132.dp)) {
+        Text(card.title, fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold,
+            color = Palette.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -137,7 +140,10 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
             }
             IconButton(onClick = { save(card) }, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(22.dp))
                 .background(Color.White.copy(alpha = 0.12f))) {
-                Icon(if (saved) Lucide.Check else Lucide.Plus,
+                val target = saveTarget(card)
+                val mutations = LocalPendingMutation.current
+                if (mutations.isPending(target)) MutationSpinner(22.dp, scale = 1f)
+                else Icon(if (saved) Lucide.Check else Lucide.Plus,
                     if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
             }
             if (partway && playFromStart != null) {

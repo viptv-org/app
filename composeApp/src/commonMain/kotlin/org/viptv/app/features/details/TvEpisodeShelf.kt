@@ -9,13 +9,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
-import coil3.compose.AsyncImage
 import org.viptv.app.components.*
 import org.viptv.app.connection.DetailFocus
 import org.viptv.app.connection.epochMillis
@@ -140,11 +138,13 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
         Column(Modifier.fillMaxWidth().heightIn(min = if (expanded) 656.dp * scale else 460.dp * scale)) {
-            if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale).padding(start = 96.dp * scale, top = 56.dp * scale)) {
-                if (parent.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(parent.logo), parent.title,
-                    Modifier.height(64.dp * scale).width(260.dp * scale),
-                    contentScale = ContentScale.Fit, alignment = Alignment.CenterStart)
-                else Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
+            if (expanded) Box(Modifier.fillMaxWidth().height(154.dp * scale)
+                .padding(start = 96.dp * scale, end = 96.dp * scale, top = 56.dp * scale)) {
+                TitleLogo(parent.logo, parent.title, Modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart,
+                    logoModifier = Modifier.height(64.dp * scale).width(260.dp * scale)) {
+                    Text(parent.title, color = Palette.text, fontSize = (36 * scale).sp, lineHeight = (44 * scale).sp,
+                        fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
             }
             TvSeasonSelector(seasons, activeSeason, scale, seasonFocus, ::enterEpisodes,
                 select = { season -> pendingEntry = null; kept = true; selected = season; groups.find { it.number == season }?.nextOffset?.let(loadPage) },

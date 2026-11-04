@@ -14,19 +14,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.features.home.BufferedArtwork
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
@@ -46,17 +49,16 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
             if (art != null) {
-                AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                BufferedArtwork(art, Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
                     0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
                     .55f to Color.Transparent, 1f to Palette.background)))
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.fillMaxWidth().height(PhoneHeroHeader), contentAlignment = Alignment.CenterStart) {
-                if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title,
-                    Modifier.width(240.dp).height(PhoneHeroHeader), alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                else Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+            TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().height(PhoneHeroHeader),
+                logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
+                Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
             }
             Box(Modifier.fillMaxWidth().heightIn(min = PhoneHeroMetaLine)) { MediaMetadata(card, fontSize = 13f, lineHeight = 19f, kindFirst = true) }
             val resume = resumeEpisode ?: card.takeIf(::resuming)
@@ -94,13 +96,16 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             DetailSourceSummary(sourcePreview, open = { chooseSource(resume ?: card) })
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
+                val mutations = LocalPendingMutation.current
+                val target = saveTarget(card)
                 Column(Modifier.width(76.dp).pointerClickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(if (saved) Lucide.Check else Lucide.Plus,
+                        if (mutations.isPending(target)) MutationSpinner(22.dp)
+                        else Icon(if (saved) Lucide.Check else Lucide.Plus,
                             if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
                     }
-                    Text("My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+                    Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
             card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
