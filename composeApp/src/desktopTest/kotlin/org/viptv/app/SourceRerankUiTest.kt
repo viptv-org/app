@@ -26,7 +26,7 @@ class SourceRerankUiTest {
     @get:Rule val uiThread = UiThreadRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    private fun row(id: String) = SourceCandidate(id, "addon:fixture", "Source $id", detail = "Release $id")
+    private fun row(id: String) = SourceCandidate(id, "addon:fixture", "Source $id", detail = "[Source $id] Release $id")
     private fun ranked(ids: List<String>, best: Int = 5) = ids.map(::row) to SourceGroups.of(ids.take(best), ids.first())
 
     private class Scene(width: Int, height: Int, television: Boolean, content: @Composable () -> Unit) : AutoCloseable {

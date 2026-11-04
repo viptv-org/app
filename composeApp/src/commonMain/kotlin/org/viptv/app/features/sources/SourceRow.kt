@@ -4,52 +4,59 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
-import org.viptv.app.components.OwnFocusTreatment
-import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
+import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.tvHold
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
-private val RowDescriptionFont = 12.sp
-private val RowDescriptionLine = 16.sp
-private val RowTitleHeight = 24.dp
-private val RowSpacing = 6.dp
-private val RowPadding = 18.dp
-private val RowHeight = 98.dp
-
-@Composable
-private fun sourceRowHeight(): Dp = maxOf(RowHeight,
-    RowTitleHeight + RowSpacing + sourceDescriptionWindowHeight(RowDescriptionLine) + RowPadding * 2)
+private val RowQualityFont = 18.sp
+private val RowQualitySubline = 11.sp
+private val RowNameFont = 15.sp
+private val RowDetailFont = 12.sp
+private val RowQualityColumn = 57.dp
 
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
     header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {},
-    details: ((SourceCandidate) -> Unit)? = null, requester: FocusRequester? = null) {
+    details: ((SourceCandidate) -> Unit)? = null, requester: FocusRequester? = null, addon: String? = null) {
     var focused by remember { mutableStateOf(false) }
-    val foreground = if (focused) Palette.background else Palette.text
+    val inverted = focused || selected
+    val foreground = if (inverted) Palette.background else Palette.text
     val interaction = remember { MutableInteractionSource() }
-    val hovered = interaction.pointerHovered()
     // The fill is the row's focus treatment; Material's focus layer would double it.
     OwnFocusTreatment { Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
         .onFocusChanged { if (focused != it.isFocused) { focused = it.isFocused; focusChanged(it.isFocused) } }
@@ -57,31 +64,41 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
             onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
-        Row(Modifier.fillMaxWidth().heightIn(min = sourceRowHeight()).clip(RoundedCornerShape(if (television) 14.dp else 0.dp))
-        .background(if (focused) Palette.text else if (television || selected) Palette.raised else Palette.surface)
-        .indication(interaction, LocalIndication.current)
-        .padding(horizontal = if (television) 28.dp else 20.dp, vertical = RowPadding),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Column(Modifier.widthIn(min = 56.dp)) {
-            Text(source.qualityLabel() ?: "—", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = foreground,
-                maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
-            source.formatLabel()?.let { Text(it, fontSize = 10.sp, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .7f)) }
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 10.dp))
+            .background(if (inverted) Palette.text else if (television) Palette.raised else Palette.surface)
+            .indication(interaction, LocalIndication.current)
+            .padding(horizontal = if (television) 28.dp else 16.dp, vertical = if (television) 14.dp else 10.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp else 13.dp)) {
+            Column(Modifier.width(RowQualityColumn)) {
+                Text(source.qualityLabel() ?: "—", fontSize = RowQualityFont, fontWeight = FontWeight.ExtraBold, color = foreground,
+                    maxLines = 1, softWrap = false)
+                source.releaseTypeLabel()?.let { Text(it, fontSize = RowQualitySubline, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .55f)) }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(source.releaseGroupLabel(), fontSize = RowNameFont, fontWeight = FontWeight.SemiBold,
+                        color = foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    source.cacheLabel()?.let { Text(it, Modifier.background(foreground.copy(alpha = .12f), RoundedCornerShape(5.dp)).padding(horizontal = 7.dp, vertical = 3.dp),
+                        color = foreground.copy(alpha = .85f), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false) }
+                    if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = .16f), RoundedCornerShape(5.dp)).padding(horizontal = 7.dp, vertical = 3.dp),
+                        color = if (inverted) Palette.text else Palette.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                    if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                }
+                Text(source.audioSubsSummary(), fontSize = RowDetailFont, color = foreground.copy(alpha = .55f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                source.factItems(addon).takeIf { it.isNotEmpty() }?.let { facts ->
+                    Text(buildAnnotatedString {
+                        val size = source.sizeLabel()
+                        facts.forEachIndexed { index, item ->
+                            if (index > 0) append("  ·  ")
+                            if (item == size) withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(item) } else append(item)
+                        }
+                    }, fontSize = RowDetailFont, color = foreground.copy(alpha = .75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
+                Icon(Lucide.Check, "Selected source", Modifier.size(14.dp), tint = Palette.text)
+            }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(RowSpacing)) {
-            SourceTitleLine(source.label, TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold), foreground,
-                source.factBadges(), SourceBadgeStyle(10.sp, 13.sp, 4.dp, 5.dp, 2.dp, 6.dp),
-                Modifier.fillMaxWidth().heightIn(min = RowTitleHeight), trailing = if (bestMatch || didntStart) ({
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (bestMatch) Text(BEST_MATCH_MARKER, color = if (focused) Palette.background else Palette.accent, fontSize = 11.sp,
-                            lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-                        if (didntStart) Text(DIDNT_START_LABEL, color = if (focused) Palette.background else Palette.danger, fontSize = 11.sp,
-                            lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-                    }
-                }) else null)
-            SourceDescriptionWindow(source.descriptionText(), active = focused || hovered,
-                fontSize = RowDescriptionFont, lineHeight = RowDescriptionLine, color = foreground.copy(alpha = .8f))
-        }
-        Icon(if (selected) Lucide.Check else Lucide.ChevronRight, if (selected) "Selected source" else null,
-            Modifier.size(18.dp), tint = foreground)
-    } } }
+    } }
 }

@@ -77,30 +77,29 @@ class TvEntryAndSourcesUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun longTitlesAndDescriptionsKeepEveryRowTheSameHeight() {
-        val short = "Short release"
-        val title = "Example Series S04E12 2160p WEB-DL HEVC HDR10+ Dolby Atmos Extended edition and release group"
-        val long = "Example Series S04E12 2160p WEB-DL HEVC HDR10+ Dolby Atmos English / Japanese multi audio Extended edition and release group Additional provider information"
-        val scene = ImageComposeScene(960, 1080, Density(1f)) {
+    @Test fun namesAndFactsKeepEveryRowTheSameHeight() {
+        val short = SourceCandidate("short", "addon", "Short release", detail = "[ShortGroup] One.Line.1080p.mkv")
+        val long = SourceCandidate("long", "addon",
+            "Example Series S04E12 2160p WEB-DL HEVC HDR10+ Dolby Atmos",
+            detail = "[LongGroup] Example Series S04E12 2160p WEB-DL HEVC HDR10+ Dolby Atmos English Japanese multi audio extended edition")
+        val scene = ImageComposeScene(960, 400, Density(1f)) {
             ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
                 Column(Modifier.padding(32.dp)) {
-                    TvSourceRow(SourceCandidate("short", "addon", short), TvSourceInfo("1080p"), 1f, null, true, {})
-                    Spacer(Modifier.height(16.dp))
-                    TvSourceRow(SourceCandidate("long", "addon", title, detail = long), TvSourceInfo("4K"), 1f, null, true, {})
+                TvSourceRow(short, TvSourceInfo("1080p"), 1f, null, true, {})
+                Spacer(Modifier.height(16.dp))
+                TvSourceRow(long, TvSourceInfo("4K"), 1f, null, true, {})
                 }
             } }
         }
         try {
             frames(scene, 0, 16)
-            val shortRow = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it).contains(short) }
-            val longRow = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it).contains(title) }
-            assertEquals(shortRow.boundsInRoot.height, longRow.boundsInRoot.height, "the two-line window keeps every row one height")
+            val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
+            assertEquals(2, rows.size)
+            assertEquals(1, rows.map { it.boundsInRoot.height }.distinct().size, "the static row keeps every row one height")
             val labels = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
-            val titleLayout = layout(labels.single { text(it) == title })
-            assertEquals(1, titleLayout.lineCount, "the title keeps its single line")
-            val description = labels.single { text(it) == long }
-            assertTrue(layout(description).lineCount > 2, "the description wraps past its two-line window")
-            assertTrue(description.boundsInRoot.top >= longRow.boundsInRoot.top, "the description stays inside the row")
+            val name = labels.single { text(it) == "LongGroup" }
+            assertEquals(1, layout(name).lineCount, "the source name keeps its single line")
+            assertTrue(name.boundsInRoot.top >= rows.first().boundsInRoot.top, "the source name stays inside its row")
             capture(scene, "sources")
         } finally { scene.close() }
     }

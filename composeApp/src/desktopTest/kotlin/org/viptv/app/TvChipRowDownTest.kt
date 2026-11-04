@@ -137,7 +137,7 @@ class TvChipRowDownTest {
             }, listOf("Type: All", "Sort: Date added"), "The Whisper Man"),
             Scenario("Sources", {
                 TvSourcesScreen(null, PreviewData.filterSources, false, null, {}, {}, info = sourceInfo)
-            }, listOf("Quality: All", "Source: All sources"), "Torrentio 4K #1"),
+            }, listOf("Quality: All", "Source: All sources"), "Torrentio"),
         )
     }
 
