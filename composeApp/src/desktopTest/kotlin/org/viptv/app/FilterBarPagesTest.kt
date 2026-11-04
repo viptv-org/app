@@ -134,6 +134,37 @@ class FilterBarPagesTest {
         }
     }
 
+    @Test fun emptyBrowseOffersNewestFilterRemovalAndKeepsClearSecondary() {
+        val browse = Browse()
+        browse.query = BrowseQuery("movie", "top", "c1", genre = "comedy")
+        Page(390, 844, density = 1f, pointer = false) {
+            BrowseScreen(Screen.Movies, null, false, {}, emptyList(), controls, browse.query, filterChanged = browse.changed,
+                multipleChanged = browse.multiple, applyQuery = browse.apply)
+        }.use {
+            assertTrue(it.has("Nothing matches"), "a filtered empty grid blames the filters")
+            assertTrue(it.has("Movies from Cinemeta has no movies with all 1 filters. Removing the newest one usually helps."))
+            assertTrue(it.has("Remove “Comedy”"), "the newest filter is the primary action")
+            assertTrue(it.has("Clear all filters"), "clear demoted to a secondary action")
+            assertFalse(it.has("No titles yet"), "the no-titles copy is not for a filtered grid")
+            it.press("Remove “Comedy”")
+            assertEquals(listOf("genre="), browse.requests)
+            assertNull(browse.query.genre)
+        }
+    }
+
+    @Test fun emptyBrowseWithoutFiltersSaysNoTitlesYet() {
+        val browse = Browse()
+        Page(390, 844, density = 1f, pointer = false) {
+            BrowseScreen(Screen.Movies, null, false, {}, emptyList(), controls, browse.query, filterChanged = browse.changed,
+                multipleChanged = browse.multiple, applyQuery = browse.apply)
+        }.use {
+            assertTrue(it.has("No titles yet"), "an unfiltered empty grid says there are no titles")
+            assertFalse(it.has("Nothing matches"))
+            assertFalse(it.has("Clear all filters"))
+            assertFalse(it.has("Remove “Comedy”"))
+        }
+    }
+
     private val library = LibrarySnapshot(Scope("t", "t", "t", 1), 1, defaultLibraryQuery(), posters, complete = true,
         controls = listOf(
             QueryControl("source", "List", ControlKind.SINGLECHOICE, false, listOf(Choice("favorites", "My List"), Choice("trakt", "Trakt watchlist"))),
