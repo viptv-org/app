@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import org.viptv.app.state.*
 import org.viptv.app.theme.ViptvTheme
@@ -23,7 +22,6 @@ internal fun DesktopShell(
     mac: Boolean,
     controls: DesktopWindowControls,
     localDatabase: String? = null,
-    searchFocus: FocusRequester? = null,
     manageControllerLifecycle: Boolean = true,
     titleBarArea: @Composable (@Composable () -> Unit) -> Unit = { it() },
 ) {
@@ -47,7 +45,6 @@ internal fun DesktopShell(
                             { menuOpen = !menuOpen }, controls.minimize, controls.maximize, controls.close, Modifier,
                             back = if (globalBack.canGoBack(state)) globalBack::back else null,
                             forward = if (globalBack.canGoForward(state)) globalBack::forward else null,
-                            searchFocus = searchFocus,
                             maximized = controls.maximized)
                     }
                     Box(Modifier.weight(1f)) {

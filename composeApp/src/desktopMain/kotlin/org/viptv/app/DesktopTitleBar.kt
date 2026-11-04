@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -66,7 +64,6 @@ internal fun DesktopTitleBar(
     forward: (() -> Unit)? = null,
     cast: (() -> Unit)? = null,
     remote: (() -> Unit)? = null,
-    searchFocus: FocusRequester? = null,
     maximized: Boolean = false,
 ) {
     val simple = state.screen in listOf(Screen.Connect, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
@@ -110,7 +107,7 @@ internal fun DesktopTitleBar(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     DesktopChromeIcon(ChromeIcon.Search, Palette.text, Modifier.size(16.dp))
                     BasicTextField(query, { query = it; if (it.isNotEmpty()) navigate(Screen.Search); search(it) },
-                        Modifier.weight(1f).then(if (searchFocus != null) Modifier.focusRequester(searchFocus) else Modifier)
+                        Modifier.weight(1f)
                             .onPreviewKeyEvent { event ->
                                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                                     Key.Escape -> {

@@ -87,6 +87,7 @@ fun App(
         onDispose { lifecycle.removeObserver(observer); if (manageControllerLifecycle) controller.appForeground(false) }
     }
     val tvDisplay = rememberTvDisplayState()
+    val surface = inputSurface(television, browser, desktopChrome)
     val reduceMotion = reducedMotion(tvDisplay.value, rememberSystemReducedMotion())
     val accent = accentColor(tvDisplay.value)
     val ratings = showRatings(tvDisplay.value)
@@ -106,7 +107,7 @@ fun App(
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
         LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState) {
-    ViptvTheme(television, pointer = browser || desktopChrome) {
+    ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
@@ -124,7 +125,7 @@ fun App(
                 return@BoxWithConstraints
             }
             val compact = maxWidth < 640.dp && !television
-            val touch = !television && !browser && !desktopChrome
+            val touch = surface == InputSurface.Touch
             val tablet = !compact && touch
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)

@@ -7,15 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -35,15 +28,8 @@ fun main() {
 
 private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
-    val searchFocus = remember { FocusRequester() }
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
-    DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, framed = !mac,
-        onPreviewKeyEvent = { event ->
-            if (event.type == KeyEventType.KeyDown && (event.isCtrlPressed || event.isMetaPressed) && event.key == Key.K) {
-                runCatching { searchFocus.requestFocus() }
-                true
-            } else false
-        }) {
+    DesktopAppWindow(::exitApplication, "VIPTV Experiment", windowState, framed = !mac) {
         val scope = rememberCoroutineScope()
         val controller = remember { ApplicationController(scope) }
         val globalBack = remember(controller) { GlobalBack(controller) }
@@ -77,7 +63,7 @@ private fun launchApplication() = application {
             close = ::exitApplication, maximized = maximized)
         org.viptv.app.player.mpv.MpvWindow(window) {
             DesktopShell(controller, globalBack, mac, controls, localDatabase = "$base/viptv-experiment/local.sqlite",
-                searchFocus = searchFocus, titleBarArea = { bar -> WindowDraggableArea(Modifier.fillMaxWidth()) { bar() } })
+                titleBarArea = { bar -> WindowDraggableArea(Modifier.fillMaxWidth()) { bar() } })
         }
     }
 }

@@ -37,6 +37,7 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import org.viptv.app.components.LocalActivationKeys
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
@@ -195,6 +196,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
+    val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
@@ -206,9 +208,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             PlayerOverlayHost(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                     Key.Escape -> { if (phone) latestPhoneBack() else if (phonePanel != null) dismissPanel() else close(); true }
-                    Key.Spacebar, Key.MediaPlayPause -> { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true }
-                    Key.MediaFastForward -> { seek(position + MediaSkipMillis); true }
-                    Key.MediaRewind -> { seek(position - MediaSkipMillis); true }
+                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
+                    Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
