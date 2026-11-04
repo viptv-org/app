@@ -133,15 +133,21 @@ fun ApplicationController.search(term: String, retry: Boolean = false) {
 }
 
 private suspend fun ApplicationController.searchRemote(remote: RemoteConnection, term: String, session: () -> Boolean) {
-    val streamed = remote.searchStreamResults(term) { event ->
-        if (!session()) return@searchStreamResults
-        when (event) {
-            is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows, results = emptyList()) }
-            is SearchStreamEvent.Row -> updateState { state ->
-                val rows = state.searchRows.map { if (it.id == event.row.id) event.row else it }
-                state.copy(searchRows = rows, results = rows.flatMap { it.cards })
+    val streamed = withTimeoutOrNull(searchStreamTimeoutMillis) {
+        remote.searchStreamResults(term) { event ->
+            if (!session()) return@searchStreamResults
+            when (event) {
+                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows, results = emptyList()) }
+                is SearchStreamEvent.Row -> updateState { state ->
+                    val rows = state.searchRows.map { if (it.id == event.row.id) event.row else it }
+                    state.copy(searchRows = rows, results = rows.flatMap { it.cards })
+                }
             }
         }
+    }
+    if (streamed == null) {
+        if (session() && mutable.value.screen == Screen.Search) updateState { it.copy(error = SEARCH_TIMEOUT_MESSAGE) }
+        return
     }
     if (streamed) return
     val grouped = remote.searchResults(term)
@@ -155,9 +161,10 @@ private suspend fun ApplicationController.searchLocal(device: LocalConnection, p
     if (session()) updateState { it.copy(results = cards, searchRows = grouped?.rows.orEmpty()) }
 }
 
+private const val SEARCH_TIMEOUT_MESSAGE = "Your server took too long to answer this search. Try again."
+
 private fun ApplicationController.searchFailure(error: Exception): String = when {
-    error is HttpRequestTimeoutException || error is SocketTimeoutException ->
-        "Your server took too long to answer this search. Try again."
+    error is HttpRequestTimeoutException || error is SocketTimeoutException -> SEARCH_TIMEOUT_MESSAGE
     else -> failureMessage(error) ?: "Something went wrong. Try again."
 }
 

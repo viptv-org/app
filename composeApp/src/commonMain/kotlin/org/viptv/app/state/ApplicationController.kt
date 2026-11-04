@@ -23,6 +23,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val freshness: Freshness = Freshness(),
     internal val bestMatchNoticeMillis: Long = 2_000L,
     internal val startDeadlineMillis: Long = 20_000L,
+    internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L)) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
