@@ -210,7 +210,8 @@ private suspend fun ApplicationController.readDetail(card: Card, navigation: Lon
     }
     val pendingSeason = mutable.value.pendingDetailSeason
     updateState { it.copy(detail = read.detail.withCardPresentation(card).withOpenedProgress(card),
-        detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus,
+        detailFocus = pendingSeason?.let { season -> DetailFocus(season) } ?: read.focus
+            ?: card.identity.episode?.let { coordinates -> DetailFocus(coordinates.season, coordinates.episode) },
         pendingDetailSeason = null, detailShell = false) }
     rememberNavigation()
 }
