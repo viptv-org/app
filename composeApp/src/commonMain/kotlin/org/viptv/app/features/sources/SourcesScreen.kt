@@ -26,12 +26,14 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
+import com.composables.icons.lucide.CloudOff
 import kotlinx.coroutines.flow.collect
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.connection.SourceProducerOutcome
@@ -56,13 +58,13 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     choose: (SourceCandidate) -> Unit, back: () -> Unit, detail: DetailSnapshot? = null, television: Boolean = false, tablet: Boolean = false, loadingMore: Boolean = false, selectedSource: String? = null, torrentOnlyProviders: Int = 0,
     openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
     errorCode: String? = null, openGateways: (() -> Unit)? = null, producers: List<SourceProducerOutcome> = emptyList(),
-    banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false) {
+    banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false, retry: () -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
             detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
-            groups = groups, producers = producers, banner = banner, failed = failed, opening = opening)
+            groups = groups, producers = producers, banner = banner, failed = failed, opening = opening, retry = retry)
         return
     }
     var quality by remember { mutableStateOf<String?>(null) }
@@ -146,7 +148,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(if (television) 10.dp else 0.dp), topEdgeFade = false) {
                 error?.let {
                     item(key = "error") {
-                        Column(Modifier.padding(20.dp)) {
+                        if (visible.isEmpty()) SourcesFailure(it, retry, openGateways?.takeIf { errorCode == "gateway_required" })
+                        else Column(Modifier.padding(20.dp)) {
                             Text(it, color = Palette.danger)
                             if (openGateways != null && errorCode == "gateway_required") {
                                 Spacer(Modifier.height(8.dp))
@@ -188,6 +191,21 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
 }
 
 internal fun sourceDrawerWidth(window: Dp): Dp = minOf(window, maxOf(460.dp, minOf(720.dp, window * 0.55f)))
+
+@Composable
+private fun SourcesFailure(error: String, retry: () -> Unit, gateways: (() -> Unit)?) {
+    Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(Lucide.CloudOff, null, Modifier.size(28.dp), tint = Palette.secondary)
+        Text("Couldn’t load sources", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(error, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            org.viptv.app.components.Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(44.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
+            gateways?.let { org.viptv.app.components.TextButton(it) { Text("Open Gateways") } }
+        }
+    }
+}
 
 @Composable
 private fun SourceSummary(line: String, pending: Boolean, modifier: Modifier = Modifier, fontSize: TextUnit) {

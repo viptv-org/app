@@ -53,7 +53,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
     debridHelp: () -> Unit = {}, openingStage: String? = null, groups: SourceGroups = SourceGroups(),
     producers: List<SourceProducerOutcome> = emptyList(), banner: String? = null, failed: List<String> = emptyList(),
-    opening: Boolean = false) {
+    opening: Boolean = false, retry: () -> Unit = {}) {
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -155,7 +155,12 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 LazyColumn(Modifier.weight(1f), state = listState,
                     verticalArrangement = Arrangement.spacedBy(10.dp * scale),
                     contentPadding = PaddingValues(bottom = 24.dp * scale)) {
-                    error?.let { item { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) } }
+                    error?.let {
+                        item(key = "error") {
+                            if (visible.isEmpty()) TvSourcesFailure(it, retry, scale)
+                            else Text(it, color = Palette.danger, fontSize = (22 * scale).sp)
+                        }
+                    }
                     notice?.let { message ->
                         item(key = "producer") {
                             Text(message, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = Palette.secondary, fontSize = (22 * scale).sp)
@@ -275,6 +280,19 @@ internal fun TvSourcesTorrentPanel(providers: Int, scale: Float, debridHelp: () 
                     Text("Back", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TvSourcesFailure(error: String, retry: () -> Unit, scale: Float) {
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
+        Icon(Lucide.CloudOff, null, Modifier.size(44.dp * scale), tint = Palette.secondary)
+        Text("Couldn’t load sources", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(error, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
+        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+            contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }
     }
 }

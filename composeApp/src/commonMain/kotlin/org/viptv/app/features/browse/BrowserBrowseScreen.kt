@@ -38,6 +38,7 @@ import org.viptv.app.state.browseFilter
 import org.viptv.app.state.browseMore
 import org.viptv.app.state.browseSelections
 import org.viptv.app.state.open
+import org.viptv.app.state.retryBrowse
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.ControlKind
@@ -64,14 +65,14 @@ internal fun BrowserBrowseRoute(state: ApplicationState, controller: Application
     BrowserBrowseScreen(state.screen, cards, state.browseControls, state.browseQuery, state.busy, state.error,
         more = if (state.browseNext != null) controller::browseMore else null,
         open = controller::open, changed = controller::browseFilter,
-        multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse)
+        multipleChanged = controller::browseSelections, applyQuery = controller::applyBrowse, retry = controller::retryBrowse)
 }
 
 @Composable
 internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: DiscoveryControls?, query: BrowseQuery,
     busy: Boolean, error: String?, more: (() -> Unit)?, open: (Card) -> Unit,
     changed: (String, String) -> Unit, multipleChanged: (String, List<String>) -> Unit,
-    applyQuery: (BrowseQuery) -> Unit) {
+    applyQuery: (BrowseQuery) -> Unit, retry: () -> Unit = {}) {
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore("browse")
     val anchored = restore.anchor(cards.size) { cardLookupKey(cards[it]) }
@@ -92,7 +93,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
             Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
             if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog)
+            else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog, retry)
             else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
             LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
                 horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -142,13 +143,14 @@ private fun BrowserBrowseEmpty(screen: Screen, source: String?, count: Int, newe
 }
 
 @Composable
-private fun BrowserBrowseFailure(error: String, title: String?, source: String?, openCatalog: () -> Unit) {
+private fun BrowserBrowseFailure(error: String, title: String?, source: String?, openCatalog: () -> Unit, retry: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title?.let { "Couldn’t load $it" } ?: "Couldn’t load this page", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text("${source?.takeIf(String::isNotBlank) ?: "The source"} didn’t answer. Your filters are kept.", fontSize = 14.sp, color = Palette.secondary)
         Text(error, fontSize = 13.sp, color = Palette.danger)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (title != null) BrowserStateAction("Choose another catalog", primary = true, onClick = openCatalog)
+            BrowserStateAction("Try again", primary = true, onClick = retry)
+            if (title != null) BrowserStateAction("Choose another catalog", primary = false, onClick = openCatalog)
         }
     }
 }
