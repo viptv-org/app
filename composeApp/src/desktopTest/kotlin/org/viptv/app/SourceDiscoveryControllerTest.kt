@@ -153,7 +153,7 @@ class SourceDiscoveryControllerTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val published = mutableListOf<List<String>>()
         try {
             val sources = remote.sources(title.copy(identity = title.identity.copy(kind = "movie"))) { progress ->
@@ -187,7 +187,7 @@ class SourceDiscoveryControllerTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(this, store)
         controller.connection = remote
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "profile", preferences = PreferencesSnapshot())

@@ -61,7 +61,7 @@ class PlaybackLeaseTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->
@@ -255,7 +255,7 @@ class PlaybackLeaseTest {
             }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(testScheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(backgroundScope, store)
         controller.connection = remote
         controller.leaseOpener = PlaybackLeaseOpener { connection, candidate, profile, forceGateway, position, stage ->

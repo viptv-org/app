@@ -31,7 +31,7 @@ class PreferenceWritePendingTest {
             engine { dispatcher = StandardTestDispatcher(scheduler); addHandler(reply) }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(scheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store).also {
             it.connection = remote
             it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1",

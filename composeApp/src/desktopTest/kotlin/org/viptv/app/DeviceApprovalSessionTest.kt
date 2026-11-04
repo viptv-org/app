@@ -44,7 +44,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val done = CompletableDeferred<Unit>(); controller.restore { done.complete(Unit) }
@@ -81,7 +81,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val signedIn = CompletableDeferred<String?>(); controller.signIn("member", "password") { signedIn.complete(it) }
@@ -119,7 +119,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             controller.restore { oldCallback = true }
@@ -154,7 +154,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val signedIn = CompletableDeferred<String?>(); controller.signIn("member", "password") { signedIn.complete(it) }
@@ -194,7 +194,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             controller.restore { oldCallback = true }
@@ -232,7 +232,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val denied = CompletableDeferred<Result<DeviceApproval>>()
@@ -269,7 +269,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val signedIn = CompletableDeferred<String?>(); controller.signIn("member", "password") { signedIn.complete(it) }
@@ -300,7 +300,7 @@ class DeviceApprovalSessionTest {
                 }
                 configureTransport()
             }
-            RemoteConnection("https://watch.example", store, client, browserMode = true, workerDispatcher = StandardTestDispatcher(testScheduler))
+            RemoteConnection("https://watch.example", store, client, browserMode = true)
         }
         try {
             val denied = CompletableDeferred<Result<Unit>>(); controller.approve("00123456") { denied.complete(it) }

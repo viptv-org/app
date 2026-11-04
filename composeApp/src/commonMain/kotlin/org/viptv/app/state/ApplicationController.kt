@@ -19,7 +19,7 @@ import kotlin.time.TimeSource
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
     internal val playbackDiagnostics: ((String) -> Unit)? = null,
     internal val localFactory: (String) -> LocalConnection = ::localConnection,
-    internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store, workerDispatcher = workerDispatcherFor(scope.coroutineContext)) },
+    internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
     internal val freshness: Freshness = Freshness(),
     internal val bestMatchNoticeMillis: Long = 2_000L,
     internal val startDeadlineMillis: Long = 20_000L,

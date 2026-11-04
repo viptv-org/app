@@ -28,7 +28,7 @@ class LiveControllerTest {
             engine { dispatcher = StandardTestDispatcher(scheduler); addHandler { request -> respond(reply(request), headers = headersOf(HttpHeaders.ContentType, "application/json")) } }
             configureTransport()
         }
-        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false, workerDispatcher = StandardTestDispatcher(scheduler))
+        val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store).also {
             it.connection = remote
             it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "1", livePage = LiveCatalogPage(listOf(channel("one"), channel("two")), availability = "Available"), liveFavoritesAvailable = true)
