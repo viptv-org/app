@@ -30,8 +30,6 @@ import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.ListEntrance
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.Button
-import org.viptv.app.components.ServerMessages
-import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.flow.first
 import org.viptv.app.state.RowSeeAll
 
@@ -129,7 +127,7 @@ internal fun HomeCatalogRow(row: HomeRow, compact: Boolean, television: Boolean,
                         })
                 }
                 if (appendError != null) item(key = "row-append") {
-                    RowMessageCard(width, portrait, appendError) { more?.invoke(row.id) }
+                    RowMessageCard(width, portrait) { more?.invoke(row.id) }
                 } else items(trailing, key = { "append-$it" }) {
                     RowSkeletonCard(width, portrait)
                 }
@@ -162,16 +160,12 @@ private fun RowSkeletonCard(width: Int, portrait: Boolean) {
 }
 
 @Composable
-private fun RowMessageCard(width: Int, portrait: Boolean, message: String, retry: () -> Unit) {
+private fun RowMessageCard(width: Int, portrait: Boolean, retry: () -> Unit) {
     Column(Modifier.width(width.dp).aspectRatio(if (portrait) 2f / 3 else 16f / 9)
-        .clip(RoundedCornerShape(9.dp)).background(Palette.surface).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Couldn’t load more titles", fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 2,
-            overflow = TextOverflow.Ellipsis)
-        Text(ServerMessages.human(message, ServerMessages.ROW_FAILURE), color = Palette.secondary, fontSize = 12.sp, lineHeight = 15.sp,
-            maxLines = 3, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.weight(1f))
-        Button({ retry() }, Modifier.height(34.dp)) { Text("Try again") }
+        .clip(RoundedCornerShape(9.dp)).background(Palette.surface).padding(10.dp),
+        verticalArrangement = Arrangement.SpaceBetween) {
+        Text("Couldn’t load more", fontSize = 10.sp, lineHeight = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Button({ retry() }, Modifier.fillMaxWidth().height(34.dp)) { Text("Try again", fontSize = 13.sp) }
     }
 }
 
