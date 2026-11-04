@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.itemsIndexed as rowItemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
+import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.listItemEntrance
@@ -146,7 +149,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
 @Composable
 private fun SearchIdle(recent: List<String>, trending: List<String>, gutter: Dp, query: (String) -> Unit,
     clearRecents: () -> Unit, modifier: Modifier) {
-    Column(modifier.fillMaxWidth().padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).pageBottomClearance().padding(horizontal = gutter), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (recent.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Recent", color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
