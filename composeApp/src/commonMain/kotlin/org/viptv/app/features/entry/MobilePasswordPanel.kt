@@ -53,7 +53,10 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
         Text(if (busy) "Signing in…" else "Sign in", fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
-    TextButton(onClick = { forgot(server) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+    if (server.isBlank()) {
+        Text("Forgot password?", Modifier.padding(top = 8.dp), color = Palette.text.copy(alpha = 0.4f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("Enter your server address first.", Modifier.padding(top = 2.dp), color = Palette.secondary, fontSize = 12.sp)
+    } else TextButton(onClick = { forgot(server) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Text("Forgot password?", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
     TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {
