@@ -8,22 +8,20 @@ import org.viptv.engine.wire.SubtitleCandidate
 import kotlin.test.*
 
 class BrowserCaptionStyleTest {
-    @Test fun defaultPreferencesPreserveAuthoredCueStyles() {
-        assertEquals("", browserCaptionDeclarations(ProfilePreferences(), 1f))
-        assertEquals("", browserCaptionDeclarations(ProfilePreferences(), Float.NaN))
+    @Test fun defaultPreferencesKeepAuthoredCueStylesAndCancelTheBrowserBox() {
+        assertEquals("background-color:transparent;", browserCaptionDeclarations(ProfilePreferences(), 1f))
+        assertEquals("background-color:transparent;", browserCaptionDeclarations(ProfilePreferences(), Float.NaN))
     }
 
     @Test fun androidArgbColorsRetainAlphaWhenConvertedToCss() {
         val css = browserCaptionDeclarations(ProfilePreferences(subtitle_text_color = "#80fFeEaa", subtitle_background_color = "#40000000"), 1.25f)
-        assertContains(css, "color:#FFEEAA80;")
-        assertContains(css, "background-color:#00000040;")
-        assertContains(css, "font-size:6.25vh;")
+        assertEquals("font-size:6.25vh;color:#FFEEAA80;background-color:#00000040;", css)
     }
 
     @Test fun malformedStyleTextCannotBecomeCssAndSizeStaysBounded() {
         val preferences = ProfilePreferences(subtitle_text_color = "red;}body{display:none", subtitle_background_color = "url(https://invalid)")
-        assertEquals("font-size:10.0vh;", browserCaptionDeclarations(preferences, 99f))
-        assertEquals("font-size:2.5vh;", browserCaptionDeclarations(preferences, -1f))
+        assertEquals("font-size:10.0vh;background-color:transparent;", browserCaptionDeclarations(preferences, 99f))
+        assertEquals("font-size:2.5vh;background-color:transparent;", browserCaptionDeclarations(preferences, -1f))
     }
     @Test fun providerCuesSitOnSnappedLinesLiftedTheSameDistanceAtEverySize() {
         assertEquals(-5, providerCueLine(1f))

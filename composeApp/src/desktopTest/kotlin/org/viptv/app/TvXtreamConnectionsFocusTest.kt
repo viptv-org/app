@@ -45,7 +45,7 @@ class TvXtreamConnectionsFocusTest {
         ViptvTheme(true) {
             focusManager = LocalFocusManager.current
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, null,
-                television = true, initialSection = "Playback", tvPreferences = TvSettingsPreferences(), changeTvPreferences = { },
+                television = true, initialSection = "Playback", tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
                 tvXtreamConnections = { first, sidebar, scale ->
                     TvXtreamConnections(connections, 1L, false, null, null, canManage = true, manageNote = "", scale = scale,
                         first = first, sidebar = sidebar, request = {}, create = { _, _, _, _, _ -> }, update = { _, _, _ -> },

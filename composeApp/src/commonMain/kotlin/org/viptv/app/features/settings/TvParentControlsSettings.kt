@@ -11,6 +11,11 @@ import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.TvFocusColumn
 import org.viptv.app.connection.*
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.state.PARENT_PIN_TARGET
+import org.viptv.app.state.kidsPolicyTarget
+import org.viptv.app.state.leavePinTarget
+import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -69,11 +74,21 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, controls: Ma
             }
         }
     }
-    pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, error,
-        dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) }) }
-    editing?.let { profile -> KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
-        snapshot?.parent?.pin_configured == true, busy, error,
-        dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }) }
-    leavePinFor?.let { profile -> LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, error,
-        dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) }) }
+    val mutations = LocalPendingMutation.current
+    val pinTarget = preferenceTarget(PARENT_PIN_TARGET)
+    pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, mutations.failure(pinTarget) ?: error,
+        dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) },
+        pending = mutations.isPending(pinTarget)) }
+    editing?.let { profile ->
+        val target = preferenceTarget(kidsPolicyTarget(profile.id))
+        KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
+            snapshot?.parent?.pin_configured == true, busy, mutations.failure(target) ?: error,
+            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }, pending = mutations.isPending(target))
+    }
+    leavePinFor?.let { profile ->
+        val target = preferenceTarget(leavePinTarget(profile.id))
+        LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
+            dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) },
+            pending = mutations.isPending(target))
+    }
 }

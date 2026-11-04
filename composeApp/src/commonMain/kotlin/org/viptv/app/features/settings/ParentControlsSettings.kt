@@ -3,12 +3,17 @@ package org.viptv.app.features.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.pageBottomClearance
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.*
+import org.viptv.app.state.PARENT_PIN_TARGET
+import org.viptv.app.state.kidsPolicyTarget
+import org.viptv.app.state.leavePinTarget
+import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
@@ -62,13 +67,25 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
             }
         }
     } }
-    if (unlocking) ParentPinDialog("unlock", snapshot?.parent?.pin_configured == true, busy, error,
-        dismiss = { if (!busy) unlocking = false }, submit = { current, _ -> unlock(current) })
-    editing?.let { profile -> KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
-        snapshot?.parent?.pin_configured == true, busy, error,
-        dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }) }
-    leavePinFor?.let { profile -> LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, error,
-        dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) }) }
+    val mutations = LocalPendingMutation.current
+    val pinTarget = preferenceTarget(PARENT_PIN_TARGET)
+    if (unlocking) ParentPinDialog("unlock", snapshot?.parent?.pin_configured == true, busy,
+        mutations.failure(pinTarget) ?: error,
+        dismiss = { if (!busy) unlocking = false }, submit = { current, _ -> unlock(current) },
+        pending = mutations.isPending(pinTarget))
+    editing?.let { profile ->
+        val target = preferenceTarget(kidsPolicyTarget(profile.id))
+        KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
+            snapshot?.parent?.pin_configured == true, busy, mutations.failure(target) ?: error,
+            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) },
+            pending = mutations.isPending(target))
+    }
+    leavePinFor?.let { profile ->
+        val target = preferenceTarget(leavePinTarget(profile.id))
+        LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
+            dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) },
+            pending = mutations.isPending(target))
+    }
 }
 
 internal fun fallbackPolicy(profile: ServerProfile) = KidsPolicy(profile.kids, profile.max_age ?: 12)

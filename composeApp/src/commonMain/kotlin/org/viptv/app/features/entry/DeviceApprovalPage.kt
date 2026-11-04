@@ -41,7 +41,6 @@ internal fun DeviceApprovalPage(
     compact: Boolean,
     controller: DeviceApprovalController,
     initialCode: String = "",
-    goHome: () -> Unit = {},
 ) {
     var step by remember { mutableStateOf(DeviceApprovalStep.Restore) }
     var code by remember { mutableStateOf(initialCode.filter(Char::isDigit).take(8)) }
@@ -108,6 +107,8 @@ internal fun DeviceApprovalPage(
         }
     }
 
+    fun startOver() { code = ""; device = null; error = null; step = DeviceApprovalStep.Code }
+
     DeviceCard(compact) {
         when (step) {
             DeviceApprovalStep.Restore -> {
@@ -150,13 +151,14 @@ internal fun DeviceApprovalPage(
             }
             DeviceApprovalStep.Done -> {
                 DeviceCheckTile()
-                DeviceTitle("Your TV is signed in", compact)
-                DeviceSubtitle("The TV can now pick its profile.", compact)
-                DevicePrimaryButton("Back to home", true, false, goHome)
+                DeviceTitle("Device signed in", compact)
+                DeviceSubtitle("It can now pick its profile.", compact)
+                DevicePrimaryButton("Add another device", true, false, ::startOver)
             }
             DeviceApprovalStep.Denied -> {
                 DeviceTitle("Denied", compact)
-                DeviceSubtitle("This TV will not be signed in. You can close this page.", compact)
+                DeviceSubtitle("That device will not be signed in.", compact)
+                DevicePrimaryButton("Add another device", true, false, ::startOver)
             }
         }
     }

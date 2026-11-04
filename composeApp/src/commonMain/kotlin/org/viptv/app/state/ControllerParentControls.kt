@@ -30,13 +30,17 @@ fun ApplicationController.unlockParentControls(pin: String) {
 }
 
 fun ApplicationController.changeParentPin(current: String, next: String) {
-    if (mutable.value.busy) return
-    run {
-        val status = mutable.value.parentSettings?.parent ?: throw LocalFailure("Refresh parental controls first.")
-        if (status.pin_configured && !validParentPin(current)) throw LocalFailure("Enter the current parent PIN.")
-        if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
-        if (next.isEmpty() && mutable.value.parentSettings?.profiles.orEmpty().any { it.kids })
-            throw LocalFailure("Turn off kids restrictions on every profile before removing the parent PIN.")
+    val before = mutable.value
+    mutate(preferenceTarget(PARENT_PIN_TARGET),
+        revert = { it.copy(parentControls = before.parentControls, parentSettings = before.parentSettings) },
+        prepare = {
+            val status = it.parentSettings?.parent ?: throw LocalFailure("Refresh parental controls first.")
+            if (status.pin_configured && !validParentPin(current)) throw LocalFailure("Enter the current parent PIN.")
+            if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
+            if (next.isEmpty() && it.parentSettings?.profiles.orEmpty().any { profile -> profile.kids })
+                throw LocalFailure("Turn off kids restrictions on every profile before removing the parent PIN.")
+        },
+        ownsControllerJob = true) {
         parentRequest(if (next.isEmpty()) "Parent PIN removed." else "Parent PIN saved.", "The current parent PIN was not accepted. Check it and try again.") { remote ->
             remote.saveParentPin(current, next)
             remote.profileManagement()
@@ -44,18 +48,26 @@ fun ApplicationController.changeParentPin(current: String, next: String) {
     }
 }
 
+internal const val PARENT_PIN_TARGET = "Household PIN"
+
 fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) {
-    if (mutable.value.busy) return
-    run {
-        val settings = mutable.value.parentSettings ?: throw LocalFailure("Refresh parental controls first.")
-        if (settings.profiles.none { it.id == profile }) throw LocalFailure("Choose one of this account’s profiles.")
-        if (policy.enabled && !settings.parent.pin_configured) throw LocalFailure("Set a parent PIN before enabling kids restrictions.")
-        if (policy.max_age !in 0..17) throw LocalFailure("Choose an age between 0 and 17.")
-        val ratings = mutable.value.parentControls[profile]?.policy?.ratings
-        if (policy.movie_rating != null && ratings != null && ratings.movie.none { it.label == policy.movie_rating })
-            throw LocalFailure("Choose one of the movie rating limits this server offers.")
-        if (policy.series_rating != null && ratings != null && ratings.series.none { it.label == policy.series_rating })
-            throw LocalFailure("Choose one of the series rating limits this server offers.")
+    val before = mutable.value
+    mutate(preferenceTarget(kidsPolicyTarget(profile)),
+        optimistic = { state -> state.copy(parentControls = state.parentControls +
+            (profile to (state.parentControls[profile] ?: ParentProfileControls()).copy(policy = policy))) },
+        revert = { it.copy(parentControls = before.parentControls, parentSettings = before.parentSettings) },
+        prepare = {
+            val settings = it.parentSettings ?: throw LocalFailure("Refresh parental controls first.")
+            if (settings.profiles.none { existing -> existing.id == profile }) throw LocalFailure("Choose one of this account’s profiles.")
+            if (policy.enabled && !settings.parent.pin_configured) throw LocalFailure("Set a parent PIN before enabling kids restrictions.")
+            if (policy.max_age !in 0..17) throw LocalFailure("Choose an age between 0 and 17.")
+            val ratings = it.parentControls[profile]?.policy?.ratings
+            if (policy.movie_rating != null && ratings != null && ratings.movie.none { limit -> limit.label == policy.movie_rating })
+                throw LocalFailure("Choose one of the movie rating limits this server offers.")
+            if (policy.series_rating != null && ratings != null && ratings.series.none { limit -> limit.label == policy.series_rating })
+                throw LocalFailure("Choose one of the series rating limits this server offers.")
+        },
+        ownsControllerJob = true) {
         val operation = generation
         var saved: KidsPolicy? = null
         parentRequest("Profile restrictions saved.") { remote ->
@@ -78,14 +90,20 @@ fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) 
 }
 
 fun ApplicationController.changeProfileLeavePin(profile: String, current: String, next: String) {
-    if (mutable.value.busy) return
-    run {
-        val settings = mutable.value.parentSettings ?: throw LocalFailure("Refresh parental controls first.")
-        if (settings.profiles.none { it.id == profile }) throw LocalFailure("Choose one of this account’s profiles.")
-        if (!settings.profilePinAvailable) throw LocalFailure("This server does not support a PIN for leaving a profile.")
-        if (mutable.value.parentControls[profile]?.leavePin != false && !validParentPin(current))
-            throw LocalFailure("Enter the profile’s current PIN.")
-        if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
+    val before = mutable.value
+    mutate(preferenceTarget(leavePinTarget(profile)),
+        optimistic = { state -> state.copy(parentControls = state.parentControls +
+            (profile to (state.parentControls[profile] ?: ParentProfileControls()).copy(leavePin = next.isNotEmpty()))) },
+        revert = { it.copy(parentControls = before.parentControls, parentSettings = before.parentSettings) },
+        prepare = {
+            val settings = it.parentSettings ?: throw LocalFailure("Refresh parental controls first.")
+            if (settings.profiles.none { existing -> existing.id == profile }) throw LocalFailure("Choose one of this account’s profiles.")
+            if (!settings.profilePinAvailable) throw LocalFailure("This server does not support a PIN for leaving a profile.")
+            if (it.parentControls[profile]?.leavePin != false && !validParentPin(current))
+                throw LocalFailure("Enter the profile’s current PIN.")
+            if (next.isNotEmpty() && !validParentPin(next)) throw LocalFailure("Use 4 to 8 digits for the new PIN.")
+        },
+        ownsControllerJob = true) {
         parentRequest(if (next.isEmpty()) "Leave PIN removed." else "Leave PIN saved.",
             "The current PIN for this profile was not accepted. Check it and try again.") { remote ->
             remote.saveProfilePin(profile, current, next)
@@ -93,6 +111,9 @@ fun ApplicationController.changeProfileLeavePin(profile: String, current: String
         }
     }
 }
+
+internal fun kidsPolicyTarget(profile: String) = "Restrictions $profile"
+internal fun leavePinTarget(profile: String) = "Leave PIN $profile"
 
 private suspend fun ApplicationController.parentRequest(notice: String? = null, forbidden: String = "Unlock parental controls and try again.",
     action: suspend (RemoteConnection) -> ProfileManagement) {
