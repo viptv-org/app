@@ -20,7 +20,7 @@ internal val PhoneBrowseTitleGap = 8.dp
 internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
     val remote = LocalHeaderRemote.current
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             if (screen in listOf(Screen.Library, Screen.Live, Screen.Calendar)) Text(when (screen) { Screen.Library -> "My List"; Screen.Live -> "Live"; else -> "Calendar" }, fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else Brand(28.dp, 20.sp, 9.dp)
             Spacer(Modifier.weight(1f))
             remote?.invoke()
