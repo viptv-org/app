@@ -26,7 +26,7 @@ class ForgotPasswordTest {
     private fun verify(mobile: Boolean) {
         var opened: String? = null
         val scene = ImageComposeScene(if (mobile) 390 else 1280, if (mobile) 844 else 800, Density(1f)) { ViptvTheme {
-            if (mobile) MobilePasswordPanel("https://watch.example", false, null, {}, { _, _, _ -> }, forgot = { opened = it })
+            if (mobile) MobilePasswordPanel("https://watch.example", false, null, { _, _, _ -> }, forgot = { opened = it })
             else DesktopPasswordPanel("https://watch.example", false, null, {}, { _, _, _ -> }, forgot = { opened = it })
         } }
         try {

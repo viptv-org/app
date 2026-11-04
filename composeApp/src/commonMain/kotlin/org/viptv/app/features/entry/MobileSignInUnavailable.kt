@@ -11,7 +11,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
 @Composable
-internal fun MobileSignInUnavailable(step: SignInStep, back: () -> Unit, password: () -> Unit) {
+internal fun MobileSignInUnavailable(step: SignInStep, password: () -> Unit) {
     val title = when (step) {
         SignInStep.Browser -> "Finish signing in in your browser"
         SignInStep.Device -> "Use another device"
@@ -28,8 +28,5 @@ internal fun MobileSignInUnavailable(step: SignInStep, back: () -> Unit, passwor
     Text(message, color = Palette.secondary, fontSize = 15.sp, lineHeight = 22.sp)
     TextButton(onClick = password, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
         Text("Use a password instead", color = Palette.text)
-    }
-    TextButton(onClick = back, modifier = Modifier.fillMaxWidth()) {
-        Text("All sign-in options", color = Palette.secondary)
     }
 }

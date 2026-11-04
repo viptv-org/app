@@ -16,12 +16,11 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.openAccountAuthorization
 import org.viptv.app.components.AccessibleIconButton
-import org.viptv.app.components.BackControl
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 
 @Composable
-internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, back: () -> Unit,
+internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?,
     connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {},
     forgot: (String) -> Unit = { address -> if (address.isNotBlank()) runCatching { openAccountAuthorization(address) } }) {
     var server by remember { mutableStateOf(origin) }
@@ -29,7 +28,6 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?, 
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
     var editServer by remember { mutableStateOf(origin.isBlank()) }
-    BackControl(back, label = "All sign-in options")
     Spacer(Modifier.height(16.dp))
     Text("Sign in with a password", color = Palette.text, fontSize = 25.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold)
     Spacer(Modifier.height(18.dp))
