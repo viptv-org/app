@@ -22,9 +22,11 @@ import org.viptv.engine.wire.*
 fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, retry: () -> Unit, desktopChrome: Boolean = false, play: (Card) -> Unit = open, tablet: Boolean = false, navigate: (org.viptv.app.state.Screen) -> Unit = {}, browser: Boolean = false, profile: org.viptv.app.connection.Profile? = null, save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
     heroRotates: Boolean = true,
-    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
+    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap()) {
     if (television) {
         TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary,
+            moreRow = moreRow, rowBusy = rowBusy, rowErrors = rowErrors,
             seeAllFor = seeAllFor, openSeeAll = openSeeAll)
         return
     }
@@ -76,6 +78,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     HomeCatalogRow(row, compact, television, Modifier,
                         { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
                         entrance = entrance,
+                        more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
                         hover = { card, inside ->
                             val key = cardLookupKey(card)
                             hoveredContinue = if (inside) key else hoveredContinue?.takeIf { it != key }
