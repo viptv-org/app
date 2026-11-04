@@ -7,23 +7,14 @@ import kotlin.math.roundToInt
 internal fun browserCaptionDeclarations(preferences: ProfilePreferences, scale: Float): String = buildString {
     val size = scale.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
     if (size != 1f) append("font-size:${size * 5}vh;")
-    captionCssColor(preferences.subtitle_text_color)?.takeUnless { it == "#FFFFFFFF" }?.let {
-        append("color:$it;")
-    }
-    captionCssColor(preferences.subtitle_background_color)?.takeUnless { it.endsWith("00") }?.let {
-        append("background-color:$it;")
-    }
+    val text = captionTextArgb(preferences.subtitle_text_color)
+    if (text != CAPTION_WHITE) append("color:${captionCssColour(text)};")
+    // The browser draws its own cue box unless the rule cancels it.
+    val box = captionBoxArgb(preferences.subtitle_background_color)
+    append("background-color:${box?.let(::captionCssColour) ?: "transparent"};")
 }
 
 internal fun providerCueLine(scale: Float): Int {
     val size = scale.takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f
     return -1 - (4 / size).roundToInt()
-}
-
-// Profile colours are #RRGGBB or Android #AARRGGBB; CSS eight-digit hex is #RRGGBBAA.
-private fun captionCssColor(value: String): String? {
-    if (value.length !in setOf(7, 9) || value.firstOrNull() != '#' ||
-        value.drop(1).any { it !in '0'..'9' && it !in 'a'..'f' && it !in 'A'..'F' }) return null
-    val hex = value.drop(1).uppercase()
-    return if (hex.length == 6) "#${hex}FF" else "#${hex.drop(2)}${hex.take(2)}"
 }
