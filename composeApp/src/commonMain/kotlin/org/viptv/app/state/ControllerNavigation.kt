@@ -4,6 +4,14 @@ import org.viptv.app.connection.*
 import kotlinx.coroutines.CancellationException
 
 fun ApplicationController.navigate(screen: Screen, record: Boolean = true, browse: BrowseQuery? = null) {
+    transition(screen, record, browse, restore = null)
+}
+
+private fun ApplicationController.restoreScreen(entry: BackEntry) {
+    transition(entry.screen, record = false, browse = null, restore = entry)
+}
+
+private fun ApplicationController.transition(screen: Screen, record: Boolean, browse: BrowseQuery?, restore: BackEntry?) {
     val previousScreen = mutable.value.screen
     val navigation = ++navigationGeneration
     pageRequestJob?.let { pending ->
@@ -52,31 +60,38 @@ fun ApplicationController.navigate(screen: Screen, record: Boolean = true, brows
     }
     updateState { state ->
         val history = if (record && screen != previousScreen)
-            state.copy(navBack = (state.navBack + recorded).takeLast(32), navForward = emptyList())
+            state.copy(navBack = (state.navBack + state.captureBackEntry(recorded)).takeLast(32), navForward = emptyList())
         else state
-        history.copy(screen = screen, error = null, errorCode = null, detailRetryable = true,
-            searchFocusResults = state.searchFocusResults && screen == Screen.Search,
-            pendingDetailSeason = state.pendingDetailSeason.takeIf { screen == Screen.Search },
-            leavePinFrom = history.leavePinFrom.takeIf { screen == Screen.ProfilePin },
-            settingsEntrySection = if (screen == Screen.Settings) state.settingsEntrySection else null,
-            liveSetupReturnFocus = state.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
+        val restored = restore?.let(history::restoreBackEntry) ?: history
+        restored.copy(screen = screen, error = null, errorCode = null, detailRetryable = true,
+            searchFocusResults = restored.searchFocusResults && screen == Screen.Search,
+            pendingDetailSeason = restored.pendingDetailSeason.takeIf { screen == Screen.Search },
+            leavePinFrom = restored.leavePinFrom.takeIf { screen == Screen.ProfilePin },
+            settingsEntrySection = if (screen == Screen.Settings) restored.settingsEntrySection else null,
+            liveSetupReturnFocus = restored.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
-            settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) state.settingsPage else null,
-            passwordChangeNotice = if (screen == Screen.Settings) state.passwordChangeNotice else null)
+            settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) restored.settingsPage else null,
+            passwordChangeNotice = if (screen == Screen.Settings) restored.passwordChangeNotice else null)
     }
-    if (screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
+    recoverBackEntryLoads(screen, browse, navigation, restore)
+    rememberNavigation()
+}
+
+// Back to a list screen restores its captured entry and skips the load that would reset filters, data and scroll.
+private fun ApplicationController.recoverBackEntryLoads(screen: Screen, browse: BrowseQuery?, navigation: Long, restore: BackEntry?) {
+    val skip = restore != null && screen in restoredListScreens
+    if (!skip && screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
         loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
     else if (screen == Screen.Home) freshen()
     if (screen != Screen.Live) liveGuideJob?.cancel()
-    if (screen == Screen.Live) run { loadLive(LiveQuery()) }
+    if (!skip && screen == Screen.Live) run { loadLive(LiveQuery()) }
     if (screen == Screen.Settings && connection?.browserSession != true) refreshAddons()
-    if (screen == Screen.Library) run { loadLibraryPage() }
-    if (screen == Screen.ContinueWatching) loadContinueWatching(navigation)
-    if (screen == Screen.Calendar && connection != null) run { loadCalendar() }
-    if (screen == Screen.History) loadHistory(navigation)
-    rememberNavigation()
+    if (!skip && screen == Screen.Library) run { loadLibraryPage() }
+    if (!skip && screen == Screen.ContinueWatching) loadContinueWatching(navigation)
+    if (!skip && screen == Screen.Calendar && connection != null) run { loadCalendar() }
+    if (!skip && screen == Screen.History) loadHistory(navigation)
 }
 
 internal fun ApplicationController.loadHistory(navigation: Long = navigationGeneration) {
@@ -193,19 +208,19 @@ private fun ApplicationController.backWithinSettings(): Boolean {
 fun ApplicationController.navigateForward() {
     val state = mutable.value
     val target = state.navForward.lastOrNull() ?: return
-    updateState { it.copy(navForward = it.navForward.dropLast(1), navBack = it.navBack + it.screen) }
-    navigate(target, record = false)
+    updateState { it.copy(navForward = it.navForward.dropLast(1), navBack = it.navBack + it.captureBackEntry(it.screen)) }
+    restoreScreen(target)
 }
 
 private fun ApplicationController.returnTo(screen: Screen) {
-    val state = mutable.value
-    updateState { current -> current.copy(navBack = if (current.navBack.lastOrNull() == screen) current.navBack.dropLast(1) else current.navBack) }
-    navigate(screen, record = false)
+    val target = mutable.value.navBack.lastOrNull()?.takeIf { it.screen == screen }
+    updateState { current -> current.copy(navBack = if (current.navBack.lastOrNull()?.screen == screen) current.navBack.dropLast(1) else current.navBack) }
+    restoreScreen(target ?: BackEntry(screen))
 }
 
 private fun ApplicationController.popHistory() {
     val state = mutable.value
     val target = state.navBack.lastOrNull() ?: return
-    updateState { it.copy(navBack = it.navBack.dropLast(1), navForward = it.navForward + it.screen) }
-    navigate(target, record = false)
+    updateState { it.copy(navBack = it.navBack.dropLast(1), navForward = it.navForward + it.captureBackEntry(it.screen)) }
+    restoreScreen(target)
 }

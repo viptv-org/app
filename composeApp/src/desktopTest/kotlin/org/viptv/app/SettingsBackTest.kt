@@ -50,7 +50,7 @@ class SettingsBackTest {
         override fun close() { scene.close(); scope.cancel() }
     }
 
-    private fun settings(navBack: List<Screen> = listOf(Screen.Home), localMode: Boolean = true,
+    private fun settings(navBack: List<BackEntry> = listOf(BackEntry(Screen.Home)), localMode: Boolean = true,
         manageAccount: Boolean = false, accountOwner: Boolean = false,
         accountRole: String = if (accountOwner) "owner" else "member") =
         ApplicationState(screen = Screen.Settings, navBack = navBack, selectedProfile = "1", localMode = localMode,
@@ -92,7 +92,7 @@ class SettingsBackTest {
     }
 
     @Test fun backFromTheSettingsListIsUnchanged() {
-        Harness(browser = false, settings(navBack = listOf(Screen.Library))).use { ui ->
+        Harness(browser = false, settings(navBack = listOf(BackEntry(Screen.Library)))).use { ui ->
             ui.render()
             ui.controller.navigateBack(); ui.render()
             assertEquals(Screen.Library, ui.controller.state.value.screen)
@@ -125,7 +125,7 @@ class SettingsBackTest {
     @Test fun wideSectionsAreNotSubPagesAndAPageLastsOneVisit() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession)
-        controller.mutable.value = settings(navBack = listOf(Screen.Search)).copy(settingsPage = SettingsPage("Devices"))
+        controller.mutable.value = settings(navBack = listOf(BackEntry(Screen.Search))).copy(settingsPage = SettingsPage("Devices"))
         controller.navigateBack()
         assertEquals(Screen.Search, controller.state.value.screen)
         assertNull(controller.state.value.settingsPage, "Leaving Settings must forget its page")
