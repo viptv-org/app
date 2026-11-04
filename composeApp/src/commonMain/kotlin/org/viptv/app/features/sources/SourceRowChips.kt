@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,11 +19,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -51,58 +63,65 @@ internal fun SourceCacheChip(cache: CacheChip, fontSize: TextUnit, iconSize: Dp,
 
 @Composable
 internal fun SourceAudioSubsLine(source: SourceCandidate, color: Color, sectionFontSize: TextUnit, chipFontSize: TextUnit,
-    iconSize: Dp, padH: Dp, padV: Dp, gap: Dp, outline: Dp, radius: Dp) {
+    iconSize: Dp, padH: Dp, chipHeight: Dp, gap: Dp, outline: Dp, radius: Dp) {
     val audio = source.audioChips()
     val subs = source.subtitleChips()
     FlowRow(horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(gap)) {
         if (audio == null && subs == null) {
-            Text("Audio not listed", fontSize = sectionFontSize, color = color.copy(alpha = .55f))
+            Text("Audio not listed", Modifier.height(chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
             return@FlowRow
         }
         if (audio != null) {
-            SourceSectionLabel(Lucide.Volume2, "Audio", color, sectionFontSize, iconSize)
-            audio.forEach { SourceLanguageChip(it.label, color, it.dashed, chipFontSize, padH, padV, outline, radius) }
+            SourceSectionLabel(Lucide.Volume2, "Audio", color, sectionFontSize, iconSize, chipHeight)
+            audio.forEach { SourceLanguageChip(it.label, color, it.dashed, chipFontSize, padH, chipHeight, outline, radius) }
         }
         if (subs != null) {
-            SourceSectionLabel(Lucide.Captions, "Subs", color, sectionFontSize, iconSize)
-            subs.forEach { SourceLanguageChip(it.label, color, it.dashed, chipFontSize, padH, padV, outline, radius) }
+            SourceSectionLabel(Lucide.Captions, "Subs", color, sectionFontSize, iconSize, chipHeight)
+            subs.forEach { SourceLanguageChip(it.label, color, it.dashed, chipFontSize, padH, chipHeight, outline, radius) }
         } else if (audio != null) {
-            Text("Subs not listed", fontSize = sectionFontSize, color = color.copy(alpha = .55f))
+            Text("Subs not listed", Modifier.height(chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
         }
     }
 }
 
 @Composable
-internal fun SourceFactsRow(source: SourceCandidate, addon: String?, color: Color, fontSize: TextUnit, iconSize: Dp, gap: Dp) {
+internal fun SourceFactsRow(source: SourceCandidate, addon: String?, color: Color, fontSize: TextUnit, iconSize: Dp) {
     val facts = source.factItems(addon)
     if (facts.isEmpty()) return
     val size = source.sizeLabel()
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    val packageId = "season-pack"
+    val placeholder = with(LocalDensity.current) { iconSize.toSp() }
+    val inline = mapOf(
+        packageId to InlineTextContent(
+            Placeholder(width = placeholder, height = placeholder, placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter),
+        ) { Icon(Lucide.Package, null, Modifier.size(iconSize), tint = color.copy(alpha = .75f)) },
+    )
+    val text = buildAnnotatedString {
         facts.forEachIndexed { index, item ->
-            if (index > 0) Text("·", fontSize = fontSize, color = color.copy(alpha = .4f))
-            if (item == SEASON_PACK_LABEL) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    Icon(Lucide.Package, null, Modifier.size(iconSize), tint = color.copy(alpha = .75f))
-                    Text(item, fontSize = fontSize, color = color.copy(alpha = .75f), fontWeight = FontWeight.SemiBold)
-                }
-            } else {
-                Text(item, fontSize = fontSize, color = color.copy(alpha = .75f), fontWeight = if (item == size) FontWeight.Bold else FontWeight.Normal)
+            if (index > 0) append(" · ")
+            when {
+                item == SEASON_PACK_LABEL -> { appendInlineContent(packageId, "Season pack"); append(" Season pack") }
+                item == size -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(item) }
+                else -> append(item)
             }
+        }
+    }
+    Text(text, inlineContent = inline, fontSize = fontSize, color = color.copy(alpha = .75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+}
+
+@Composable
+private fun SourceSectionLabel(icon: ImageVector, text: String, color: Color, fontSize: TextUnit, iconSize: Dp, chipHeight: Dp) {
+    Box(Modifier.height(chipHeight), contentAlignment = Alignment.Center) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, null, Modifier.size(iconSize), tint = color.copy(alpha = .6f))
+            Text(text, fontSize = fontSize, color = color.copy(alpha = .6f), fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 @Composable
-private fun SourceSectionLabel(icon: ImageVector, text: String, color: Color, fontSize: TextUnit, iconSize: Dp) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(icon, null, Modifier.size(iconSize), tint = color.copy(alpha = .6f))
-        Text(text, fontSize = fontSize, color = color.copy(alpha = .6f), fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun SourceLanguageChip(text: String, color: Color, dashed: Boolean, fontSize: TextUnit, padH: Dp, padV: Dp, outline: Dp, radius: Dp) {
-    Box(Modifier.chipOutline(color.copy(alpha = .5f), outline, radius, dashed).padding(horizontal = padH, vertical = padV)) {
+private fun SourceLanguageChip(text: String, color: Color, dashed: Boolean, fontSize: TextUnit, padH: Dp, chipHeight: Dp, outline: Dp, radius: Dp) {
+    Box(Modifier.height(chipHeight).chipOutline(color.copy(alpha = .5f), outline, radius, dashed).padding(horizontal = padH), contentAlignment = Alignment.Center) {
         Text(text, fontSize = fontSize, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
     }
 }
@@ -110,6 +129,13 @@ private fun SourceLanguageChip(text: String, color: Color, dashed: Boolean, font
 private fun Modifier.chipOutline(color: Color, width: Dp, radius: Dp, dashed: Boolean): Modifier =
     if (!dashed) this.border(width, color, RoundedCornerShape(radius))
     else this.drawBehind {
-        drawRoundRect(color = color, cornerRadius = CornerRadius(radius.toPx()),
-            style = Stroke(width = width.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(9f, 7f), 0f)))
+        val stroke = width.toPx()
+        val inset = stroke / 2f
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(inset, inset),
+            size = Size(size.width - stroke, size.height - stroke),
+            cornerRadius = CornerRadius((radius.toPx() - inset).coerceAtLeast(0f)),
+            style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), 0f)),
+        )
     }

@@ -2,6 +2,7 @@
 
 package org.viptv.app
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
@@ -105,7 +106,7 @@ class SourceRowBoundsUiTest {
         val sources = listOf(
             SourceCandidate("c1", "addon:20", "[TB+] Torrentio\n1080p", detail = "[EMBER] S01E03.mkv\n👤 10 💾 481.6 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 10, presentation = SourcePresentation(provider_name = "Torrentio", size_label = "481.6 MB")),
             SourceCandidate("c2", "addon:20", "🕵️ [RD⏳] MediaFusion", detail = "[sorrow] S01E03.mkv\n👤 5 💾 876.66 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 5, presentation = SourcePresentation(provider_name = "MediaFusion", size_label = "876.66 MB")),
-            SourceCandidate("c3", "addon:20", "⚡ AniKage • English DUB", detail = "[Group] S01E03.mkv", quality_height = 1080, delivery = "direct", audio_flags = listOf("dubbed"), audio_languages = listOf("en")),
+            SourceCandidate("c3", "addon:20", "⚡ AniKage • English DUB", detail = "[Group] S01E03.mkv", quality_height = 1080, delivery = "direct", audio_flags = listOf("dubbed"), audio_languages = listOf("en"), presentation = SourcePresentation(provider_name = "vSources ⚡")),
         )
         val scene = scene(390, 700) { Column(Modifier.width(390.dp)) { sources.forEach { SourceRow(it, false, {}) } } }
         try {
@@ -120,7 +121,7 @@ class SourceRowBoundsUiTest {
 
     private fun phone(sources: List<SourceCandidate>, capturePath: String) {
         val scene = scene(390, 2400) {
-            Column(Modifier.width(390.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
+            Column(Modifier.width(390.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
         }
         try {
             frames(scene, 4)
@@ -131,7 +132,7 @@ class SourceRowBoundsUiTest {
 
     private fun desktop(sources: List<SourceCandidate>, capturePath: String) {
         val scene = scene(1440, 1400) {
-            Column(Modifier.width(720.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
+            Column(Modifier.width(720.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> SourceRow(source, false, {}, selected = index == 0) } }
         }
         try {
             frames(scene, 4)
@@ -142,7 +143,7 @@ class SourceRowBoundsUiTest {
 
     private fun tv(sources: List<SourceCandidate>, capturePath: String) {
         val scene = scene(1440, 1100, television = true) {
-            Column(Modifier.width(1200.dp)) { sources.forEachIndexed { index, source -> TvSourceRow(source, TvSourceInfo(source.qualityLabel()), 1f, null, true, {}, bestMatch = index == 0) } }
+            Column(Modifier.width(1200.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { sources.forEachIndexed { index, source -> TvSourceRow(source, TvSourceInfo(source.qualityLabel()), 1f, null, true, {}, bestMatch = index == 0) } }
         }
         try {
             frames(scene, 4)
@@ -160,7 +161,7 @@ class SourceRowBoundsUiTest {
             source.qualityLabel()?.let { assertTrue(it in present, "$where: missing quality $it") }
             source.audioChips()?.forEach { chip -> assertTrue(chip.label in present, "$where: missing audio chip ${chip.label}") }
             source.subtitleChips()?.filter { it.label != "Subs" }?.forEach { chip -> assertTrue(chip.label in present, "$where: missing subs chip ${chip.label}") }
-            source.factItems(null).filter { it != "Season pack" }.forEach { fact -> assertTrue(fact in present, "$where: missing fact $fact") }
+            source.factItems(null).filter { it != "Season pack" }.forEach { fact -> assertTrue(present.any { fact in it }, "$where: missing fact $fact") }
         }
         println("=== $where text nodes ===")
         unmerged(scene).filter { text(it).isNotBlank() }.map { text(it) }.distinct().sorted().forEach { println("  $it") }

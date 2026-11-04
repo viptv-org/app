@@ -61,7 +61,7 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
             onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(if (television) 14.dp else 10.dp))
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
             .background(if (inverted) Palette.text else if (television) Palette.raised else Palette.surface)
             .indication(interaction, LocalIndication.current)
             .padding(horizontal = if (television) 28.dp else 16.dp, vertical = if (television) 14.dp else 10.dp),
@@ -81,8 +81,8 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
                     if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp,
                         fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 }
-                SourceAudioSubsLine(source, foreground, RowDetailFont, 11.sp, 12.dp, 5.dp, 2.dp, 6.dp, 1.dp, 4.dp)
-                SourceFactsRow(source, addon, foreground, RowDetailFont, 12.dp, 6.dp)
+                SourceAudioSubsLine(source, foreground, RowDetailFont, 11.sp, 12.dp, 6.dp, 20.dp, 6.dp, 1.dp, 4.dp)
+                SourceFactsRow(source, addon, foreground, RowDetailFont, 12.dp)
             }
             if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
                 Icon(Lucide.Check, "Selected source", Modifier.size(14.dp), tint = Palette.text)

@@ -82,7 +82,7 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
         .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
             onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
     header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
-    Row(Modifier.fillMaxWidth().heightIn(min = tvSourceRowHeight(scale)).clip(RoundedCornerShape(14.dp * scale))
+    Row(Modifier.fillMaxWidth().heightIn(min = tvSourceRowHeight(scale)).clip(RoundedCornerShape(12.dp * scale))
         .background(if (inverted) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
         .padding(horizontal = 28.dp * scale, vertical = 14.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(26.dp * scale)) {
         Column(Modifier.width(tvQualityColumnWidth(scale))) {
@@ -100,8 +100,8 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
                 if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger,
                     fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             }
-            SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (3 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
-            SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp, (10 * scale).dp)
+            SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (28 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
+            SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp)
         }
         if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
             Icon(Lucide.Check, "Selected source", Modifier.size(18.dp * scale), tint = Palette.text)

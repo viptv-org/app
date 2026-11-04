@@ -87,7 +87,7 @@ internal fun SourceCandidate.factItems(addon: String? = null): List<String> = li
     codecLabel(),
     seeders?.let { "↑$it" },
     trackerLabel(),
-    addon?.takeIf { it.isNotBlank() } ?: providerLabel(),
+    addon?.takeIf { it.isNotBlank() } ?: presentation?.provider_name?.takeIf { it.isNotBlank() },
     SEASON_PACK_LABEL.takeIf { seasonPack() },
 ).distinct()
 
