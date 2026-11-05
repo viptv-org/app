@@ -11,7 +11,10 @@ Read the workspace `AGENTS.md` first.
   Android targets).
 - A worktree needs `local.properties` and `git submodule update --init native/core`
   (`scripts/agents/claim.sh` does both), plus the host packages in the workspace
-  `docs/platform-deps.md`.
+  `docs/platform-deps.md`. `native/core` only moves forward: a PR may bump it and
+  never roll it back, and `scripts/ci/native-core-forward-only.sh` fails the checks
+  when the pin goes backwards. A commit that swept in a stale checkout is undone
+  with `git checkout origin/edge -- native/core`.
 - The first `desktopTest` in a fresh worktree builds the Rust engine (about 7 minutes).
 
 ## Checks
