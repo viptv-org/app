@@ -72,7 +72,7 @@ class BackendBannerTvFocusTest {
         }
 
         val state get() = controller.state.value
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         fun focused(): String = nodes().filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.joinToString(" | ") { label(it) }
         fun shows(text: String) = nodes().any { label(it).contains(text) }
