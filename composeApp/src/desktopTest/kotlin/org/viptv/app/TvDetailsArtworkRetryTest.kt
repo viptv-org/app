@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -19,6 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.ART_ATTEMPTS
+import org.viptv.app.features.details.DesktopEpisodeRow
+import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.features.details.TvDetailBackdrop
 import org.viptv.app.features.details.TvEpisodeCard
 import org.viptv.app.images.ConfigureImageLoading
@@ -89,6 +92,22 @@ class TvDetailsArtworkRetryTest {
             render(400, 400, frames = 320) { TvDetailBackdrop(card, 1f) { 0f } }
             assertEquals(ART_ATTEMPTS, art.paths["/landscape.png"] ?: 0, "the landscape is retried before the fallback: ${art.paths}")
             assertEquals(1, art.paths["/poster.png"] ?: 0, "the poster is the fallback: ${art.paths}")
+        }
+    }
+
+    @Test fun detailsEpisodeRowsAskNothingForAStillTheirScreenAlreadyKnowsIsMissing() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/phone.png" to 99, "/desktop.png" to 99), failStatus = 404) { art ->
+            val phone = art.card(title = "Phone Episode", landscape = art.url("phone"))
+            val desktop = art.card(title = "Desktop Episode", landscape = art.url("desktop"))
+            render(520, 420, frames = 120) { TvEpisodeCard(phone, 1f, {}, {}, null, FocusRequester()) }
+            render(520, 420, frames = 120) { TvEpisodeCard(desktop, 1f, {}, {}, null, FocusRequester()) }
+            assertEquals(1, art.paths["/phone.png"] ?: 0, "the first look at the still asks once: ${art.paths}")
+            assertEquals(1, art.paths["/desktop.png"] ?: 0, "the first look at the still asks once: ${art.paths}")
+            render(560, 420, frames = 60) {
+                Column { DetailEpisodeCard(episode = phone, phone = false, play = {}); DesktopEpisodeRow(desktop, play = {}) }
+            }
+            assertEquals(1, art.paths["/phone.png"] ?: 0, "the phone episode row asks nothing for a known-missing still: ${art.paths}")
+            assertEquals(1, art.paths["/desktop.png"] ?: 0, "the desktop episode row asks nothing for a known-missing still: ${art.paths}")
         }
     }
 

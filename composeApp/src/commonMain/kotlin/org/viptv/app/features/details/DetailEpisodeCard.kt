@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.GoneArtwork
+import org.viptv.app.components.isGoneArtwork
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
@@ -77,7 +79,9 @@ internal fun Card.phoneCaption(): String? = listOfNotNull(
 @Composable
 private fun EpisodeArtwork(episode: Card, modifier: Modifier, comingUp: Boolean) {
     Box(modifier.clip(RoundedCornerShape(8.dp)).background(Palette.surface), contentAlignment = Alignment.Center) {
-        AsyncImage(episode.landscape ?: episode.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        val art = episode.landscape ?: episode.poster
+        if (art != null && !GoneArtwork.contains(art)) AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+            onError = { error -> if (error.result.throwable.isGoneArtwork()) GoneArtwork.record(art) })
         if (episode.isPlayPending()) {
             PendingActionSpinner(Modifier.size(30.dp), size = 30.dp, strokeWidth = 3.dp, color = Palette.text)
         } else if (!comingUp) Box(Modifier.size(30.dp).background(Palette.background.copy(alpha = .55f), CircleShape)

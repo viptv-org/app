@@ -34,17 +34,26 @@ internal class ArtFailure(url: String? = null) {
         gone = false
     }
 
-    // The same URL answers the same way: a 4xx is final, so settle now instead of repeating the failure. A still that is gone stays gone.
+    // The same URL answers the same way, so a 4xx is final: settle now instead of repeating the failure.
     fun fail(throwable: Throwable?, url: String?) {
         failed = true
-        val code = (throwable as? HttpException)?.response?.code ?: return
-        if (code !in 400..499 || code == 408 || code == 429) return
-        if (code == 404 || code == 410) {
+        if (throwable == null || !throwable.isFinalArtFailure()) return
+        if (throwable.isGoneArtwork()) {
             gone = true
             GoneArtwork.record(url)
         }
         attempts = ART_ATTEMPTS
     }
+}
+
+private fun Throwable.isFinalArtFailure(): Boolean {
+    val code = (this as? HttpException)?.response?.code ?: return false
+    return code in 400..499 && code != 408 && code != 429
+}
+
+internal fun Throwable.isGoneArtwork(): Boolean {
+    val code = (this as? HttpException)?.response?.code ?: return false
+    return code == 404 || code == 410
 }
 
 @Composable
