@@ -9,8 +9,13 @@ import kotlin.math.roundToInt
 
 internal fun Card.kindLabel(): String = identity.kind.replaceFirstChar { it.uppercase() }
 
-internal fun Card.heroMetadataParts(): List<String> =
-    listOfNotNull(kindLabel().takeIf { it.isNotBlank() }) + metadataParts()
+internal fun Card.heroMetadataParts(): List<String> {
+    val kind = kindLabel()
+    val parts = metadataParts()
+    // A provider subtitle can open with the kind itself ("Movie · 2026 · …"): the hero's line names it once.
+    return listOfNotNull(kind.takeIf { it.isNotBlank() }) +
+        if (parts.firstOrNull()?.equals(kind, ignoreCase = true) == true) parts.drop(1) else parts
+}
 
 internal fun Card.metadataParts(includeRating: Boolean = true): List<String> = metadata?.let { value -> buildList {
     value.year?.let { add(it.toString()) }
