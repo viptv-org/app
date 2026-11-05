@@ -190,10 +190,13 @@ fun App(
                       if (watchOnTvPlatform && remoteTvName != null && state.screen in listOf(Screen.Discover, Screen.Live, Screen.Library)) {
                           { RemoteHeaderButton(remoteTvName, showTip = !prefs.tipDismissed, dismissTip = watchOnTvState::dismissRemoteTip, open = { remoteOpen = true }) }
                       } else null
+                  val unreachableSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
+                  val bannerFocus = remember { TvBannerFocus() }
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable,
-                      LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll, LocalHeaderPills provides phone) { Column(Modifier.fillMaxSize()) {
+                      LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll, LocalHeaderPills provides phone,
+                      LocalTvBannerFocus provides bannerFocus.takeIf { television && unreachableSince != null }) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
                         if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
@@ -292,6 +295,10 @@ fun App(
                   } }
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       PhoneBottomBar(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate, hidden = phoneScroll.barHidden)
+                  }
+                  if (unreachableSince != null) {
+                      BackendBanner(television, phone, bottomBar, unreachableSince, state.backendRetrySeconds,
+                          controller::dismissBackendBanner, bannerFocus)
                   }
                 }
             }

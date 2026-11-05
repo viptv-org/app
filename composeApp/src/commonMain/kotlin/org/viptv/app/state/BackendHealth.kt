@@ -33,6 +33,8 @@ class BackendHealth(private val time: TimeSource = TimeSource.Monotonic) {
 
     fun retryDue(): Boolean = retryAt?.hasPassedNow() ?: true
 
+    val retrySeconds: Int get() = retryDelay(failures).inWholeSeconds.toInt()
+
     companion object {
         val FIRST = 10.seconds
         val MAX = 60.seconds
