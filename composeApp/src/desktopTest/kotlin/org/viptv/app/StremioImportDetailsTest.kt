@@ -34,9 +34,9 @@ class StremioImportDetailsTest {
             StremioDetailsStatus(true, 162, 162, 160), StremioDetailsStatus(false, 162, 162, 161))
         var readBeforeApply = false
         transport.details = { readBeforeApply = readBeforeApply || transport.calls.none { it.startsWith("apply") }; statuses() }
-        var changes = 0
-        val session = session(transport, changed = { changes++ })
-        val seen = mutableListOf<StremioTitleDetails?>()
+        val changes = java.util.concurrent.atomic.AtomicInteger()
+        val session = session(transport, changed = { changes.incrementAndGet() })
+        val seen: MutableList<StremioTitleDetails?> = java.util.concurrent.CopyOnWriteArrayList()
         val watcher = scope.launch { session.state.collect { seen += it.details } }
         session.importNow()
         assertEquals(StremioImportStage.Complete, session.state.value.stage)
@@ -48,7 +48,7 @@ class StremioImportDetailsTest {
         assertTrue(StremioTitleDetails(40, 162, StremioDetailsPhase.Running) in seen, "$seen")
         delay(60)
         assertEquals(4, transport.detailsCalls(), "Polling stops once the server reports the run finished")
-        assertEquals(2, changes, "Home is checked after apply and again once the cards are filled")
+        assertEquals(2, changes.get(), "Home is checked after apply and again once the cards are filled")
         assertFalse(readBeforeApply, "Details are read only after the import is applied")
         watcher.cancel()
     }
