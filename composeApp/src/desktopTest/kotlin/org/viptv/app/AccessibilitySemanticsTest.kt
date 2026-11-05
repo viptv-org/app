@@ -32,15 +32,12 @@ import org.viptv.app.components.PhoneSheet
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
 import org.viptv.app.components.SelectPresentation
-import org.viptv.app.connection.Profile
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.features.calendar.TvCalendarScreen
-import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.ApplicationState
-import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.Test
@@ -53,35 +50,21 @@ class AccessibilitySemanticsTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
-    private val profiles = listOf(Profile("1", "Ana", null))
-
     private val days = (1..7).map { index ->
         CalendarDay("day-$index", "W", "$index", "Day $index", "Day $index")
     }
-
-    private val screens: Map<String, ApplicationState> = mapOf(
-        "Home" to ApplicationState(screen = Screen.Home, selectedProfile = "1", profiles = profiles,
-            localMode = true, home = PreviewData.home),
-        "Details" to ApplicationState(screen = Screen.Details, selectedProfile = "1", profiles = profiles,
-            localMode = true, detail = PreviewData.detail),
-        "Settings" to ApplicationState(screen = Screen.Settings, selectedProfile = "1", profiles = profiles, localMode = true),
-        "Search" to ApplicationState(screen = Screen.Search, selectedProfile = "1", profiles = profiles,
-            localMode = true, searchTerm = "monster", results = PreviewData.posters),
-        "Calendar" to ApplicationState(screen = Screen.Calendar, selectedProfile = "1", profiles = profiles,
-            localMode = true, calendarDays = days, calendarAvailable = true),
-    )
 
     @Test fun everyClickableNodeOnTheMainScreensIsNamedOrHasARole() {
         Shell().use { shell ->
             val violations = buildList {
                 for (name in listOf("Home", "Details", "Settings", "Search", "Calendar")) {
-                    shell.show(screens.getValue(name))
+                    shell.show(a11yPages.getValue(name))
                     shell.frames()
                     addAll(shell.clickableViolations().map { "$name: $it" })
                 }
 
                 // Open the profile menu on Home and walk its overlay items too.
-                shell.show(screens.getValue("Home"))
+                shell.show(a11yPages.getValue("Home"))
                 shell.frames()
                 val trigger = shell.nodes().singleOrNull {
                     it.config.contains(SemanticsActions.OnClick) &&
@@ -95,9 +78,35 @@ class AccessibilitySemanticsTest {
         }
     }
 
+    @Test fun everyClickableOnEveryPageIsNamed() {
+        val violations = buildList {
+            for ((width, height) in listOf(390 to 844, 1280 to 900)) {
+                Shell(width, height).use { shell ->
+                    for ((name, state) in a11yPages) {
+                        shell.show(state)
+                        shell.frames(80)
+                        addAll(shell.unnamedClickables().map { "$name at ${width}px: $it" })
+                    }
+                }
+            }
+            for (surface in a11ySurfaces) {
+                val scene = ImageComposeScene(surface.width, surface.height, Density(1f)) {
+                    ViptvTheme(surface.television) {
+                        Surface(Modifier.fillMaxSize(), color = Palette.background) { surface.content() }
+                    }
+                }
+                try {
+                    frames(scene, 80)
+                    addAll(nodes(scene).unnamedClickables(surface.width, surface.height).map { "${surface.name}: $it" })
+                } finally { scene.close() }
+            }
+        }
+        assertTrue(violations.isEmpty(), "clickables without a name:\n${violations.joinToString("\n")}")
+    }
+
     @Test fun calendarDateChipsExposeTabRoleAndSelection() {
         Shell().use { shell ->
-            shell.show(screens.getValue("Calendar"))
+            shell.show(a11yPages.getValue("Calendar"))
             shell.frames()
             val chips = shell.nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.Tab }
             assertEquals(7, chips.size, "seven date chips, not ${chips.size}")
@@ -195,7 +204,7 @@ class AccessibilitySemanticsTest {
 
     @Test fun theProfileTriggerIsAButtonAndItsMenuAnnouncesAPane() {
         Shell().use { shell ->
-            shell.show(screens.getValue("Home"))
+            shell.show(a11yPages.getValue("Home"))
             shell.frames()
             val trigger = shell.nodes().single {
                 it.config.contains(SemanticsActions.OnClick) &&
@@ -221,7 +230,7 @@ class AccessibilitySemanticsTest {
         .filter { it.config.contains(SemanticsActions.OnClick) &&
             it.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { c -> c == "Close" } }
 
-    private class Shell : AutoCloseable {
+    private class Shell(private val width: Int = 390, private val height: Int = 844) : AutoCloseable {
         private val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
             override suspend fun save(session: SavedRemoteSession) = Unit
@@ -232,7 +241,7 @@ class AccessibilitySemanticsTest {
         private var previousLoader: ImageLoader? = null
         private var appLoader: ImageLoader? = null
         private var frame = 0L
-        val scene = ImageComposeScene(390, 844, Density(1f)) {
+        val scene = ImageComposeScene(width, height, Density(1f)) {
             val context = LocalPlatformContext.current
             remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
             App(providedController = controller, manageControllerLifecycle = false)
@@ -247,6 +256,8 @@ class AccessibilitySemanticsTest {
         fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
+
+        fun unnamedClickables(): List<String> = nodes().unnamedClickables(width, height)
 
         fun clickableViolations(): List<String> = nodes()
             .filter { it.config.contains(SemanticsActions.OnClick) }
