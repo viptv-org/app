@@ -22,6 +22,9 @@ Read the workspace `AGENTS.md` first.
 - `:composeApp:testAndroidHostTest` (Robolectric) when `androidMain` changes;
   `:androidApp:assembleDebug -Pviptv.abis=x86_64` when `androidApp/` changes.
 - Compose "LayoutNode not found in RectList" is a known flake: rerun that class alone.
+- Wait for asynchronous controller work with `scene.renderUntil { … }`
+  (`composeApp/src/desktopTest/kotlin/org/viptv/app/RenderUntil.kt`), never a fixed
+  frame count; fixed counts are only for animations, which need the frame clock.
 - `.github/workflows/app-checks.yml` runs the same three tasks on every PR into
   `edge` and `main` and on pushes to `edge`; it clones `playback-gateway` for the
   desktop torrent resource and uploads failed `desktopTest` reports.
