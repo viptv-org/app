@@ -14,6 +14,8 @@ internal object ServerMessages {
 
     const val EMAIL_STATUS = "Sent to your email address."
 
+    const val UPDATE_APP = "Update VIPTV to use this server's current catalog and playback APIs."
+
     const val GENERIC = "Something went wrong. Try again."
 
     private const val MAX_LENGTH = 140
