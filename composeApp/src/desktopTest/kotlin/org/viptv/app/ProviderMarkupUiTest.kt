@@ -37,6 +37,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ProviderMarkupUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val markup = "First line<br>Second <i>italic</i> &amp; more"
     private val prose = "First line\nSecond italic & more"
