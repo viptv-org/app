@@ -9,12 +9,18 @@ import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import kotlinx.serialization.json.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.app.state.*
 import kotlin.test.*
 
 class PlaybackLifecycleTest {
+    private object NoOwner : LifecycleOwner {
+        override val lifecycle: Lifecycle get() = error("The observer never reads its owner")
+    }
+
     @Test fun leavingAndReturningKeepsPlaybackAndRouteWithoutResumingUserPause() = runBlocking {
         val controller = ApplicationController(this)
         val input = PlaybackInput("attempt", "https://media.example/movie.mp4", positionMillis = 50_000)
@@ -93,5 +99,38 @@ class PlaybackLifecycleTest {
             controller.resumePlayback()
             assertTrue(controller.state.value.paused)
         } finally { remote.close() }
+    }
+
+    @Test fun backgroundingThroughTheLifecycleFlushesThePositionWithoutPausing() = runBlocking {
+        val positions = mutableListOf<Long>()
+        val client = HttpClient(MockEngine { request ->
+            assertEquals("/api/profiles/profile/progress", request.url.encodedPath)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            positions += body.getValue("record").jsonObject.getValue("position_millis").jsonPrimitive.long
+            respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", client = client, browserMode = false)
+        val controller = ApplicationController(this)
+        val input = PlaybackInput("attempt", "https://media.example/movie.mp4", profileId = "profile")
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Player, playback = input,
+            sourceTitle = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "metadata", title = "Movie", badges = emptyList()))
+        controller.lastProgress = PlayerFact.Progress(50_000, 100_000)
+        val observer = controller.foregroundObserver()
+        try {
+            observer.onStateChanged(NoOwner, Lifecycle.Event.ON_STOP)
+            controller.progressJob?.join()
+            assertEquals(listOf(50_000L), positions, "Backgrounding posts the current position")
+            assertFalse(controller.state.value.paused, "Backgrounding flushes without pausing what is listening")
+
+            observer.onStateChanged(NoOwner, Lifecycle.Event.ON_START)
+            controller.progressJob?.join()
+            assertFalse(controller.state.value.paused, "Returning resumes nothing that was not paused")
+            assertEquals(listOf(50_000L), positions, "Returning does not post another sample")
+        } finally {
+            observer.onStateChanged(NoOwner, Lifecycle.Event.ON_STOP)
+            controller.progressJob?.join()
+            remote.close()
+        }
     }
 }
