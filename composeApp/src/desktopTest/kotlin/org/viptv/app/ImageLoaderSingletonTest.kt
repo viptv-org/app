@@ -30,6 +30,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ImageLoaderSingletonTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val poster = "https://simkl.in/posters/20/204275190b49d24215_m.webp"
     private val card = Card(MediaIdentity("simkl:134:1", "movie", emptyList()), provider_id = "simkl",

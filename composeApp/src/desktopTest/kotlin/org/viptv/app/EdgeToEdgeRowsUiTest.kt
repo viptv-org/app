@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class EdgeToEdgeRowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private class Case(val name: String, val width: Int, val gutter: Int, val title: String, val prefix: String,
         val arrows: Boolean = false, val content: @Composable () -> Unit)
 

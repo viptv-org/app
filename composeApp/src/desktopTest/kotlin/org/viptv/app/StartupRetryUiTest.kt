@@ -17,6 +17,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class StartupRetryUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val error = "Could not reach your server. Check the connection and try again."
 
     @Test fun theTvWelcomeStepOffersTheRetryBelowItsReason() {
@@ -25,7 +26,7 @@ class StartupRetryUiTest {
             ViptvTheme(true) { TvSignIn("https://fixture.example", false, error, null, { _, _, _ -> }, {}, retry = { retried++ }) }
         }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val nodes = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             val reason = nodes.single { text(it) == error }
             val action = nodes.single { text(it) == "Try again" && it.config.contains(SemanticsActions.OnClick) }
@@ -41,7 +42,7 @@ class StartupRetryUiTest {
             ViptvTheme(true) { TvSignIn("https://fixture.example", false, "Session expired. Sign in again.", null, { _, _, _ -> }, {}) }
         }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             assertTrue(scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }.none { text(it) == "Try again" },
                 "An expired session offers no retry")
         } finally { scene.close() }
@@ -53,7 +54,7 @@ class StartupRetryUiTest {
             ConnectScreen(false, "https://fixture.example", false, error, null, { _, _, _ -> }, phone = true, retry = { retried++ })
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val nodes = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             val action = nodes.single { text(it) == "Try again" && it.config.contains(SemanticsActions.OnClick) }
             assertTrue(action.boundsInRoot.top >= 0 && action.boundsInRoot.bottom <= 844, "The action is inside the viewport: ${action.boundsInRoot}")

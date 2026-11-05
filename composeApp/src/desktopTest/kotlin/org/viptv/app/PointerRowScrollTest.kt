@@ -29,6 +29,7 @@ import kotlin.test.*
 
 class PointerRowScrollTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Scene(pointer: Boolean, television: Boolean = false, content: @Composable () -> Unit) : AutoCloseable {

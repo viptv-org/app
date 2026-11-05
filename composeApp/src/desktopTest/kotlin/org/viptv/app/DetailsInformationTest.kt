@@ -23,6 +23,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsInformationTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val description = "After a cosmic event lifts their street out of the suburbs, the Platt family " +
         "learns what their neighbours were really hiding."
     private val enriched = Card(MediaIdentity("oak-street", "series", emptyList()), provider_id = "addon:21",

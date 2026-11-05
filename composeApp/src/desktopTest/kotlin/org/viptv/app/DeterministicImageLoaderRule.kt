@@ -18,8 +18,13 @@ private class DeterministicFetcher : Fetcher {
     override suspend fun fetch(): FetchResult = throw IOException("Image loading is disabled in render tests.")
 }
 
+// Local files read synchronously on the composition thread; only remote fetches carry the async race.
 private class DeterministicFetcherFactory : Fetcher.Factory<coil3.Uri> {
-    override fun create(data: coil3.Uri, options: Options, imageLoader: ImageLoader): Fetcher = DeterministicFetcher()
+    override fun create(data: coil3.Uri, options: Options, imageLoader: ImageLoader): Fetcher? =
+        when (data.scheme) {
+            "http", "https" -> DeterministicFetcher()
+            else -> null
+        }
 }
 
 @OptIn(DelicateCoilApi::class)

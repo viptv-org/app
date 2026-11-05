@@ -40,6 +40,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class EpisodeAirDateUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val now = 1_772_668_800_000L
     private val released = 1_772_582_400_000L

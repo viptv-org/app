@@ -29,6 +29,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class)
 class ListEndFooterUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Composable
     private fun FooterView(modifier: Modifier = Modifier, loading: Boolean = false, ended: Boolean = false,

@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class HomeRowRefreshAnchorTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun card(id: String, title: String) =
         Card(MediaIdentity(id, "movie", emptyList()), provider_id = "addon:1", title = title, badges = emptyList())

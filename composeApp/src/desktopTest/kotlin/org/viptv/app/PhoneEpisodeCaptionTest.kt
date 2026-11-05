@@ -29,6 +29,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PhoneEpisodeCaptionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val series = Card(MediaIdentity("tt570", "series", emptyList()), provider_id = "addon:21", title = "Fixture show", badges = emptyList())
     private fun episode(number: Long, progress: Double? = null, watched: Boolean = false, minutes: Long? = 44) = series.copy(

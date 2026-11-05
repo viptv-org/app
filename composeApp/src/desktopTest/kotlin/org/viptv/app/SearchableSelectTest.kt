@@ -32,6 +32,7 @@ import java.io.PrintStream
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SearchableSelectTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val genres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Café Society")
         .map { SelectOption(it.lowercase(), it) }
 
@@ -220,7 +221,7 @@ class SearchableSelectTest {
             ViptvTheme(false, pointer = pointer) { Surface(Modifier.fillMaxSize(), color = Palette.background) { Box(Modifier.padding(20.dp)) { content() } } }
         }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flatten)
         fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

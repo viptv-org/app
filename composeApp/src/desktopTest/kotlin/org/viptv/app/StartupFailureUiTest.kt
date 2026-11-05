@@ -12,13 +12,14 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class StartupFailureUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun expiredRestoreReasonIsVisibleOnTheActualWelcomeStepAndSignInRemainsEnabled() {
         val reason = "Session expired. Sign in again."
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             ViptvTheme(true) { TvSignIn("", false, reason, null, { _, _, _ -> }, {}) }
         }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val nodes = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             val message = nodes.single { text(it) == reason }
             assertTrue(message.boundsInRoot.top >= 656 && message.boundsInRoot.bottom < 960)

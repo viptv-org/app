@@ -26,6 +26,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class DetailsSheetSemanticsTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val card = Card(MediaIdentity("tt797", "movie", emptyList()), provider_id = "addon:4",
         title = "Details Sheet Title", badges = emptyList())
@@ -89,7 +90,7 @@ class DetailsSheetSemanticsTest {
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
 
     private fun frames(scene: ImageComposeScene, count: Int = 20) =
-        repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+        repeat(count) { scene.render(it * 16_666_667L).close() }
 
     private companion object {
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

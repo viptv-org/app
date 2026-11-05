@@ -22,6 +22,7 @@ import kotlin.test.*
 
 class SourceProducerStatusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun source(id: String, providerId: String, label: String) = SourceCandidate(id, providerId, "Stream $id",
         detail = "[Stream $id] Release $id", quality_height = 1080, presentation = SourcePresentation(provider_name = label))

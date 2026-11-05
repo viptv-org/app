@@ -28,6 +28,7 @@ import kotlin.test.*
 
 class PhoneSignInBackTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun scene(startPairing: ((String) -> Unit)?) = ImageComposeScene(390, 844, Density(1f)) {
         ViptvTheme(pointer = false) {
@@ -48,7 +49,7 @@ class PhoneSignInBackTest {
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
-    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
 
     private fun backCount(scene: ImageComposeScene) = nodes(scene).count { it.config.getOrNull(SemanticsProperties.TestTag) == PageBackTag }
 

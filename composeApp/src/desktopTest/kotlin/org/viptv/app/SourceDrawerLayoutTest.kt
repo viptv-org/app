@@ -21,6 +21,7 @@ import kotlin.test.*
 
 class SourceDrawerLayoutTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val title = Card(MediaIdentity("tt13293588", "movie", emptyList()), provider_id = "addon:21", title = "Oak Street", badges = emptyList())
     private val release = "Oak.Street.2026.2160p.WEB-DL.DUAL.DDP5.1.Atmos.DV.HDR10.H.265.MSubs-ToonsHub 👤 412 💾 14.2 GB ⚙️ ThePirateBay [RD+] multi-audio"
     private val sources = (1..3).map { n ->

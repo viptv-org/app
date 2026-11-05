@@ -25,6 +25,7 @@ import kotlin.test.*
 
 class ListItemMotionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun entrance(hasContent: State<Boolean>, sink: (ListEntrance) -> Unit): ImageComposeScene =
         ImageComposeScene(100, 100, Density(1f)) {
@@ -33,7 +34,7 @@ class ListItemMotionTest {
 
     private fun render(scene: ImageComposeScene, frames: Int = 2) {
         var time = 0L
-        repeat(frames) { scene.render(time).close(); time += 16_666_667L; Thread.sleep(2) }
+        repeat(frames) { scene.render(time).close(); time += 16_666_667L }
     }
 
     @Test fun aFirstLoadAnimatesOnceContentArrives() {

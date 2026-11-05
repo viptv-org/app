@@ -31,6 +31,7 @@ import kotlinx.coroutines.runBlocking
 
 class TvSearchEdgeUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val screenWidth = 1920

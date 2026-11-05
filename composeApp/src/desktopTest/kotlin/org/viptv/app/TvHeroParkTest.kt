@@ -16,6 +16,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class TvHeroParkTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun card(id: String) = Card(MediaIdentity(id, "movie", emptyList()), provider_id = "fixture", title = "Card $id", badges = emptyList())
 
@@ -38,7 +39,7 @@ class TvHeroParkTest {
             }
             return frames
         }
-        fun flush(count: Int = 8) = repeat(count) { scene.render(System.nanoTime() - start).close(); Thread.sleep(8) }
+        fun flush(count: Int = 8) = repeat(count) { scene.render(System.nanoTime() - start).close() }
         try {
             pump(500)
             assertEquals(0, observed.value?.index, "the pass starts at the first featured card")

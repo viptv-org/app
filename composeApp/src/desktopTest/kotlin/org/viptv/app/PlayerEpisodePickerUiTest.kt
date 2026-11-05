@@ -32,6 +32,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class PlayerEpisodePickerUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun still(number: Long) = "https://img.example/private-show/e$number-still.jpg"
@@ -189,7 +190,7 @@ class PlayerEpisodePickerUiTest {
 
     private class Ui(val scene: ImageComposeScene) {
         var time = 0L
-        fun frames() = repeat(16) { time += 16_666_667L; scene.render(time).close(); Thread.sleep(4) }
+        fun frames() = repeat(16) { time += 16_666_667L; scene.render(time).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

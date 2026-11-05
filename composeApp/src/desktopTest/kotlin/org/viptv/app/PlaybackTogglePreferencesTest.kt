@@ -15,6 +15,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlaybackTogglePreferencesTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun phonePlaybackTogglesSaveTheProfilePreferenceBody() {
         val saved = mutableListOf<ProfilePreferences>()
@@ -68,7 +69,7 @@ class PlaybackTogglePreferencesTest {
         assertEquals(state, switch(scene, label).config[SemanticsProperties.ToggleableState])
     private fun toggle(scene: ImageComposeScene, label: String) =
         assertTrue(switch(scene, label).config[SemanticsActions.OnClick].action!!.invoke())
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

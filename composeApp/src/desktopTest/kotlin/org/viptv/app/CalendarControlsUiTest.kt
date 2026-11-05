@@ -19,6 +19,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class CalendarControlsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val days=listOf(CalendarDay("one","Thu","15","Today","Oct15"),CalendarDay("two","Fri","16","Tomorrow","Oct16"))
     private val card=PreviewTvCalendar.entries.first().card.copy(identity=MediaIdentity("simkl:tv:20","series",emptyList()),provider_id="simkl",title="Scheduled series",description="An actual scheduled release.",metadata_origin=MetadataOrigin("simkl"))
     private val entry=CalendarEntry("release","one","4 PM",card,subtitle="S2 E4 · Actual episode",aired=true,description="An actual scheduled release.",season=2,episode=4)
@@ -135,11 +136,11 @@ class CalendarControlsUiTest {
         .single{it.boundsInRoot.top<=band.first&&it.boundsInRoot.bottom>=band.second}
     private fun reach(node:SemanticsNode)=node.config[SemanticsProperties.HorizontalScrollAxisRange].let{range->range.value() to range.maxValue()}
     private fun near(expected:Float,actual:Float,what:String)=assertTrue(kotlin.math.abs(expected-actual)<=1f,"$what: expected $expected, was $actual")
-    private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(20){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}
+    private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(20){s.render((offset+it)*16_666_667L).close()}
     private fun await(s:ImageComposeScene,offset:Int,what:String,condition:()->Boolean){
         val deadline=System.nanoTime()+2_000_000_000L
         var frame=offset
-        do{s.render(frame++*16_666_667L).close();if(condition())return;Thread.sleep(3)}while(System.nanoTime()<deadline)
+        do{s.render(frame++*16_666_667L).close();if(condition())return}while(System.nanoTime()<deadline)
         fail("$what did not appear; texts="+nodes(s).map(::text).filter{it.isNotBlank()})
     }
     private fun nodes(s:ImageComposeScene)=s.semanticsOwners.flatMap{flatten(it.rootSemanticsNode)}

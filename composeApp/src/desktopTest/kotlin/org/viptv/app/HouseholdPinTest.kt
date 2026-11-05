@@ -15,6 +15,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class HouseholdPinTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun management(pin: Boolean, kids: Boolean = false) = ProfileManagement(
         listOf(ServerProfile("1", "Viewer", kids = kids, max_age = if (kids) 10 else null)),
@@ -97,7 +98,7 @@ class HouseholdPinTest {
 
     private fun scene(content: @androidx.compose.runtime.Composable () -> Unit) =
         ImageComposeScene(390, 844, Density(1f)) { ViptvTheme { content() } }
-    private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(it * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

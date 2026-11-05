@@ -44,6 +44,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class LandscapeHeroUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val profile = Profile("qa", "QA profile", null, avatarId = "initial-blue")
     private val title = "Fixture film"
 

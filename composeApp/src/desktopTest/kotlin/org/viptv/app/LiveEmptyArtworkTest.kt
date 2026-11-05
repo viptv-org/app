@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveEmptyArtworkTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhotosArePackagedNotPlaceholders() = runBlocking {
         assertTrue(Res.readBytes(LiveEmptyWideArt).size > 50_000, "the wide photo is a real packaged image")
@@ -69,7 +70,7 @@ class LiveEmptyArtworkTest {
     private fun render(scene: ImageComposeScene, name: String): IntArray {
         var time = 0L
         fun frame() = scene.render(time).also { time += 16_666_667L }
-        fun settle(frames: Int) = repeat(frames) { frame().close(); Thread.sleep(3) }
+        fun settle(frames: Int) = repeat(frames) { frame().close() }
         fun pixels(capture: Boolean): IntArray = frame().use { image ->
             if (capture) System.getenv("VIPTV_LIVE_CAPTURE_DIR")?.let { path ->
                 File(path).mkdirs()

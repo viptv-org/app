@@ -29,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class IdleRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun idleDesktopHomeAndSearchStopRequestingFrames() = runBlocking {
         val client = HttpClient(MockEngine { respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json")) }) { configureTransport() }

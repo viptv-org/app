@@ -43,6 +43,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ProfileHomeSkeletonTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun scope(profile: String) = Scope("local", "device", profile, 1)
     private fun card(title: String) = Card(MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl", title = title, badges = emptyList())
@@ -143,12 +144,12 @@ class ProfileHomeSkeletonTest {
             HomeScreen(home = snapshot, television = false, open = {}, retry = {}, busy = busy)
         } }
         try {
-            repeat(18) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(18) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(scene.hasLoadingHome(), "the phone Home renders a skeleton on its first frames")
             assertTrue(scene.texts().none { it == "Profile one title" || it == "Profile two title" })
 
             busy = false; snapshot = home("2", "Profile two title")
-            repeat(24) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(24) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(scene.texts().contains("Profile two title"))
             assertFalse(scene.hasLoadingHome(), "content replaces the skeleton")
         } finally { scene.close() }
@@ -162,7 +163,7 @@ class ProfileHomeSkeletonTest {
         } }
         try {
             var frame = 0L
-            repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(12) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(scene.hasLoadingHome(), "reduced motion keeps the static placeholders")
         } finally { scene.close() }
     }

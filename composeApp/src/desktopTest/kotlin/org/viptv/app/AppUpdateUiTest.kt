@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AppUpdateUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val platform = FakeUpdatePlatform(feedJson(1301))
     private val updater = AppUpdater(platform, scope) { "https://viptv.example/updates/android/update.json" }
@@ -35,7 +36,7 @@ class AppUpdateUiTest {
     private class Scene(width: Int, height: Int, content: @androidx.compose.runtime.Composable () -> Unit) : AutoCloseable {
         val scene = ImageComposeScene(width, height, Density(1f), content = content)
         private var frame = 0L
-        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }.orEmpty()

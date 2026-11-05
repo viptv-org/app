@@ -43,6 +43,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AddonFailureNoticeTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val captureDir = File("/tmp/viptv-addon-failure").apply { mkdirs() }
 
@@ -195,7 +196,7 @@ class AddonFailureNoticeTest {
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 30) =
-        repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }

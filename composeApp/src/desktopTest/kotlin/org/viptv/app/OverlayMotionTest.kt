@@ -20,6 +20,7 @@ import kotlin.test.*
 
 class OverlayMotionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun render(scene: ImageComposeScene, n: Int, start: Int = 0): Int {
         var frame = start

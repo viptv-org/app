@@ -34,6 +34,7 @@ import kotlin.test.assertTrue
 
 class TvCrashNoticeFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Fixture(var sent: Int = 0, var discarded: Int = 0) : AutoCloseable {

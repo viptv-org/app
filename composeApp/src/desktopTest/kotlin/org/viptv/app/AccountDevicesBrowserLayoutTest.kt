@@ -22,11 +22,12 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesBrowserLayoutTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun browserAccountLayoutUsesTheSuppliedSidebarAndContentGeometry() {
         var addonLoads = 0
         val scene = ImageComposeScene(1440,860,Density(1f)) { Fixture { addonLoads++ } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node)+node.children.flatMap(::flatten)
             val nodes = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             val titles = nodes.filter { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Devices" } == true }
@@ -43,7 +44,7 @@ class AccountDevicesBrowserLayoutTest {
             }
             val addonAction = nodes.single { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "Add-ons" } == true && node.config.contains(SemanticsActions.OnClick) }
             addonAction.config[SemanticsActions.OnClick].action!!.invoke()
-            repeat(12) { scene.render((it+30)*16_666_667L).close();Thread.sleep(4) }
+            repeat(12) { scene.render((it+30)*16_666_667L).close() }
             assertEquals(2,addonLoads,"Add-on configuration refreshes when its section opens (1 eager + 1 on open)")
         } finally { scene.close() }
     }

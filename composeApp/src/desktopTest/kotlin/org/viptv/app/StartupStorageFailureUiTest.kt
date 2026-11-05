@@ -13,6 +13,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class StartupStorageFailureUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val error = "Your saved connection could not be read from secure storage. Choose a connection to continue."
 
     @Test fun desktopInitialChoiceShowsStorageFailureAndKeepsLocalActionVisible() = verify(false)
@@ -25,7 +26,7 @@ class StartupStorageFailureUiTest {
             ConnectScreen(false, "https://fixture.example", false, error, { local++ }, { _, _, _ -> }, desktop = !phone, phone = phone)
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val nodes = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
             val message = nodes.single { text(it) == error }
             assertTrue(message.boundsInRoot.top >= 0 && message.boundsInRoot.bottom <= height)

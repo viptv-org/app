@@ -17,6 +17,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AvatarPickerUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     init { runBlocking { loadAvatarCatalog() } }
     private val saved = Profile("kid", "Kid", null, avatarStyle = "clay", avatarChoice = 20, avatarUrl = "https://avatars.example/clay-20.png")
 
@@ -103,7 +104,7 @@ class AvatarPickerUiTest {
                 AvatarPicker(profile, false, layout, {}, choose)
             } }
         }
-    private fun frames(s: ImageComposeScene, offset: Int = 0) = repeat(16) { s.render((offset + it) * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(s: ImageComposeScene, offset: Int = 0) = repeat(16) { s.render((offset + it) * 16_666_667L).close() }
     private fun nodes(s: ImageComposeScene) = s.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
     private fun flatten(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flatten)
     private fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
@@ -118,7 +119,7 @@ class AvatarPickerUiTest {
         if (config.contains(SemanticsActions.OnClick)) this else parent?.parentOrSelfClickable() ?: this
     private fun capture(scene: ImageComposeScene, name: String) {
         val path = System.getenv("VIPTV_PROFILE_CAPTURE_DIR") ?: return
-        repeat(40) { scene.render((200 + it) * 16_666_667L).close(); Thread.sleep(50) }
+        repeat(40) { scene.render((200 + it) * 16_666_667L).close() }
         File(path).mkdirs()
         scene.render(1_000_000_000L).use { image -> image.encodeToData()!!.use { File(path, "$name.png").writeBytes(it.bytes) } }
     }

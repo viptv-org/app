@@ -38,6 +38,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class BufferedTimelineUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val accent = Color(0xFFF5C542).toArgb()
     // White 50% over the inactive bar: .3 white over black for the pointer slider, .22 on the TV timeline.
@@ -278,7 +279,7 @@ class BufferedTimelineUiTest {
     }
 
     private var frame = 0L
-    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render(frame++ * 16_666_667L).close() }
 
     private fun capture(scene: ImageComposeScene, name: String) {
         System.getenv("VIPTV_BUFFERED_TIMELINE_CAPTURE_DIR")?.let { path ->
