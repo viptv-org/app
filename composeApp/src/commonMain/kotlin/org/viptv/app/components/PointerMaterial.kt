@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
@@ -43,7 +44,7 @@ fun Button(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean 
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val container = hoverFill(source, colors.containerColor, enabled = enabled)
-    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.Button(onClick, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
         colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
@@ -56,7 +57,7 @@ fun OutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: 
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val container = hoverFill(source, colors.containerColor, enabled = enabled)
-    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.OutlinedButton(onClick, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
         colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
@@ -69,7 +70,7 @@ fun TextButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Bool
     content: @Composable RowScope.() -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val container = hoverFill(source, colors.containerColor, enabled = enabled)
-    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
+    DesignHoverOnly { androidx.compose.material3.TextButton(onClick, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled).pressScale(source, pressedScale), enabled, shape,
         colors.copy(containerColor = container), elevation, border, contentPadding, source, content) }
 }
 
@@ -79,7 +80,7 @@ fun IconButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Bool
     shape: Shape = IconButtonDefaults.standardShape, pressedScale: Float = Motion.button, content: @Composable () -> Unit) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val container = hoverFill(source, colors.containerColor, enabled = enabled)
-    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.cursorIf(enabled).pressScale(source, pressedScale), enabled,
+    DesignHoverOnly { androidx.compose.material3.IconButton(onClick, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled).pressScale(source, pressedScale), enabled,
         colors.copy(containerColor = container), source, shape, content) }
 }
 
@@ -100,7 +101,7 @@ fun FilterChip(selected: Boolean, onClick: () -> Unit, label: @Composable () -> 
     shape: Shape = FilterChipDefaults.shape, colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
     elevation: SelectableChipElevation? = FilterChipDefaults.filterChipElevation(),
     border: BorderStroke? = FilterChipDefaults.filterChipBorder(enabled, selected), interactionSource: MutableInteractionSource? = null) =
-    androidx.compose.material3.FilterChip(selected, onClick, label, modifier.cursorIf(enabled), enabled, leadingIcon, trailingIcon,
+    androidx.compose.material3.FilterChip(selected, onClick, label, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled), enabled, leadingIcon, trailingIcon,
         shape, colors, elevation, border, interactionSource)
 
 @Composable
@@ -116,7 +117,7 @@ fun Surface(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean
     color: Color = MaterialTheme.colorScheme.surface, contentColor: Color = contentColorFor(color),
     tonalElevation: Dp = 0.dp, shadowElevation: Dp = 0.dp, border: BorderStroke? = null,
     interactionSource: MutableInteractionSource? = null, content: @Composable () -> Unit) =
-    androidx.compose.material3.Surface(onClick, modifier.cursorIf(enabled), enabled, shape, color, contentColor,
+    androidx.compose.material3.Surface(onClick, modifier.sizeIn(minWidth = TapTargetMinimum, minHeight = TapTargetMinimum).cursorIf(enabled), enabled, shape, color, contentColor,
         tonalElevation, shadowElevation, border, interactionSource, content)
 
 @Composable

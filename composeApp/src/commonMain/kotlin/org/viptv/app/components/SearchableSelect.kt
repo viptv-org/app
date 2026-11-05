@@ -167,11 +167,12 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
     val chipDown = LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
-    Row(modifier.chipFrame(on, focused, metrics, shape)
+    Row(modifier
         .then(if (chipFocus == null) Modifier else Modifier.focusRequester(chipFocus))
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
+        .chipFrame(on, focused, metrics, shape)
         .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         if (on) Icon(Lucide.Check, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.text)
@@ -186,10 +187,11 @@ internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, 
     val chipDown = down ?: LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
-    Row(modifier.chipFrame(false, focused, metrics, shape, bordered = false)
+    Row(modifier
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
+        .chipFrame(false, focused, metrics, shape, bordered = false)
         .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         icon?.let { Icon(it, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.secondary) }
@@ -264,8 +266,8 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
             .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
             .onFocusChanged { focused = it.isFocused }
             .tvFocusOutline(focused, metrics.corner, metrics.scale))
-        .chipFrame(highlighted, focused, metrics, shape)
         .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick)
+        .chipFrame(highlighted, focused, metrics, shape)
         .padding(start = metrics.startInset, end = metrics.endInset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         // Not `fill`: inside the scrolling bar the chip is as wide as its text, up to the cap.

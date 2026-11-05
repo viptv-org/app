@@ -170,10 +170,11 @@ private fun RowMessageCard(width: Int, portrait: Boolean, retry: () -> Unit) {
 
 @Composable
 private fun CarouselArrow(forward: Boolean, enabled: Boolean, move: () -> Unit) {
-    Box(Modifier.size(28.dp).clip(CircleShape).border(1.dp, Palette.raised, CircleShape)
-        .pointerClickable(enabled = enabled, onClick = move, shape = CircleShape), contentAlignment = Alignment.Center) {
-        Icon(if (forward) Lucide.ChevronRight else Lucide.ChevronLeft,
-            if (forward) "Next items" else "Previous items", Modifier.size(16.dp),
-            tint = Palette.text.copy(alpha = if (enabled) 1f else 0.4f))
+    Box(Modifier.pointerClickable(enabled = enabled, onClick = move, shape = CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(28.dp).clip(CircleShape).border(1.dp, Palette.raised, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(if (forward) Lucide.ChevronRight else Lucide.ChevronLeft,
+                if (forward) "Next items" else "Previous items", Modifier.size(16.dp),
+                tint = Palette.text.copy(alpha = if (enabled) 1f else 0.4f))
+        }
     }
 }
