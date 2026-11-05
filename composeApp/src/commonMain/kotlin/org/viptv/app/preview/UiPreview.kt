@@ -117,8 +117,8 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                             Screen.Calendar -> if (television) TvCalendarScreen(PreviewTvCalendar.days, PreviewTvCalendar.entries,
                                 { go(Screen.Details) }, { go(Screen.Settings) }, PreviewTvCalendar.actions, { go(Screen.Sources) })
                                 else CalendarScreen(PreviewCalendar.days, PreviewCalendar.entries, false, { go(Screen.Details) }, { go(Screen.Settings) })
-                            Screen.Live -> if (television) PreviewTvGuide(tvDetailVariant, watchLive, { go(Screen.Settings) })
-                                else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive, { go(Screen.Settings) })
+                            Screen.Live -> if (television) PreviewTvGuide(tvDetailVariant, watchLive)
+                                else LiveScreen(PreviewLive.channels, false, PreviewLive.start, PreviewLive.now, watchLive)
                             Screen.Library -> if (television) TvLibraryScreen(if (tvDetailVariant in listOf("Empty", "Unavailable")) emptyList() else PreviewTvLibrary.cards,
                                 tvDetailVariant != "Unavailable", { go(Screen.Details) }, { go(Screen.Home) }, PreviewTvLibrary.watched)
                                 else if (tvDetailVariant == "Long") LibraryScreen(PreviewData.longLibrary.cards, true, television, { go(Screen.Details) }, { go(Screen.History) }, { go(Screen.Home) },

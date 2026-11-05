@@ -125,7 +125,7 @@ class TvChipRowDownTest {
                     filter = CalendarFilter.YourShows, actions = PreviewTvCalendar.actions)
             }, listOf("Type: All", "Shows: Your shows", "Previous week", "This week", "Next week"), "Today"),
             Scenario("Live", {
-                LiveScreen(listOf(liveChannel()), television = true, start = null, now = 0, watch = {}, manage = {},
+                LiveScreen(listOf(liveChannel()), television = true, start = null, now = 0, watch = {},
                     groupLabels = mapOf("news" to "News", "sport" to "Sport"), groupChanged = {}, favoritesFilter = {})
             }, listOf("Group: All", "Favourites"), "Fixture news"),
             Scenario("Browse", {

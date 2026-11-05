@@ -33,7 +33,7 @@ class TvLiveFilterFocusTest {
 
     @Test fun tvGuideUpReachesTheGroupChip() {
         Page {
-            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {}, manage = {},
+            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {},
                 groupLabels = mapOf("news" to "News", "sport" to "Sport"), groupChanged = {}, favoritesFilter = {})
         }.use { page ->
             page.focusGuide()
@@ -44,7 +44,7 @@ class TvLiveFilterFocusTest {
 
     @Test fun tvGuideUpReachesTheFavouritesChipWhenItIsTheOnlyFilter() {
         Page {
-            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {}, manage = {},
+            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {},
                 favoritesFilter = {})
         }.use { page ->
             page.focusGuide()

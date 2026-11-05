@@ -42,6 +42,9 @@ internal const val LiveMemberWho = "Only the household owner can set up live TV.
 internal const val LivePairedWho = "Manage live TV from a signed-in phone, computer or the web dashboard."
 internal const val LiveNoChannelsHeadline = "No channels came back."
 internal const val LiveNoChannelsBody = "This source is set up, but it isn't sending channels."
+internal const val LiveEmptyCategoryBody = "No channels here yet. Choose another category."
+internal const val LiveEmptyFilterBody = "No channels here yet. Choose another filter."
+internal const val LiveAllChannels = "All channels"
 internal const val LiveLoadFailedHeadline = "Could not load Live TV."
 internal const val LiveTryAgain = "Try again"
 internal const val LiveSourceIntegrations = "Source integrations"
@@ -215,6 +218,21 @@ internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean,
 @Composable
 internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester? = null, secondary: FocusRequester? = null) =
     LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations, primary, secondary)
+
+@Composable
+internal fun LiveFilteredEmpty(television: Boolean, scale: Float, phone: Boolean, favoritesOnly: Boolean, busy: Boolean,
+    sourceName: String?, allChannels: () -> Unit) {
+    val message = if (favoritesOnly) {
+        if (busy) "Loading favourite channels…" else "No favourite channels${sourceName?.let { " from $it" } ?: " from this source"}."
+    } else if (phone) LiveEmptyCategoryBody else LiveEmptyFilterBody
+    Column(verticalArrangement = Arrangement.spacedBy(if (television) 24.dp * scale else 16.dp * scale)) {
+        if (television) Text(message, color = Palette.secondary, fontSize = (24 * scale).sp)
+        else Text(message, color = Palette.secondary)
+        if (television) TvAction(Modifier.height(64.dp * scale), scale, activate = allChannels, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+            Text(LiveAllChannels, color = it, fontSize = (24 * scale).sp)
+        } else TextButton(allChannels) { Text(LiveAllChannels) }
+    }
+}
 
 @Composable
 private fun LiveEmptyCopy(television: Boolean, scale: Float, compact: Boolean, headline: String, body: String,

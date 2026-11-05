@@ -26,7 +26,7 @@ class PlaceholderControlsTest {
     @Test fun liveShowsTheFavouriteControlOnlyWhenTheConnectionCanSaveIt() {
         fun live(save: ((LiveChannel) -> Unit)?) = ImageComposeScene(1200, 800, Density(1f)) { ViptvTheme(false) {
             Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                LiveScreen(listOf(channel()), false, null, null, {}, {}, favoriteChanged = save)
+                LiveScreen(listOf(channel()), false, null, null, {}, favoriteChanged = save)
             }
         } }
         val readOnly = live(null)
