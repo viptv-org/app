@@ -17,21 +17,21 @@ class LivePagingFooterTest {
         override suspend fun clear() = Unit
     }
 
-    private fun channel(number: Int) = LiveCatalogChannel(id = "ch$number", connection_id = "conn1",
+    private fun channel(number: Int) = LiveChannel(id = "ch$number", connection_id = "conn1",
         card = Card(identity = MediaIdentity("tt$number", "channel", emptyList()), provider_id = "stremio",
             title = "Channel $number", badges = emptyList()))
 
-    private fun livePage(offset: Int, total: Int): LiveCatalogPage {
+    private fun livePage(offset: Int, total: Int): LivePage {
         val end = minOf(offset + 2, total)
-        return LiveCatalogPage(channels = ((offset + 1)..end).map(::channel),
-            next_cursor = end.takeIf { it < total }?.toString(), complete = end >= total, availability = "Available")
+        return LivePage(channels = ((offset + 1)..end).map(::channel), groups = emptyList(), connections = emptyList(),
+            next_cursor = end.takeIf { it < total }?.toString(), complete = end >= total, availability = Availability.AVAILABLE)
     }
 
     private suspend fun await(what: String, predicate: () -> Boolean) {
         withTimeout(5_000) { while (!predicate()) delay(10) }
     }
 
-    private fun initial() = LiveCatalogPage(channels = listOf(channel(1), channel(2)), next_cursor = "2", availability = "Available")
+    private fun initial() = LivePage(channels = listOf(channel(1), channel(2)), groups = emptyList(), connections = emptyList(), next_cursor = "2", complete = true, availability = Availability.AVAILABLE)
     private fun channels(controller: ApplicationController) = controller.state.value.livePage!!.channels
     private fun cursor(controller: ApplicationController) = controller.state.value.livePage!!.next_cursor
 
@@ -71,7 +71,7 @@ class LivePagingFooterTest {
             assertEquals(6, channels(controller).size)
             assertNull(cursor(controller))
 
-            controller.mutable.value = controller.state.value.copy(livePage = initial(), liveQuery = org.viptv.app.connection.LiveQuery())
+            controller.mutable.value = controller.state.value.copy(livePage = initial(), liveQuery = org.viptv.engine.wire.LiveQuery(offset = 0))
             failNext = true
             controller.moreLive()
             await("failed page") { controller.state.value.livePageError != null && !controller.state.value.busy }
@@ -87,7 +87,7 @@ class LivePagingFooterTest {
     @Test fun aNonAdvancingCursorIsAPerPageFailureThatKeepsTheList() = runBlocking {
         val controller = ApplicationController(this, store)
         controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "owner",
-            livePage = initial().copy(next_cursor = "0"), liveQuery = org.viptv.app.connection.LiveQuery())
+            livePage = initial().copy(next_cursor = "0"), liveQuery = org.viptv.engine.wire.LiveQuery(offset = 0))
         try {
             controller.moreLive()
             await("failed page") { controller.state.value.livePageError != null && !controller.state.value.busy }

@@ -7,6 +7,9 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.app.features.live.*
 import org.viptv.app.state.*
+import org.viptv.engine.wire.Availability
+import org.viptv.engine.wire.LiveChannel
+import org.viptv.engine.wire.LivePage
 import kotlin.test.*
 
 class LiveEmptyStateTest {
@@ -16,9 +19,10 @@ class LiveEmptyStateTest {
         override suspend fun clear() = Unit
     }
 
-    private fun page(connections: Int = 1, channels: Int = 0, availability: String = "Available") =
-        LiveCatalogPage(channels = List(channels) { LiveCatalogChannel("$it", "m3u:1", org.viptv.engine.wire.Card(
+    private fun page(connections: Int = 1, channels: Int = 0, availability: Availability = Availability.AVAILABLE) =
+        LivePage(channels = List(channels) { LiveChannel("$it", "m3u:1", org.viptv.engine.wire.Card(
             org.viptv.engine.wire.MediaIdentity("$it", "live", emptyList()), provider_id = "m3u:1", title = "Channel $it", badges = emptyList())) },
+            groups = emptyList(), complete = true,
             availability = availability, connections = List(connections) {
                 org.viptv.engine.wire.IntegrationConnection("m3u:$it", "m3u", "7", name = "Feed $it", enabled = true, revision = 1, capabilities = emptyList())
             })
@@ -29,7 +33,7 @@ class LiveEmptyStateTest {
         assertEquals(LiveSpread.Filtered, liveSpread(page(channels = 0), busy = false, filtered = true), "a filter applied wins over the empty states")
         assertEquals(LiveSpread.Filtered, liveSpread(null, busy = true, filtered = true))
         assertEquals(LiveSpread.NoSource, liveSpread(page(connections = 0), busy = false, filtered = false))
-        assertEquals(LiveSpread.NoSource, liveSpread(page(availability = "NeedsConfiguration"), busy = false, filtered = false))
+        assertEquals(LiveSpread.NoSource, liveSpread(page(availability = Availability.NEEDSCONFIGURATION), busy = false, filtered = false))
         assertEquals(LiveSpread.Loading, liveSpread(page(channels = 0), busy = true, filtered = false))
         assertEquals(LiveSpread.Loading, liveSpread(null, busy = true, filtered = false), "the first request is open before the page exists")
         assertEquals(LiveSpread.NoChannels, liveSpread(page(channels = 0), busy = false, filtered = false))
