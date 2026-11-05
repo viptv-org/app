@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
