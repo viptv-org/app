@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.rememberArriveFade
 import org.viptv.app.components.tvFocusOutline
@@ -63,9 +63,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 .padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    IconButton(close, Modifier.size(28.dp)) {
-                        Icon(Lucide.X, "Close track selection", Modifier.size(16.dp))
-                    }
+                    AccessibleIconButton(Lucide.X, "Close track selection", close, iconSize = 16.dp, wash = null)
                 }
                 if (phone) {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {

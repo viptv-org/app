@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,7 +42,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.AddonFailureNotice
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberEnterLeaveMotion
@@ -127,9 +126,9 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                             }
                         }
                     }
-                    IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp)
-                        .then(closeFocus.requestFocusWhenPlaced(closeFocusOnOpen))
-                        .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
+                    AccessibleIconButton(Lucide.X, "Close details (Esc)", requestDismiss,
+                        Modifier.align(Alignment.TopEnd).padding(16.dp).then(closeFocus.requestFocusWhenPlaced(closeFocusOnOpen)),
+                        iconSize = 20.dp, wash = Color.White.copy(alpha = .12f))
                 }
             }
         }
