@@ -79,7 +79,7 @@ class ServerUpdateRequiredTest {
         } finally { scope.cancel(); remote.close() }
     }
 
-    @Test fun theNoticeStaysOffThePlayer() = runBlocking<Unit> {
+    @Test fun theNoticeStaysOffThePlayerButShowsOnSignIn() = runBlocking<Unit> {
         val remote = remote { updateRequiredAnswer() }
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {

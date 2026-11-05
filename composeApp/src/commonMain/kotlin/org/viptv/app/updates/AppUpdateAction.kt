@@ -1,7 +1,6 @@
 package org.viptv.app.updates
 
-// The server serves the web bundle, so a reload picks up the build it now asks for; a platform whose app arrives
-// outside the server has no in-app delivery path and offers no action.
+// The server serves the web bundle, so reloading the page is the web's own update path.
 internal expect fun reloadAppAction(): (() -> Unit)?
 
 internal fun appUpdateAction(updater: AppUpdater?): (() -> Unit)? =
