@@ -1,6 +1,7 @@
 package org.viptv.app.components
 
 import org.viptv.app.connection.airDateLabel
+import org.viptv.app.connection.seasonNumber
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.EpisodeCoordinates
 import org.viptv.engine.wire.NextEpisode
@@ -37,7 +38,7 @@ internal fun Card.isCaughtUp(): Boolean =
         progress == null && subtitle == null && isWatched()
 
 internal fun EpisodeCoordinates.caption(): String =
-    "S${season ?: 1L} E$episode"
+    "S${seasonNumber()} E$episode"
 
 internal fun Card.caughtUpCaption(): String? =
     identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }

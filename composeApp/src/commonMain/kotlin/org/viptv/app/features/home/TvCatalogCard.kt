@@ -58,6 +58,7 @@ import org.viptv.engine.wire.NextEpisode
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
+import org.viptv.app.connection.seasonNumber
 
 @Composable
 internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier: Modifier = Modifier,
@@ -198,7 +199,7 @@ private data class TvCardStates(
                 certification = card.metadata?.certification?.takeIf { it.isNotBlank() },
                 metaText = card.subtitle?.takeIf { it.isNotBlank() }
                     ?: card.identity.episode?.let { episode ->
-                        listOfNotNull(episode.season?.let { "S$it" }, "E${episode.episode}").joinToString(" ")
+                        "S${episode.seasonNumber()} E${episode.episode}"
                     }
                     ?: card.metadataParts(includeRating).take(3).takeIf { it.isNotEmpty() }?.joinToString(" · "),
             )

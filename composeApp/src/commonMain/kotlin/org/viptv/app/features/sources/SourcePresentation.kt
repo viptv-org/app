@@ -1,6 +1,7 @@
 package org.viptv.app.features.sources
 
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.connection.seasonNumber
 
 internal fun SourceCandidate.sourceFilterId(): String = provider_id + ":" + presentation?.source_id.orEmpty()
 internal fun SourceCandidate.providerLabel(): String = presentation?.provider_name?.takeIf { it.isNotBlank() } ?: provider_id
@@ -152,5 +153,5 @@ internal fun SourceCandidate.technicalDetail(): String? {
 internal fun sourceHeading(title: org.viptv.engine.wire.Card?, detail: org.viptv.engine.wire.DetailSnapshot?): String? {
     val episode = title?.identity?.episode ?: return title?.title
     val name = detail?.item?.title ?: return title.title
-    return "$name · S${episode.season ?: 1} E${episode.episode}"
+    return "$name · S${episode.seasonNumber()} E${episode.episode}"
 }

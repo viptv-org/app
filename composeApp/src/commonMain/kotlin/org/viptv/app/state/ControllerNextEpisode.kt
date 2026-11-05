@@ -113,8 +113,8 @@ internal fun validNextEpisode(current: Card, next: Card): Boolean {
     val there = next.identity.episode ?: return false
     if (next.metadata_origin != current.metadata_origin || next.provider_id != current.provider_id || next.identity.kind != "series" ||
         next.parent_identity != current.parent_identity || next.identity.id == current.identity.id || here.order != there.order) return false
-    val season = here.season ?: 1L
-    val nextSeason = there.season ?: 1L
+    val season = here.seasonNumber()
+    val nextSeason = there.seasonNumber()
     if ((season == 0L) != (nextSeason == 0L)) return false
     return nextSeason > season || (nextSeason == season && there.episode > here.episode)
 }

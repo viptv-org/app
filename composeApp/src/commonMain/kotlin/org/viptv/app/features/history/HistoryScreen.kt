@@ -22,6 +22,7 @@ import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.connection.seasonNumber
 import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.Button
@@ -63,7 +64,7 @@ internal fun HistoryDisplay.watchState(): String = when {
 }
 
 internal fun HistoryDisplay.descriptor(): String = entry.card.identity.episode?.let { episode ->
-    "S${episode.season ?: 1L} · E${episode.episode}"
+    "S${episode.seasonNumber()} · E${episode.episode}"
 } ?: entry.card.identity.kind.replaceFirstChar { it.uppercase() }
 
 internal fun HistoryDisplay.watchStateLine(): String = "${descriptor()} · ${watchState()}"
