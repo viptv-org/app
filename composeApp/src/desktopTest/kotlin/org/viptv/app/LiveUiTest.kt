@@ -43,7 +43,7 @@ class LiveUiTest {
         var saved = 0; var filtered = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                LiveScreen(listOf(channel()), true, null, null, {}, {}, favoriteChanged = { saved++ }, favoritesFilter = { filtered++ })
+                LiveScreen(listOf(channel()), true, null, null, {}, favoriteChanged = { saved++ }, favoritesFilter = { filtered++ })
             } }
         }
         try {
@@ -60,7 +60,7 @@ class LiveUiTest {
         for (sources in listOf(mapOf("m3u:1" to "Playlist"), mapOf("m3u:1" to "Playlist", "xtream:2" to "Other feed"))) {
             val scene = ImageComposeScene(1200, 800, Density(1f)) {
                 ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    LiveScreen(listOf(channel()), false, null, null, {}, {}, sources = sources, selectedSource = "m3u:1", sourceChanged = {})
+                    LiveScreen(listOf(channel()), false, null, null, {}, sources = sources, selectedSource = "m3u:1", sourceChanged = {})
                 } }
             }
             try {
@@ -76,7 +76,7 @@ class LiveUiTest {
         for (tv in listOf(false, true)) {
             val scene = ImageComposeScene(if (tv) 1920 else 1200, if (tv) 1080 else 800, Density(1f)) {
                 ViptvTheme(tv) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    LiveScreen(listOf(channel()), tv, null, null, {}, {}, favoritesOnly = true, favoritesFilter = {},
+                    LiveScreen(listOf(channel()), tv, null, null, {}, favoritesOnly = true, favoritesFilter = {},
                         sources = mapOf("m3u:1" to "Playlist", "xtream:2" to "Other feed"), selectedSource = "xtream:2", sourceChanged = {})
                 } }
             }
@@ -84,6 +84,33 @@ class LiveUiTest {
             finally { scene.close() }
         }
     }
+
+    @Test fun emptyFilteredCategoryKeepsTheChipsAndOffersAllChannelsNotManageAddons() {
+        for ((dimension, line) in listOf(
+            Triple(390, 844, false) to "No channels here yet. Choose another category.",
+            Triple(1280, 800, false) to "No channels here yet. Choose another filter.",
+            Triple(1920, 1080, true) to "No channels here yet. Choose another filter.",
+        )) {
+            val (width, height, television) = dimension
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(emptyList(), television, null, null, {}, groupLabels = mapOf("news" to "News"),
+                        groupChanged = {}, spread = LiveSpread.Filtered)
+                } }
+            }
+            try {
+                frames(scene)
+                val texts = nodes(scene).map(::text)
+                assertTrue(texts.contains(line), "${width}px ${if (television) "TV" else "app"} shows the filtered-empty line")
+                assertTrue(texts.contains("All channels"), "${width}px keeps the All channels recovery")
+                assertTrue(nodes(scene).any { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it) == "Group: All" }, "${width}px keeps the chips")
+                assertFalse(texts.contains("Manage add-ons"), "${width}px retires Manage add-ons from Live")
+                assertFalse(texts.contains("No channels are available for this profile."), "${width}px retires the profile-empty line")
+                capture(scene, "${if (television) "tv" else if (width == 390) "phone" else "desktop"}-live-empty-category")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun groupAndFavouritesAreChipsThatApplyAtOnceAndClear() {
         for (tv in listOf(false, true)) {
             val groups = mutableListOf<String?>()
@@ -92,7 +119,7 @@ class LiveUiTest {
                 title = "Fixture sport", badges = emptyList()), category = "Sport", groupId = "sport"))
             val scene = ImageComposeScene(if (tv) 1920 else 1200, if (tv) 1080 else 800, Density(1f)) {
                 ViptvTheme(tv) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    LiveScreen(channels, tv, null, null, {}, {}, groupLabels = mapOf("news" to "News", "sport" to "Sport"),
+                    LiveScreen(channels, tv, null, null, {}, groupLabels = mapOf("news" to "News", "sport" to "Sport"),
                         groupChanged = { groups += it }, favoritesFilter = { favorites++ })
                 } }
             }

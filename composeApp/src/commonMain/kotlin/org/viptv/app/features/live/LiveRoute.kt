@@ -47,13 +47,13 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 else -> null
             }
             val mayManageSources = state.localMode || state.accountAccess?.managesSources == true
-            LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) }, { controller.navigate(Screen.Settings) },
+            LiveScreen(channels, television, if (channels.any { it.programs.isNotEmpty() }) 0 else null, clock.nowMinute, { controller.playLive(it.id) },
                 groupLabels = state.livePage?.groups.orEmpty().associate { it.id to it.label }, groupChanged = controller::filterLive,
                 guideRequested = { controller.showLiveGuide(it.id) }, more = if (state.livePage?.next_cursor != null && (!state.liveFavoritesOnly || state.liveFavorites.any { id -> state.livePage.channels.none { it.id == id } })) controller::moreLive else null, busy = state.busy,
                 favoriteChanged = if (state.liveFavoritesAvailable) ({ controller.toggleLiveFavorite(it.id) }) else null,
                 favoritesOnly = state.liveFavoritesOnly, favoritesFilter = if (state.liveFavoritesAvailable) controller::filterLiveFavorites else null,
                 sources = state.livePage?.connections.orEmpty().filter { it.enabled }.associate { it.id to it.name }, selectedSource = state.liveQuery.connection_id,
-                sourceChanged = controller::selectLiveConnection, emptyReason = emptyReason, spread = spread,
+                sourceChanged = controller::selectLiveConnection, spread = spread,
                 noChannelsReason = emptyReason,
                 noChannelsRetry = retry, sourceIntegrations = if (mayManageSources) ({ controller.openLiveSetup(LiveSourceIntegrationsSection) }) else null,
                 statusNotice = notice, noticeRetry = retry, pageError = state.livePageError)

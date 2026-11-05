@@ -83,7 +83,7 @@ class LiveGuideSliverCellsTest {
         id = "one", connectionId = "m3u:1", programs = programs)
 
     @Test fun tvGuideFocusOnlyRestsOnVisiblePrograms() {
-        Page { LiveScreen(listOf(channel(sliverGuide)), television = true, start = 0, now = 30, watch = {}, manage = {}) }.use { page ->
+        Page { LiveScreen(listOf(channel(sliverGuide)), television = true, start = 0, now = 30, watch = {}) }.use { page ->
             page.focus("Started earlier")
             val cells = page.cells(setOf("Started earlier", "Afternoon"))
             assertEquals(2, cells.size, "only the programs wide enough to read are cells")
@@ -96,7 +96,7 @@ class LiveGuideSliverCellsTest {
 
     @Test fun desktopGuideShowsNoSliverCells() {
         Page(1200, 800, television = false) {
-            LiveScreen(listOf(channel(sliverGuide)), television = false, start = 0, now = 30, watch = {}, manage = {})
+            LiveScreen(listOf(channel(sliverGuide)), television = false, start = 0, now = 30, watch = {})
         }.use { page ->
             page.click("Full guide")
             page.until("the guide's programs") { page.nodes().any { page.text(it).startsWith("Afternoon") } }

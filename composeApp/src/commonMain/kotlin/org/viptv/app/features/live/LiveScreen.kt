@@ -20,14 +20,14 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 
 @Composable
-fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, manage: () -> Unit, groupLabels: Map<String, String> = emptyMap(),
+fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, now: Int?, watch: (LiveChannel) -> Unit, groupLabels: Map<String, String> = emptyMap(),
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false, favoriteChanged: ((LiveChannel) -> Unit)? = null,
     favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null, sources: Map<String, String> = emptyMap(), selectedSource: String? = null,
-    sourceChanged: ((String) -> Unit)? = null, emptyReason: String? = null, spread: LiveSpread = LiveSpread.Channels,
+    sourceChanged: ((String) -> Unit)? = null, spread: LiveSpread = LiveSpread.Channels,
     noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null,
     statusNotice: String? = null, noticeRetry: (() -> Unit)? = null, pageError: String? = null) {
     val restore = rememberPageRestore("live")
-    if (television) { TvLiveScreen(channels, start, now, watch, manage, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore, pageError = pageError); return }
+    if (television) { TvLiveScreen(channels, start, now, watch, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore, pageError = pageError); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
@@ -73,9 +73,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
             } else if (visible.isEmpty() && spread == LiveSpread.Failed) {
                 LiveLoadFailed(false, scale, phone, noChannelsReason, noChannelsRetry, sourceIntegrations)
             } else if (visible.isEmpty()) {
-                Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else emptyReason ?: "No channels are available for this profile.", color = Palette.secondary)
-                if (favoritesOnly) TextButton({ chooseGroup(null) }) { Text("All channels") }
-                else TextButton(manage) { Text("Manage add-ons") }
+                LiveFilteredEmpty(television, scale, phone, favoritesOnly, busy, sources[selectedSource]) { chooseGroup(null) }
             } else if (!phone && start != null && visible.any { it.programs.isNotEmpty() }) {
                 Box(Modifier.weight(1f)) { LiveGuide(visible, start, now, television, scale,
                     { channel, program -> selected = channel; selectedProgram = program; guideRequested(channel) }, watch, more = more, busy = busy, restore = restore, pageError = pageError) }

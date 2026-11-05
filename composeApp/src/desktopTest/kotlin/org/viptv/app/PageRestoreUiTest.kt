@@ -282,7 +282,7 @@ class PageRestoreUiTest {
         val visiting = mutableStateOf(true)
         var opened: LiveChannel? = null
         val scene = page(1200, 800, visiting) {
-            LiveScreen(channels.value, false, 0, 30, { opened = it }, {})
+            LiveScreen(channels.value, false, 0, 30, { opened = it })
         }
         try {
             frames(scene)
@@ -325,7 +325,7 @@ class PageRestoreUiTest {
         var opened: LiveChannel? = null
         val scene = page(1920, 1080, visiting, television = true) {
             focusManager = LocalFocusManager.current
-            LiveScreen(channels.value, true, 0, 30, { opened = it }, {})
+            LiveScreen(channels.value, true, 0, 30, { opened = it })
         }
         try {
             frames(scene)

@@ -10,8 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.viptv.app.components.TvAction
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.pageAnchor
@@ -21,11 +19,10 @@ import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LocalTvScale
-import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, watch: (LiveChannel) -> Unit,
-    manage: () -> Unit, categories: List<String> = channels.mapNotNull { it.category }.distinct(), groupLabels: Map<String, String> = emptyMap(),
+    categories: List<String> = channels.mapNotNull { it.category }.distinct(), groupLabels: Map<String, String> = emptyMap(),
     groupChanged: ((String?) -> Unit)? = null, guideRequested: (LiveChannel) -> Unit = {}, more: (() -> Unit)? = null, busy: Boolean = false,
     favoriteChanged: ((LiveChannel) -> Unit)? = null, favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null,
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
@@ -84,11 +81,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
             channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
             Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
                 .height((pageHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
-                if (visible.isEmpty()) Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (favoritesOnly) { if (busy) "Loading favourite channels…" else "No favourite channels${sources[selectedSource]?.let { " from $it" } ?: " from this source"}." } else "No channels are available for this profile.", color = Palette.secondary, fontSize = (24 * scale).sp)
-                    TvAction(Modifier.height(64.dp * scale), scale, activate = if (favoritesOnly) ({ category = AllGroups; groupChanged?.invoke(null); Unit }) else manage, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                        Text(if (favoritesOnly) "All channels" else "Manage add-ons", color = it, fontSize = (24 * scale).sp)
-                    }
+                if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
+                    category = AllGroups; groupChanged?.invoke(null)
                 } else if (hasGuide) {
                     LiveGuide(visible, start!!, now, true, scale,
                     { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy, restore = restore, pageError = pageError)

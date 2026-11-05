@@ -116,7 +116,7 @@ class BottomClearanceUiTest {
                 LiveChannel(Card(MediaIdentity("live-$i", "live", emptyList()), provider_id = "m3u:1",
                     title = "Channel $i", badges = emptyList()))
             }
-            LiveScreen(channels, false, null, null, {}, {})
+            LiveScreen(channels, false, null, null, {})
         })
         add(Case("Continue watching") {
             ContinueWatchingScreen(ContinueWatchingPage(movies, loaded = true), {}, {}, null, {}, {}, {})
