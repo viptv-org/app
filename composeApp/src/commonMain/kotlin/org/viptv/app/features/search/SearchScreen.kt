@@ -129,6 +129,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                                 rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
                                     val key = searchCardKey(card)
                                     MediaCard(card, width = 160, portrait = true, showLabels = true,
+                                        searchQuery = term,
                                         open = { restore.mark(key, index); open(it) },
                                         modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index).listItemEntrance(index, entrance.animate))
                                 }
@@ -146,6 +147,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                 gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
                     val key = searchCardKey(card)
                     MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
+                        searchQuery = term,
                         open = { restore.mark(key, index); open(it) },
                         modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
                 }
