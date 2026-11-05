@@ -5,10 +5,12 @@ package org.viptv.app
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -33,12 +35,16 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.HomeGenrePicker
 import org.viptv.app.components.LocalHomeGenres
+import org.viptv.app.features.details.DetailsScreen
+import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.preview.PreviewData
+import org.viptv.app.preview.PreviewTvDetails
 import org.viptv.app.preview.PreviewTvHome
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
-import org.viptv.engine.wire.HomeSnapshot
+import org.viptv.engine.wire.CardMetadata
+import org.viptv.engine.wire.MediaIdentity
 
 // Every line drawn over artwork keeps 4.5:1 against the brightest frame, so the fixture behind the copy is flat white.
 class TextOverArtworkContrastTest {
@@ -46,30 +52,57 @@ class TextOverArtworkContrastTest {
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    private val white = PreviewData.hero.copy(landscape = "https://artwork.test/white.jpg", poster = null, logo = null)
+    private val white = PreviewData.hero.copy(landscape = "https://artwork.test/white.jpg", poster = null, logo = null,
+        metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13"))
     private val home = PreviewData.home.copy(hero = white, featured = emptyList())
     private val tvHome = PreviewTvHome.home.copy(hero = white, featured = emptyList())
+    private val detail = PreviewData.detail.copy(item = white)
+    private val series = PreviewTvDetails.series.copy(item = white.copy(identity = MediaIdentity("detail-series", "series", emptyList())))
+    private val metadata = listOf("2026", "1h 40m", "Action / Adventure", "★ 7.7")
+    private val desktopMetadata = listOf("Movie", "2026", "Action, Adventure", "IMDb 7.7")
+    private val description = "The Platt family bands together"
 
     private class Surface(val name: String, val width: Int, val height: Int, val television: Boolean,
-        val home: HomeSnapshot, val copy: List<String>, val hero: List<String>, val tablet: Boolean = false, val desktop: Boolean = false)
+        val content: @Composable () -> Unit, val copy: List<String>, val hero: List<String>)
 
     private fun surfaces(): List<Surface> = listOf(
-        Surface("TV Home", 1920, 1080, television = true, home = tvHome,
-            copy = listOf("Home", "Movies", "My List", "The End of Oak Street", "2026", "Action, Adventure", "1h 40m", "The Platt family bands together"),
-            hero = listOf("2026", "Action, Adventure", "1h 40m", "The Platt family bands together")),
-        Surface("phone Home", 393, 852, television = false, home = home,
-            copy = listOf("The End of Oak Street", "2026", "Action, Adventure", "1h 40m"),
-            hero = listOf("The End of Oak Street", "2026", "Action, Adventure", "1h 40m")),
-        Surface("tablet Home", 1024, 900, television = false, home = home, tablet = true,
-            copy = listOf("The End of Oak Street", "2026", "Action, Adventure", "1h 40m"),
-            hero = listOf("The End of Oak Street")),
-        Surface("desktop Home", 1440, 900, television = false, home = home, desktop = true,
-            copy = listOf("The End of Oak Street", "2026", "Action, Adventure", "1h 40m", "The Platt family bands together"),
-            hero = listOf("2026", "Action, Adventure", "1h 40m", "The Platt family bands together")),
+        Surface("TV Home", 1920, 1080, television = true,
+            content = { HomeScreen(tvHome, television = true, open = {}, retry = {}, navigate = {}, profile = PreviewData.profile) },
+            copy = listOf("Home", "Movies", "My List", "The End of Oak Street") + metadata + description,
+            hero = metadata + description),
+        Surface("phone Home", 393, 852, television = false,
+            content = { HomeScreen(home, television = false, open = {}, retry = {}) },
+            copy = listOf("The End of Oak Street") + metadata, hero = metadata),
+        Surface("tablet Home", 1024, 900, television = false,
+            content = { HomeScreen(home, television = false, tablet = true, open = {}, retry = {}, navigate = {}) },
+            copy = listOf("The End of Oak Street") + metadata, hero = listOf("The End of Oak Street")),
+        Surface("desktop Home", 1440, 900, television = false,
+            content = { HomeScreen(home, television = false, desktopChrome = true, open = {}, retry = {}) },
+            copy = listOf("The End of Oak Street") + metadata + description, hero = metadata + description),
+        Surface("TV Details", 1920, 1080, television = true,
+            content = { TvDetailsScreen(series, busy = false, error = null, sources = {}, extras = PreviewTvDetails.seriesExtras) },
+            copy = listOf("The End of Oak Street", "Starring Evan Peters, Richard Jenkins, Niecy Nash") + metadata + description,
+            hero = metadata + description + "Starring Evan Peters"),
+        Surface("phone Details", 393, 852, television = false,
+            content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
+            copy = listOf("The End of Oak Street", "Movie") + metadata, hero = emptyList()),
+        Surface("tablet Details", 1024, 900, television = false,
+            content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, tablet = true) },
+            copy = listOf("The End of Oak Street", "Movie") + metadata + description,
+            hero = listOf("The End of Oak Street", "Movie") + metadata + description),
+        Surface("desktop Details", 1440, 900, television = false,
+            content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
+            copy = listOf("The End of Oak Street") + desktopMetadata + description,
+            hero = listOf("The End of Oak Street") + desktopMetadata + description),
+        Surface("browser Details", 1280, 800, television = false,
+            content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, browser = true) },
+            copy = listOf("The End of Oak Street", "Add to My List"), hero = listOf("The End of Oak Street")),
     )
 
     @Test fun textOverArtworkKeepsFourAndAHalfToOne() = ui {
         withWhiteArtwork {
+            val missing = mutableListOf<String>()
+            val low = mutableListOf<String>()
             for (surface in surfaces()) {
                 Shot(surface).use { shot ->
                     shot.until("${surface.name} to compose its copy over the artwork") { shot.textNodes().isNotEmpty() }
@@ -77,21 +110,18 @@ class TextOverArtworkContrastTest {
                     shot.frames(SettleFrames)
                     val overArtwork = shot.copyOverArtwork()
                     val drawn = shot.textNodes().joinToString("\n") { it.config.getOrNull(SemanticsProperties.Text)!!.joinToString(" ") { text -> text.text } }
-                    for (line in surface.copy) {
-                        assertTrue(drawn.contains(line), "${surface.name} draws \"$line\": $drawn")
-                    }
+                    surface.copy.filterNot(drawn::contains).forEach { missing += "${surface.name} does not draw \"$it\"" }
                     val overArtworkCopy = overArtwork.joinToString("\n") { it.text }
-                    for (line in surface.hero) {
-                        assertTrue(overArtworkCopy.contains(line), "${surface.name} keeps \"$line\" over its artwork: $overArtworkCopy")
-                    }
-                    for (line in overArtwork) {
-                        assertTrue(line.contrast >= 4.5, "${surface.name} draws \"${line.text}\" at " +
-                            "${"%.2f".format(line.contrast)}:1 (${"#%06X".format(line.ink and 0xFFFFFF)} on " +
-                            "${"#%06X".format(line.background and 0xFFFFFF)})")
+                    (surface.hero.filterNot(overArtworkCopy::contains)).forEach { missing += "${surface.name} does not keep \"$it\" over its artwork" }
+                    overArtwork.filter { it.contrast < 4.5 }.forEach { line ->
+                        low += "${surface.name} draws \"${line.text}\" at ${"%.2f".format(line.contrast)}:1 " +
+                            "(${"#%06X".format(line.ink and 0xFFFFFF)} on ${"#%06X".format(line.background and 0xFFFFFF)})"
                     }
                     println("CONTRAST ${surface.name}: ${overArtwork.size} lines over artwork, worst ${"%.2f".format(overArtwork.minOf { it.contrast })}:1")
                 }
             }
+            assertTrue(missing.isEmpty(), missing.joinToString("\n"))
+            assertTrue(low.isEmpty(), low.joinToString("\n"))
         }
     }
 
@@ -103,10 +133,7 @@ class TextOverArtworkContrastTest {
         private val scene = ImageComposeScene(surface.width, surface.height, Density(1f)) {
             ViptvTheme(surface.television, pointer = !surface.television) {
                 CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {})) {
-                    Box(Modifier.fillMaxSize().background(Palette.background)) {
-                        HomeScreen(surface.home, television = surface.television, open = {}, retry = {}, navigate = {},
-                            tablet = surface.tablet, desktopChrome = surface.desktop, profile = PreviewData.profile, heroRotates = false)
-                    }
+                    Box(Modifier.fillMaxSize().background(Palette.background)) { surface.content() }
                 }
             }
         }
@@ -147,14 +174,16 @@ class TextOverArtworkContrastTest {
             if (around.isEmpty()) return null
             // A 1 px badge border and the glyphs themselves can reach into the ring: its median is the scrim behind them.
             val background = around.sortedBy(::luminance)[around.size / 2]
-            var ink = background
-            var inkContrast = 1.0
+            var drawn = background
+            var drawnContrast = 1.0
             for (y in box.top.toInt() until box.bottom.toInt()) for (x in box.left.toInt() until box.right.toInt()) {
                 val colour = pixels.getColor(x, y)
                 val value = contrast(colour, background)
-                if (value > inkContrast) { inkContrast = value; ink = colour }
+                if (value > drawnContrast) { drawnContrast = value; drawn = colour }
             }
-            return Measurement(text, ink, background, inkContrast)
+            // A glyph a few pixels wide never reaches its own colour: compare the ink the app specifies, as long as the drawn peak is that ink.
+            val ink = Inks.minByOrNull { distance(it, drawn) }?.takeIf { distance(it, drawn) <= InkTolerance } ?: drawn
+            return Measurement(text, ink, background, contrast(ink, background))
         }
 
         override fun close() = scene.close()
@@ -183,6 +212,9 @@ class TextOverArtworkContrastTest {
         const val RingPixels = 3
         const val SettleFrames = 30
         val GroundLuminance = luminance(Palette.background.toArgb())
+        val Inks = listOf(Palette.text, Palette.body, Palette.secondary, Palette.tertiary, Palette.background, Palette.danger)
+            .map(Color::toArgb)
+        const val InkTolerance = 24
     }
 }
 
@@ -192,6 +224,11 @@ private fun luminance(argb: Int): Double {
         return if (value <= 0.04045) value / 12.92 else ((value + 0.055) / 1.055).pow(2.4)
     }
     return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+}
+
+private fun distance(first: Int, second: Int): Int {
+    fun channel(shift: Int) = kotlin.math.abs(((first shr shift) and 0xFF) - ((second shr shift) and 0xFF))
+    return maxOf(channel(16), maxOf(channel(8), channel(0)))
 }
 
 private fun contrast(a: Int, b: Int): Double {
