@@ -140,19 +140,21 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
 @Composable
 private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
     resumeEpisode: Card?) {
-    Box(Modifier.fillMaxWidth().aspectRatio(16f / 8.2f).heightIn(min = 260.dp)) {
-        AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
-        Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
-                Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().height(maxOf(260.dp, maxWidth * (8.2f / 16f)))) {
+            AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
+            Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
+                    Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                    Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+                FavoriteAction(card, saved, save)
             }
-            Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
-                Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            FavoriteAction(card, saved, save)
         }
     }
 }
