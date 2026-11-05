@@ -30,7 +30,7 @@ fun ApplicationController.foregroundObserver(onReturn: () -> Unit = {}) = Lifecy
         // freshness is behind only after a stop, so a start that sees it behind is a return to the app, not the launch.
         Lifecycle.Event.ON_START -> { val returning = !freshness.active(); appForeground(true); if (returning) retryStartup(); onReturn() }
         Lifecycle.Event.ON_RESUME -> freshen()
-        Lifecycle.Event.ON_STOP -> appForeground(false)
+        Lifecycle.Event.ON_STOP -> { saveProgress(false, final = true); appForeground(false) }
         else -> Unit
     }
 }
