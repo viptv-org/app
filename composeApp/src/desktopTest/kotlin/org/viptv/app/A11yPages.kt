@@ -1,26 +1,11 @@
 package org.viptv.app
 
-import androidx.compose.runtime.remember
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.ImageComposeScene
-import androidx.compose.ui.unit.Density
-import coil3.ImageLoader
-import coil3.SingletonImageLoader
-import coil3.annotation.DelicateCoilApi
-import coil3.compose.LocalPlatformContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.connection.FeatureAvailability
 import org.viptv.app.connection.Profile
-import org.viptv.app.connection.RemoteSessionStore
-import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.preview.PreviewData
-import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.ContinueWatchingList
 import org.viptv.app.state.Screen
@@ -68,7 +53,7 @@ internal val a11yPages: Map<String, ApplicationState> = mapOf(
     "Calendar" to a11yBase.copy(screen = Screen.Calendar, calendarDays = a11yDays, calendarAvailable = true),
     "Details" to a11yBase.copy(screen = Screen.Details, detail = PreviewData.detail),
     "Sources" to a11yBase.copy(screen = Screen.Sources, detail = PreviewData.detail, sourceTitle = PreviewData.hero,
-        sources = PreviewData.sources),
+        sources = PreviewData.sources, detailReturnScreen = Screen.Home, sourceReturnScreen = Screen.Details),
     "Library" to a11yBase.copy(screen = Screen.Library, library = PreviewData.posters),
     "Live" to a11yBase.copy(screen = Screen.Live, livePage = LivePage(channels = listOf(a11yLiveChannel), groups = emptyList(),
         connections = listOf(IntegrationConnection("m3u:1", "m3u", "7", name = "Playlist", enabled = true, revision = 1,
@@ -81,37 +66,3 @@ internal val a11yPages: Map<String, ApplicationState> = mapOf(
         addons = listOf(IntegrationConnection("addon:1", "stremio", "1", name = "Torrentio", enabled = true, revision = 1,
             capabilities = emptyList()))),
 )
-
-@OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
-internal class AppShell(private val width: Int, private val height: Int) : AutoCloseable {
-    private val store = object : RemoteSessionStore {
-        override suspend fun read(): SavedRemoteSession? = null
-        override suspend fun save(session: SavedRemoteSession) = Unit
-        override suspend fun clear() = Unit
-    }
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-    private val controller = ApplicationController(scope, store)
-    private var previousLoader: ImageLoader? = null
-    private var appLoader: ImageLoader? = null
-    private var frame = 0L
-    val scene = ImageComposeScene(width, height, Density(1f)) {
-        val context = LocalPlatformContext.current
-        remember { previousLoader = SingletonImageLoader.get(context); SingletonImageLoader.reset() }
-        App(providedController = controller, manageControllerLifecycle = false)
-        appLoader = SingletonImageLoader.get(context)
-    }
-
-    fun show(state: ApplicationState) { controller.mutable.value = state }
-
-    fun frames(count: Int = 80) { frame = scene.renderFrames(frame, count) }
-
-    fun violations(): List<String> {
-        frames()
-        return scene.semanticsNodes().tapTargetViolations(width, height)
-    }
-
-    override fun close() {
-        scene.close(); scope.cancel()
-        appLoader?.shutdown(); previousLoader?.let { SingletonImageLoader.setUnsafe(it) }
-    }
-}
