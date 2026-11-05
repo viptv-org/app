@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
+import org.viptv.app.features.settings.addDeviceSection
 
 class DeviceCodeLink internal constructor(val origin: String, val code: String, val delivered: Boolean = false,
     private val received: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()) {
@@ -23,10 +24,11 @@ fun ApplicationController.deliverDeviceCode() {
     if (link.expired) { deviceLink.value = null; return }
     val current = mutable.value
     if (link.delivered || current.starting || current.screen in beforeProfile) return
+    if (!current.accountSession) { deviceLink.value = null; return }
     val origin = connection?.accountDashboardUrl?.trimEnd('/')
     if (current.localMode || origin == null || !origin.equals(link.origin, ignoreCase = true)) { deviceLink.value = null; return }
     deviceLink.value = link.delivered()
-    updateState { current -> current.copy(settingsEntrySection = "Add a device") }
+    updateState { current -> current.copy(settingsEntrySection = addDeviceSection) }
     navigate(Screen.Settings)
 }
 

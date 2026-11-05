@@ -172,6 +172,10 @@ data class ApplicationState(
 internal val ApplicationState.animeAvailable: Boolean
     get() = browsingConfiguration?.profile?.browsing_plugin?.let { it == "simkl" } ?: true
 
+// A device grant cannot manage the account, so the account-only pages stay closed to it.
+internal val ApplicationState.accountSession: Boolean
+    get() = accountRole != "device"
+
 internal fun ApplicationState.detailsPending(): Boolean =
     detail == null && error == null && detailFailure == null && playTapTitle != null
 
