@@ -7,6 +7,9 @@ import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.engine.wire.LiveGuide
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
@@ -80,10 +83,10 @@ data class ApplicationState(
     val browseFailures: List<AddonFailure> = emptyList(),
     val browsePageError: String? = null,
     val homeGenres: HomeGenres? = null,
-    val livePage: LiveCatalogPage? = null,
+    val livePage: LivePage? = null,
     val livePageError: String? = null,
-    val liveQuery: LiveQuery = LiveQuery(),
-    val liveGuides: Map<String, LiveGuideSnapshot> = emptyMap(),
+    val liveQuery: LiveQuery = LiveQuery(offset = 0),
+    val liveGuides: Map<String, LiveGuide> = emptyMap(),
     val liveGuideChannel: String? = null,
     val liveGuideLoading: Boolean = false,
     val liveFavorites: Set<String> = emptySet(),

@@ -18,6 +18,9 @@ import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.LiveGuide
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.HistoryEntry
@@ -84,8 +87,8 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
 
     override suspend fun browse(profile: String, query: BrowseQuery): CatalogPage = fetchLocalBrowse(profile, query)
 
-    override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = fetchLiveChannels(profile, query)
-    override suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = fetchLiveGuide(profile, channel)
+    override suspend fun liveChannels(profile: String, query: LiveQuery): LivePage = fetchLiveChannels(profile, query)
+    override suspend fun liveGuide(profile: String, channel: String): LiveGuide = fetchLiveGuide(profile, channel)
     override suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = fetchLiveSources(profile, channel)
     override suspend fun liveFavorites(profile: String): Set<String> = withContext(Dispatchers.IO) { decodeLiveFavorites(engine.liveFavorites(profile)) }
     override suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = withContext(Dispatchers.IO) { decodeLiveFavorites(engine.setLiveFavorite(profile, channel, saved)) }

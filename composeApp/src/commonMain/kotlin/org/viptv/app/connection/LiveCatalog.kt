@@ -1,34 +1,18 @@
 package org.viptv.app.connection
 
 import io.ktor.http.*
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
-import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.LiveGuide
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.SourceCandidate
-
-@Serializable
-data class LiveQuery(val connection_id: String? = null, val group_id: String? = null, val search: String? = null,
-    val offset: Int = 0, val limit: Int = 100)
-@Serializable
-data class LiveCatalogChannel(val id: String, val connection_id: String, val card: Card,
-    val group_id: String? = null, val group_name: String? = null, val group_ids: List<String> = emptyList())
-@Serializable
-data class LiveCatalogGroup(val id: String, val label: String)
-@Serializable
-data class LiveCatalogPage(val channels: List<LiveCatalogChannel> = emptyList(), val groups: List<LiveCatalogGroup> = emptyList(),
-    val next_cursor: String? = null, val complete: Boolean = true, val availability: String = "Unsupported", val reason: String? = null,
-    val connections: List<org.viptv.engine.wire.IntegrationConnection> = emptyList())
-@Serializable
-data class LiveGuideProgram(val id: String, val title: String, val start_millis: Long, val end_millis: Long, val description: String? = null)
-@Serializable
-data class LiveGuideSnapshot(val channel_id: String, val programs: List<LiveGuideProgram> = emptyList(),
-    val availability: String = "Unsupported", val reason: String? = null)
 
 private val liveCodec = Json { ignoreUnknownKeys = true }
 
-suspend fun RemoteConnection.liveChannels(profile: String, query: LiveQuery): LiveCatalogPage {
+suspend fun RemoteConnection.liveChannels(profile: String, query: LiveQuery): LivePage {
     val parameters = buildList {
-        add("offset=${query.offset}"); add("limit=${query.limit}")
+        add("offset=${query.offset}")
+        query.limit?.let { add("limit=$it") }
         query.connection_id?.let { add("connection_id=${it.encodeURLParameter()}") }
         query.group_id?.let { add("group_id=${it.encodeURLParameter()}") }
         query.search?.let { add("search=${it.encodeURLParameter()}") }
@@ -36,7 +20,7 @@ suspend fun RemoteConnection.liveChannels(profile: String, query: LiveQuery): Li
     return liveCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/live/channels?${parameters.joinToString("&")}"))
 }
 
-suspend fun RemoteConnection.liveGuide(profile: String, channel: String): LiveGuideSnapshot =
+suspend fun RemoteConnection.liveGuide(profile: String, channel: String): LiveGuide =
     liveCodec.decodeFromJsonElement(call("/api/profiles/${profile.encodeURLPathPart()}/live/${channel.encodeURLPathPart()}/guide"))
 
 suspend fun RemoteConnection.liveSources(profile: String, channel: String): List<SourceCandidate> {

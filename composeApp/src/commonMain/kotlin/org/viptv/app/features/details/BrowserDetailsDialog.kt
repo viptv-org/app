@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -32,7 +31,7 @@ import com.composables.icons.lucide.X
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.TitleLogo
-import org.viptv.app.components.requestPlacedFocus
+import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -71,10 +70,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
             (if (failures.isNotEmpty() && !busy && error == null) 1 else 0) + 1 + episode }, selected)
     Dialog(onDismissRequest = requestDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val focusManager = LocalFocusManager.current
-        // The window layer attaches a frame later, so retry until the button is placed.
         LaunchedEffect(closeFocusOnOpen) {
-            if (!closeFocusOnOpen) { focusManager.clearFocus(force = true); return@LaunchedEffect }
-            repeat(30) { if (closeFocus.requestPlacedFocus()) return@LaunchedEffect; withFrameNanos { } }
+            if (!closeFocusOnOpen) focusManager.clearFocus(force = true)
         }
         BoxWithConstraints(Modifier.widthIn(max = 832.dp).fillMaxWidth().fillMaxHeight().padding(vertical = 32.dp, horizontal = 16.dp), contentAlignment = Alignment.TopCenter) {
             val compact = maxWidth < 640.dp
@@ -129,7 +126,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                             }
                         }
                     }
-                    IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp).focusRequester(closeFocus)
+                    IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp)
+                        .then(closeFocus.requestFocusWhenPlaced(closeFocusOnOpen))
                         .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
                 }
             }
@@ -140,19 +138,21 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
 @Composable
 private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
     resumeEpisode: Card?) {
-    Box(Modifier.fillMaxWidth().aspectRatio(16f / 8.2f).heightIn(min = 260.dp)) {
-        AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
-        Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
-                Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().height(maxOf(260.dp, maxWidth * (8.2f / 16f)))) {
+            AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
+            Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
+                    Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                    Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
+                    Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+                FavoriteAction(card, saved, save)
             }
-            Button(onClick = { play(resumeEpisode ?: card) }, modifier = Modifier.width(230.dp).height(44.dp), shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
-                Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            FavoriteAction(card, saved, save)
         }
     }
 }

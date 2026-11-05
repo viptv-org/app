@@ -2,6 +2,9 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.Availability
+import org.viptv.engine.wire.LiveGuide
+import org.viptv.engine.wire.LiveQuery
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.minutes
 
@@ -22,7 +25,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
     var wanted = query
     var channels = if (append) mutable.value.livePage?.channels.orEmpty() else emptyList()
     val initiallyVisibleFavorites = channels.count { it.id in mutable.value.liveFavorites }
-    val offsets = mutableSetOf<Int>()
+    val offsets = mutableSetOf<Long>()
     var favoritesLoaded = append
     while (true) {
         if (!offsets.add(wanted.offset)) throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
@@ -37,7 +40,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
         if (!favoritesLoaded) { loadLiveFavorites(context); favoritesLoaded = true }
         if (!ownsLive(context) || generation != operation) throw CancellationException("Live TV selection changed")
         val state = mutable.value
-        val next = page.next_cursor?.toIntOrNull()
+        val next = page.next_cursor?.toLongOrNull()
         val needsFavoritePage = state.liveFavoritesOnly && state.liveFavoritesAvailable && state.liveFavorites.isNotEmpty() &&
             channels.count { it.id in state.liveFavorites } <= initiallyVisibleFavorites && page.next_cursor != null
         if (!needsFavoritePage) break
@@ -66,7 +69,7 @@ fun ApplicationController.filterLiveFavorites() = run {
 }
 fun ApplicationController.moreLive() = run {
     if (mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.all { id -> mutable.value.livePage?.channels?.any { it.id == id } == true }) return@run
-    val offset = mutable.value.livePage?.next_cursor?.toIntOrNull() ?: return@run
+    val offset = mutable.value.livePage?.next_cursor?.toLongOrNull() ?: return@run
     try {
         if (offset <= mutable.value.liveQuery.offset || offset > 10_000) throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
         loadLive(mutable.value.liveQuery.copy(offset = offset), append = true)
@@ -88,7 +91,7 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
     updateState { next -> next.copy(liveGuideChannel = channel, liveGuideLoading = false) }
     val cached = mutable.value.liveGuides[channel]
     val fresh = liveGuideFetchedAt[channel]?.elapsedNow()?.let { it < 1.minutes } == true
-    if (!force && fresh && cached?.availability != "TemporarilyUnavailable" && cached != null) return
+    if (!force && fresh && cached?.availability != Availability.TEMPORARILYUNAVAILABLE && cached != null) return
     liveGuideJob = scope.launch {
         try {
             if (!force) delay(250)
@@ -100,10 +103,10 @@ fun ApplicationController.showLiveGuide(channel: String, force: Boolean = false)
                 if (error is RemoteFailure && error.status == 401 && ownsLive(context) && liveGuideRequest == request) {
                     run { throw error }; return@launch
                 }
-                LiveGuideSnapshot(channel, availability = "TemporarilyUnavailable", reason = "Could not load the program guide.")
+                LiveGuide(channel_id = channel, programs = emptyList(), availability = Availability.TEMPORARILYUNAVAILABLE, reason = "Could not load the program guide.")
             }
-            val guide = if (fetched.channel_id != channel) LiveGuideSnapshot(channel, availability = "TemporarilyUnavailable", reason = "Could not load the program guide.")
-                else if (fetched.availability == "Available" && fetched.programs.isEmpty() && fetched.reason == null)
+            val guide = if (fetched.channel_id != channel) LiveGuide(channel_id = channel, programs = emptyList(), availability = Availability.TEMPORARILYUNAVAILABLE, reason = "Could not load the program guide.")
+                else if (fetched.availability == Availability.AVAILABLE && fetched.programs.isEmpty() && fetched.reason == null)
                     fetched.copy(reason = "Guide data isn’t available for this source yet. You can still watch this channel.") else fetched
             if (ownsLive(context) && generation == operation && liveGuideRequest == request && mutable.value.livePage?.channels?.any { it.id == channel } == true) {
                 liveGuideFetchedAt[channel] = TimeSource.Monotonic.markNow()

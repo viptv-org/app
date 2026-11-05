@@ -4,9 +4,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.viptv.app.connection.LiveCatalogChannel
-import org.viptv.app.connection.LiveCatalogPage
-import org.viptv.app.connection.LiveQuery
 import org.viptv.app.connection.LocalConnection
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
@@ -15,7 +12,11 @@ import org.viptv.app.state.ApplicationState
 import org.viptv.app.state.Screen
 import org.viptv.app.state.configureSourceIntegration
 import org.viptv.app.state.removeSourceIntegration
+import org.viptv.engine.wire.Availability
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.LiveChannel
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.MediaIdentity
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,7 +26,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class ProfileConfigurationRefreshTest {
-    private fun channel(id: String, connection: String) = LiveCatalogChannel(id, connection,
+    private fun channel(id: String, connection: String) = LiveChannel(id, connection,
         Card(identity = MediaIdentity(id, "live", emptyList(), null), provider_id = "xtream", title = id, badges = emptyList()))
 
     private fun configuredSnapshot() = SourceIntegrationSnapshot(
@@ -43,16 +44,16 @@ class ProfileConfigurationRefreshTest {
                 requestedRevision = revision
                 configured = true
             }
-            override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage {
+            override suspend fun liveChannels(profile: String, query: LiveQuery): LivePage {
                 liveReads++
-                return if (configured) LiveCatalogPage(channels = listOf(channel("xtream:1", "xtream:1")), availability = "Available")
-                else LiveCatalogPage(availability = "Available")
+                return if (configured) LivePage(channels = listOf(channel("xtream:1", "xtream:1")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE)
+                else LivePage(channels = emptyList(), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE)
             }
         }
         val controller = fixture.controller { local }
         controller.local = local
         controller.mutable.value = ApplicationState(screen = Screen.Live, localMode = true, selectedProfile = "default",
-            sourceIntegrations = SourceIntegrationSnapshot(revision = 1), livePage = LiveCatalogPage(availability = "Available"))
+            sourceIntegrations = SourceIntegrationSnapshot(revision = 1), livePage = LivePage(channels = emptyList(), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE))
         try {
             controller.configureSourceIntegration("xtream", buildJsonObject { put("url", "https://provider.example") })
             controller.job!!.join()
@@ -75,16 +76,16 @@ class ProfileConfigurationRefreshTest {
             override suspend fun sourceIntegrationSchemas(profile: String) =
                 if (removed) SourceIntegrationSnapshot(revision = 3) else configuredSnapshot()
             override suspend fun removeSourceIntegration(profile: String, revision: Long, connection: String) { removed = true }
-            override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage {
+            override suspend fun liveChannels(profile: String, query: LiveQuery): LivePage {
                 liveReads++
-                return if (removed) LiveCatalogPage(availability = "Available")
-                else LiveCatalogPage(channels = listOf(channel("xtream:1", "xtream:1")), availability = "Available")
+                return if (removed) LivePage(channels = emptyList(), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE)
+                else LivePage(channels = listOf(channel("xtream:1", "xtream:1")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE)
             }
         }
         val controller = fixture.controller { local }
         controller.local = local
         controller.mutable.value = ApplicationState(screen = Screen.Live, localMode = true, selectedProfile = "default",
-            sourceIntegrations = configuredSnapshot(), livePage = LiveCatalogPage(channels = listOf(channel("xtream:1", "xtream:1")), availability = "Available"))
+            sourceIntegrations = configuredSnapshot(), livePage = LivePage(channels = listOf(channel("xtream:1", "xtream:1")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE))
         try {
             controller.removeSourceIntegration("xtream:1")
             controller.job!!.join()

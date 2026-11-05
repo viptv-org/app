@@ -214,7 +214,7 @@ class PlaybackLeaseTest {
     }
 
     @Test fun aLiveStreamReacquiresWithAFreshGrantAndStreamId() = runTest {
-        val channel = LiveCatalogChannel("channel-1", "m3u:1", Card(MediaIdentity("channel-1", "live", emptyList()), provider_id = "m3u:1", title = "Channel", badges = emptyList()))
+        val channel = LiveChannel("channel-1", "m3u:1", Card(MediaIdentity("channel-1", "live", emptyList()), provider_id = "m3u:1", title = "Channel", badges = emptyList()))
         var granted = "stream-1"
         val grants = mutableListOf<String>()
         val opens = mutableListOf<String>()
@@ -262,7 +262,7 @@ class PlaybackLeaseTest {
             connection.openPlayback(candidate, profile, facts, forceGateway, position, torrents = null, stage = stage)
         }
         controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "profile",
-            livePage = LiveCatalogPage(listOf(channel), availability = "Available"), preferences = PreferencesSnapshot())
+            livePage = LivePage(channels = listOf(channel), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE), preferences = PreferencesSnapshot())
         try {
             controller.playLive("channel-1"); runCurrent()
             val input = assertNotNull(controller.state.value.playback)

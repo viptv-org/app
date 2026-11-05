@@ -119,6 +119,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                                 val requester = if (rowIndex == firstResultGroup && index == 0) firstResultFocus else own
                                 if (key == restoreId) LaunchedEffect(Unit) { withFrameNanos { }; requester.requestFocus() }
                                 MediaCard(card, (212 * scale).toInt(), portrait = true, showLabels = true, labelScale = scale * 1.7f,
+                                searchQuery = term,
                                 open = open, onFocus = { focusedId = key; sectionScroll.focus(rowIndex + if (error != null) 1 else 0) }, modifier = Modifier.focusRequester(requester), cornerRadius = 12.dp * scale, focusWidth = 3.dp * scale,
                                 watchedBadgeSize = 34.dp * scale, scale = scale) }
                         }
