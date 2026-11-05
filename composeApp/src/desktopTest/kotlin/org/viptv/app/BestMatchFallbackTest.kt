@@ -184,4 +184,45 @@ class BestMatchFallbackTest {
         assertEquals(listOf(true, false, false), rows.map { it.didntStart })
         assertTrue(rows.first().bestMatch, "The marker does not move off the row that failed")
     }
+
+    @Test fun theNextSourceSavesTheLivePositionBeforeItOpens() = runTest {
+        val fixture = LocalSetupFixture()
+        val rows = listOf(row("a"), row("b"))
+        val events = mutableListOf<String>()
+        var saved: Long? = null
+        val device = object : LocalConnection by fixture.local {
+            override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome {
+                publish(SourcesOutcome(rows))
+                return SourcesOutcome(rows)
+            }
+            override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources =
+                RankedSources(sources, interimSourceGroups(sources))
+            override suspend fun openSource(id: String): PlaybackInput {
+                events += "open:$id"
+                return PlaybackInput(id, "https://media.example.test/$id", positionMillis = saved ?: 0L)
+            }
+            override suspend fun recordProgress(input: PlaybackInput, card: Card, positionMillis: Long, durationMillis: Long?) {
+                saved = positionMillis
+                events += "save:$positionMillis"
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val controller = ApplicationController(scope, fixture.store, localFactory = { device })
+        controller.capability = { DeviceCapability() }
+        controller.local = device
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+            preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
+        try {
+            controller.chooseSource(movie)
+            withTimeout(5000) { controller.state.first { it.playback?.id == "a" } }
+            controller.observePlayback(PlayerFact.Progress(123_456, 800_000))
+            controller.playNextSource()
+            val switched = withTimeout(5000) { controller.state.first { it.playback?.id == "b" } }
+            assertEquals(listOf("open:a", "save:123456", "open:b"), events)
+            assertEquals(123_456L, switched.playback!!.positionMillis, "The next source resumes from the live position")
+        } finally {
+            fixture.close(controller)
+            scope.cancel()
+        }
+    }
 }

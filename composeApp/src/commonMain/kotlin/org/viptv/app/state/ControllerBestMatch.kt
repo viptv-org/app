@@ -41,6 +41,7 @@ fun ApplicationController.stopBestMatchFallback() {
 fun ApplicationController.playNextSource() {
     val session = mutable.value.bestMatch ?: return
     val next = session.nextTarget() ?: return
+    if (!completionSeen) saveProgress(false)
     updateState { it.copy(bestMatch = null, audioNotice = null) }
     openSource(mutable.value.sources.firstOrNull { it.id == next.id } ?: next, forceGateway = false, positionMillis = null)
 }
