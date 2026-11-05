@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -91,6 +92,7 @@ import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.tvHold
+import org.viptv.app.features.search.searchMatchHighlight
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -113,7 +115,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     watchedBadgeSize: Dp? = null,
     select: ((Card) -> Unit)? = null,
     onHover: (Boolean) -> Unit = {},
-    scale: Float = 1f) {
+    scale: Float = 1f,
+    searchQuery: String? = null) {
     var focused by remember { mutableStateOf(false) }
     val accent = Palette.accent
     val actions = LocalCardActions.current
@@ -204,7 +207,10 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
         }
         if (showLabels) {
             Spacer(Modifier.height(9.dp))
-            Text(card.title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1,
+            val title = remember(card.title, searchQuery) {
+                searchQuery?.takeIf { it.isNotBlank() }?.let { searchMatchHighlight(card.title, it) } ?: AnnotatedString(card.title)
+            }
+            Text(title, Modifier.fillMaxWidth().then(if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier), fontSize = (14 * labelScale).sp, lineHeight = (18 * labelScale).sp, fontWeight = FontWeight.Medium, maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
@@ -235,7 +241,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             Popup(popupPositionProvider = CardPreviewPosition(gap),
                 onDismissRequest = { previewOpen = false },
                 properties = PopupProperties(focusable = false, dismissOnClickOutside = false, dismissOnBackPress = false)) {
-                CardPreview(card, saved,
+                CardPreview(card, saved, searchQuery,
                     onPlay = { previewOpen = false; activate(card) },
                     onSave = { previewOpen = false; actions.toggleSave(card) },
                     onInfo = { previewOpen = false; open(card) },
@@ -356,7 +362,7 @@ private class CardMenuPosition(private val at: IntOffset) : PopupPositionProvide
 }
 
 @Composable
-private fun CardPreview(card: Card, saved: Boolean,
+private fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null,
     onPlay: () -> Unit, onSave: () -> Unit, onInfo: () -> Unit, onHoverChanged: (Boolean) -> Unit) {
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
@@ -410,7 +416,8 @@ private fun CardPreview(card: Card, saved: Boolean,
                 PreviewCircle("More info", onInfo) { Icon(Lucide.Info, null, Modifier.size(18.dp), tint = Palette.text) }
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(card.title, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold,
+                Text(searchQuery?.takeIf { it.isNotBlank() }?.let { searchMatchHighlight(card.title, it) } ?: AnnotatedString(card.title),
+                    fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 MediaMetadata(card, fontSize = 12f, lineHeight = 16f, badgeSize = 10f)
             }
