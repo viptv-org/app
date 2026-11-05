@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -17,13 +18,13 @@ import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun HomeSkeleton(compact: Boolean, tablet: Boolean, browser: Boolean, gutter: Dp) {
+internal fun HomeSkeleton(compact: Boolean, tablet: Boolean, browser: Boolean, gutter: Dp, viewportHeight: Dp? = null) {
     Column(Modifier.fillMaxWidth().semantics { contentDescription = "Loading Home" },
         verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Box(Modifier.fillMaxWidth().padding(top = if (tablet || browser) 0.dp else 12.dp)) {
             when {
                 !compact && !tablet -> DesktopHeroSkeleton(browser, gutter)
-                tablet -> TabletHeroSkeleton(gutter)
+                tablet -> TabletHeroSkeleton(gutter, viewportHeight)
                 else -> PhoneHeroSkeleton(gutter)
             }
         }
@@ -58,19 +59,23 @@ private fun PhoneHeroSkeleton(gutter: Dp) {
 }
 
 @Composable
-private fun TabletHeroSkeleton(gutter: Dp) {
-    Box(Modifier.fillMaxWidth().padding(horizontal = gutter).height(520.dp)) {
-        Block(Modifier.fillMaxSize(), radius = 12.dp)
-        Column(Modifier.align(Alignment.BottomStart).padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Block(Modifier.width(300.dp).height(32.dp), radius = 4.dp)
-            Block(Modifier.width(220.dp).height(14.dp), radius = 4.dp)
-            Block(Modifier.fillMaxWidth().height(14.dp), radius = 4.dp)
-            Block(Modifier.fillMaxWidth(0.6f).height(14.dp), radius = 4.dp)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Block(Modifier.width(160.dp).height(48.dp), radius = 12.dp)
-                Block(Modifier.size(48.dp), radius = 24.dp)
-                Block(Modifier.size(48.dp), radius = 24.dp)
+private fun TabletHeroSkeleton(gutter: Dp, viewportHeight: Dp?) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val (height, short) = tabletHeroFrame(maxWidth - gutter * 2, viewportHeight)
+        Box(Modifier.fillMaxWidth().padding(horizontal = gutter).height(height).testTag(TABLET_HERO_FRAME_TAG)) {
+            Block(Modifier.fillMaxSize(), radius = 12.dp)
+            Column(Modifier.align(Alignment.BottomStart).padding(start = if (short) 20.dp else 32.dp, end = if (short) 20.dp else 32.dp,
+                bottom = if (short) 16.dp else 40.dp).widthIn(max = 520.dp),
+                verticalArrangement = Arrangement.spacedBy(if (short) 8.dp else 12.dp)) {
+                Block(Modifier.width(if (short) 200.dp else 300.dp).height(if (short) 26.dp else 32.dp), radius = 4.dp)
+                Block(Modifier.width(220.dp).height(14.dp), radius = 4.dp)
+                Block(Modifier.fillMaxWidth().height(14.dp), radius = 4.dp)
+                if (!short) Block(Modifier.fillMaxWidth(0.6f).height(14.dp), radius = 4.dp)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Block(Modifier.width(160.dp).height(48.dp), radius = 12.dp)
+                    Block(Modifier.size(48.dp), radius = 24.dp)
+                    Block(Modifier.size(48.dp), radius = 24.dp)
+                }
             }
         }
     }
