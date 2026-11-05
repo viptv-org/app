@@ -31,6 +31,7 @@ import org.viptv.app.state.Screen
 import org.viptv.app.state.backSources
 import org.viptv.app.state.dismissBackendBanner
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * On TV the outage banner takes no focus, so the D-pad reaches Dismiss by pressing Up at the top of
@@ -72,7 +73,7 @@ class BackendBannerTvPagesTest {
 
         val state get() = controller.state.value
 
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         fun label(node: SemanticsNode): String =
             (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
@@ -81,8 +82,8 @@ class BackendBannerTvPagesTest {
             .joinToString(" | ") { label(it) }
         fun shows(text: String) = nodes().any { label(it).contains(text) }
         fun until(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what (focus: ${focused()})" }; frames(2) }
+            try { frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition) }
+            catch (timedOut: AssertionError) { throw AssertionError("${timedOut.message} (focus: ${focused()})", timedOut) }
         }
         fun focus(text: String) {
             val node = nodes().first { label(it).contains(text) && it.config.contains(SemanticsActions.RequestFocus) }
