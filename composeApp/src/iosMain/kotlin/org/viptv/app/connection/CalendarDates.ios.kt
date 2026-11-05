@@ -3,6 +3,8 @@ package org.viptv.app.connection
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.*
 import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.format.formatTimeOfDay
+import org.viptv.app.format.is24HourTime
 import platform.Foundation.*
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSCalendarUnitYear
@@ -61,10 +63,10 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
         return CalendarLabel(date, "All day", date <= dayString(NSDate()))
     }
     val d = dateFromDayString(date) ?: return null
-    val time = NSDateFormatter().apply { dateFormat = "h:mm a" }
+    val components = NSCalendar.currentCalendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, fromDate = d)
     return CalendarLabel(
         day = dayString(d),
-        time = time.stringFromDate(d),
+        time = formatTimeOfDay(components.hour.toInt(), components.minute.toInt(), is24HourTime()),
         aired = d.timeIntervalSince1970 < NSDate().timeIntervalSince1970,
     )
 }

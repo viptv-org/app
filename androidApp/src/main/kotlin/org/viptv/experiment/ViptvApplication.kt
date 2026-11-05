@@ -6,6 +6,7 @@ import org.viptv.app.crash.AndroidCrashReports
 import org.viptv.app.crash.CrashFacts
 import org.viptv.app.crash.CrashReport
 import org.viptv.app.crash.CrashReportStore
+import org.viptv.app.format.AndroidTimeOfDay
 import org.viptv.app.state.AndroidSourceMemory
 import org.viptv.app.state.SourceMemory
 
@@ -14,6 +15,7 @@ class ViptvApplication : Application() {
         super.onCreate()
         AndroidCrashReports.attach(this)
         AndroidSourceMemory.attach(this)
+        AndroidTimeOfDay.attach(this)
         SourceMemory.useDeviceStorage()
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->

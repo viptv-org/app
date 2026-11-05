@@ -3,6 +3,8 @@ package org.viptv.app.connection
 
 import kotlinx.serialization.json.*
 import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.format.formatTimeOfDay
+import org.viptv.app.format.is24HourTime
 
 internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val value = Json.parseToJsonElement(calendarWindowJson(offsetDays, APP_DATE_LOCALE)).jsonObject
@@ -15,7 +17,10 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
 internal actual fun calendarLabel(date: String): CalendarLabel? {
     val raw = calendarLabelJson(date).takeIf { it != "null" } ?: return null
     val value = Json.parseToJsonElement(raw).jsonObject
-    return CalendarLabel(value.getValue("day").jsonPrimitive.content, value.getValue("time").jsonPrimitive.content, value.getValue("aired").jsonPrimitive.boolean)
+    val time = value["hour"]?.jsonPrimitive?.intOrNull
+        ?.let { hour -> formatTimeOfDay(hour, value.getValue("minute").jsonPrimitive.int, is24HourTime()) }
+        ?: value.getValue("time").jsonPrimitive.content
+    return CalendarLabel(value.getValue("day").jsonPrimitive.content, time, value.getValue("aired").jsonPrimitive.boolean)
 }
 @JsFun("""(offsetDays, locale) => {
  const now = new Date(), id = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -35,6 +40,6 @@ private external fun calendarWindowJson(offsetDays: Int, locale: String): String
  }
  const d=new Date(value); if(!Number.isFinite(d.getTime())) return 'null';
  const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
- return JSON.stringify({day,time:d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),aired:d.getTime()<Date.now()});
+ return JSON.stringify({day, hour:d.getHours(), minute:d.getMinutes(), aired:d.getTime()<Date.now()});
 }""")
 private external fun calendarLabelJson(value: String): String
