@@ -40,6 +40,7 @@ class AppUpdateUiTest {
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }.orEmpty()
         fun shows(value: String) = nodes().any { value in text(it) }
+        fun clickable(value: String) = nodes().any { it.config.contains(SemanticsActions.OnClick) && value in text(it) }
         fun clickContaining(value: String) {
             val node = nodes().first { it.config.contains(SemanticsActions.OnClick) && (value in text(it) ||
                 it.children.any { child -> value in text(child) }) }
@@ -254,6 +255,44 @@ class AppUpdateUiTest {
             assertTrue(scene.shows("VIPTV 0.1.1301 is ready to install"))
             scene.clickContaining("Install update")
             assertEquals(1, platform.installs.size)
+        }
+    }
+
+    @Test fun theServerRequiredNoticeOffersTheUpdaterAndPutsItOff() {
+        var updates = 0
+        var dismissed = 0
+        Scene(390, 844) {
+            ViptvTheme { AppUpdateRequiredNotice(television = false, update = { updates++ }, dismiss = { dismissed++ }) }
+        }.use { scene ->
+            scene.render()
+            assertTrue(scene.shows("Update required"))
+            assertTrue(scene.shows("Update VIPTV to use this server's current catalog and playback APIs."))
+            scene.clickContaining("Update")
+            assertEquals(1, updates)
+            scene.clickContaining("Not now")
+            assertEquals(1, dismissed)
+            scene.capture("phone-update-required")
+        }
+    }
+
+    @Test fun aPlatformWithoutAnUpdaterOffersOnlyNotNow() {
+        Scene(390, 844) { ViptvTheme { AppUpdateRequiredNotice(television = false, update = null, dismiss = {}) } }.use { scene ->
+            scene.render()
+            assertTrue(scene.shows("Update required"))
+            assertFalse(scene.clickable("Update"), "Nothing can install a build on this platform")
+            assertTrue(scene.clickable("Not now"))
+        }
+    }
+
+    @Test fun theTvServerRequiredNoticeOffersUpdate() {
+        var updates = 0
+        Scene(1920, 1080) {
+            ViptvTheme(television = true) { AppUpdateRequiredNotice(television = true, update = { updates++ }, dismiss = {}) }
+        }.use { scene ->
+            scene.render()
+            assertTrue(scene.shows("Update required"))
+            scene.clickContaining("Update")
+            assertEquals(1, updates)
         }
     }
 }
