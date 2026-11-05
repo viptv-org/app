@@ -18,6 +18,7 @@ import org.junit.Rule
 import org.viptv.app.connection.RemoteSessionStore
 import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.features.home.MEDIA_CARD_HOVER_RING_TAG
+import org.viptv.app.features.search.SEARCH_PLACEHOLDER
 import org.viptv.app.features.home.MEDIA_CARD_HOVER_TAG
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
@@ -106,13 +107,13 @@ class DesktopShellHoverTest {
     }
 
     @Test fun theTitleBarSearchAndProfileAnswerHover() = shell {
-        assertHoverRepaints("title-bar search") { it.contains("Search movies and series") }
+        assertHoverRepaints("title-bar search") { it.contains(SEARCH_PLACEHOLDER) }
         assertHoverRepaints("Switch profile") { it.contains("Switch profile") }
     }
 
     @Test fun theTitleBarSearchShowsTheSpecPlaceholderWithoutAShortcutHint() = shell {
         val texts = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
-        assertTrue(texts.contains("Search movies and series"), "the placeholder matches copy.md")
+        assertTrue(texts.contains(SEARCH_PLACEHOLDER), "the placeholder matches copy.md")
         assertFalse(texts.any { it == "Ctrl K" || it == "⌘K" }, "no keyboard-shortcut hint badge")
     }
 

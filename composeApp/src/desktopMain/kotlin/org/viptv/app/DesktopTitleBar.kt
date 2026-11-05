@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import org.viptv.app.features.entry.ProfileAvatar
+import org.viptv.app.features.search.SEARCH_PLACEHOLDER
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.state.ApplicationState
@@ -130,7 +131,7 @@ internal fun DesktopTitleBar(
                             fontFamily = MaterialTheme.typography.bodyMedium.fontFamily),
                         decorationBox = { inner ->
                             Box {
-                                if (query.isEmpty()) Text("Search movies and series", color = Palette.secondary, fontSize = 13.sp)
+                                if (query.isEmpty()) Text(SEARCH_PLACEHOLDER, color = Palette.secondary, fontSize = 13.sp)
                                 inner()
                             }
                         })
