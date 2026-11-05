@@ -59,7 +59,7 @@ internal fun BoxScope.TvPlayerControls(state: TvPlayerState, title: Card?, extra
 @Composable
 private fun TvPlayerPill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float,
     down: FocusRequester, requester: FocusRequester, sides: Pair<FocusRequester, FocusRequester>, pending: Boolean = false, activate: () -> Unit) {
-    TvGlassAction(Modifier.height(56.dp * scale).focusProperties { left = sides.first; right = sides.second }, scale, requester = requester, down = down, activate = activate,
+    TvGlassAction(Modifier.heightIn(min = 56.dp * scale).focusProperties { left = sides.first; right = sides.second }, scale, requester = requester, down = down, activate = activate,
         cornerRadius = 28.dp * scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), background = Color.White.copy(alpha = .16f)) {
         if (pending) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = it)
         else Icon(icon, null, Modifier.size(24.dp * scale), it)

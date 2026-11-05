@@ -20,6 +20,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.components.motionSpec
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -34,17 +35,20 @@ private fun HeroLogo(url: String, title: String, modifier: Modifier) {
 
 @Composable
 internal fun TvHeroSummary(card: Card, scale: Float) {
-    Box(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxWidth()) {
         if (card.logo != null) HeroLogo(card.logo, card.title,
-            Modifier.offset(96.dp * scale, 306.dp * scale).size(410.dp * scale, 160.dp * scale))
-        else Box(Modifier.offset(96.dp * scale, 306.dp * scale).size(800.dp * scale, 160.dp * scale)) {
+            Modifier.heightIn(min = 160.dp * scale).width(410.dp * scale))
+        else Box(Modifier.heightIn(min = 160.dp * scale).width(800.dp * scale)) {
             Text(card.title, Modifier.align(Alignment.BottomStart), fontSize = (48 * scale).sp,
                 lineHeight = (56 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Box(Modifier.offset(96.dp * scale, 494.dp * scale)) {
-            TvMediaMetadata(card, scale)
+        Spacer(Modifier.height(28.dp * scale))
+        TvMediaMetadata(card, scale)
+        Spacer(Modifier.height(20.dp * scale))
+        // The copy keeps its two-line slot so the actions below it never move when a title has no description.
+        Box(Modifier.heightIn(min = 76.dp * scale).width(780.dp * scale)) {
+            card.description.providerText()?.let { Text(it, fontSize = (26 * scale).sp,
+                lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
-        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 544.dp * scale).width(780.dp * scale), fontSize = (26 * scale).sp,
-            lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
     }
 }

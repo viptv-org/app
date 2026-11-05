@@ -29,6 +29,7 @@ import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
+import org.viptv.app.format.providerText
 
 internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
 
@@ -114,7 +115,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     val entry = requireNotNull(focused)
                     AsyncImage(entry.card.landscape ?: entry.card.poster, entry.card.title, Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop)
                     Text(entry.card.title, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold)
-                    entry.description?.let { Text(it, fontSize = (24 * scale).sp, color = Palette.body) }
+                    entry.description.providerText()?.let { Text(it, fontSize = (24 * scale).sp, color = Palette.body) }
                     Button(onClick = { choose(entry) }, shape = RoundedCornerShape(12.dp * scale), modifier = Modifier.height(72.dp * scale),
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) { Text("View details", fontSize = (26 * scale).sp) }
                 }

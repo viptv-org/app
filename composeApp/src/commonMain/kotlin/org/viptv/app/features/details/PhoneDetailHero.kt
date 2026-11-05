@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,9 +32,10 @@ import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.features.home.BufferedArtwork
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
@@ -55,13 +55,11 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
             if (art != null) {
                 BufferedArtwork(art, Modifier.fillMaxSize())
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                    0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
-                    .55f to Color.Transparent, 1f to Palette.background)))
+                Box(Modifier.fillMaxSize().background(Scrim.phoneDetailArt))
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            val titleArea = if (card.logo != null) Modifier.height(PhoneHeroHeader) else Modifier.heightIn(min = PhoneHeroHeader)
+            val titleArea = Modifier.heightIn(min = PhoneHeroHeader)
             TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().then(titleArea),
                 logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
                 Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
@@ -73,7 +71,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             val label = heroPlayLabel(resume)
             val pending = (resume ?: card).isPlayPending()
             Box(Modifier.fillMaxWidth()) {
-                Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
+                Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -116,7 +114,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                     Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
-            card.description?.let { Text(providerPlainText(it), fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
+            card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
             card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
                 Text("Starring ${cast.joinToString(", ")}", fontSize = 14.sp, lineHeight = 21.sp,

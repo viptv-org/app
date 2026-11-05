@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 
 @Composable
 internal fun BoxScope.HomeBackdrop(artwork: String) {
@@ -22,7 +22,6 @@ internal fun BoxScope.HomeBackdrop(artwork: String) {
             if (blurred != null) base.graphicsLayer { alpha = 0.45f; scaleX = 1.25f; scaleY = 1.25f }
             else base.graphicsLayer { alpha = 0.45f; scaleX = 1.25f; scaleY = 1.25f }.blur(60.dp, BlurredEdgeTreatment.Unbounded)
         }, contentScale = ContentScale.Crop)
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(
-            0f to Palette.background.copy(alpha = 0.15f), 0.6f to Palette.background.copy(alpha = 0.65f), 1f to Palette.background)))
+        Box(Modifier.matchParentSize().background(Scrim.pageBackdrop))
     }
 }

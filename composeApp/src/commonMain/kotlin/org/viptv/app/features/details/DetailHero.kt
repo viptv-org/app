@@ -8,8 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,6 +15,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.TitleLogo
 import org.jetbrains.compose.resources.painterResource
@@ -25,7 +24,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 
 @Composable
 internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
@@ -36,8 +35,7 @@ internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.fillMaxWidth().height(280.dp)) {
                 DetailArtwork(card, Modifier.fillMaxSize())
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                    listOf(Color.Transparent, Palette.background))))
+                Box(Modifier.fillMaxSize().background(Scrim.detailArtFade))
             }
             DetailSummary(card, play, Modifier.fillMaxWidth(), save, saved, playFromStart)
         }
@@ -83,7 +81,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, 
             Text("Play from the beginning", fontWeight = FontWeight.SemiBold)
         }
         FavoriteAction(card, saved, save)
-        card.description?.let { Text(providerPlainText(it), fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,
+        card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,
             maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
     }
 }

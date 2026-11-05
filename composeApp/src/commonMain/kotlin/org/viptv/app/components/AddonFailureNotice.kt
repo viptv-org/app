@@ -43,7 +43,7 @@ fun AddonFailureNotice(
             Text(message, color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp,
                 modifier = Modifier.weight(1f))
             manageAddons?.let {
-                TvAction(Modifier.width(300.dp * scale).height(64.dp * scale), scale, requester = focus, activate = it,
+                TvAction(Modifier.width(300.dp * scale).heightIn(min = 64.dp * scale), scale, requester = focus, activate = it,
                     contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                     Text("Manage add-ons", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
                 }

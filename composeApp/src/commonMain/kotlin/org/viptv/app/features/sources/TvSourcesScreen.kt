@@ -244,12 +244,12 @@ internal fun TvSourcesEmptyPanel(titleName: String?, addons: Int, providers: Int
         Text(sourcesEmptyExplanation(titleName, addons, providers), fontSize = (26 * scale).sp,
             lineHeight = (38 * scale).sp, color = Palette.secondary)
         Row(Modifier.padding(top = 12.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-            TvAction(Modifier.width(280.dp * scale).height(72.dp * scale), scale, requester = requester, activate = checkAgain,
+            TvAction(Modifier.width(280.dp * scale).heightIn(min = 72.dp * scale), scale, requester = requester, activate = checkAgain,
                 contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                 Icon(Lucide.RefreshCw, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                 Text("Check again", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.width(300.dp * scale).height(72.dp * scale), scale, activate = manageAddons,
+            TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale), scale, activate = manageAddons,
                 contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                 Icon(Lucide.Puzzle, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                 Text("Manage add-ons", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
@@ -270,12 +270,12 @@ internal fun TvSourcesTorrentPanel(providers: Int, scale: Float, debridHelp: () 
             Text(sourcesTorrentExplanation(providers), fontSize = (26 * scale).sp,
                 lineHeight = (38 * scale).sp, color = Palette.text)
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-                TvAction(Modifier.width(400.dp * scale).height(72.dp * scale), scale, requester = requester, activate = debridHelp,
+                TvAction(Modifier.width(400.dp * scale).heightIn(min = 72.dp * scale), scale, requester = requester, activate = debridHelp,
                     contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                     Icon(Lucide.Info, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                     Text("What’s a debrid service?", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
-                TvAction(Modifier.width(180.dp * scale).height(72.dp * scale), scale, activate = dismiss,
+                TvAction(Modifier.width(180.dp * scale).heightIn(min = 72.dp * scale), scale, activate = dismiss,
                     contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                     Text("Back", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
@@ -290,7 +290,7 @@ private fun TvSourcesFailure(error: String, retry: () -> Unit, scale: Float) {
         Icon(Lucide.CloudOff, null, Modifier.size(44.dp * scale), tint = Palette.secondary)
         Text("Couldn’t load sources", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(error, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }

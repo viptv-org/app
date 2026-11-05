@@ -20,7 +20,7 @@ internal fun AddonInstallForm(address: TextFieldState, busy: Boolean, install: (
             AddonUrlField(address, !busy, modifier, dismiss)
         }
         val action: @Composable (Modifier) -> Unit = { modifier ->
-            Button(onClick = install, enabled = !busy && address.text.isNotBlank(), modifier = modifier.height(50.dp),
+            Button(onClick = install, enabled = !busy && address.text.isNotBlank(), modifier = modifier.heightIn(min = 50.dp),
                 shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                 if (busy) { MutationSpinner(16.dp, color = Palette.background); Spacer(Modifier.width(8.dp)); Text("Installing…") }
                 else Text("Install")

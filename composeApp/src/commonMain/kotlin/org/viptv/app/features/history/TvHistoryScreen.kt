@@ -74,7 +74,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                     Text("Everything watched on this profile, newest first.", color = Palette.secondary,
                         fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                 }
-                TvAction(Modifier.height(64.dp * scale).width(260.dp * scale), scale,
+                TvAction(Modifier.heightIn(min = 64.dp * scale).width(260.dp * scale), scale,
                     requester = clearFocus, enabled = !busy && history.isNotEmpty(), keepFocus = busy, activate = { confirm = true }) { tint ->
                     Text("Clear history", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -87,7 +87,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                     Text("Nothing watched yet", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     Text("Titles you play show up here.", color = Palette.secondary, fontSize = (24 * scale).sp)
-                    TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true,
+                    TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true,
                         requester = if (!attached) first else null, activate = back,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Text("Browse Home", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
@@ -124,14 +124,14 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(target?.entry?.card?.title?.let { "“$it”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
                         fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    TvAction(Modifier.height(64.dp * scale).width(360.dp * scale), scale, requester = actionsFocus,
+                    TvAction(Modifier.heightIn(min = 64.dp * scale).width(360.dp * scale), scale, requester = actionsFocus,
                         enabled = target != null, activate = {
                             target?.let { correct(it, if (it.watched) HistoryCorrection.Unwatched else HistoryCorrection.Watched) }
                         }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Text(if (target?.watched == true) "Mark unwatched" else "Mark watched", color = it,
                             fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
                     }
-                    if ((target?.duration ?: 0.0) > 0.0) TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale,
+                    if ((target?.duration ?: 0.0) > 0.0) TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale,
                         activate = { target?.let { resuming = it } }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                         Text("Resume at…", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
                     }
@@ -155,7 +155,7 @@ private fun TvHistoryFailure(reason: String, retry: () -> Unit, scale: Float, re
     Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
         Text("Couldn’t load history", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
-        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
             activate = retry, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }
@@ -169,7 +169,7 @@ private fun TvHistoryRow(entry: HistoryDisplay, scale: Float, modifier: Modifier
     val card = entry.entry.card
     val shape = RoundedCornerShape(16.dp * scale)
     val progress = entry.progressFraction()
-    Row(modifier.fillMaxWidth().height(148.dp * scale)
+    Row(modifier.fillMaxWidth().heightIn(min = 148.dp * scale)
         .focusProperties { this.left = FocusRequester.Cancel; this.right = FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(entry) }
         .graphicsLayer { this.shape = shape; shadowElevation = if (focused) 24.dp.toPx() * scale else 0f; clip = false }

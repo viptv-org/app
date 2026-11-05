@@ -114,7 +114,7 @@ class WatchOnTvSetupUiTest {
             assertTrue(probe.hasProgress(), "discovery still running keeps an indicator: ${probe.texts()}")
 
             gate.complete(Unit)
-            probe.frames(6)
+            probe.await("the settled search") { !probe.hasProgress() }
             assertFalse(probe.hasProgress(), "discovery settled clears the indicator: ${probe.texts()}")
         } finally { scene.close() }
     }

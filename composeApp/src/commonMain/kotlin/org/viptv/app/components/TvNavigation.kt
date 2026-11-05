@@ -21,6 +21,7 @@ import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.state.Screen
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 
 @Composable
 internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
@@ -29,8 +30,9 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) && (it.screen != Screen.Anime || LocalAnimeAvailable.current) }
         val initial = remember { FocusRequester() }
         val onARail = destinations.any { it.screen == selected }
+        Box(Modifier.fillMaxWidth().height(132.dp * scale).background(Scrim.tvTopBar))
         // Up from the page lands on the selected rail: Compose's 2D search would pick the left-most icon instead.
-        Box(Modifier.fillMaxWidth().height(132.dp * scale).focusProperties {
+        Box(Modifier.fillMaxWidth().heightIn(min = 132.dp * scale).focusProperties {
             onEnter = {
                 when (requestedFocusDirection) {
                     FocusDirection.Right -> cancelFocusChange()
@@ -58,7 +60,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             } else snapshotFlow { banner.focused.value }.collect { bannerHadFocus = it }
         }
         val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }
-        Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
+        Row(Modifier.offset(300.dp * scale, 38.dp * scale).heightIn(min = 56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             var searchFocused by remember { mutableStateOf(false) }
             // IconButton clips to a circle, so the ring is drawn by a wrapper outside that clip; its own focus layer would be a second ring.
@@ -75,7 +77,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
             destinations.forEachIndexed { index, destination ->
                 var focused by remember { mutableStateOf(false) }
                 val own = navFocus[index + 1]
-                Box(Modifier.width(IntrinsicSize.Max).height(56.dp * scale).then(if (destination.screen == selected) Modifier.focusRequester(initial) else Modifier)
+                Box(Modifier.width(IntrinsicSize.Max).heightIn(min = 56.dp * scale).then(if (destination.screen == selected) Modifier.focusRequester(initial) else Modifier)
                     .focusRequester(own)
                     .focusProperties {
                         left = if (index == 0) navFocus[0] else navFocus[index]

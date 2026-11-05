@@ -10,8 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +23,7 @@ import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
@@ -34,7 +33,7 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
@@ -63,8 +62,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                 else Modifier.width(if (paneWidth >= 1100.dp) 560.dp else paneWidth * .5f))) {
                 detail?.item?.let { card ->
                     AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f),
-                        .3f to Color.Transparent, .7f to Palette.background.copy(alpha = .95f))))
+                    Box(Modifier.fillMaxSize().background(Scrim.tabletDetailPane))
                     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom,
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp)) {
                         item {
@@ -73,8 +71,8 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                     Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                                 }
                                 MediaMetadata(card, kindFirst = true)
-                                card.description?.let { Text(providerPlainText(it), fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
-                                Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
+                                card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                                     Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(heroEpisode), fontSize = 16.sp, fontWeight = FontWeight.Bold)

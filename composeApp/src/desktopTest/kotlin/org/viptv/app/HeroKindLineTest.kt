@@ -20,6 +20,7 @@ import org.junit.Rule
 import org.viptv.app.components.heroMetadataParts
 import org.viptv.app.components.kindLabel
 import org.viptv.app.features.details.DetailsScreen
+import org.viptv.app.preview.PreviewData
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
@@ -46,6 +47,35 @@ class HeroKindLineTest {
         assertEquals(listOf("Movie", "Series", "Anime"), titles.map(Card::kindLabel))
         assertEquals(listOf("Movie", "2026", "2h 25m", "Action / Adventure", "★ 8.0"), movie.heroMetadataParts())
         assertEquals(listOf("Series", "2025", "24m", "Animation / Action / Fantasy", "★ 6.5"), series.heroMetadataParts())
+    }
+
+    @Test fun aSubtitleThatOpensWithTheKindNamesItOnce() {
+        assertEquals(listOf("Movie", "2026", "Action / Adventure"),
+            movie.copy(metadata = null, subtitle = "Movie · 2026 · Action / Adventure").heroMetadataParts())
+        assertEquals(listOf("Series", "2025", "Drama"),
+            series.copy(metadata = null, subtitle = "Series · 2025 · Drama").heroMetadataParts())
+        assertEquals(listOf("Anime", "2025"),
+            anime.copy(metadata = null, subtitle = "anime · 2025").heroMetadataParts())
+        assertEquals(listOf("Movie"), movie.copy(metadata = null, subtitle = "Movie").heroMetadataParts())
+        assertEquals(listOf("Movie", "2026", "Drama"),
+            series.copy(identity = series.identity.copy(kind = "movie"), metadata = null, subtitle = "2026 · Drama").heroMetadataParts())
+        assertEquals(listOf("Movie", "Movie review", "2026"),
+            movie.copy(metadata = null, subtitle = "Movie review · 2026").heroMetadataParts())
+    }
+
+    @Test fun aStremioSubtitleSurvivesAnEmptyMetadataCardOnce() {
+        // releaseInfo fills the subtitle while every parsed fact is absent, so metadataParts falls back to it.
+        val releaseInfo = movie.copy(metadata = CardMetadata(), subtitle = "Movie · 2026")
+        assertEquals(listOf("Movie", "2026"), releaseInfo.heroMetadataParts())
+    }
+
+    @Test fun thePreviewDetailPageNamesTheKindOnce() = onEdt {
+        Details(390, 844, PreviewData.detail).use { page ->
+            page.settle()
+            assertEquals("Movie · 2026 · Action, Adventure · 1h 40m", page.texts().firstOrNull { it.startsWith("Movie · ") },
+                "the preview hero line: ${page.texts()}")
+            assertTrue(page.texts().none { it.contains("Movie · Movie") }, "the kind is named once: ${page.texts()}")
+        }
     }
 
     @Test fun missingValuesLeaveNoDanglingSeparator() {

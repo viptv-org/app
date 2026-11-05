@@ -18,6 +18,9 @@ import org.viptv.app.theme.*
 import java.io.File
 import org.junit.Rule
 import kotlin.test.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportUiTest {
@@ -47,7 +50,7 @@ class StremioImportUiTest {
             probe.clickDescription("Show password"); assertNotNull(probe.described("Hide password"))
             probe.click("Next: Choose add-ons")
             assertEquals(listOf("synthetic-password"), transport.passwords)
-            assertTrue(probe.has("Step 2 of 4: Choose add-ons"))
+            probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
             assertTrue(probe.focused("Choose add-ons"), "The stage heading receives focus")
             assertNull(probe.fieldOrNull("Stremio password"))
             assertEquals(ToggleableState.On, probe.describedState("Use add-on Synthetic metadata"))
@@ -56,18 +59,21 @@ class StremioImportUiTest {
             assertTrue(probe.has("This add-on uses an unsupported connection method."))
             probe.capture("browser-addons")
             probe.click("Next: Review items")
+            probe.renderUntil("the review stage") { probe.has("Step 3 of 4: Review items") }
             assertTrue(probe.focused("Review items"))
             assertEquals(ToggleableState.On, probe.describedState("Include Saved movie"))
             assertEquals(ToggleableState.On, probe.describedState("Include Episode resume season 1 episode 2"))
             probe.clickDescription("Include Saved movie")
             assertTrue(probe.has("1 review items included · 1 excluded · 2 shown in this preview"))
             probe.click("Next: Confirm import")
+            probe.renderUntil("the confirm stage") { probe.has("Step 4 of 4: Confirm import") }
             assertTrue(probe.focused("Confirm import"))
             assertEquals(ToggleableState.Off, probe.toggleState("I confirm this import is for Synthetic profile."))
             assertTrue(probe.disabled("Confirm import", button = true))
             probe.click("I confirm this import is for Synthetic profile.")
             probe.capture("browser-confirm")
             probe.click("Confirm import", button = true)
+            probe.renderUntil("the completion stage") { probe.has("Import complete") }
             assertTrue(probe.has("Import complete")); assertTrue(probe.has("The confirmed changes were saved to this profile."))
             assertEquals("apply:$stremioHandle:[$stremioMovieId]:1", transport.calls.last())
             probe.click("Start another preview")
@@ -97,7 +103,7 @@ class StremioImportUiTest {
             probe.click("Cancel")
             assertFalse(probe.has("Reading Stremio for a read-only preview…"))
             assertEquals("", probe.editable("Stremio email"))
-            gate.complete(stremioAddons()); probe.frames(6)
+            gate.complete(stremioAddons()); probe.renderUntil("the connect stage") { probe.has("Step 1 of 4: Connect Stremio") }
             assertTrue(probe.has("Step 1 of 4: Connect Stremio"), "A cancelled preview cannot resume the wizard")
         } finally { scene.close() }
     }
@@ -128,18 +134,18 @@ class StremioImportUiTest {
             probe.assertInside(390, "phone add-ons")
             probe.capture("phone-addons-choice")
             probe.click("Next: Review items")
-            assertTrue(probe.has("An add-on could not be verified. Change your add-on choices and try again."))
+            probe.renderUntil("the failed verification") { probe.has("An add-on could not be verified. Change your add-on choices and try again.") }
             assertTrue(probe.has("Couldn't check: Synthetic Debrid, Ñandú Meta."))
-            probe.frames(60)
+            probe.renderUntil("the first failed add-on focused") {
+                probe.described("Use add-on Synthetic Debrid")?.config?.getOrNull(SemanticsProperties.Focused) == true
+            }
             val first = assertNotNull(probe.described("Use add-on Synthetic Debrid"), "The first failed add-on is scrolled into view")
             assertEquals(true, first.config.getOrNull(SemanticsProperties.Focused), "and focused")
             assertTrue(probe.has("This add-on didn't respond. Try again or uncheck it."))
             assertTrue(probe.has("Couldn't be checked"))
             probe.capture("phone-addons-failed")
-            probe.scrollList(0)
-            assertTrue(probe.has("2 add-ons couldn't be checked. Uncheck them, or continue without add-ons."))
-            probe.scrollList(26)
-            assertTrue(probe.has("This add-on couldn't be checked. Uncheck it or try again."), "Unknown categories get generic copy")
+            probe.scrollList(0, "2 add-ons couldn't be checked. Uncheck them, or continue without add-ons.")
+            probe.scrollList(26, "This add-on couldn't be checked. Uncheck it or try again.")
             probe.clickDescription("Use add-on Synthetic Debrid")
             assertEquals(setOf(failing[1]), session.state.value.failedAddons, "Unticking clears that add-on's mark")
             probe.click("Uncheck failed add-ons")
@@ -147,7 +153,7 @@ class StremioImportUiTest {
             assertEquals(ToggleableState.Off, probe.describedState("Use add-on Ñandú Meta"))
             assertNull(probe.clickableOrNull("Uncheck failed add-ons"))
             probe.click("Next: Review items")
-            assertTrue(probe.has("Review items"))
+            probe.renderUntil("the review stage") { probe.has("Step 3 of 4: Review items") }
             assertEquals(19, transport.calls.last().substringAfter("[").substringBefore("]").split(", ").size)
         } finally { scene.close() }
     }
@@ -160,7 +166,8 @@ class StremioImportUiTest {
         val scene = scene(390, 844, session, compact = true)
         try {
             val probe = Probe(scene); probe.frames(12)
-            session.connect("synthetic@example.invalid", "synthetic-password"); probe.frames(6)
+            session.connect("synthetic@example.invalid", "synthetic-password")
+            probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
             probe.click("Next: Review items")
             assertTrue(probe.has("Verifying metadata and preparing named items…"))
             assertTrue(probe.has("This can take up to a minute for large libraries or many add-ons. Nothing is saved yet."))
@@ -169,7 +176,7 @@ class StremioImportUiTest {
             assertTrue(probe.has(stremioReviewStoppedCopy))
             assertFalse(probe.has("Verifying metadata and preparing named items…"))
             assertEquals(ToggleableState.On, probe.describedState("Use add-on Synthetic metadata"))
-            gate.complete(stremioReview()); probe.frames(6)
+            gate.complete(stremioReview()); probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
             assertTrue(probe.has("Step 2 of 4: Choose add-ons"))
         } finally { scene.close() }
     }
@@ -183,9 +190,9 @@ class StremioImportUiTest {
         val scene = scene(390, 844, session, compact = true)
         try {
             val probe = Probe(scene); probe.frames(12)
-            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
-            probe.scrollList(6)
-            assertTrue(probe.has("1920 review items included · 0 excluded · 2000 shown in this preview"))
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems()
+            probe.renderUntil("the review stage") { probe.has("Step 3 of 4: Review items") }
+            probe.scrollList(6, "1920 review items included · 0 excluded · 2000 shown in this preview")
             val timings = linkedMapOf<String, Long>()
             fun timed(label: String, block: () -> Unit) { val start = System.nanoTime(); block(); timings[label] = (System.nanoTime() - start) / 1_000_000 }
             val saga = review.items.filter { "saga" in it.name.lowercase() }
@@ -219,7 +226,8 @@ class StremioImportUiTest {
         val scene = scene(1280, 1200, session)
         try {
             val probe = Probe(scene); probe.frames(12)
-            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems()
+            probe.renderUntil("the review summary") { probe.has("Source library records") }
             val left = probe.textNode("Source library records").positionInRoot.x
             val right = probe.textNode("Existing entries preserved").positionInRoot.x
             assertTrue(right - left > 300, "Summary uses two columns ($left, $right)")
@@ -249,13 +257,21 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             probe.assertInside(390, "connect")
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
-            probe.click("Next: Choose add-ons"); probe.assertInside(390, "add-ons")
+            probe.click("Next: Choose add-ons")
+            probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
+            probe.assertInside(390, "add-ons")
             probe.capture("phone-addons")
-            probe.click("Next: Review items"); probe.assertInside(390, "items")
+            probe.click("Next: Review items")
+            probe.renderUntil("the review stage") { probe.has("Step 3 of 4: Review items") }
+            probe.assertInside(390, "items")
             probe.capture("phone-items")
-            probe.click("Next: Confirm import"); probe.assertInside(390, "confirm")
+            probe.click("Next: Confirm import")
+            probe.renderUntil("the confirm stage") { probe.has("Step 4 of 4: Confirm import") }
+            probe.assertInside(390, "confirm")
             probe.click("I confirm this import is for $long.")
-            probe.click("Confirm import", button = true); probe.assertInside(390, "complete")
+            probe.click("Confirm import", button = true)
+            probe.renderUntil("the completion stage") { probe.has("Import complete") }
+            probe.assertInside(390, "complete")
         } finally { scene.close() }
     }
 
@@ -270,12 +286,13 @@ class StremioImportUiTest {
         val scene = scene(1000, 4000, session)
         try {
             val probe = Probe(scene); probe.frames(12)
-            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); probe.frames(10)
+            session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems()
+            probe.renderUntil("the review items") { probe.described("Include Movie 000") != null }
             assertNotNull(probe.described("Include Movie 000")); assertNull(probe.described("Include Movie 050"))
             assertTrue(probe.has("Showing 1–50 of 120 matching"))
             probe.scrollToEnd(); probe.click("Next items")
             assertNotNull(probe.described("Include Movie 050"))
-            probe.scrollList(0)
+            probe.scrollList(0, "Find a title")
             probe.setText("Find a title", "Movie 11")
             assertNotNull(probe.described("Include Movie 119")); assertNull(probe.described("Include Movie 050"))
             probe.click("Exclude matching")
@@ -320,17 +337,21 @@ class StremioImportUiTest {
             assertTrue(probe.has("Your password is used for this request only and is not saved by VIPTV."))
             probe.setText("Stremio email", "synthetic@example.invalid"); probe.setText("Stremio password", "synthetic-password")
             probe.click("Next: Choose add-ons")
+            probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
             assertTrue(probe.has("Already configured in your account")); assertTrue(probe.has("Add to your account on confirmation"))
             assertTrue(probe.has("Unavailable — not added")); assertTrue(probe.has("This add-on uses an unsupported connection method."))
             assertTrue(probe.has("Selected new add-ons are account-wide, not limited to this profile. Their private configuration is encrypted and is never shown here. Nothing is added until final confirmation."))
             assertTrue(probe.has("2 of 2 available add-ons selected · 1 new to your account"))
             probe.click("Back")
-            assertTrue(probe.focused("Connect Stremio"))
+            probe.renderUntil("the connect stage") { probe.focused("Connect Stremio") }
             assertTrue(probe.has("Stremio is connected for this preview. Your add-on and item choices are still saved in this draft."))
             assertTrue(probe.has("synthetic@example.invalid")); assertTrue(probe.has("My List · Watch history and resume"))
             assertTrue(probe.has("Your password was cleared after connecting. Changing the connection starts a new preview."))
             assertNull(probe.fieldOrNull("Stremio password")); assertNotNull(probe.clickableOrNull("Change connection"))
-            probe.click("Next: Choose add-ons"); probe.click("Next: Review items")
+            probe.click("Next: Choose add-ons")
+            probe.renderUntil("the add-on stage") { probe.has("Step 2 of 4: Choose add-ons") }
+            probe.click("Next: Review items")
+            probe.renderUntil("the review stage") { probe.has("Step 3 of 4: Review items") }
             assertTrue(probe.has("New add-ons to register for your account: 1"))
             assertTrue(probe.has("Resume 12:34 of 1:30:00")); assertTrue(probe.has("History/resume: Update older entry"))
             assertTrue(probe.has("Series · Season 2, episode 3")); assertTrue(probe.has("History/resume: Keep existing entry"))
@@ -344,17 +365,20 @@ class StremioImportUiTest {
             assertTrue(probe.has("Excluded — will not be imported"))
             assertTrue(probe.has("1 review items included · 1 excluded · 3 shown in this preview"))
             probe.click("Next: Confirm import")
+            probe.renderUntil("the confirm stage") { probe.has("Step 4 of 4: Confirm import") }
             assertTrue(probe.has("Review your chosen import into Synthetic profile."))
             assertTrue(probe.has("Selected review items: 1. New account-wide add-ons: 1."))
             assertTrue(probe.has("• Existing metadata (already configured)")); assertTrue(probe.has("• New metadata"))
             assertTrue(probe.has("Selected new add-ons are added to your account only when you confirm."))
             probe.click("I confirm this import is for Synthetic profile.")
             probe.click("Confirm import", button = true)
+            probe.renderUntil("the uncertain result") { probe.has(stremioUncertainApplyCopy) }
             assertTrue(probe.has(stremioUncertainApplyCopy))
             assertTrue(probe.has("This selection is locked while its result is being confirmed. Retrying uses the same items."))
             assertTrue(probe.disabled("Back")); assertTrue(probe.disabled("Cancel"))
             transport.apply = { stremioCompletion.copy(addonsAdded = 1, excludedItems = 1) }
             probe.click("Confirm import", button = true)
+            probe.renderUntil("the completion stage") { probe.focused("Import complete") }
             val applies = transport.calls.filter { it.startsWith("apply") }
             assertEquals(2, applies.size); assertEquals(applies[0], applies[1], "Retry sends the identical selection")
             assertTrue(probe.focused("Import complete"))
@@ -377,7 +401,8 @@ class StremioImportUiTest {
         try {
             val probe = Probe(scene); probe.frames(12)
             session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
-            session.setConfirmed(true); session.apply(); probe.frames(12)
+            session.setConfirmed(true); session.apply()
+            probe.renderUntil("the completion stage") { probe.has("Import complete") && probe.focused("Import complete") }
             assertTrue(probe.has("Import complete")); assertTrue(probe.focused("Import complete"))
             val label = probe.textNode("Getting title details…")
             assertEquals(LiveRegionMode.Polite, label.config.getOrNull(SemanticsProperties.LiveRegion), "Announced like the busy status")
@@ -389,18 +414,22 @@ class StremioImportUiTest {
             assertFalse(probe.disabled("Start another preview")); assertFalse(probe.described("Back to settings")!!.config.contains(SemanticsProperties.Disabled))
             probe.capture("phone-details-starting")
 
-            status = StremioDetailsStatus(true, 40, 162); probe.frames(12)
+            status = StremioDetailsStatus(true, 40, 162)
+            probe.renderUntil("the 40 of 162 count") { probe.has("40 of 162 titles") }
             assertTrue(probe.has("40 of 162 titles"))
+            probe.renderUntil("the bar to start moving") { probe.progress().config[SemanticsProperties.ProgressBarRangeInfo].current > 0f }
             val moving = probe.progress().config[SemanticsProperties.ProgressBarRangeInfo].current
-            assertTrue(moving > 0f && moving < 40f / 162, "The bar animates toward the new count ($moving)")
+            assertTrue(moving < 40f / 162, "The bar animates toward the new count ($moving)")
             probe.frames(150)
             assertEquals(40f / 162, probe.progress().config[SemanticsProperties.ProgressBarRangeInfo].current, .001f)
             assertTrue(probe.focused("Import complete"), "Progress updates never move focus")
             probe.capture("phone-details-progress")
-            status = StremioDetailsStatus(true, 120, 162); probe.frames(60)
+            status = StremioDetailsStatus(true, 120, 162)
+            probe.renderUntil("the 120 of 162 count") { probe.has("120 of 162 titles") }
             probe.capture("phone-details-progress-later")
 
-            status = StremioDetailsStatus(false, 162, 162, 162); probe.frames(12)
+            status = StremioDetailsStatus(false, 162, 162, 162)
+            probe.renderUntil("the ready state") { probe.has("Title details are ready.") }
             assertTrue(probe.has("Title details are ready."))
             assertTrue(probe.has("Imported titles now show their description, artwork and ratings."))
             assertEquals(LiveRegionMode.Polite, probe.textNode("Title details are ready.").config.getOrNull(SemanticsProperties.LiveRegion))
@@ -420,7 +449,7 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
             session.setConfirmed(true); session.apply()
-            repeat(20) { if (!probe.has("Finished getting title details.")) probe.frames(3) }
+            probe.renderUntil("the finished fill") { probe.has("Finished getting title details.") }
             assertTrue(probe.has("Finished getting title details."), "Not \"ready\" when no card was filled")
             assertTrue(probe.has("Details were found for 0 of 163 titles. The others keep their name and poster."))
             assertNull(probe.progressOrNull())
@@ -438,7 +467,7 @@ class StremioImportUiTest {
             val probe = Probe(scene); probe.frames(12)
             session.connect("synthetic@example.invalid", "synthetic-password"); session.reviewItems(); session.toConfirm()
             session.setConfirmed(true); session.apply()
-            repeat(20) { if (!probe.has("Title details are still being added in the background.")) probe.frames(3) }
+            probe.renderUntil("the background fill") { probe.has("Title details are still being added in the background.") }
             assertTrue(probe.has("Title details are still being added in the background."))
             assertNull(probe.progressOrNull())
             assertTrue(probe.has("Start another preview"))
@@ -451,7 +480,7 @@ class StremioImportUiTest {
         }
         try {
             val probe = Probe(scene)
-            repeat(60) { if (!probe.has("Getting title details…")) probe.frames(3) }
+            probe.renderUntil("the television completion stage") { probe.has("Getting title details…") }
             assertTrue(probe.has("Import complete")); assertTrue(probe.has("Getting title details…"))
             assertNotNull(probe.progressOrNull())
             assertTrue(probe.has("Start another preview"))
@@ -514,6 +543,9 @@ class StremioImportUiTest {
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
         fun frames(count: Int) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
+        fun renderUntil(what: String, timeout: Duration = 10.seconds, condition: () -> Boolean) {
+            frame = scene.renderUntil(timeout = timeout, from = frame, what = what, condition = condition)
+        }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
@@ -535,9 +567,13 @@ class StremioImportUiTest {
         fun scrollToEnd() {
             repeat(3) { nodes().first { it.config.contains(SemanticsActions.ScrollBy) }.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 100_000f); frames(6) }
         }
-        fun scrollList(index: Int) {
-            val list = nodes().first { it.config.contains(SemanticsActions.ScrollToIndex) }
-            list.config[SemanticsActions.ScrollToIndex].action!!.invoke(index); frames(10)
+        fun scrollList(index: Int, expect: String) {
+            val deadline = TimeSource.Monotonic.markNow() + 10.seconds
+            while (!has(expect)) {
+                nodes().first { it.config.contains(SemanticsActions.ScrollToIndex) }.config[SemanticsActions.ScrollToIndex].action!!.invoke(index)
+                frames(2)
+                if (deadline.hasPassedNow()) fail("Scrolling to item $index did not show \"$expect\"")
+            }
         }
         fun toggleState(label: String) = clickableOrFail(label, false).config[SemanticsProperties.ToggleableState]
         fun disabled(label: String, button: Boolean = false) = clickableOrFail(label, button).config.contains(SemanticsProperties.Disabled)

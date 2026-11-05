@@ -54,6 +54,6 @@ internal fun TvEntryKeyboard(scale: Float, initialSuffix: Boolean = false, onDel
 @Composable
 private fun TvEntryKey(modifier: Modifier, scale: Float, requester: FocusRequester? = null, activate: () -> Unit, suffix: Boolean = false,
     content: @Composable (Color) -> Unit) {
-    TvAction(modifier.height(76.dp * scale), scale, requester = requester,
+    TvAction(modifier.heightIn(min = 76.dp * scale), scale, requester = requester,
         background = Color.White.copy(alpha = if (suffix) .18f else .09f), cornerRadius = 10.dp * scale, activate = activate) { content(it) }
 }

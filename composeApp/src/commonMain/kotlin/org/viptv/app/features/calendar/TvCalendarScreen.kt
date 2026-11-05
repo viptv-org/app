@@ -67,7 +67,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
         Row(Modifier.offset(96.dp * scale, railY).focusProperties { onEnter = { date.requestFocus() } }.focusGroup(),
             horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             days.forEach { day ->
-                TvAction(Modifier.height(64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=typeChip }, scale,
+                TvAction(Modifier.heightIn(min = 64.dp * scale).focusProperties { if (selectedRow != null) down = selectedRow; if(controls)up=typeChip }, scale,
                     primary = activeDay == day.id, requester = if (activeDay == day.id) date else null,
                     selected = activeDay == day.id,
                     activate = { chosen = day.id; focusedId = null; rows.requestScrollToItem(0) }, cornerRadius = 32.dp * scale,
@@ -97,7 +97,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-                    if (!available) TvAction(Modifier.height(64.dp * scale), scale, activate = manage,
+                    if (!available) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Manage integrations", color = it, fontSize = (24 * scale).sp) }
                 }
             }
@@ -116,7 +116,7 @@ private fun TvCalendarFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
         Text("Couldn’t load the calendar", fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }

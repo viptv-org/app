@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -28,9 +29,9 @@ internal fun TvCalendarPreview(entry: CalendarEntry, action: TvCalendarAction?, 
         Text(entry.card.title, fontSize = (34 * scale).sp, lineHeight = (41 * scale).sp, fontWeight = FontWeight.Bold,
             maxLines = 2, overflow = TextOverflow.Ellipsis)
         if (entry.library) CalendarYourShow(22 * scale, Palette.accent)
-        entry.description?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.body,
+        entry.description.providerText()?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.body,
             maxLines = 4, overflow = TextOverflow.Ellipsis) }
-        TvAction(Modifier.width(300.dp * scale).height(72.dp * scale)
+        TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale)
             .focusProperties { if (left != null) this.left = left; this.up = up; this.right = FocusRequester.Cancel }, scale, requester = requester,
             activate = { if (action == null) open(entry.card) else watch(action.target) }, arrangement = Arrangement.Start,
             contentPadding = PaddingValues(horizontal = 28.dp * scale)) {

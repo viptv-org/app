@@ -41,7 +41,7 @@ internal fun HomeStatus(home: HomeSnapshot?, error: String?, busy: Boolean, retr
             verticalAlignment = Alignment.CenterVertically) {
             Text(message, Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }, color = Palette.secondary,
                 fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp)
-            TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale,
+            TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale,
                 requester = focus, enabled = !busy, activate = action) {
                 Text(label, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, color = it)
             }
@@ -49,7 +49,7 @@ internal fun HomeStatus(home: HomeSnapshot?, error: String?, busy: Boolean, retr
             Text(title, fontWeight = FontWeight.SemiBold, fontSize = ((if (television) 32 else 22) * scale).sp, color = Palette.text)
             Text(message, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = Palette.secondary,
                 fontSize = ((if (television) 24 else 16) * scale).sp, lineHeight = ((if (television) 34 else 24) * scale).sp)
-            if (television) TvAction(Modifier.width(300.dp * scale).height(72.dp * scale), scale,
+            if (television) TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale), scale,
                 requester = focus, enabled = !busy, activate = action) {
                 Text(label, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, color = it)
             } else Button(action, enabled = !busy) { Text(label) }

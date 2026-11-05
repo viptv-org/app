@@ -31,7 +31,7 @@ internal fun TvMediaMetadata(card: Card, scale: Float, lineHeight: Float = 30f, 
             }
             if (badges.isNotEmpty()) Spacer(Modifier.width(6.dp * scale))
         }
-        badges.forEach { badge -> Box(Modifier.height(maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
+        badges.forEach { badge -> Box(Modifier.heightIn(min = maxOf(30f, lineHeight).dp * scale), contentAlignment = Alignment.Center) {
             TvMediaBadge(badge, scale)
         } }
     }

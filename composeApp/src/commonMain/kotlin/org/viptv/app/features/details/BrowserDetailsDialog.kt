@@ -5,14 +5,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -35,15 +33,16 @@ import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
 import org.viptv.app.components.AddonFailureNotice
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberEnterLeaveMotion
@@ -89,7 +88,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                     // One step per press: the key-down dismisses and neither half reaches the page's Back as well.
                     if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) requestDismiss(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
-                color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
+                color = Palette.dialog, shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
                     LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp), topEdgeFade = false) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
@@ -101,7 +100,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                 else -> {
                                     item(key = "information") { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                         MediaMetadata(card)
-                                        card.description?.let { Text(providerPlainText(it), fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                        card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
                                     } }
                                     if (failures.isNotEmpty()) item(key = "addon-failure") {
                                         AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter))
@@ -127,9 +126,9 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                             }
                         }
                     }
-                    IconButton(onClick = requestDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(38.dp)
-                        .then(closeFocus.requestFocusWhenPlaced(closeFocusOnOpen))
-                        .background(Color.White.copy(alpha = .12f), CircleShape)) { Icon(Lucide.X, "Close details (Esc)", Modifier.size(20.dp)) }
+                    AccessibleIconButton(Lucide.X, "Close details (Esc)", requestDismiss,
+                        Modifier.align(Alignment.TopEnd).padding(16.dp).then(closeFocus.requestFocusWhenPlaced(closeFocusOnOpen)),
+                        iconSize = 20.dp, wash = Color.White.copy(alpha = .12f))
                 }
             }
         }
@@ -142,7 +141,7 @@ private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, p
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(maxOf(260.dp, maxWidth * (8.2f / 16f)))) {
             AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
+            Box(Modifier.fillMaxSize().background(Scrim.webDetailHero))
             Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
                     Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)

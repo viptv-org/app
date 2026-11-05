@@ -47,27 +47,29 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
         }
     }) {
         val scale = maxWidth / 1920.dp
-        ProfileAvatarAtTop(profile, scale)
-        Text(if (leaving) "Enter the PIN to leave ${profile?.name.orEmpty()}’s profile" else if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}", Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale),
-            fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
-        TvPinDigits(pin, scale, Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale))
-        TvPinKeys(pin, scale, busy, first, digit, erase, submit, Modifier.align(Alignment.TopCenter).padding(top = 540.dp * scale))
-        var forgotFocused by remember { mutableStateOf(false) }
-        Text("Forgot PIN?", Modifier.align(Alignment.TopCenter).padding(top = 920.dp * scale)
-            .focusRequester(recovery)
-            .onFocusChanged { forgotFocused = it.isFocused }
-            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { forgot = true },
-            fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold,
-            color = if (forgotFocused) Palette.text else Palette.secondary)
-        error?.let { Text(it, Modifier.align(Alignment.TopCenter).padding(top = 980.dp * scale), color = Palette.danger,
-            fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
+        Column(Modifier.align(Alignment.TopCenter).padding(top = 150.dp * scale), horizontalAlignment = Alignment.CenterHorizontally) {
+            ProfileAvatar(profile, 120.dp * scale, 22.dp * scale)
+            Spacer(Modifier.height(30.dp * scale))
+            Text(if (leaving) "Enter the PIN to leave ${profile?.name.orEmpty()}’s profile" else if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}",
+                fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(29.dp * scale))
+            TvPinDigits(pin, scale)
+            Spacer(Modifier.height(56.dp * scale))
+            TvPinKeys(pin, scale, busy, first, digit, erase, submit)
+            Spacer(Modifier.height(40.dp * scale))
+            var forgotFocused by remember { mutableStateOf(false) }
+            Text("Forgot PIN?", Modifier
+                .focusRequester(recovery)
+                .onFocusChanged { forgotFocused = it.isFocused }
+                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { forgot = true },
+                fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold,
+                color = if (forgotFocused) Palette.text else Palette.secondary)
+            error?.let { Text(it, Modifier.padding(top = 30.dp * scale), color = Palette.danger,
+                fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
+        }
     }
     if (forgot) AlertDialog(onDismissRequest = { restore = true; forgot = false }, title = { Text("Profile PIN") },
         text = { Text("PIN recovery is not available for this profile.") },
         confirmButton = { TextButton(onClick = { restore = true; forgot = false }) { Text("OK") } })
 }
 
-@Composable
-private fun BoxScope.ProfileAvatarAtTop(profile: Profile?, scale: Float) {
-    Box(Modifier.align(Alignment.TopCenter).padding(top = 150.dp * scale)) { ProfileAvatar(profile, 120.dp * scale, 22.dp * scale) }
-}

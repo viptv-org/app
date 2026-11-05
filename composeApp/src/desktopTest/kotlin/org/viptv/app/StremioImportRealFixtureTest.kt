@@ -88,6 +88,9 @@ class StremioImportRealFixtureTest {
         }
         var frame = 0L
         fun frames(count: Int) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
+        fun renderUntil(what: String, condition: () -> Boolean) {
+            frame = scene.renderUntil(from = frame, what = what, condition = condition)
+        }
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun has(text: String) = nodes().any { it.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text == text } == true }
@@ -108,10 +111,12 @@ class StremioImportRealFixtureTest {
         }
         try {
             frames(12)
-            session.connect("fixture@example.invalid", "unused"); frames(10)
+            session.connect("fixture@example.invalid", "unused")
+            renderUntil("the add-on stage") { has("Step 2 of 4: Choose add-ons") }
             assertEquals(StremioImportStage.Addons, session.state.value.stage)
             inside("real add-ons")
-            session.continueWithoutAddons(); frames(10)
+            session.continueWithoutAddons()
+            renderUntil("the items stage") { has("Step 3 of 4: Review items") }
             assertEquals(StremioImportStage.Items, session.state.value.stage)
             val selectable = review.items.count { it.selectable }
             scrollTo(6)
@@ -132,7 +137,8 @@ class StremioImportRealFixtureTest {
             repeat(3) { nodes().first { it.config.contains(SemanticsActions.ScrollBy) }.config[SemanticsActions.ScrollBy].action!!.invoke(0f, 100_000f); frames(6) }
             timed("next page") { click("Next items") }
             inside("real review page 2")
-            session.toConfirm(); frames(10)
+            session.toConfirm()
+            renderUntil("the confirm stage") { has("Step 4 of 4: Confirm import") }
             assertEquals(StremioImportStage.Confirm, session.state.value.stage)
             scrollTo(5)
             assertTrue(has("Selected review items: $selectable. New account-wide add-ons: ${review.addonsToAdd}."))

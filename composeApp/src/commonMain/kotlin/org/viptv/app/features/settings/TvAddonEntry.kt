@@ -72,12 +72,12 @@ internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, 
             TvEntryKeyboard(scale, onDelete = { if (!busy) addressChange(address.dropLast(1)) }) { value -> if (!busy) addressChange((address + value).take(2048)) }
         }
         Row(Modifier.offset(96.dp * scale, 860.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-            TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true,
+            TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true,
                 enabled = address.isNotBlank() && !busy, activate = install) { tint ->
                 Icon(Lucide.Plus, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                 Text("Install", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, activate = back) { tint ->
+            TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale), scale, activate = back) { tint ->
                 Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -103,12 +103,12 @@ internal fun TvAddonEntryPage(address: String, addressChange: (String) -> Unit, 
         }
         Column(Modifier.offset(1260.dp * scale, 780.dp * scale).width(564.dp * scale),
             verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-            TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, enabled = address.isNotEmpty() && !busy,
+            TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, enabled = address.isNotEmpty() && !busy,
                 activate = { addressChange(address.dropLast(1)) }) { tint ->
                 Icon(Lucide.Delete, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                 Text("Delete character", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, enabled = address.isNotEmpty() && !busy,
+            TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, enabled = address.isNotEmpty() && !busy,
                 activate = { addressChange("") }) { tint ->
                 Text("Clear", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
