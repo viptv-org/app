@@ -9,6 +9,7 @@ internal val searchFilterOptions = listOf("All", "Movies", "Series", "Anime", "C
 
 private const val providerFailed = "This search provider could not respond. Try again."
 private const val noMatchingTitles = "No matching titles"
+private const val noChannelsMatch = "No channels match your search."
 private const val needsCredentials = "This add-on needs valid credentials to search."
 
 private fun SearchResultRow.errored(): Boolean = state == "Failed" && when (error_code) {
@@ -50,8 +51,12 @@ internal fun searchResultGroups(rows: List<SearchResultRow>, filters: Set<String
     if (returned.isEmpty()) emptyList() else returned + silent
 }
 
-internal fun searchNoResultsCopy(rows: List<SearchResultRow>): String =
-    if (rows.any { it.errored() } && rows.none { it.cards.isNotEmpty() }) providerFailed else noMatchingTitles
+internal fun searchNoResultsCopy(rows: List<SearchResultRow>, filters: Set<String> = emptySet()): String =
+    when {
+        rows.any { it.errored() } && rows.none { it.cards.isNotEmpty() } -> providerFailed
+        filters.isNotEmpty() && filters.all { it == "Channels" } -> noChannelsMatch
+        else -> noMatchingTitles
+    }
 
 internal fun Card.matchesSearchFilter(filters: Set<String>): Boolean = filters.isEmpty() || filters.any { filter ->
     when (filter) {

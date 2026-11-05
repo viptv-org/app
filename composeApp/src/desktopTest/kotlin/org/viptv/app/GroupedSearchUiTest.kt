@@ -52,12 +52,12 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun aFilterThatExcludesEveryProviderShowsOneEmptyState() {
+    @Test fun channelsScopeWithNoChannelMatchShowsTheChannelsEmptyState() {
         val movie = Card(MediaIdentity("only-title", "movie", emptyList()), provider_id = "stremio", title = "Only copy", badges = emptyList())
-        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
             ViptvTheme {
                 Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {},
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, false, {}, {},
                         editQuery = {}, filters = setOf("Channels"),
                         searchRows = listOf(SearchResultRow("addon:1", "First provider", "stremio", addon_id = 1, cards = listOf(movie))))
                 }
@@ -66,10 +66,29 @@ class GroupedSearchUiTest {
         try {
             frames(scene, 0)
             val texts = nodes(scene).map(::text)
-            assertEquals(1, texts.count { it == "No matching titles" })
-            assertFalse(texts.any { it.contains("No matches") })
+            assertEquals(1, texts.count { it == "No channels match your search." })
+            assertFalse(texts.any { it == "No matching titles" })
             assertFalse(texts.any { it == "First provider" })
             assertFalse(texts.any { it == "Only copy" })
+        } finally { scene.close() }
+    }
+
+    @Test fun titleScopeWithNoMatchKeepsTheTitleEmptyStateCopy() {
+        val channel = Card(MediaIdentity("only-channel", "channel", emptyList()), provider_id = "stremio", title = "Only channel", badges = emptyList())
+        val scene = ImageComposeScene(1440, 1100, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("spider", emptyList(), emptyList(), false, null, true, {}, {},
+                        editQuery = {}, filters = setOf("Movies"),
+                        searchRows = listOf(SearchResultRow("addon:1", "First provider", "stremio", addon_id = 1, cards = listOf(channel))))
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertEquals(1, texts.count { it == "No matching titles" })
+            assertFalse(texts.any { it == "No channels match your search." })
         } finally { scene.close() }
     }
 
