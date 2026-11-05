@@ -66,7 +66,7 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                 }
             }
             if (home == null && busy) item(key = "skeleton") {
-                HomeSkeleton(compact, tablet, browser, gutter)
+                HomeSkeleton(compact, tablet, browser, gutter, viewportHeight)
             }
             if (home != null) {
                 val visibleRows = home.rows.filter {

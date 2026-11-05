@@ -10,7 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -20,6 +22,7 @@ import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HomeFilters
 import org.viptv.app.components.LocalHeaderPills
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TabletMinSide
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.Screen
@@ -33,30 +36,49 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
 
+internal const val TABLET_HERO_FRAME_TAG = "tablet-hero-frame"
+
+internal val TabletHeroPortraitHeight = 640.dp
+
+internal val TabletHeroLandscapeHeight = 520.dp
+
+internal val TabletHeroShortMin = 240.dp
+
+internal data class TabletHeroFrame(val height: Dp, val short: Boolean)
+
+internal fun tabletHeroFrame(contentWidth: Dp, viewportHeight: Dp?): TabletHeroFrame {
+    val frame = if (contentWidth < 900.dp) TabletHeroPortraitHeight else TabletHeroLandscapeHeight
+    val short = viewportHeight?.takeIf { it < TabletMinSide }
+    return TabletHeroFrame(short?.coerceIn(TabletHeroShortMin, frame) ?: frame, short != null)
+}
+
 @Composable
-internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean, carousel: HeroCarousel? = null) {
+internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, navigate: (Screen) -> Unit, save: (Card) -> Unit, saved: Boolean,
+    carousel: HeroCarousel? = null, viewportHeight: Dp? = null) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val portrait = maxWidth < 900.dp
-        Box(Modifier.fillMaxWidth().height(if (portrait) 640.dp else 520.dp)) {
+        val (height, short) = tabletHeroFrame(maxWidth, viewportHeight)
+        Box(Modifier.fillMaxWidth().height(height).testTag(TABLET_HERO_FRAME_TAG)) {
             val art = card.landscape ?: card.poster
             if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
             else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = 0.85f),
                 0.45f to Palette.background.copy(alpha = 0.4f), 0.7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to Palette.background)))
-            if (!LocalHeaderPills.current) Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 40.dp)) {
+            if (!LocalHeaderPills.current) Box(Modifier.align(Alignment.TopStart).padding(start = if (short) 20.dp else 32.dp, top = if (short) 16.dp else 40.dp)) {
                 HomeFilters(Screen.Home, navigate)
             }
-            Column(Modifier.fillMaxHeight().padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.fillMaxHeight().padding(start = if (short) 20.dp else 32.dp, end = if (short) 20.dp else 32.dp, bottom = if (short) 16.dp else 40.dp)
+                .widthIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(if (short) 8.dp else 12.dp)) {
                 HeroCopyFade(card, Modifier.fillMaxWidth().weight(1f), Alignment.BottomStart) { shown ->
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title, Modifier.width(300.dp).height(130.dp),
+                    Column(verticalArrangement = Arrangement.spacedBy(if (short) 8.dp else 12.dp)) {
+                        if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title,
+                            Modifier.width(if (short) 200.dp else 300.dp).height(if (short) 88.dp else 130.dp),
                             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
-                        else Text(shown.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
+                        else Text(shown.title, fontSize = if (short) 26.sp else 32.sp, lineHeight = if (short) 30.sp else 38.sp, fontWeight = FontWeight.Bold)
                         MediaMetadata(shown)
-                        shown.description?.let { ClampedText(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body, maxLines = 2) }
-                        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        shown.description?.let { ClampedText(it, fontSize = if (short) 15.sp else 16.sp, lineHeight = if (short) 21.sp else 23.sp,
+                            color = Palette.body, maxLines = if (short) 1 else 2) }
+                        Row(Modifier.padding(top = if (short) 2.dp else 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                 if (shown.isPlayPending()) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)

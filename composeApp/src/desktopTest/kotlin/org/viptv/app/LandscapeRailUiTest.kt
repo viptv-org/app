@@ -161,8 +161,8 @@ class LandscapeRailUiTest {
             assertEquals(phoneDestinations.map { it.label }.toSet(), shell.entryNames(), "the rail carries every destination")
             assertTrue(shell.nodes().any { description(it) == "Settings" }, "Settings is reachable")
             assertTrue(shell.nodes().any { description(it) == "Switch profile" }, "the profile entry is reachable")
-            assertFalse(shell.nodes().any { it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot.top > 300f && it.boundsInRoot.left > 92f },
-                "a landscape phone draws the rail, not the bottom bar")
+            assertFalse(shell.nodes().any { it.config.getOrNull(SemanticsProperties.Role) == Role.Button && description(it) == "Search" },
+                "a landscape phone draws the rail and its icon Search entry, not the bottom bar's round button")
             capture(shell.scene, "app-landscape-844x390")
         }
     }
