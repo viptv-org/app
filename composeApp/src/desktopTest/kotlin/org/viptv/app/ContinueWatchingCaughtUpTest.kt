@@ -63,7 +63,7 @@ class ContinueWatchingCaughtUpTest {
         assertNull(movie.caughtUpCaption())
         val unnumbered = finale.copy(identity = finale.identity.copy(episode = EpisodeCoordinates("aired", null, 7)))
         assertTrue(unnumbered.isCaughtUp())
-        assertEquals("E7 · Watched", unnumbered.caughtUpCaption())
+        assertEquals("S1 E7 · Watched", unnumbered.caughtUpCaption())
     }
 
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)

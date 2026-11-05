@@ -2,6 +2,7 @@ package org.viptv.app.features.details
 
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.EpisodeSeason
+import org.viptv.app.connection.seasonNumber
 
 internal fun episodeKey(card: Card): String = listOf(card.provider_id, card.identity.kind,
     card.identity.id, card.identity.episode?.order, card.identity.episode?.season,
@@ -16,7 +17,7 @@ internal data class DetailSeason(val number: Long?, val episodes: List<Card>, va
 }
 
 internal fun detailSeasons(episodes: List<Card>, index: List<EpisodeSeason> = emptyList()): List<DetailSeason> {
-    val groups = episodes.distinctBy(::episodeKey).groupBy { it.identity.episode?.season }
+    val groups = episodes.distinctBy(::episodeKey).groupBy { it.identity.episode?.seasonNumber() }
     return (groups.keys + index.map { it.season }).distinct().sortedWith(compareBy({ it == null }, { it ?: 0L }))
         .map { season ->
             val descriptor = index.find { it.season == season }

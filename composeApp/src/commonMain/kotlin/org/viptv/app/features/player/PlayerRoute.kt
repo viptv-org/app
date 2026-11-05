@@ -10,6 +10,7 @@ import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 import org.viptv.engine.wire.Card
+import org.viptv.app.connection.seasonNumber
 
 @Composable
 internal fun PlayerRoute(state: ApplicationState, controller: ApplicationController, television: Boolean,
@@ -29,7 +30,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     val title = state.sourceTitle?.let { card ->
         val episode = card.identity.episode
         if (episode != null && detail != null) card.copy(title = detail.item.title,
-            subtitle = "S${episode.season ?: 1} E${episode.episode} · ${card.title}") else card
+            subtitle = "S${episode.seasonNumber()} E${episode.episode} · ${card.title}") else card
     }
     PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback,
         { fact -> controller.observePlaybackFor(state.playback, fact) }, controller::closePlayer,

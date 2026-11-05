@@ -25,6 +25,7 @@ import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.PinnedHeaderSurface
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
+import org.viptv.app.connection.seasonNumber
 
 @Composable
 fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, sources: (Card) -> Unit, television: Boolean = false, tablet: Boolean = false, browser: Boolean = false, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = sources, loadPage: (Long) -> Unit = {}, playFromStart: ((Card) -> Unit)? = null, defaultSourceLabel: String? = null,
@@ -167,7 +168,7 @@ internal fun seriesResumeEpisode(detail: DetailSnapshot): Card? {
     if (detail.item.identity.kind != "series") return null
     return detail.episodes.firstOrNull {
         val coordinates = it.identity.episode
-        coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L && resuming(it)
+        coordinates != null && coordinates.seasonNumber() > 0L && coordinates.episode > 0L && resuming(it)
     }
 }
 
