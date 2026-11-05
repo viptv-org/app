@@ -7,7 +7,6 @@ import org.viptv.app.player.PlayerFact
 internal class PlaybackTracking(
     private val scope: CoroutineScope,
     private val emit: suspend (PlaybackEvent, Long, Long?, Boolean) -> Unit,
-    private val failed: () -> Unit,
 ) {
     private var previous: Job? = null
     private var last: PlaybackEvent? = null
@@ -25,8 +24,7 @@ internal class PlaybackTracking(
                 withTimeout(5_000) { emit(event, progress?.positionMillis ?: 0, progress?.durationMillis, ended) }
             } catch (error: CancellationException) {
                 if (error !is TimeoutCancellationException) throw error
-                failed()
-            } catch (_: Exception) { failed() }
+            } catch (_: Exception) { }
             }
         }.also { previous = it }
     }

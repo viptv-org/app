@@ -25,7 +25,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val bestMatchNoticeMillis: Long = 2_000L,
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
-    internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L)) {
+    internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
+    internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L)) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
@@ -45,6 +46,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var pageRequestJob: Job? = null
     internal val progressGate = Mutex()
     internal var progressJob: Job? = null
+    internal var progressSequence = 0L
+    internal var pendingProgress: ProgressWrite? = null
+    internal var progressRetryJob: Job? = null
     internal var liveGuideJob: Job? = null
     internal var liveGuideRequest = 0L
     internal var liveDirectoryRequest = 0L
