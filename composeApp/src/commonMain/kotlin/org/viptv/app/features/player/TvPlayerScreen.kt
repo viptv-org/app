@@ -60,7 +60,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     LaunchedEffect(state.controlError) { state.controlError?.let { delay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = activeSkip != null && !state.visible
-    val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable }
+    val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable && error == null }
     val audioPromptActive = audioPrompt != null && nextSource != null
     val audioRequester = remember { FocusRequester() }
     LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }

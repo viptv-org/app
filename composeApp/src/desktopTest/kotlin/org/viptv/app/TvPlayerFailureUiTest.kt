@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -36,8 +37,8 @@ class TvPlayerFailureUiTest {
             val texts = nodes(scene).map(::text)
             assertTrue("This source stopped working" in texts)
             assertTrue("This source could not play. Choose another source." in texts)
-            val retry = nodes(scene).single { text(it) == "Retry" && it.config.contains(androidx.compose.ui.semantics.SemanticsActions.OnClick) }
-            retry.config[androidx.compose.ui.semantics.SemanticsActions.OnClick].action!!.invoke()
+            val retry = nodes(scene).single { text(it) == "Retry" && it.config.contains(SemanticsActions.OnClick) }
+            retry.config[SemanticsActions.OnClick].action!!.invoke()
             assertEquals(1, retried)
         } finally { scene.close() }
     }
