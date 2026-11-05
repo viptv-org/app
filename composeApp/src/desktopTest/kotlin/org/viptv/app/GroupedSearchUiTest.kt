@@ -281,6 +281,51 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aFailedProviderShelfOffersTheRetryThatIssuesTheSameQueryAgain() {
+        var retried = 0
+        val result = Card(MediaIdentity("result-id", "movie", emptyList()), provider_id = "addon:1", title = "Returned title", badges = emptyList())
+        val rows = listOf(
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(result)),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("dog", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows, retry = { retried++ })
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            val texts = nodes(scene).map(::text)
+            assertTrue(texts.any { it == "This search provider could not respond. Try again." })
+            val retry = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it) == "Try again" }
+            assertTrue(retry.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, retried)
+        } finally { scene.close() }
+    }
+
+    @Test fun aQueryWhereEveryProviderFailedOffersTheRetryForTheSameQuery() {
+        var retried = 0
+        val rows = listOf("Movies Search", "Series Search")
+            .map { SearchResultRow(it.lowercase().replace(' ', '-'), it, "stremio", state = "Failed") }
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            ViptvTheme {
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    SearchScreen("zzzqx", emptyList(), emptyList(), false, null, false, {}, {},
+                        editQuery = {}, searchRows = rows, retry = { retried++ })
+                }
+            }
+        }
+        try {
+            frames(scene, 0)
+            assertEquals(1, nodes(scene).count { text(it) == "This search provider could not respond. Try again." })
+            val retry = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && text(it) == "Try again" }
+            assertTrue(retry.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, retried)
+        } finally { scene.close() }
+    }
+
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
         scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
     }
