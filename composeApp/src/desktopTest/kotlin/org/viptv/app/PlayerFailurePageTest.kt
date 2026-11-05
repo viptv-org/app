@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Rule
+import org.viptv.app.features.player.PlayerFallbackNotice
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.player.TvPlaybackExtras
 import org.viptv.app.features.player.TvPlayerScene
@@ -104,6 +105,30 @@ class PlayerFailurePageTest {
                 else PlayerScreen(null, true, failure, {}, {}, {}, title)
             }.use { scene ->
                 assertPage(scene, if (television) "Choose another source to continue from 0:00." else failure, emptyList())
+            }
+        }
+    }
+
+    @Test fun theBestMatchFallbackDrawsTheSamePageWithStop() {
+        for (television in listOf(false, true)) {
+            for (phone in if (television) listOf(false) else listOf(true, false)) {
+                var stopped = 0
+                val notice = PlayerFallbackNotice("This source could not play", "Source b", "1080p · WEB-DL · addon:b")
+                scene(if (television) 1920 else 1440, if (television) 1080 else 900, television = television) {
+                    if (television) TvPlayerScreen(null, false, failure, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {},
+                        fallback = notice, stopFallback = { stopped++ }, scene = TvPlayerScene.Error)
+                    else PlayerScreen(null, true, failure, {}, {}, {}, title, phone = phone, fallback = notice,
+                        stopFallback = { stopped++ })
+                }.use { scene ->
+                    frames(scene)
+                    val texts = nodes(scene).map(::text)
+                    assertTrue("This source could not play. Trying the next best source…" in texts, "the notice is the page's headline; saw $texts")
+                    assertTrue(texts.any { it.contains("Source b") }, "the next source's facts follow it; saw $texts")
+                    assertFalse("This source stopped working" in texts, "the page waits for Stop before the failure copy")
+                    assertFalse(nodes(scene).any { text(it) == "Back" }, "the fallback notice has no Back")
+                    click(scene, "Stop")
+                    assertEquals(1, stopped)
+                }
             }
         }
     }

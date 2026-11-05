@@ -92,8 +92,8 @@ class PageBackControlTest {
         "Continue watching" to { ContinueWatchingScreen(ContinueWatchingPage(emptyList(), loaded = true), play = { _ -> }, open = { _ -> },
             more = null, retry = {}, back = {}, home = {}) },
         "Details" to { DetailsScreen(DetailSnapshot(card, episodes = emptyList()), busy = false, error = null, back = {}, sources = { _ -> }) },
-        "Player failure" to { PlayerFailurePage(PhoneFailureStyle, "The source stopped.", null, retry = null, choose = null, close = {},
-            title = null, insets = WindowInsets(0)) },
+        "Player failure" to { PlayerFailurePage(PhoneFailureStyle, "This source stopped working", "The source stopped.", back = {},
+            insets = WindowInsets(0)) },
     )
 
     @Test fun phonePagesShareOneBackControlInOneSlot() {

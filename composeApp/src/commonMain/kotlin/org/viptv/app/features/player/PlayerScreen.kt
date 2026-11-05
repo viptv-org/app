@@ -315,11 +315,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     }
                 }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
                 val stopped = failed || error != null
+                val failureStyle = if (phone) PhoneFailureStyle else DesktopFailureStyle
                 when {
-                    stopped && fallback != null -> PhonePlayerFallback(fallback, stopFallback, controlInsets)
-                    stopped -> PlayerFailurePage(if (phone) PhoneFailureStyle else DesktopFailureStyle,
+                    stopped && fallback != null -> PlayerFallbackPage(fallback, stopFallback, failureStyle, controlInsets)
+                    stopped -> PlayerFailurePage(failureStyle, "This source stopped working",
                         tvExtras.failureDescription ?: error ?: "Choose another source to continue from ${playbackTime(position)}.",
-                        tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
+                        primary = retry?.let { failureStyle.retryAction(tvExtras.fallbackLabel, it) },
+                        choose = chooseSources?.let(failureStyle::chooseAction),
+                        back = close, title = title, insets = controlInsets)
                     else -> {
                         val opening = openingSource
                         if (opening != null) {

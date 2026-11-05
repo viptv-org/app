@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -32,6 +33,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 internal enum class PlayerFailureLayout { Phone, Desktop, Tv }
+
+internal class PlayerFailureAction(val label: String, val icon: ImageVector?, val activate: () -> Unit)
 
 internal data class PlayerFailureStyle(
     val layout: PlayerFailureLayout,
@@ -61,9 +64,15 @@ internal data class PlayerFailureStyle(
     val actionLift: Dp = 0.dp,
     val maxWidth: Dp,
     val corner: Dp,
+    val chooseLabel: String = "Choose a source",
     val header: Boolean = false,
     val backInRow: Boolean = true,
-)
+) {
+    fun retryAction(fallbackLabel: String?, activate: () -> Unit) =
+        PlayerFailureAction(fallbackLabel?.let { "Try $it" } ?: "Retry", Lucide.RefreshCw, activate)
+
+    fun chooseAction(activate: () -> Unit) = PlayerFailureAction(chooseLabel, Lucide.SlidersHorizontal, activate)
+}
 
 internal val PhoneFailureStyle = PlayerFailureStyle(PlayerFailureLayout.Phone, scrim = .8f, icon = 32.dp,
     titleSize = 22.sp, titleLine = 28.sp, textSize = 13.sp, textLine = 19.sp, textLines = 3,
@@ -74,7 +83,7 @@ internal val PhoneFailureStyle = PlayerFailureStyle(PlayerFailureLayout.Phone, s
 internal val DesktopFailureStyle = PlayerFailureStyle(PlayerFailureLayout.Desktop, scrim = .82f, icon = 40.dp,
     titleSize = 26.sp, titleLine = 30.sp, titleTracking = (-.52).sp, textSize = 15.sp, textLine = 22.sp,
     gap = 12.dp, actionTop = 8.dp, actionGap = 10.dp, actionHeight = 40.dp, actionText = 14.sp, actionLine = 20.sp,
-    actionIcon = 17.dp, actionIconGap = 7.dp, actionPadding = 16.dp, maxWidth = 720.dp, corner = 12.dp)
+    actionIcon = 17.dp, actionIconGap = 7.dp, actionPadding = 16.dp, maxWidth = 860.dp, corner = 12.dp)
 
 internal fun tvFailureStyle(scale: Float) = PlayerFailureStyle(PlayerFailureLayout.Tv, scale, scrim = .85f, icon = 44.dp * scale,
     iconDisc = 88.dp * scale, titleSize = (48 * scale).sp, titleLine = (55.2f * scale).sp, titleTracking = (-.96f * scale).sp,
@@ -82,18 +91,19 @@ internal fun tvFailureStyle(scale: Float) = PlayerFailureStyle(PlayerFailureLayo
     gap = 18.dp * scale, actionTop = 18.dp * scale, actionGap = 16.dp * scale, actionHeight = 72.dp * scale,
     actionWidth = 380.dp * scale, backWidth = 200.dp * scale, actionText = (26 * scale).sp, actionLine = (37.7f * scale).sp,
     actionIcon = 28.dp * scale, actionIconGap = 12.dp * scale, actionPadding = 0.dp,
-    actionShadow = 50.dp * scale, actionLift = 18.dp * scale, maxWidth = 1400.dp * scale, corner = 12.dp * scale)
+    actionShadow = 50.dp * scale, actionLift = 18.dp * scale, maxWidth = 1400.dp * scale, corner = 12.dp * scale,
+    chooseLabel = "Choose another source")
 
 @Composable
-internal fun PlayerFailurePage(style: PlayerFailureStyle, description: String, fallbackLabel: String?,
-    retry: (() -> Unit)?, choose: (() -> Unit)?, close: () -> Unit, title: Card? = null,
-    insets: WindowInsets = WindowInsets(0, 0, 0, 0), chooseLabel: String = "Choose a source") {
+internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, description: String,
+    primary: PlayerFailureAction? = null, choose: PlayerFailureAction? = null, back: (() -> Unit)? = null,
+    title: Card? = null, insets: WindowInsets = WindowInsets(0, 0, 0, 0)) {
     val initial = remember { FocusRequester() }
     val reveal = if (style.layout == PlayerFailureLayout.Tv) 1f else rememberArriveFade()
     Box(Modifier.fillMaxSize().alpha(reveal).background(Color.Black.copy(alpha = style.scrim)).windowInsetsPadding(insets)) {
-        if (style.header) Row(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
+        if (style.header && back != null) Row(Modifier.align(Alignment.TopStart).fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            BackControl(close, Modifier.then(if (retry == null && choose == null) Modifier.focusRequester(initial) else Modifier))
+            BackControl(back, Modifier.then(if (primary == null && choose == null) Modifier.focusRequester(initial) else Modifier))
             Column(Modifier.weight(1f)) {
                 title?.let { Text(it.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
@@ -103,16 +113,16 @@ internal fun PlayerFailurePage(style: PlayerFailureStyle, description: String, f
             .semantics { liveRegion = LiveRegionMode.Assertive },
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(style.gap)) {
             FailureAlert(style)
-            Text("This source stopped working", Modifier.then(style.titleHeight?.let { height ->
+            Text(headline, Modifier.then(style.titleHeight?.let { height ->
                 Modifier.height(height).wrapContentHeight(Alignment.CenterVertically, unbounded = true) } ?: Modifier),
                 fontSize = style.titleSize, lineHeight = style.titleLine, letterSpacing = style.titleTracking,
                 fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(description, fontSize = style.textSize, lineHeight = style.textLine, color = Palette.secondary,
                 textAlign = TextAlign.Center, maxLines = style.textLines, overflow = TextOverflow.Ellipsis)
-            FailureActions(style, fallbackLabel, retry, choose, close, initial, chooseLabel)
+            FailureActions(style, primary, choose, back, initial)
         }
     }
-    LaunchedEffect(Unit) { initial.requestFocus() }
+    if (primary != null || choose != null || back != null) LaunchedEffect(Unit) { initial.requestFocus() }
 }
 
 @Composable
@@ -123,18 +133,16 @@ private fun FailureAlert(style: PlayerFailureStyle) {
     }
 }
 
-private enum class FailureActionKind { Retry, Choose, Back }
+private enum class FailureActionKind { Primary, Choose, Back }
 
 @Composable
-private fun FailureActions(style: PlayerFailureStyle, fallbackLabel: String?, retry: (() -> Unit)?, choose: (() -> Unit)?,
-    close: () -> Unit, initial: FocusRequester, chooseLabel: String) {
+private fun FailureActions(style: PlayerFailureStyle, primary: PlayerFailureAction?, choose: PlayerFailureAction?,
+    back: (() -> Unit)?, initial: FocusRequester) {
     val actions: @Composable () -> Unit = {
-        if (retry != null) FailureAction(style, FailureActionKind.Retry, fallbackLabel?.let { "Try $it" } ?: "Retry",
-            primary = true, requester = initial, activate = retry)
-        if (choose != null) FailureAction(style, FailureActionKind.Choose, chooseLabel, primary = false,
-            requester = if (retry == null) initial else null, activate = choose)
-        if (style.backInRow) FailureAction(style, FailureActionKind.Back, "Back", primary = false,
-            requester = if (retry == null && choose == null) initial else null, activate = close)
+        primary?.let { FailureAction(style, FailureActionKind.Primary, it, requester = initial) }
+        choose?.let { FailureAction(style, FailureActionKind.Choose, it, requester = if (primary == null) initial else null) }
+        if (style.backInRow && back != null) FailureAction(style, FailureActionKind.Back, PlayerFailureAction("Back", null, back),
+            requester = if (primary == null && choose == null) initial else null)
     }
     if (style.layout == PlayerFailureLayout.Tv)
         Row(Modifier.padding(top = style.actionTop), horizontalArrangement = Arrangement.spacedBy(style.actionGap)) { actions() }
@@ -144,26 +152,21 @@ private fun FailureActions(style: PlayerFailureStyle, fallbackLabel: String?, re
 }
 
 @Composable
-private fun FailureAction(style: PlayerFailureStyle, kind: FailureActionKind, label: String, primary: Boolean,
-    requester: FocusRequester?, activate: () -> Unit) {
-    val icon = when (kind) {
-        FailureActionKind.Retry -> Lucide.RefreshCw
-        FailureActionKind.Choose -> Lucide.SlidersHorizontal
-        FailureActionKind.Back -> null
-    }
+private fun FailureAction(style: PlayerFailureStyle, kind: FailureActionKind, action: PlayerFailureAction, requester: FocusRequester?) {
     val width = if (kind == FailureActionKind.Back) style.backWidth else style.actionWidth
     val size = Modifier.height(style.actionHeight).then(width?.let { Modifier.width(it) } ?: Modifier)
     val ink: @Composable (Color) -> Unit = { color ->
-        icon?.let { Icon(it, null, Modifier.size(style.actionIcon), tint = color); Spacer(Modifier.width(style.actionIconGap)) }
-        Text(label, color = color, fontSize = style.actionText, lineHeight = style.actionLine,
+        action.icon?.let { Icon(it, null, Modifier.size(style.actionIcon), tint = color); Spacer(Modifier.width(style.actionIconGap)) }
+        Text(action.label, color = color, fontSize = style.actionText, lineHeight = style.actionLine,
             fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
     if (style.layout == PlayerFailureLayout.Tv) {
         val modifier = size.then(style.actionShadow?.let { radius ->
             Modifier.dropShadow(RoundedCornerShape(style.corner), Shadow(radius = radius,
                 color = Color.Black.copy(alpha = .45f), offset = DpOffset(0.dp, style.actionLift))) } ?: Modifier)
-        if (primary) TvAction(modifier, style.scale, primary = true, requester = requester, activate = activate) { color -> ink(color) }
-        else TvGlassAction(modifier, style.scale, requester = requester, activate = activate,
+        if (kind == FailureActionKind.Primary) TvAction(modifier, style.scale, primary = true, requester = requester,
+            activate = action.activate) { color -> ink(color) }
+        else TvGlassAction(modifier, style.scale, requester = requester, activate = action.activate,
             background = Color.White.copy(alpha = .16f)) { color -> ink(color) }
     } else {
         val shape = RoundedCornerShape(style.corner)
@@ -171,12 +174,12 @@ private fun FailureAction(style: PlayerFailureStyle, kind: FailureActionKind, la
         val padding = PaddingValues(horizontal = style.actionPadding)
         val content: @Composable () -> Unit = { ink(LocalContentColor.current) }
         when {
-            primary -> Button(activate, modifier, shape = shape, contentPadding = padding,
+            kind == FailureActionKind.Primary -> Button(action.activate, modifier, shape = shape, contentPadding = padding,
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { content() }
-            kind == FailureActionKind.Back -> OutlinedButton(activate, modifier, shape = shape, contentPadding = padding,
+            kind == FailureActionKind.Back -> OutlinedButton(action.activate, modifier, shape = shape, contentPadding = padding,
                 border = BorderStroke(1.dp, Color.White.copy(alpha = .14f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.text)) { content() }
-            else -> Button(activate, modifier, shape = shape, contentPadding = padding,
+            else -> Button(action.activate, modifier, shape = shape, contentPadding = padding,
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) { content() }
         }
     }
