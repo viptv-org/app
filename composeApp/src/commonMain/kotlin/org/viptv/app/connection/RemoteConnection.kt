@@ -31,6 +31,7 @@ import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.crash.CrashReport
 
 data class Profile(val id: String, val name: String, val avatar: String?, val locked: Boolean = false, val avatarId: String? = null, val canDelete: Boolean = true, val lockKind: String? = null,
@@ -41,6 +42,7 @@ data class Bootstrap(val profiles: List<Profile>, val selected: String?, val hom
 class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null,
     val sessionExpired: Boolean = false) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
+internal val RemoteFailure.updateRequired: Boolean get() = status == 409 && code == "client_update_required"
 
 // Only the credential refresh says the session is gone: any other 401 is a failed request the viewer can retry.
 internal fun sessionExpired() = RemoteFailure(401, "Sign in to continue.", sessionExpired = true)
@@ -399,12 +401,19 @@ open class RemoteConnection(
             status == 401 -> "Sign in to continue."
             status == 403 -> "This action is not available for this profile."
             status == 429 -> tooManyRequestsMessage(response, code)
-            else -> "The server could not complete this request."
+            status == 409 && code == "client_update_required" -> ServerMessages.UPDATE_APP
+            else -> ServerMessages.human(serverError(text), "The server could not complete this request.")
         }, code, text)
     }
 
     private fun errorCode(body: String?): String? = body?.let {
         try { codec.parseToJsonElement(it).jsonObject["error_code"]?.jsonPrimitive?.contentOrNull }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+    }
+
+    private fun serverError(body: String?): String? = body?.let {
+        try { codec.parseToJsonElement(it).jsonObject["error"]?.jsonPrimitive?.contentOrNull }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { null }
     }
