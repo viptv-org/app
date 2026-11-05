@@ -146,7 +146,7 @@ class LiveUiTest {
             var resets = 0
             val scene = ImageComposeScene(width, height, Density(1f)) {
                 ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                    LiveScreen(listOf(channel()), television, null, null, {}, {}, favoritesOnly = true, favoritesFilter = {},
+                    LiveScreen(listOf(channel()), television, null, null, {}, favoritesOnly = true, favoritesFilter = {},
                         groupChanged = { resets++ }, groupLabels = mapOf("news" to "News"))
                 } }
             }
