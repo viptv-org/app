@@ -9,6 +9,7 @@ import kotlinx.coroutines.delay
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.Availability
 
 @Composable
 internal fun LiveRoute(state: ApplicationState, controller: ApplicationController, television: Boolean) {
@@ -42,8 +43,8 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 state.error != null -> controller::refreshLive
                 state.liveFavoriteError != null && state.liveFavoritesCanRetry -> controller::refreshLiveFavorites
                 state.liveFavoriteError != null -> null
-                state.livePage?.availability == "TemporarilyUnavailable" -> controller::refreshLive
-                guide?.availability == "TemporarilyUnavailable" -> controller::retryLiveGuide
+                state.livePage?.availability == Availability.TEMPORARILYUNAVAILABLE -> controller::refreshLive
+                guide?.availability == Availability.TEMPORARILYUNAVAILABLE -> controller::retryLiveGuide
                 else -> null
             }
             val mayManageSources = state.localMode || state.accountAccess?.managesSources == true

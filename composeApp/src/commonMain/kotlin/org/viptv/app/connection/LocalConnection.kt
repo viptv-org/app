@@ -1,9 +1,13 @@
 package org.viptv.app.connection
 
+import org.viptv.engine.wire.Availability
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.engine.wire.CatalogPage
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.engine.wire.LiveGuide
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.HistoryEntry
@@ -26,10 +30,10 @@ interface LocalConnection : AutoCloseable {
     suspend fun detail(profile: String, card: Card, offset: Int = 0): DetailSnapshot
     suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = detail(profile, card, offset)
     suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome
-    suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage = LiveCatalogPage(reason = "Live TV is unavailable on this device.")
+    suspend fun liveChannels(profile: String, query: LiveQuery): LivePage = LivePage(channels = emptyList(), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.UNSUPPORTED, reason = "Live TV is unavailable on this device.")
     suspend fun liveFavorites(profile: String): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
     suspend fun setLiveFavorite(profile: String, channel: String, saved: Boolean): Set<String> = throw UnsupportedOperationException("Channel favourites are unavailable on this device.")
-    suspend fun liveGuide(profile: String, channel: String): LiveGuideSnapshot = LiveGuideSnapshot(channel, reason = "The program guide is unavailable.")
+    suspend fun liveGuide(profile: String, channel: String): LiveGuide = LiveGuide(channel_id = channel, programs = emptyList(), availability = Availability.UNSUPPORTED, reason = "The program guide is unavailable.")
     suspend fun liveSources(profile: String, channel: String): List<SourceCandidate> = throw LocalFailure("This live channel is unavailable.")
     suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext = RankingContext()): RankedSources = RankedSources(sources)
     suspend fun openSource(id: String): PlaybackInput

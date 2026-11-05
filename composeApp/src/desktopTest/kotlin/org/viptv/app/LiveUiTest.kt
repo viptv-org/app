@@ -29,8 +29,11 @@ import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import org.viptv.engine.wire.Availability
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.engine.wire.MediaIdentity
 import java.io.File
 import org.junit.Rule
@@ -227,7 +230,7 @@ class LiveUiTest {
 
     @Test fun tvDownFromTheNavigationEntersTheEmptyStateOnTryAgain() {
         val failed = liveController(null, error = "Could not reach your server. Check the connection and try again.")
-        val answered = liveController(livePage("m3u:1" to "Playlist", "xtream:2" to "Other feed", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"))
+        val answered = liveController(livePage("m3u:1" to "Playlist", "xtream:2" to "Other feed", reason = "The provider refused the stream.", availability = Availability.TEMPORARILYUNAVAILABLE))
         for (controller in listOf(failed, answered)) {
             val focusManager = mutableListOf<androidx.compose.ui.focus.FocusManager>()
             var frame = 0L
@@ -385,7 +388,7 @@ class LiveUiTest {
         for (television in listOf(false, true)) {
             for (second in listOf(false, true)) {
                 val page = livePage(*if (second) arrayOf("m3u:1" to "Playlist", "xtream:2" to "Other feed") else arrayOf("m3u:1" to "Playlist"))
-                val controller = liveController(page, busy = true, query = LiveQuery(connection_id = "m3u:1"))
+                val controller = liveController(page, busy = true, query = LiveQuery(connection_id = "m3u:1", offset = 0))
                 val width = if (television) 1920 else 1280
                 val scene = liveScene(width, if (television) 1080 else 800, television, controller)
                 try {
@@ -406,7 +409,7 @@ class LiveUiTest {
 
     @Test fun noChannelsAnsweredShowsTheReasonAndRetryOnlyWhenSomethingFailed() {
         for (television in listOf(false, true)) {
-            val failed = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"))
+            val failed = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = Availability.TEMPORARILYUNAVAILABLE))
             val quiet = liveController(livePage("m3u:1" to "Playlist"))
             for ((controller, reason, retry) in listOf(Triple(failed, "The provider refused the stream.", true), Triple(quiet, LiveNoChannelsBody, false))) {
                 val scene = liveScene(if (television) 1920 else 1280, if (television) 1080 else 800, television, controller)
@@ -474,7 +477,7 @@ class LiveUiTest {
     }
 
     @Test fun sourceIntegrationsIsAbsentWhenTheViewerCannotManageSources() {
-        val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"),
+        val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = Availability.TEMPORARILYUNAVAILABLE),
             access = AccountAccess("device", false))
         val scene = liveScene(1280, 800, false, controller)
         try {
@@ -486,7 +489,7 @@ class LiveUiTest {
 
     @Test fun sourceIntegrationsWaitsForTheOwnerAsTheSetupActionsDo() {
         for (access in listOf(AccountAccess("owner", true), AccountAccess("member", true))) {
-            val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = "TemporarilyUnavailable"),
+            val controller = liveController(livePage("m3u:1" to "Playlist", reason = "The provider refused the stream.", availability = Availability.TEMPORARILYUNAVAILABLE),
                 access = access)
             val scene = liveScene(1280, 800, false, controller)
             try {
@@ -511,10 +514,10 @@ class LiveUiTest {
         } finally { scene.close() }
     }
 
-    private fun liveChannel() = LiveCatalogChannel("one", "m3u:1", Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()))
+    private fun liveChannel() = org.viptv.engine.wire.LiveChannel("one", "m3u:1", Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()))
 
-    private fun livePage(vararg connections: Pair<String, String>, reason: String? = null, availability: String = "Available") =
-        LiveCatalogPage(availability = availability, reason = reason, connections = connections.map { (id, name) ->
+    private fun livePage(vararg connections: Pair<String, String>, reason: String? = null, availability: Availability = Availability.AVAILABLE) =
+        LivePage(channels = emptyList(), groups = emptyList(), complete = true, availability = availability, reason = reason, connections = connections.map { (id, name) ->
             IntegrationConnection(id, "m3u", "7", name = name, enabled = true, revision = 1, capabilities = emptyList())
         })
 
@@ -524,8 +527,8 @@ class LiveUiTest {
         override suspend fun clear() = Unit
     }
 
-    private fun liveController(page: LiveCatalogPage?, access: AccountAccess? = AccountAccess("owner", true), busy: Boolean = false,
-        query: LiveQuery = LiveQuery(), returnFocus: Boolean = false, error: String? = null) =
+    private fun liveController(page: LivePage?, access: AccountAccess? = AccountAccess("owner", true), busy: Boolean = false,
+        query: LiveQuery = LiveQuery(offset = 0), returnFocus: Boolean = false, error: String? = null) =
         ApplicationController(CoroutineScope(Dispatchers.Unconfined), store).also {
             it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "12", livePage = page, liveQuery = query,
                 accountAccess = access, busy = busy, liveSetupReturnFocus = returnFocus, error = error)

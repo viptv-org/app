@@ -1,7 +1,7 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.BrowseQuery
-import org.viptv.app.connection.LiveQuery
+import org.viptv.engine.wire.LiveQuery
 import org.viptv.app.features.calendar.CALENDAR_DEFAULT_TYPE
 import org.viptv.engine.wire.LibraryQuery
 
@@ -13,7 +13,7 @@ data class BackEntry(
     val library: LibraryQuery? = null,
     val calendarType: String = CALENDAR_DEFAULT_TYPE,
     val calendarWeek: Int = 0,
-    val liveQuery: LiveQuery = LiveQuery(),
+    val liveQuery: LiveQuery = LiveQuery(offset = 0),
     val liveFavoritesOnly: Boolean = false,
 )
 
