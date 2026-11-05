@@ -20,6 +20,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.components.motionSpec
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -46,7 +47,7 @@ internal fun TvHeroSummary(card: Card, scale: Float) {
         Spacer(Modifier.height(20.dp * scale))
         // The copy keeps its two-line slot so the actions below it never move when a title has no description.
         Box(Modifier.heightIn(min = 76.dp * scale).width(780.dp * scale)) {
-            card.description?.let { Text(it, fontSize = (26 * scale).sp,
+            card.description.providerText()?.let { Text(it, fontSize = (26 * scale).sp,
                 lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
     }

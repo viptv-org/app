@@ -18,6 +18,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.theme.Palette
+import org.viptv.app.format.providerText
 import org.viptv.app.components.DesktopBreakpoints
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.isPlayPending
@@ -85,7 +86,7 @@ private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Un
                         Text(shown.title, fontSize = if (short) 26.sp else 36.sp, lineHeight = if (short) 30.sp else 40.sp, fontWeight = FontWeight.Bold)
                     }
                     MediaMetadata(shown)
-                    shown.description?.let {
+                    shown.description.providerText()?.let {
                         Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body, maxLines = if (short) 2 else 3,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }

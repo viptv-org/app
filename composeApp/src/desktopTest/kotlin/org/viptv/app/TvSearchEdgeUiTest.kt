@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.connection.SearchResultRow
+import org.viptv.app.features.search.SEARCH_PLACEHOLDER
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -198,7 +199,7 @@ class TvSearchEdgeUiTest {
             screen.settle()
             val texts = screen.nodes().flatMap(::texts)
             assertFalse(texts.any { it == "No matching titles" })
-            assertFalse(texts.any { it == "Search movies and series" })
+            assertFalse(texts.any { it == SEARCH_PLACEHOLDER })
         }
     }
 
