@@ -20,6 +20,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import org.viptv.app.components.TvMediaMetadata
 import org.viptv.app.components.motionSpec
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -44,7 +45,7 @@ internal fun TvHeroSummary(card: Card, scale: Float) {
         Box(Modifier.offset(96.dp * scale, 494.dp * scale)) {
             TvMediaMetadata(card, scale)
         }
-        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 544.dp * scale).width(780.dp * scale), fontSize = (26 * scale).sp,
+        card.description.providerText()?.let { Text(it, Modifier.offset(96.dp * scale, 544.dp * scale).width(780.dp * scale), fontSize = (26 * scale).sp,
             lineHeight = (38 * scale).sp, color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
     }
 }

@@ -6,6 +6,7 @@ import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import kotlinx.coroutines.*
+import org.viptv.app.format.providerText
 import org.viptv.engine.wire.Card
 
 internal data class TvBillboardSelection(val card: Card, val portrait: Boolean)
@@ -29,7 +30,7 @@ internal fun rememberTvBillboardSelection(
     val raw = focused.value
     val card = raw?.let(resolve)
     LaunchedEffect(raw?.identity) {
-        if (raw != null && (raw.logo == null || raw.description.isNullOrBlank())) {
+        if (raw != null && (raw.logo == null || raw.description.providerText().isNullOrBlank())) {
             while (quietForMillis()?.let { it < settleMillis() } == true) delay(QuietPollMillis)
             enrich(raw)
         }

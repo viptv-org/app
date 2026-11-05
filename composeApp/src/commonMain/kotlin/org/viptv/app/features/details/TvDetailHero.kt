@@ -29,7 +29,7 @@ import org.viptv.app.components.isPlayPending
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.saveTarget
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -58,7 +58,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
         Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
             TvDetailMetadata(card, scale)
         }
-        card.description?.let { Text(providerPlainText(it),
+        card.description.providerText()?.let { Text(it,
             Modifier.offset(96.dp * scale, (if (series) 460 else 482).dp * scale).width(800.dp * scale),
             fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body,
             maxLines = 3, overflow = TextOverflow.Ellipsis) }

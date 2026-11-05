@@ -33,7 +33,7 @@ import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.features.home.BufferedArtwork
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.state.DetailSourcePreview
@@ -116,7 +116,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                     Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
-            card.description?.let { Text(providerPlainText(it), fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
+            card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
             card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
                 Text("Starring ${cast.joinToString(", ")}", fontSize = 14.sp, lineHeight = 21.sp,

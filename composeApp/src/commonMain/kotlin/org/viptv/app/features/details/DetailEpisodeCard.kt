@@ -29,6 +29,7 @@ import org.viptv.app.components.isGoneArtwork
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
+import org.viptv.app.format.providerText
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -48,7 +49,7 @@ internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Un
             EpisodeArtwork(episode, Modifier.fillMaxWidth().aspectRatio(16f / 9), comingUp)
             EpisodeCaption(episode, Modifier.fillMaxWidth(), false, playing, comingUp, showAirDate, stateCaption)
         }
-        episode.description?.takeIf { it.isNotBlank() }?.let {
+        episode.description.providerText()?.let {
             Text(it, color = Palette.secondary, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }

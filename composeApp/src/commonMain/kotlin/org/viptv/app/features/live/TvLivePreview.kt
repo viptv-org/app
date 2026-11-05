@@ -23,6 +23,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.format.providerText
 
 @Composable
 internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null, watch: () -> Unit) {
@@ -45,7 +46,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
                     lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
                 channel.card.badges.forEach { TvMediaBadge(it, scale) }
             }
-            it.description?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
+            it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                 color = Palette.body, maxLines = 2) }
         }
     }
