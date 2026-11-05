@@ -5,6 +5,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import org.viptv.app.features.settings.rememberDevicePlaybackState
 import org.viptv.app.features.settings.rememberReducedMotion
+import org.viptv.app.features.sources.providerLabel
+import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 import org.viptv.engine.wire.Card
@@ -32,8 +34,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback,
         { fact -> controller.observePlaybackFor(state.playback, fact) }, controller::closePlayer,
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
-        tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.label,
-            sourceQuality = state.playingSource?.quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: state.playingSource?.presentation?.quality, episodes = episodes,
+        tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.providerLabel(),
+            sourceQuality = state.playingSource?.qualityLabel(), episodes = episodes,
             skips = state.playbackSegments, skipIntros = preferences?.skip_intros == true,
             nextEpisode = nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = controller::playEpisode,
