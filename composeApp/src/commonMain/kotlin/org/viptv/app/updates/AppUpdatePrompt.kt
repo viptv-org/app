@@ -92,14 +92,14 @@ fun AppUpdateRequiredNotice(television: Boolean, update: (() -> Unit)?, dismiss:
 }
 
 @Composable
-internal fun UpdateNotice(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+internal fun UpdateNotice(title: String, body: String, primary: String?, secondary: String, act: () -> Unit,
     dismiss: () -> Unit, television: Boolean) {
-    if (television) TvUpdateNotice(title, body, primary, later, act, dismiss)
-    else PhoneUpdateBanner(title, body, primary, later, act, dismiss)
+    if (television) TvUpdateNotice(title, body, primary, secondary, act, dismiss)
+    else PhoneUpdateBanner(title, body, primary, secondary, act, dismiss)
 }
 
 @Composable
-private fun PhoneUpdateBanner(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+private fun PhoneUpdateBanner(title: String, body: String, primary: String?, secondary: String, act: () -> Unit,
     dismiss: () -> Unit) {
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp).padding(bottom = 72.dp),
         contentAlignment = Alignment.BottomCenter) {
@@ -109,7 +109,7 @@ private fun PhoneUpdateBanner(title: String, body: String, primary: String?, lat
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(body, color = Palette.secondary, style = MaterialTheme.typography.bodyMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(dismiss) { Text(later, color = Palette.secondary) }
+                    TextButton(dismiss) { Text(secondary, color = Palette.secondary) }
                     primary?.let { label -> TextButton(act) { Text(label, color = Palette.accent, fontWeight = FontWeight.SemiBold) } }
                 }
             }
@@ -118,7 +118,7 @@ private fun PhoneUpdateBanner(title: String, body: String, primary: String?, lat
 }
 
 @Composable
-private fun TvUpdateNotice(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+private fun TvUpdateNotice(title: String, body: String, primary: String?, secondary: String, act: () -> Unit,
     dismiss: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
@@ -138,7 +138,7 @@ private fun TvUpdateNotice(title: String, body: String, primary: String?, later:
                         }
                         TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale,
                             requester = if (primary == null) first else null, activate = dismiss) {
-                            Text(later, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                            Text(secondary, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

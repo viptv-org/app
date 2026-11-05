@@ -105,7 +105,7 @@ open class RemoteConnection(
         private set
     internal var requiredAudioIndexSupported = false
         private set
-    // Set by the controller: a server that rejects this build's API version has no usable answer to show instead.
+    // Raised from checkStatus, not a call site: a background call that swallows the failure must still say so.
     internal var onClientUpdateRequired: (() -> Unit)? = null
 
     internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(
