@@ -42,7 +42,7 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onF
         Box(Modifier.fillMaxWidth().heightIn(min = 200.dp * scale).clip(shape)
             .background(Brush.linearGradient(listOf(Color(0xFF1D2230), Color(0xFF121318)))), contentAlignment = Alignment.Center) {
             if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.size(140.dp * scale), contentScale = ContentScale.Fit)
-            else Box(Modifier.fillMaxSize().padding(top = 56.dp * scale), contentAlignment = Alignment.Center) {
+            else Box(Modifier.matchParentSize().padding(top = 56.dp * scale), contentAlignment = Alignment.Center) {
                 Text(card.title, fontSize = (56 * scale).sp, lineHeight = (67 * scale).sp, letterSpacing = (-1.12f * scale).sp,
                     fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -54,7 +54,7 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onF
                         fontWeight = FontWeight.ExtraBold, color = Color.White)
                 }
             }
-            if (frame > 0f) Box(Modifier.fillMaxSize().border(3.dp * scale, Color.White.copy(alpha = frame), shape))
+            if (frame > 0f) Box(Modifier.matchParentSize().border(3.dp * scale, Color.White.copy(alpha = frame), shape))
         }
         Text(card.title, Modifier.padding(top = 12.dp * scale), fontSize = (22 * scale).sp, lineHeight = (26 * scale).sp,
             fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
