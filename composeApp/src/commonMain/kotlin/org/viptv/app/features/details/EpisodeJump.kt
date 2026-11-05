@@ -35,6 +35,7 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.connection.seasonNumber
 
 internal const val EPISODE_JUMP_CHIP_LABEL = "Episode #"
 internal const val EPISODE_JUMP_CHIP_DESCRIPTION = "Jump to episode number"
@@ -48,10 +49,10 @@ private const val EPISODE_JUMP_INPUT_LIMIT = 30
 internal fun episodeJumpIndex(episodes: List<Card>, season: Long?, input: String): Int? {
     if (input.isEmpty() || !input.all { it in '0'..'9' }) return null
     val number = input.toLongOrNull() ?: return null
-    val wanted = season ?: 1L
+    val wanted = season.seasonNumber()
     return episodes.indexOfFirst { card ->
         val coordinates = card.identity.episode
-        coordinates != null && (coordinates.season ?: 1L) == wanted && coordinates.episode == number
+        coordinates != null && coordinates.seasonNumber() == wanted && coordinates.episode == number
     }.takeIf { it >= 0 }
 }
 

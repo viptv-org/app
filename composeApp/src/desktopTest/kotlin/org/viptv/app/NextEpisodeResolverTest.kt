@@ -10,7 +10,7 @@ import kotlin.test.*
 class NextEpisodeResolverTest {
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
-    private fun episode(season: Long, number: Long, provider: String = "addon:7", metadataOrigin: MetadataOrigin? = origin) =
+    private fun episode(season: Long?, number: Long, provider: String = "addon:7", metadataOrigin: MetadataOrigin? = origin) =
         Card(MediaIdentity("private-$season-$number", "series", emptyList(), EpisodeCoordinates("aired", season, number)),
             provider_id = provider, title = "S$season E$number", badges = emptyList(),
             parent_identity = parent, metadata_origin = metadataOrigin)
@@ -30,6 +30,22 @@ class NextEpisodeResolverTest {
     @Test fun theLastEpisodeHasNoNext() {
         val list = (1L..4L).map { episode(1, it) }
         assertNull(nextEpisodeAfter(episode(1, 4), list))
+    }
+
+    @Test fun aFlatNumberedSeriesStillFindsItsNextEpisode() {
+        val list = (1L..4L).map { episode(null, it).copy(title = "Episode $it") }
+        assertEquals("Episode 3", nextEpisodeAfter(episode(null, 2), list)?.title)
+        assertEquals("Episode 2", nextEpisodeAfter(episode(null, 1), list.reversed())?.title)
+        assertNull(nextEpisodeAfter(episode(null, 4), list))
+    }
+
+    @Test fun anAbsentSeasonSortsAsSeasonOneBesideItsStoredEpisodes() {
+        val first = episode(1, 1)
+        val stored = episode(null, 2)
+        val third = episode(1, 3)
+        val list = listOf(first, stored, third)
+        assertEquals(stored, nextEpisodeAfter(first, list))
+        assertEquals(third, nextEpisodeAfter(stored, list))
     }
 
     @Test fun episodesFromAnotherProviderParentOrIncarnationAreIgnored() {
