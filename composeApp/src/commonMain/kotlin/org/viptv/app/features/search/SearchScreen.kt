@@ -91,7 +91,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
         if (!hasResults) error?.let { message -> SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter)) }
         if (!busy && term.isNotBlank() && !hasResults && error == null) {
-            val copy = searchNoResultsCopy(searchRows)
+            val copy = searchNoResultsCopy(searchRows, filters)
             if (searchFailed(searchRows)) SearchFailureLine(copy, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
             else Text(copy, Modifier.padding(horizontal = gutter), color = Palette.secondary)
         }
