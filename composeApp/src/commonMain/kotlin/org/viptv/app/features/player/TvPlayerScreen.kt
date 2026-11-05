@@ -24,6 +24,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.LocalActivationKeys
 import org.viptv.app.components.TvBackdrop
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.tvBackdropSource
 
 @Composable
@@ -79,9 +80,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive, audioPromptActive) {
         if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes && !audioPromptActive) {
             val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
-            if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.requestFocus() else audio.requestFocus()
+            if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.focusWhenPlaced() else audio.focusWhenPlaced()
         }
-        else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive && !audioPromptActive) root.requestFocus()
+        else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive && !audioPromptActive) root.focusWhenPlaced()
     }
     TvBackdrop(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown) state.interaction++
@@ -163,4 +164,15 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }
+}
+
+private const val FocusPlacementFrames = 30
+
+// A request made before its control is placed is dropped, so the chrome waits out the frames its 200 ms fade takes to place them.
+private suspend fun FocusRequester.focusWhenPlaced(): Boolean {
+    repeat(FocusPlacementFrames) {
+        if (requestPlacedFocus()) return true
+        withFrameNanos { }
+    }
+    return false
 }
