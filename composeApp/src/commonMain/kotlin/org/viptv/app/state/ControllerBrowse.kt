@@ -14,10 +14,10 @@ fun ApplicationController.browseFilter(id: String, value: String) {
     val query = when (id) {
         "type" -> BrowseQuery(value)
         "catalog" -> prior.forCatalog(catalog)
-        "genre" -> prior.copy(genre = value.takeIf(String::isNotBlank), values = prior.values.filterNot { it.id == id }, skip = 0)
-        "search" -> prior.copy(search = value.takeIf(String::isNotBlank), values = prior.values.filterNot { it.id == id }, skip = 0)
-        else -> prior.copy(extras = if (value.isBlank()) prior.extras - id else prior.extras + (id to value),
-            values = prior.values.filterNot { it.id == id }, skip = 0)
+        "genre" -> prior.firstPage().copy(genre = value.takeIf(String::isNotBlank), values = prior.values.filterNot { it.id == id })
+        "search" -> prior.firstPage().copy(search = value.takeIf(String::isNotBlank), values = prior.values.filterNot { it.id == id })
+        else -> prior.firstPage().copy(extras = if (value.isBlank()) prior.extras - id else prior.extras + (id to value),
+            values = prior.values.filterNot { it.id == id })
     }
     if (query != prior) run { loadBrowse(query) }
 }
@@ -31,14 +31,16 @@ fun ApplicationController.browseSelections(id: String, values: List<String>) {
 
 fun ApplicationController.applyBrowse(query: BrowseQuery) {
     if (query == mutable.value.browseQuery) return
-    run { loadBrowse(query.copy(skip = 0)) }
+    run { loadBrowse(query.firstPage()) }
 }
 
 fun ApplicationController.retryBrowse() = run { loadBrowse(mutable.value.browseQuery) }
 
 fun ApplicationController.browseMore() = run {
-    val skip = mutable.value.browseNext?.toIntOrNull() ?: return@run
-    loadBrowse(mutable.value.browseQuery.copy(skip = skip), append = true)
+    val next = mutable.value.browseNext ?: return@run
+    val query = mutable.value.browseQuery
+    val skip = next.toIntOrNull()
+    loadBrowse(if (skip != null) query.copy(skip = skip, cursor = null) else query.copy(skip = 0, cursor = next), append = true)
 }
 
 internal suspend fun ApplicationController.loadBrowse(query: BrowseQuery, append: Boolean = false) {

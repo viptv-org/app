@@ -13,7 +13,7 @@ private val rememberedScreens = setOf(Screen.Home, Screen.Discover, Screen.Movie
 
 internal fun ApplicationState.navigationRecord(): SavedNavigation? {
     if (selectedProfile == null || screen !in rememberedScreens) return null
-    val browse = browseQuery.copy(skip = 0)
+    val browse = browseQuery.firstPage()
     val library = libraryQuery.copy(offset = 0)
     return when (screen) {
         Screen.Details -> detail?.item?.let {
@@ -27,7 +27,7 @@ internal fun ApplicationController.rememberNavigation(browse: BrowseQuery? = nul
     val state = mutable.value
     val profile = state.selectedProfile ?: return
     val snapshot = state.navigationRecord() ?: return
-    val record = browse?.let { snapshot.copy(browse = it.copy(skip = 0)) } ?: snapshot
+    val record = browse?.let { snapshot.copy(browse = it.firstPage()) } ?: snapshot
     if (record == rememberedNavigation && profile == rememberedNavigationProfile) return
     rememberedNavigation = record
     rememberedNavigationProfile = profile
@@ -55,7 +55,7 @@ private fun ApplicationController.applyNavigationRecord(saved: SavedNavigation, 
     val target = rememberedScreens.firstOrNull { it.name == saved.screen } ?: return
     if (target == Screen.Home) return
     if (mutable.value.selectedProfile != profile || mutable.value.screen != Screen.Home) return
-    saved.browse?.let { updateState { next -> next.copy(browseQuery = it.copy(skip = 0)) } }
+    saved.browse?.let { updateState { next -> next.copy(browseQuery = it.firstPage()) } }
     if (saved.search.isNotBlank()) updateState { next -> next.copy(searchTerm = saved.search) }
     saved.library?.let { updateState { next -> next.copy(libraryQuery = it.copy(offset = 0)) } }
     when (target) {

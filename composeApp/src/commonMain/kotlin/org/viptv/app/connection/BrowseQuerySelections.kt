@@ -6,9 +6,11 @@ internal fun BrowseQuery.forCatalog(next: DiscoveryCatalog?): BrowseQuery =
     if (catalog == next?.id && connection_id == next?.connection_id) this
     else BrowseQuery(type, catalog = next?.id, connection_id = next?.connection_id)
 
+internal fun BrowseQuery.firstPage(): BrowseQuery = copy(skip = 0, cursor = null)
+
 internal fun BrowseQuery.withSelections(id: String, selected: List<String>): BrowseQuery {
     val active = selected.distinct()
-    return copy(skip = 0, genre = genre.takeUnless { id == "genre" },
+    return firstPage().copy(genre = genre.takeUnless { id == "genre" },
         search = search.takeUnless { id == "search" }, extras = extras - id,
         values = values.filterNot { it.id == id } +
             if (active.isEmpty()) emptyList() else listOf(QueryValue(id, active)))
