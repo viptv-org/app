@@ -34,7 +34,13 @@ import org.viptv.engine.wire.Card
 
 internal enum class PlayerFailureLayout { Phone, Desktop, Tv }
 
+internal const val ChooseAnotherSource = "Choose another source"
+
 internal class PlayerFailureAction(val label: String, val icon: ImageVector?, val activate: () -> Unit)
+
+// The reason the player reports wins; otherwise the page says the one thing the viewer can do, and where playback resumes when it can.
+internal fun failureDescription(reason: String?, positionMillis: Long): String = reason
+    ?: if (positionMillis > 0) "$ChooseAnotherSource to continue from ${playbackTime(positionMillis)}." else "$ChooseAnotherSource."
 
 internal data class PlayerFailureStyle(
     val layout: PlayerFailureLayout,
@@ -64,14 +70,13 @@ internal data class PlayerFailureStyle(
     val actionLift: Dp = 0.dp,
     val maxWidth: Dp,
     val corner: Dp,
-    val chooseLabel: String = "Choose a source",
     val header: Boolean = false,
     val backInRow: Boolean = true,
 ) {
     fun retryAction(fallbackLabel: String?, activate: () -> Unit) =
         PlayerFailureAction(fallbackLabel?.let { "Try $it" } ?: "Retry", Lucide.RefreshCw, activate)
 
-    fun chooseAction(activate: () -> Unit) = PlayerFailureAction(chooseLabel, Lucide.SlidersHorizontal, activate)
+    fun chooseAction(activate: () -> Unit) = PlayerFailureAction(ChooseAnotherSource, Lucide.SlidersHorizontal, activate)
 }
 
 internal val PhoneFailureStyle = PlayerFailureStyle(PlayerFailureLayout.Phone, scrim = .8f, icon = 32.dp,
@@ -91,11 +96,10 @@ internal fun tvFailureStyle(scale: Float) = PlayerFailureStyle(PlayerFailureLayo
     gap = 18.dp * scale, actionTop = 18.dp * scale, actionGap = 16.dp * scale, actionHeight = 72.dp * scale,
     actionWidth = 380.dp * scale, backWidth = 200.dp * scale, actionText = (26 * scale).sp, actionLine = (37.7f * scale).sp,
     actionIcon = 28.dp * scale, actionIconGap = 12.dp * scale, actionPadding = 0.dp,
-    actionShadow = 50.dp * scale, actionLift = 18.dp * scale, maxWidth = 1400.dp * scale, corner = 12.dp * scale,
-    chooseLabel = "Choose another source")
+    actionShadow = 50.dp * scale, actionLift = 18.dp * scale, maxWidth = 1400.dp * scale, corner = 12.dp * scale)
 
 @Composable
-internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, description: String,
+internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, reason: String?, positionMillis: Long = 0,
     primary: PlayerFailureAction? = null, choose: PlayerFailureAction? = null, back: (() -> Unit)? = null,
     title: Card? = null, insets: WindowInsets = WindowInsets(0, 0, 0, 0)) {
     val initial = remember { FocusRequester() }
@@ -117,7 +121,7 @@ internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, desc
                 Modifier.height(height).wrapContentHeight(Alignment.CenterVertically, unbounded = true) } ?: Modifier),
                 fontSize = style.titleSize, lineHeight = style.titleLine, letterSpacing = style.titleTracking,
                 fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text(description, fontSize = style.textSize, lineHeight = style.textLine, color = Palette.secondary,
+            Text(failureDescription(reason, positionMillis), fontSize = style.textSize, lineHeight = style.textLine, color = Palette.secondary,
                 textAlign = TextAlign.Center, maxLines = style.textLines, overflow = TextOverflow.Ellipsis)
             FailureActions(style, primary, choose, back, initial)
         }

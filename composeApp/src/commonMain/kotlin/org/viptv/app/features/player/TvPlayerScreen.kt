@@ -122,8 +122,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             state.failed || state.undecodable || error != null ->
                 if (fallback != null) PlayerFallbackPage(fallback, stopFallback, failureStyle)
                 else PlayerFailurePage(failureStyle, "This source stopped working",
-                    extras.failureDescription ?: (if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error)
-                        ?: "Choose another source to continue from ${playbackTime(state.position)}.",
+                    extras.failureDescription ?: (if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error),
+                    state.position,
                     primary = retry?.let { failureStyle.retryAction(extras.fallbackLabel, it) },
                     choose = chooseSources?.let(failureStyle::chooseAction),
                     back = close)
