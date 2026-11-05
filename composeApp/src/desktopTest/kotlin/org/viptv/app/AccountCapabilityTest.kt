@@ -106,8 +106,7 @@ class AccountCapabilityTest {
     @Test fun aMemberReadsDevicesAndSelfServiceRowsWithoutOwnerWrites() {
         Host("""{"manage_account":false}""", accountRole = "member", sessionRole = "member").use { ui ->
             ui.render()
-            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
-            ui.render()
+            ui.waitFor { ui.shows("Devices & sessions") }
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
             assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
             assertTrue(ui.shows("Delete account"), "Any account session keeps the self-service delete row")
@@ -122,7 +121,7 @@ class AccountCapabilityTest {
     @Test fun aPairedTelevisionCannotReadTheDeviceListSoTheRowIsAbsent() {
         Host("""{"manage_account":false}""", accountRole = "owner", sessionRole = "device").use { ui ->
             ui.render()
-            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
+            ui.waitFor { ui.controller.state.value.accountRole == "device" }
             ui.render()
             assertFalse(ui.shows("Devices & sessions"), "GET /account/devices answers account_session_required to a device session")
             assertFalse(ui.shows("Household PIN"))

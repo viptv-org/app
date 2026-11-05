@@ -38,7 +38,7 @@ class TvPlayerBufferSourceLineTest {
             }
         }
         try {
-            repeat(60) { scene.render(it * 16_666_667L).close() }
+            scene.renderUntil { texts(scene).any { it == "Movie · Torrentio · 1080p" } }
             val labels = texts(scene)
             assertTrue(labels.any { it == "Movie · Torrentio · 1080p" }, labels.toString())
             assertFalse(labels.any { "1080p 1080p" in it || "1080p · 1080p" in it }, labels.toString())

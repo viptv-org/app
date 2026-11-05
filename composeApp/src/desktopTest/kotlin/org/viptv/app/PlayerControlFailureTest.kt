@@ -23,6 +23,7 @@ import org.viptv.app.player.playbackControlErrorCopy
 import org.viptv.app.player.playbackControlErrorVisibleMillis
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerControlFailureTest {
@@ -88,8 +89,8 @@ class PlayerControlFailureTest {
             assertTrue(facts.tryEmit(PlayerFact.ControlFailed(PlaybackControl.Seek)))
             render(6)
             assertTrue(showsNotice(scene), "a failed viewer command is visible in the middle of the picture")
-            val deadline = System.nanoTime() + (playbackControlErrorVisibleMillis + 10_000) * 1_000_000
-            while (showsNotice(scene) && System.nanoTime() < deadline) { render(); Thread.sleep(50) }
+            frame = scene.renderUntil(timeout = (playbackControlErrorVisibleMillis + 10_000).milliseconds, from = frame,
+                what = "the control error notice to clear") { !showsNotice(scene) }
             assertFalse(showsNotice(scene), "the notice clears instead of staying over working playback")
         } finally { scene.close() }
     }

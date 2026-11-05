@@ -31,6 +31,7 @@ import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class DeviceApprovalPageTest {
@@ -125,11 +126,7 @@ class DeviceApprovalPageTest {
             frames()
         }
         fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "timed out waiting for $what: ${texts()}")
-                frames(); Thread.sleep(20)
-            }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
             frames()
         }
     }

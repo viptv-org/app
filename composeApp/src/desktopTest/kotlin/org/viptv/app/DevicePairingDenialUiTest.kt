@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Rule
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class DevicePairingDenialUiTest {
@@ -113,11 +114,7 @@ class DevicePairingDenialUiTest {
             assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke()); frames(20)
         }
         fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "Timed out waiting for $what")
-                frames(6); Thread.sleep(50)
-            }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
             frames()
         }
         fun capture(variant: String) {

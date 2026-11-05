@@ -17,6 +17,7 @@ import org.viptv.app.theme.*
 import java.io.File
 import org.junit.Rule
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class AddDeviceScreenTest {
@@ -106,11 +107,7 @@ class AddDeviceScreenTest {
             frames()
         }
         fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "Timed out waiting for $what: ${texts()}")
-                frames(6); Thread.sleep(50)
-            }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
             frames()
         }
     }
