@@ -17,6 +17,7 @@ import org.viptv.app.connection.BrowseQuery
 import org.viptv.app.connection.DiscoveryCatalog
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.connection.catalogTitle
+import org.viptv.app.connection.firstPage
 import org.viptv.app.connection.forCatalog
 import org.viptv.app.connection.selectedCatalog
 import org.viptv.app.connection.selectionKey
@@ -42,7 +43,7 @@ internal fun appliedFacets(facets: List<QueryControl>, query: BrowseQuery): List
     facets.filter { it.id != "type" && query.facetValues(it).isNotEmpty() }
 
 internal fun clearedFilters(query: BrowseQuery): BrowseQuery =
-    query.copy(skip = 0, genre = null, search = null, extras = emptyMap(), values = emptyList())
+    query.firstPage().copy(genre = null, search = null, extras = emptyMap(), values = emptyList())
 
 internal data class AppliedChip(val id: String, val value: String, val label: String, val multiple: Boolean)
 

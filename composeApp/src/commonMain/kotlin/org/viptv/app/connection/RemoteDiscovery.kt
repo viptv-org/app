@@ -19,7 +19,7 @@ data class DiscoveryControls(val provider_id: String, val media_types: List<Stri
 @Serializable
 data class BrowseQuery(val type: String, val catalog: String? = null, val connection_id: String? = null,
     val skip: Int = 0, val search: String? = null, val genre: String? = null, val extras: Map<String, String> = emptyMap(),
-    val values: List<QueryValue> = emptyList())
+    val values: List<QueryValue> = emptyList(), val cursor: String? = null)
 
 internal suspend fun RemoteConnection.discoveryControls(type: String, genre: String? = null): DiscoveryControls =
     Json { ignoreUnknownKeys = true }.decodeFromJsonElement(call("/api/discovery-controls?type=${type.encodeURLParameter()}" + (genre?.let { "&genre=${it.encodeURLParameter()}" } ?: "")))

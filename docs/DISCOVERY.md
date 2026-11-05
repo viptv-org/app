@@ -9,7 +9,10 @@ Catalog identity is the tuple of connection, media type and raw catalog ID. Two
 add-ons can each own a catalog named Top. KMP uses a local tuple key for selection,
 a friendly connection name for duplicate labels, and separate raw catalog/owner
 fields on the host wire. Switching catalogs clears the previous catalog's filters
-and cursor. The single Browse grid explicitly chooses one satisfiable catalog and
+and cursor. Browse advances from the returned `next_cursor`: a decimal value is the
+next `skip`, while any other value is the host's opaque cursor for a page merged
+from several catalogs, forwarded unchanged as `cursor` so each catalog continues
+at its own position. The single Browse grid explicitly chooses one satisfiable catalog and
 owner, making native and remote browsing one-catalog/pageable operations. If every
 catalog requires additional input, the first catalog's controls stay visible while
 its requirements are completed. Legacy host type-only aggregation remains separate.
