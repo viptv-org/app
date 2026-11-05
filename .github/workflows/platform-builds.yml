@@ -15,6 +15,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      APT_PACKAGES: libdbus-1-dev libmpv2 mpv patchelf
     steps:
       - uses: actions/checkout@v7
         with:
@@ -32,17 +34,27 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
-      - name: Cache Linux keyring build dependencies
+      - name: Compute the apt deb cache key
         if: runner.os == 'Linux'
-        uses: actions/cache@v6
+        run: bash scripts/ci/apt-cache-key.sh >> "$GITHUB_ENV"
+      - name: Restore the apt deb cache
+        if: runner.os == 'Linux'
+        id: apt-debs
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev-libmpv2-mpv-patchelf
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install Linux keyring build dependencies
         if: runner.os == 'Linux'
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev libmpv2 mpv patchelf
+        run: bash scripts/ci/install-apt-packages.sh
+      - name: Save the apt deb cache
+        if: always() && runner.os == 'Linux' && steps.apt-debs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/apt-debs
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install macOS mpv
         if: runner.os == 'macOS'
         run: brew install mpv ffmpeg-full
