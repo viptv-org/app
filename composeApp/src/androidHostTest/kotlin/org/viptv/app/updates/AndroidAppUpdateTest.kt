@@ -5,6 +5,7 @@ import android.content.pm.PackageInstaller
 import android.os.Looper
 import com.sun.net.httpserver.HttpServer
 import java.io.File
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
@@ -58,6 +59,21 @@ class AndroidAppUpdateTest {
             exchange.responseBody.use { out -> out.write(apk, start, (cut ?: (apk.size - start))) }
             exchange.close()
         }
+        server.createContext("/redirect/feed") { exchange ->
+            exchange.responseHeaders.add("Location", "/updates/android/update.json")
+            exchange.sendResponseHeaders(302, -1)
+            exchange.close()
+        }
+        server.createContext("/redirect/off-loopback") { exchange ->
+            exchange.responseHeaders.add("Location", "http://attacker.example/update.json")
+            exchange.sendResponseHeaders(302, -1)
+            exchange.close()
+        }
+        server.createContext("/redirect/apk-off-loopback") { exchange ->
+            exchange.responseHeaders.add("Location", "http://attacker.example/viptv-999999.apk")
+            exchange.sendResponseHeaders(302, -1)
+            exchange.close()
+        }
         server.start()
         feedUrl = "http://127.0.0.1:${server.address.port}/updates/android/update.json"
     }
@@ -66,6 +82,7 @@ class AndroidAppUpdateTest {
 
     private fun platform() = AndroidAppUpdatePlatform(application)
     private fun feed(platform: AndroidAppUpdatePlatform) = runBlocking { parseUpdateFeed(platform.fetchFeed(feedUrl), feedUrl) }
+    private fun redirectUrl(path: String) = "http://127.0.0.1:${server.address.port}$path"
 
     @Test fun theUpdaterDownloadsVerifiesAndHandsTheBuildToThePackageInstaller() {
         val platform = platform()
@@ -108,6 +125,24 @@ class AndroidAppUpdateTest {
             .putExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_PENDING_USER_ACTION).putExtra(Intent.EXTRA_INTENT, confirm))
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals("android.content.pm.action.CONFIRM_INSTALL", shadowOf(application).nextStartedActivity?.action)
+    }
+
+    @Test fun aRelativeRedirectOnLoopbackIsFollowedForTheFeed() {
+        val platform = platform()
+        val redirected = redirectUrl("/redirect/feed")
+        val feed = runBlocking { parseUpdateFeed(platform.fetchFeed(redirected), redirected) }
+        assertEquals(999999, feed.versionCode)
+    }
+
+    @Test fun aRedirectToAnOffLoopbackHttpHostIsRejectedForTheFeed() {
+        assertFailsWith<IOException> { runBlocking { platform().fetchFeed(redirectUrl("/redirect/off-loopback")) } }
+    }
+
+    @Test fun aRedirectToAnOffLoopbackHttpHostIsRejectedForTheDownload() {
+        val platform = platform()
+        val feed = feed(platform).copy(url = redirectUrl("/redirect/apk-off-loopback"))
+        assertFailsWith<IOException> { runBlocking { platform.download(feed) {} } }
+        assertTrue(platform.directory.listFiles().orEmpty().isEmpty(), "No partial file is kept")
     }
 
     @Test fun theInstallIsRefusedWhenTheFileChangedAfterVerification() {

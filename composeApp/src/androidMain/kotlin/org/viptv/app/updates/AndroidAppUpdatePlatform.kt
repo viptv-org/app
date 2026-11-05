@@ -41,9 +41,8 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
         set(value) { preferences.edit().apply { if (value == null) remove("last_check") else putLong("last_check", value) }.apply() }
 
     override suspend fun fetchFeed(url: String): String = withContext(Dispatchers.IO) {
-        val connection = open(url)
+        val connection = openFollowingRedirects(url) { it.setRequestProperty("Cache-Control", "no-cache") }
         try {
-            connection.setRequestProperty("Cache-Control", "no-cache")
             val code = connection.responseCode
             if (code == HttpURLConnection.HTTP_NOT_FOUND) throw UpdateFeedException("No update feed at $url", missing = true)
             if (code != HttpURLConnection.HTTP_OK) throw IOException("Update feed returned HTTP $code")
@@ -61,9 +60,8 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
         val partial = partialFile(feed)
         if (partial.length() > feed.size) partial.delete()
         val offset = partial.length()
-        val connection = open(feed.url)
+        val connection = openFollowingRedirects(feed.url) { if (offset > 0) it.setRequestProperty("Range", "bytes=$offset-") }
         try {
-            if (offset > 0) connection.setRequestProperty("Range", "bytes=$offset-")
             val code = connection.responseCode
             val append = when (code) {
                 HttpURLConnection.HTTP_PARTIAL -> offset > 0
@@ -207,11 +205,25 @@ class AndroidAppUpdatePlatform(context: Context) : AppUpdatePlatform {
     private fun apkFile(feed: UpdateFeed) = File(directory, "viptv-${feed.versionCode}-${feed.sha256.take(12)}.apk")
     private fun partialFile(feed: UpdateFeed) = File(directory, apkFile(feed).name + ".part")
 
-    private fun open(url: String): HttpURLConnection = (URL(url).openConnection() as HttpURLConnection).apply {
-        connectTimeout = 15_000; readTimeout = 30_000; instanceFollowRedirects = true
+    private fun openFollowingRedirects(url: String, configure: (HttpURLConnection) -> Unit): HttpURLConnection {
+        var current = url
+        repeat(MAX_REDIRECT_HOPS) {
+            val connection = (URL(current).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 15_000; readTimeout = 30_000; instanceFollowRedirects = false
+            }
+            configure(connection)
+            val code = try { connection.responseCode } catch (error: IOException) { connection.disconnect(); throw error }
+            if (code !in 300..399) return connection
+            val location = connection.getHeaderField("Location")
+            connection.disconnect()
+            if (location == null) throw IOException("Update redirect without Location: $current")
+            current = resolveUpdateUrl(current, location.trim())
+            if (!isAllowedUpdateUrl(current)) throw IOException("Update redirect blocked: $location")
+        }
+        throw IOException("Too many update redirects: $url")
     }
 
-    private companion object { const val MAX_FEED_BYTES = 64 * 1024 }
+    private companion object { const val MAX_FEED_BYTES = 64 * 1024; const val MAX_REDIRECT_HOPS = 5 }
 }
 
 private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
