@@ -38,7 +38,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
@@ -101,7 +101,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                 else -> {
                                     item(key = "information") { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                         MediaMetadata(card)
-                                        card.description?.let { Text(providerPlainText(it), fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                        card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
                                     } }
                                     if (failures.isNotEmpty()) item(key = "addon-failure") {
                                         AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter))

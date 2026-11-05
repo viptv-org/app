@@ -61,4 +61,12 @@ class ProviderPlainTextTest {
         val plain = "Tom & Jerry, 3 > 2 \u2014 plain."
         assertEquals(plain, providerPlainText(plain))
     }
+
+    @Test
+    fun surfacesDecodeOnceAndDropWhatDecodesToNothing() {
+        assertEquals(null, (null as String?).providerText())
+        assertEquals(null, "<br>".providerText())
+        assertEquals("Fish & Chips", "Fish &amp; Chips".providerText())
+        assertEquals("&amp;", "&amp;amp;".providerText())
+    }
 }

@@ -23,6 +23,7 @@ import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.retryAfterFailure
+import org.viptv.app.format.providerText
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
@@ -82,7 +83,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         if (playing) Text(NOW_PLAYING, Modifier.padding(top = 4.dp * scale), color = Palette.accent, fontSize = (20 * scale).sp,
             lineHeight = (26 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         card.subtitle?.let { Text(it, Modifier.padding(top = 4.dp * scale), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary) }
-        card.description?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
+        card.description.providerText()?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
             color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis) }
     }
     if (showUpcoming) EpisodeUpcomingDialog(card) { showUpcoming = false }
