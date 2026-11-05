@@ -26,6 +26,4 @@ internal object Scrim {
 
     private fun dialog(alpha: Float) = Palette.dialog.copy(alpha = alpha)
     val webDetailHero = Brush.verticalGradient(0f to Color.Transparent, .3f to Color.Transparent, .52f to dialog(.55f), .7f to dialog(.86f), 1f to Palette.dialog)
-
-    val detailArtFade = Brush.verticalGradient(listOf(Color.Transparent, Palette.background))
 }
