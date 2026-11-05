@@ -3,6 +3,8 @@ package org.viptv.app.connection
 import java.time.*
 import java.time.format.DateTimeFormatter
 import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.format.formatTimeOfDay
+import org.viptv.app.format.is24HourTime
 
 internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
     val today = LocalDate.now(clock())
@@ -24,5 +26,5 @@ internal actual fun calendarLabel(date: String): CalendarLabel? = runCatching {
     val instant = Instant.parse(date)
     val clock = clock()
     val local = instant.atZone(clock.zone)
-    CalendarLabel(local.toLocalDate().toString(), local.format(DateTimeFormatter.ofPattern("h:mm a")), instant.isBefore(clock.instant()))
+    CalendarLabel(local.toLocalDate().toString(), formatTimeOfDay(local.hour, local.minute, is24HourTime()), instant.isBefore(clock.instant()))
 }.getOrNull()
