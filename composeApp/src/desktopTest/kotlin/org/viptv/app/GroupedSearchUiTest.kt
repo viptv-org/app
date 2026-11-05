@@ -52,7 +52,7 @@ class GroupedSearchUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun aFilterThatExcludesEveryProviderShowsOneEmptyState() {
+    @Test fun theChannelsScopeShowsItsOwnEmptyStateWhenNoChannelMatches() {
         val movie = Card(MediaIdentity("only-title", "movie", emptyList()), provider_id = "stremio", title = "Only copy", badges = emptyList())
         val scene = ImageComposeScene(1440, 1100, Density(1f)) {
             ViptvTheme {
@@ -66,7 +66,8 @@ class GroupedSearchUiTest {
         try {
             frames(scene, 0)
             val texts = nodes(scene).map(::text)
-            assertEquals(1, texts.count { it == "No matching titles" })
+            assertEquals(1, texts.count { it == "No channels match your search." })
+            assertFalse(texts.any { it == "No matching titles" })
             assertFalse(texts.any { it.contains("No matches") })
             assertFalse(texts.any { it == "First provider" })
             assertFalse(texts.any { it == "Only copy" })

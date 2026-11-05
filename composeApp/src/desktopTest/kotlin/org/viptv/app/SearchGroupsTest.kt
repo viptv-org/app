@@ -58,6 +58,19 @@ class SearchGroupsTest {
         assertEquals("No matching titles", searchNoResultsCopy(rows))
     }
 
+    @Test fun theChannelsScopeHasItsOwnEmptyStateCopy() {
+        val rows = listOf(SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1", "channel"))))
+        assertEquals("No matching titles", searchNoResultsCopy(rows))
+        assertEquals("No channels match your search.", searchNoResultsCopy(rows, setOf("Channels")))
+        assertEquals("No matching titles", searchNoResultsCopy(rows, setOf("Movies")))
+        assertEquals("No matching titles", searchNoResultsCopy(rows, setOf("Movies", "Channels")))
+    }
+
+    @Test fun aFailedProviderStillReadsAsAFailureInTheChannelsScope() {
+        val rows = listOf(SearchResultRow("channels", "Channel provider", "stremio", state = "Failed"))
+        assertEquals("This search provider could not respond. Try again.", searchNoResultsCopy(rows, setOf("Channels")))
+    }
+
     @Test fun aFilterKeepsOnlyTheProvidersItMatches() {
         val rows = listOf(SearchResultRow("movies", "Movie provider", "stremio", cards = listOf(card("stremio", "movie"))),
             SearchResultRow("channels", "Channel provider", "stremio", cards = listOf(card("stremio", "channel"))))

@@ -98,7 +98,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows), Modifier.padding(horizontal = gutter), color = Palette.secondary)
+        if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows, filters), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         val footer: (@Composable (Modifier) -> Unit)? = when {
             !busy && error != null && hasResults -> { { ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
