@@ -362,7 +362,7 @@ private class CardMenuPosition(private val at: IntOffset) : PopupPositionProvide
 }
 
 @Composable
-private fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null,
+internal fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null,
     onPlay: () -> Unit, onSave: () -> Unit, onInfo: () -> Unit, onHoverChanged: (Boolean) -> Unit) {
     val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
@@ -395,16 +395,18 @@ private fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null,
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val previewPlay = remember { MutableInteractionSource() }
                 var previewPlayFocused by remember { mutableStateOf(false) }
+                val playLabel = if (card.progress != null) "Resume" else "Play"
                 Row(Modifier.height(36.dp).pressScale(previewPlay, Motion.button)
                     .onFocusChanged { previewPlayFocused = it.isFocused }
                     .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
                     .clip(CircleShape).background(hoverFill(previewPlay, Palette.text, Color.White))
-                    .pointerClickable(interactionSource = previewPlay, indication = null,
-                        onClickLabel = if (card.progress != null) "Resume" else "Play", onClick = onPlay, shape = CircleShape, hover = null)
+                    .pointerClickable(interactionSource = previewPlay, indication = null, role = Role.Button,
+                        onClickLabel = playLabel, onClick = onPlay, shape = CircleShape, hover = null)
+                    .semantics { contentDescription = playLabel }
                     .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(12.dp), tint = Palette.background)
-                    Text(if (card.progress != null) "Resume" else "Play", color = Palette.background,
+                    Text(playLabel, color = Palette.background,
                         fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 val saving = LocalPendingMutation.current.isPending(saveTarget(card))
@@ -435,7 +437,8 @@ private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable 
         .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
         .background(hoverFill(interaction, Color.Transparent, Color.White.copy(alpha = .18f)), CircleShape)
         .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
-        .pointerClickable(interactionSource = interaction, indication = null,
-            onClickLabel = label, onClick = action, shape = CircleShape, hover = null),
+        .pointerClickable(interactionSource = interaction, indication = null, role = Role.Button,
+            onClickLabel = label, onClick = action, shape = CircleShape, hover = null)
+        .semantics { contentDescription = label },
         contentAlignment = Alignment.Center) { glyph() }
 }

@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -99,12 +102,14 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 verticalAlignment = Alignment.CenterVertically) {
                 val mutations = LocalPendingMutation.current
                 val target = saveTarget(card)
-                Column(Modifier.width(76.dp).pointerClickable { save(card) }, horizontalAlignment = Alignment.CenterHorizontally,
+                val saveLabel = if (saved) "Remove from My List" else "Add to My List"
+                Column(Modifier.width(76.dp)
+                    .pointerClickable(role = Role.Button) { save(card) }
+                    .semantics { contentDescription = saveLabel }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
                         if (mutations.isPending(target)) MutationSpinner(22.dp)
-                        else Icon(if (saved) Lucide.Check else Lucide.Plus,
-                            if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
+                        else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
                     }
                     Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
