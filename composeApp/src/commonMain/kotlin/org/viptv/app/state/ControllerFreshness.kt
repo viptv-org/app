@@ -62,6 +62,7 @@ private val POLLED_SCREENS = setOf(Screen.Home, Screen.ContinueWatching)
 internal fun ApplicationController.freshnessTick() {
     val state = mutable.value
     if (!freshness.active() || state.screen !in POLLED_SCREENS || state.home == null || state.selectedProfile == null) return
+    if (!backend.retryDue()) return
     if (freshness.homeStale() && freshness.idle()) requestQuiet(QuietWork.Refresh)
     else if (freshness.checkDue(polling = true)) requestQuiet(QuietWork.Check)
 }
@@ -106,6 +107,7 @@ private suspend fun ApplicationController.quietly(owner: QuietOwner, work: suspe
     try { work() }
     catch (error: CancellationException) { throw error }
     catch (error: Exception) {
+        if (error is RemoteFailure) backend.failed()
         if (error is RemoteFailure && error.sessionExpired && current(owner)) expireSession(owner.remote, owner.local)
     }
 }

@@ -21,6 +21,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val localFactory: (String) -> LocalConnection = ::localConnection,
     internal val remoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store -> RemoteConnection(origin, sessionStore = store) },
     internal val freshness: Freshness = Freshness(),
+    internal val backend: BackendHealth = BackendHealth(freshness.time),
     internal val bestMatchNoticeMillis: Long = 2_000L,
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
@@ -29,7 +30,11 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
     internal var connection: RemoteConnection? = null
-        set(value) { field = value; value?.onClientUpdateRequired = { updateState { it.copy(updateRequired = true) } } }
+        set(value) {
+            field = value
+            value?.onClientUpdateRequired = { updateState { it.copy(updateRequired = true) } }
+            value?.onBackendReachability = ::backendOutcome
+        }
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null

@@ -8,7 +8,7 @@ import kotlin.time.TimeSource
 
 typealias Revisions = Map<String, String>
 
-class Freshness(private val time: TimeSource = TimeSource.Monotonic, private val idleAfter: Duration = IDLE) {
+class Freshness(internal val time: TimeSource = TimeSource.Monotonic, private val idleAfter: Duration = IDLE) {
     private var foreground = true
     private var supported = true
     private var requested: TimeMark? = null
