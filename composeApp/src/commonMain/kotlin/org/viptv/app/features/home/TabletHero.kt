@@ -18,6 +18,7 @@ import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HomeFilters
+import org.viptv.app.components.LocalHeaderPills
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -43,7 +44,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = 0.85f),
                 0.45f to Palette.background.copy(alpha = 0.4f), 0.7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to Palette.background)))
-            Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 40.dp)) {
+            if (!LocalHeaderPills.current) Box(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 40.dp)) {
                 HomeFilters(Screen.Home, navigate)
             }
             Column(Modifier.fillMaxHeight().padding(start = 32.dp, end = 32.dp, bottom = 40.dp).widthIn(max = 520.dp),
