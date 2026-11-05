@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsStagedRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val identity = MediaIdentity("tt1856010", "series", listOf(ExternalId("imdb", "tt1856010")))
     private val series = Card(identity, provider_id = "addon:21", title = "Gabby & Friends", badges = emptyList())
@@ -75,19 +76,20 @@ class DetailsStagedRenderTest {
                 DetailsScreen(detail, busy, error = null, back = {}, sources = {}, television = television, sourcePreview = sourcePreview)
             }
         } }
-        fun render(frames: Int = 8) = repeat(frames) { scene.render(frame++ * 16_666_667L).close() }
         fun renderUntil(maxFrames: Int = 60, condition: () -> Boolean) {
             repeat(maxFrames) {
                 scene.render(frame++ * 16_666_667L).close()
                 if (condition()) return
             }
+            fail("the scene did not reach the expected content within $maxFrames frames")
         }
         override fun close() = scene.close()
     }
 
     @Test fun phoneSlotsOnlyFillAndImprove() {
         Details(false).use { page ->
-            page.render()
+            page.renderUntil { page.scene.hasText("Gabby & Friends") && page.scene.shows(metaLine) &&
+                page.scene.shows(shortDescription) && page.scene.loadingSkeleton() }
             assertTrue(page.scene.hasText("Gabby & Friends"), "the shell draws the title")
             assertTrue(page.scene.shows(metaLine), "the shell shows the card's full metadata line")
             assertTrue(page.scene.shows(shortDescription), "the shell shows the card's short description")
@@ -114,7 +116,7 @@ class DetailsStagedRenderTest {
 
     @Test fun tvSlotsOnlyFillAndImprove() {
         Details(true).use { page ->
-            page.render()
+            page.renderUntil { page.scene.hasText("Gabby & Friends") }
             assertTrue(page.scene.hasText("Gabby & Friends"), "the TV shell draws the title")
 
             Snapshot.withMutableSnapshot {
