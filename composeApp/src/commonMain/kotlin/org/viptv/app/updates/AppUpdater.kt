@@ -75,6 +75,9 @@ class AppUpdater(
     // Held for the session write: a return to the app must not hide the Updating screen mid-install.
     private var installing: Job? = null
     private var notice: Job? = null
+    private var checkGeneration = 0
+    private var knownUrl: String? = null
+    private var urlKnown = false
 
     private var status: UpdateStatus
         get() = mutable.value.status
@@ -181,8 +184,21 @@ class AppUpdater(
     }
 
     private fun maybeCheck(manual: Boolean) {
-        if (check?.isActive == true) return
         val url = feedUrl()
+        if (!urlKnown) {
+            urlKnown = true
+            knownUrl = url
+        } else if (url != knownUrl) {
+            knownUrl = url
+            checkGeneration++
+            check?.cancel(); check = null
+            cancelDownload()
+            awaitingPermission = false
+            platform.deleteDownloads(keep = null)
+            platform.lastCheckMillis = null
+            mutable.update { it.copy(status = UpdateStatus.Unchecked, lastCheckMillis = null, required = false, snoozed = emptySet()) }
+        }
+        if (check?.isActive == true) return
         if (url == null) {
             if (!status.holdsDownload()) status = UpdateStatus.NoServer
             return
@@ -190,15 +206,17 @@ class AppUpdater(
         if (!updateCheckDue(mutable.value.lastCheckMillis, platform.nowMillis(), playing, manual)) return
         val previous = status
         if (!previous.holdsDownload()) status = UpdateStatus.Checking
+        val generation = ++checkGeneration
         check = scope.launch {
             val decision = try {
                 decideUpdate(parseUpdateFeed(platform.fetchFeed(url), url), platform.installedVersionCode)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                if (!previous.holdsDownload()) status = UpdateStatus.Failed(checkFailure(error))
+                if (generation == checkGeneration && !previous.holdsDownload()) status = UpdateStatus.Failed(checkFailure(error))
                 return@launch
             }
+            if (generation != checkGeneration) return@launch
             // Only a check that reached the feed starts the hourly limit.
             val checked = platform.nowMillis()
             platform.lastCheckMillis = checked
