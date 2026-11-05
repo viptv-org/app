@@ -1,6 +1,7 @@
 package org.viptv.app.features.live
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import org.viptv.app.format.clockTimeOfDay
 
 data class LiveClock(val originMillis: Long, val nowMillis: Long) {
     fun minute(atMillis: Long) = ((atMillis - originMillis) / 60_000).toInt()
@@ -8,4 +9,4 @@ data class LiveClock(val originMillis: Long, val nowMillis: Long) {
 }
 internal val LocalLiveClock = staticCompositionLocalOf<LiveClock?> { null }
 internal expect fun liveClock(): LiveClock
-internal expect fun liveTimeAt(atMillis: Long, period: Boolean): String
+internal fun liveTimeAt(atMillis: Long, period: Boolean): String = clockTimeOfDay(atMillis, period)

@@ -293,6 +293,10 @@ fun App(
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       PhoneBottomBar(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate, hidden = phoneScroll.barHidden)
                   }
+                  val unreachableSince = state.backendUnreachableSince
+                  if (unreachableSince != null && state.backendBannerShown && backendBannerScreen(state.screen)) {
+                      BackendBanner(television, phone, bottomBar, unreachableSince, controller::dismissBackendBanner)
+                  }
                 }
             }
             val remoteTv = watchOnTvState.pairedTv()
