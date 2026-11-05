@@ -65,7 +65,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
                     is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
                         error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
                     else -> {
-                        if (failure.retriesStartup()) updateState { it.copy(startupRetryable = true) }
+                        updateState { it.copy(startupRetryable = true) }
                         throw failure
                     }
                 }
@@ -76,10 +76,11 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
     }
 }
 
-// A launch can beat the device's network back: transport and server failures get a few quiet attempts before Connect shows the reason.
 private fun Exception.retriesStartup(): Boolean = when (this) {
     is RemoteFailure -> !sessionExpired && status >= 500
-    is LocalFailure, is kotlinx.serialization.SerializationException, is IllegalArgumentException -> false
+    is LocalFailure -> false
+    is kotlinx.serialization.SerializationException -> true
+    is IllegalArgumentException -> false
     else -> true
 }
 
