@@ -83,4 +83,17 @@ class LivePagingFooterTest {
             assertEquals(listOf(2, 4, 2), requested)
         } finally { remote.close() }
     }
+
+    @Test fun aNonAdvancingCursorIsAPerPageFailureThatKeepsTheList() = runBlocking {
+        val controller = ApplicationController(this, store)
+        controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "owner",
+            livePage = initial().copy(next_cursor = "0"), liveQuery = org.viptv.app.connection.LiveQuery())
+        try {
+            controller.moreLive()
+            await("failed page") { controller.state.value.livePageError != null && !controller.state.value.busy }
+            assertEquals(2, channels(controller).size)
+            assertEquals("0", cursor(controller))
+            assertNull(controller.state.value.error)
+        } finally { controller.job?.cancel() }
+    }
 }

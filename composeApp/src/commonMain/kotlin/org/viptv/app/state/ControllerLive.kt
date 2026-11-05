@@ -67,10 +67,10 @@ fun ApplicationController.filterLiveFavorites() = run {
 fun ApplicationController.moreLive() = run {
     if (mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.all { id -> mutable.value.livePage?.channels?.any { it.id == id } == true }) return@run
     val offset = mutable.value.livePage?.next_cursor?.toIntOrNull() ?: return@run
-    if (offset <= mutable.value.liveQuery.offset || offset > 10_000) throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
-    try { loadLive(mutable.value.liveQuery.copy(offset = offset), append = true) }
-    catch (e: CancellationException) { throw e }
-    catch (e: LocalFailure) { throw e }
+    try {
+        if (offset <= mutable.value.liveQuery.offset || offset > 10_000) throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
+        loadLive(mutable.value.liveQuery.copy(offset = offset), append = true)
+    } catch (e: CancellationException) { throw e }
     catch (e: Exception) {
         if (e is RemoteFailure && e.sessionExpired) throw e
         updateState { it.copy(livePageError = failureMessage(e) ?: "Could not load more.") }
