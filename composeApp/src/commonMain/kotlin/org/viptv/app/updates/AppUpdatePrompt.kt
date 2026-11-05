@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.delay
+import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusColumn
@@ -80,13 +81,26 @@ fun AppUpdatePrompt(updater: AppUpdater, television: Boolean, allowed: Boolean) 
         (feed.notes?.takeIf { it.isNotBlank() }?.let { "\n$it" } ?: "")
     val primary = if (failure != null) "Try again" else "Install"
     ViptvTheme(television) {
-        if (television) TvUpdatePrompt(title, body, primary, updater::install, updater::later)
-        else PhoneUpdateBanner(title, body, primary, updater::install, updater::later)
+        UpdateNotice(title, body, primary, "Later", updater::install, updater::later, television)
     }
 }
 
 @Composable
-private fun PhoneUpdateBanner(title: String, body: String, primary: String, act: () -> Unit, later: () -> Unit) {
+fun AppUpdateRequiredNotice(television: Boolean, update: (() -> Unit)?, dismiss: () -> Unit) {
+    UpdateNotice("Update required", ServerMessages.UPDATE_APP, update?.let { "Update" }, "Not now",
+        { update?.invoke() }, dismiss, television)
+}
+
+@Composable
+internal fun UpdateNotice(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+    dismiss: () -> Unit, television: Boolean) {
+    if (television) TvUpdateNotice(title, body, primary, later, act, dismiss)
+    else PhoneUpdateBanner(title, body, primary, later, act, dismiss)
+}
+
+@Composable
+private fun PhoneUpdateBanner(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+    dismiss: () -> Unit) {
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(16.dp).padding(bottom = 72.dp),
         contentAlignment = Alignment.BottomCenter) {
         Surface(Modifier.widthIn(max = 560.dp).fillMaxWidth().testTag("app-update-banner"), RoundedCornerShape(16.dp),
@@ -95,8 +109,8 @@ private fun PhoneUpdateBanner(title: String, body: String, primary: String, act:
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(body, color = Palette.secondary, style = MaterialTheme.typography.bodyMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(later) { Text("Later", color = Palette.secondary) }
-                    TextButton(act) { Text(primary, color = Palette.accent, fontWeight = FontWeight.SemiBold) }
+                    TextButton(dismiss) { Text(later, color = Palette.secondary) }
+                    primary?.let { label -> TextButton(act) { Text(label, color = Palette.accent, fontWeight = FontWeight.SemiBold) } }
                 }
             }
         }
@@ -104,11 +118,12 @@ private fun PhoneUpdateBanner(title: String, body: String, primary: String, act:
 }
 
 @Composable
-private fun TvUpdatePrompt(title: String, body: String, primary: String, act: () -> Unit, later: () -> Unit) {
+private fun TvUpdateNotice(title: String, body: String, primary: String?, later: String, act: () -> Unit,
+    dismiss: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val first = remember { FocusRequester() }
-        Popup(alignment = Alignment.TopEnd, onDismissRequest = later, properties = PopupProperties(focusable = true)) {
+        Popup(alignment = Alignment.TopEnd, onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
             TvFocusColumn(Modifier.padding(top = 96.dp * scale, end = 96.dp * scale)) {
                 Column(Modifier.width(760.dp * scale).clip(RoundedCornerShape(24.dp * scale)).background(Color(0xFF202023))
                     .padding(horizontal = 44.dp * scale, vertical = 40.dp * scale).testTag("app-update-prompt"),
@@ -116,11 +131,14 @@ private fun TvUpdatePrompt(title: String, body: String, primary: String, act: ()
                     Text(title, color = Palette.text, fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp, fontWeight = FontWeight.Bold)
                     Text(body, color = Palette.body, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp)
                     Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                        TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = act) {
-                            Text(primary, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                        primary?.let { label ->
+                            TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = act) {
+                                Text(label, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                            }
                         }
-                        TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale, activate = later) {
-                            Text("Later", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                        TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale,
+                            requester = if (primary == null) first else null, activate = dismiss) {
+                            Text(later, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

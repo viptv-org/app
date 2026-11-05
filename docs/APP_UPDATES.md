@@ -4,7 +4,8 @@ The Android app (phone, tablet, Android TV, Fire TV) updates itself from the
 server it is signed in to (app#64). It checks quietly, downloads a newer build
 in the background, verifies it and then shows **Update ready: Install**. One
 tap opens Android's own install confirmation; sideloaded installs cannot be
-silent. Desktop and web are out of scope.
+silent. Desktop and web have no feed and no in-app delivery: the web reloads
+the page when a server asks for a newer build.
 
 ## Versions
 
@@ -236,6 +237,25 @@ returning to the app retries the saved connection by itself. Either way it
 restores without a restart and without signing in again; an expired session
 goes straight to a sign-in and is never retried.
 
+## A server that refuses this build
+
+A server answers `409 client_update_required` when the app is too old for its
+catalog and playback APIs. That answer raises its own notice, separate from the
+feed: **Update required**, **Update VIPTV to use this server's current catalog
+and playback APIs.**, **Update** · **Not now**. It appears on every screen but
+the player, sign-in included, because a stale client often cannot get past the
+sign-in screen at all.
+
+**Update** opens the in-app updater: `AppUpdater.updateNow()` installs the build
+it already downloaded, or checks the feed when it has none. A platform with no
+in-app delivery path offers **Not now** alone, and the web, which the server
+itself serves, reloads the page instead (`updates/AppUpdateReload.kt`).
+**Not now** hides the notice until the server refuses the build again.
+
+The connection layer raises it: `RemoteConnection.onClientUpdateRequired` is
+set by `ApplicationController.connection`, so a background call the caller
+swallows still raises the notice (`ApplicationState.updateRequired`).
+
 ## Testing an upgrade locally
 
 On the TV emulator, without the real server:
@@ -257,7 +277,9 @@ policy, `AppUpdater` state machine, prompt) and
 The tests (desktopTest): `AppUpdateFeedTest` (the feed), `AppUpdatePolicyTest`
 (hourly checks, retries, prompt rules), `AppUpdaterTest` (the state machine) and
 `AppUpdateUiTest` (the real composition: banner, TV card, Updating screen,
-About row). The Robolectric tests (androidHostTest): `AndroidAppUpdateTest`
-(download, verification, `PackageInstaller`) and `UpdateRelaunchReceiverTest`
+About row). `ServerUpdateRequiredTest` covers the notice a
+`client_update_required` answer raises. The Robolectric tests
+(androidHostTest): `AndroidAppUpdateTest` (download, verification,
+`PackageInstaller`) and `UpdateRelaunchReceiverTest`
 (reopening the app on `MY_PACKAGE_REPLACED`). The desktop tests drive
 `FakeUpdatePlatform` (desktopTest), their shared fake platform.

@@ -42,7 +42,9 @@ data class Bootstrap(val profiles: List<Profile>, val selected: String?, val hom
 class RemoteFailure(val status: Int, message: String, val code: String? = null, val body: String? = null,
     val sessionExpired: Boolean = false) : Exception(message)
 internal val RemoteFailure.metadataNotFound: Boolean get() = status == 404 && code == "metadata_not_found"
-internal val RemoteFailure.updateRequired: Boolean get() = status == 409 && code == "client_update_required"
+internal val RemoteFailure.updateRequired: Boolean get() = isClientUpdateRequired(status, code)
+
+internal fun isClientUpdateRequired(status: Int, code: String?): Boolean = status == 409 && code == "client_update_required"
 
 // Only the credential refresh says the session is gone: any other 401 is a failed request the viewer can retry.
 internal fun sessionExpired() = RemoteFailure(401, "Sign in to continue.", sessionExpired = true)
@@ -103,6 +105,8 @@ open class RemoteConnection(
         private set
     internal var requiredAudioIndexSupported = false
         private set
+    // Set by the controller: a server that rejects this build's API version has no usable answer to show instead.
+    internal var onClientUpdateRequired: (() -> Unit)? = null
 
     internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(
         send = { path, body -> send(path, HttpMethod.Post, body, null, null) },
@@ -395,13 +399,15 @@ open class RemoteConnection(
             catch (_: Exception) { null }
         }
         val code = errorCode(text)
+        val clientUpdateRequired = isClientUpdateRequired(status, code)
+        if (clientUpdateRequired) onClientUpdateRequired?.invoke()
         throw RemoteFailure(status, when {
             status == 404 && code == "metadata_not_found" -> "This title is no longer available."
             status == 404 && code == "title_needs_search" -> "Search for this title to open it."
             status == 401 -> "Sign in to continue."
             status == 403 -> "This action is not available for this profile."
             status == 429 -> tooManyRequestsMessage(response, code)
-            status == 409 && code == "client_update_required" -> ServerMessages.UPDATE_APP
+            clientUpdateRequired -> ServerMessages.UPDATE_APP
             else -> ServerMessages.human(serverError(text), "The server could not complete this request.")
         }, code, text)
     }
