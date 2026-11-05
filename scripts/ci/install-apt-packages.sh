@@ -6,9 +6,14 @@ mkdir -p "$cache_dir"
 
 for attempt in 1 2; do
   echo "apt install attempt ${attempt} of 2"
-  if timeout 150 sudo apt-get -o Acquire::Retries=3 update \
-     && timeout 150 sudo apt-get -o Acquire::Retries=3 \
-        -o "Dir::Cache::archives=${cache_dir}" install -y "$@"; then
+  if timeout 300 bash -c '
+    set -euo pipefail
+    cache_dir=$1
+    shift
+    sudo apt-get -o Acquire::Retries=3 update \
+      && sudo apt-get -o Acquire::Retries=3 \
+           -o "Dir::Cache::archives=${cache_dir}" install -y --no-install-recommends "$@"
+  ' _ "$cache_dir" "$@"; then
     exit 0
   fi
 done
