@@ -107,6 +107,8 @@ open class RemoteConnection(
         private set
     // Raised from checkStatus, not a call site: a background call that swallows the failure must still say so.
     internal var onClientUpdateRequired: (() -> Unit)? = null
+    // Every API response means the backend answered, whatever it answered; a request that never got one means it is unreachable.
+    internal var onBackendReachability: ((Boolean) -> Unit)? = null
 
     internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(
         send = { path, body -> send(path, HttpMethod.Post, body, null, null) },
@@ -366,16 +368,21 @@ open class RemoteConnection(
 
     private suspend fun send(path: String, method: HttpMethod, body: JsonElement?, access: String?, csrfValue: String?,
         timeoutMillis: Long? = null): HttpResponse {
-        return client.request(origin + path) {
-            this.method = method
-            contentType(ContentType.Application.Json)
-            header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
-            if (!browser) header(HttpHeaders.Origin, origin)
-            access?.let { bearerAuth(it) }
-            csrfValue?.let { header("x-csrf-token", it) }
-            body?.let { setBody(it.toString()) }
-            timeoutMillis?.let { limit -> timeout { requestTimeoutMillis = limit; socketTimeoutMillis = limit } }
-        }
+        val response = try {
+            client.request(origin + path) {
+                this.method = method
+                contentType(ContentType.Application.Json)
+                header("x-viptv-image-delivery", if (browser) "proxy" else "direct")
+                if (!browser) header(HttpHeaders.Origin, origin)
+                access?.let { bearerAuth(it) }
+                csrfValue?.let { header("x-csrf-token", it) }
+                body?.let { setBody(it.toString()) }
+                timeoutMillis?.let { limit -> timeout { requestTimeoutMillis = limit; socketTimeoutMillis = limit } }
+            }
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) { onBackendReachability?.invoke(false); throw error }
+        onBackendReachability?.invoke(true)
+        return response
     }
 
     private suspend fun requestJson(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement =
