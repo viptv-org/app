@@ -22,6 +22,7 @@ import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HomeFilters
 import org.viptv.app.components.LocalHeaderPills
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.format.providerText
 import org.viptv.app.components.TabletMinSide
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -76,7 +77,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
                         else Text(shown.title, fontSize = if (short) 26.sp else 32.sp, lineHeight = if (short) 30.sp else 38.sp, fontWeight = FontWeight.Bold)
                         MediaMetadata(shown)
-                        shown.description?.let { ClampedText(it, fontSize = if (short) 15.sp else 16.sp, lineHeight = if (short) 21.sp else 23.sp,
+                        shown.description.providerText()?.let { ClampedText(it, fontSize = if (short) 15.sp else 16.sp, lineHeight = if (short) 21.sp else 23.sp,
                             color = Palette.body, maxLines = if (short) 1 else 2) }
                         Row(Modifier.padding(top = if (short) 2.dp else 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),

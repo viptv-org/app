@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.TvMediaMetadata
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -28,7 +29,7 @@ internal fun TvBrowseSummary(card: Card, scale: Float) {
         Box(Modifier.offset(96.dp * scale, 240.dp * scale)) {
             TvMediaMetadata(card, scale)
         }
-        card.description?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(700.dp * scale), color = Palette.body,
+        card.description.providerText()?.let { Text(it, Modifier.offset(96.dp * scale, 290.dp * scale).width(700.dp * scale), color = Palette.body,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
     }
 }

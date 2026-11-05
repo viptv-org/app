@@ -34,7 +34,7 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
-import org.viptv.app.format.providerPlainText
+import org.viptv.app.format.providerText
 
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
@@ -73,7 +73,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                     Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
                                 }
                                 MediaMetadata(card, kindFirst = true)
-                                card.description?.let { Text(providerPlainText(it), fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
                                 Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))

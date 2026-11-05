@@ -26,6 +26,7 @@ import org.viptv.app.components.isGoneArtwork
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
+import org.viptv.app.format.providerText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -63,7 +64,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             Text(episode.title, fontSize = if (browser) 15.sp else 16.sp, fontWeight = FontWeight.Bold, maxLines = 2,
                 color = if (comingUp) Palette.secondary else Color.Unspecified, overflow = TextOverflow.Ellipsis)
             if (browser && watched) EpisodeWatchedPill(television = false)
-            episode.description?.let { Text(it, color = Palette.secondary, fontSize = if (browser) 13.sp else 14.sp,
+            episode.description.providerText()?.let { Text(it, color = Palette.secondary, fontSize = if (browser) 13.sp else 14.sp,
                 lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             if (showAirDate) EpisodeAirDateLine(episode, comingUp)
         }

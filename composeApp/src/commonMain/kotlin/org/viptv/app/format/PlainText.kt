@@ -15,6 +15,9 @@ private val NamedEntities = mapOf(
     "copy" to "\u00A9", "reg" to "\u00AE", "trade" to "\u2122",
 )
 
+// Decoding is one-way for escaped markup (`&amp;amp;` becomes `&`), so every value passes through once.
+internal fun String?.providerText(): String? = this?.let(::providerPlainText)?.takeIf { it.isNotEmpty() }
+
 internal fun providerPlainText(raw: String): String {
     val lined = ParagraphTag.replace(BreakTag.replace(raw.replace("\r\n", "\n"), "\n"), "\n\n")
     val text = AnyTag.replace(lined, "")
