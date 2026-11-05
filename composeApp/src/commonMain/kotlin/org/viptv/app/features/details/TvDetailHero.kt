@@ -41,32 +41,36 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
     val series = card.identity.kind == "series"
     val pending = (extras.resume ?: card).isPlayPending()
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
-    Box(Modifier.fillMaxWidth().height(816.dp * scale).clipToBounds().onPreviewKeyEvent {
+    Column(Modifier.fillMaxWidth().heightIn(min = 816.dp * scale).clipToBounds().padding(start = 96.dp * scale).onPreviewKeyEvent {
         if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown && downAction != null) {
             downAction(); true
         } else false
     }) {
-        TitleLogo(card.logo, card.title,
-            Modifier.offset(96.dp * scale, (if (series) 250 else 220).dp * scale)
-                .size(800.dp * scale, (if (series) 134 else 190).dp * scale),
-            contentAlignment = Alignment.BottomStart,
-            logoModifier = Modifier.width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale),
-            logoAlignment = Alignment.BottomStart) {
-            Text(card.title, fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp,
-                fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height((if (series) 250 else 220).dp * scale))
+        Box(Modifier.width(800.dp * scale).heightIn(min = (if (series) 134 else 190).dp * scale), contentAlignment = Alignment.BottomStart) {
+            TitleLogo(card.logo, card.title,
+                Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.BottomStart,
+                logoModifier = Modifier.width((if (series) 460 else 260).dp * scale).height((if (series) 134 else 190).dp * scale),
+                logoAlignment = Alignment.BottomStart) {
+                Text(card.title, fontSize = (52 * scale).sp, lineHeight = (60 * scale).sp,
+                    fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
         }
-        Box(Modifier.offset(96.dp * scale, (if (series) 410 else 432).dp * scale).width(1100.dp * scale)) {
-            TvDetailMetadata(card, scale)
+        Spacer(Modifier.height((if (series) 26 else 22).dp * scale))
+        TvDetailMetadata(card, scale)
+        Spacer(Modifier.height(20.dp * scale))
+        Box(Modifier.width(800.dp * scale).heightIn(min = 113.dp * scale)) {
+            card.description.providerText()?.let { Text(it,
+                fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body,
+                maxLines = 3, overflow = TextOverflow.Ellipsis) }
         }
-        card.description.providerText()?.let { Text(it,
-            Modifier.offset(96.dp * scale, (if (series) 460 else 482).dp * scale).width(800.dp * scale),
-            fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body,
-            maxLines = 3, overflow = TextOverflow.Ellipsis) }
-        extras.cast?.let { Text("Starring $it", Modifier.offset(96.dp * scale, 586.dp * scale).width(800.dp * scale),
+        Spacer(Modifier.height(13.dp * scale))
+        extras.cast?.let { Text("Starring $it", Modifier.width(800.dp * scale),
             color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
-        Row(Modifier.offset(96.dp * scale, (if (series) 648 else 668).dp * scale),
-            horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-            TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).height(72.dp * scale)
+        Spacer(Modifier.height(32.dp * scale))
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+            TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).heightIn(min = 72.dp * scale)
                 .then(if (hold != null) Modifier.tvHold(onHold = hold) else Modifier)
                 .focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel },
                 scale = scale, primary = true, ring = false, requester = first, activate = play,

@@ -63,7 +63,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
         Row(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(84.dp * scale)) {
             Column(Modifier.width(520.dp * scale)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                    Row(Modifier.weight(1f).height(72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
+                    Row(Modifier.weight(1f).heightIn(min = 72.dp * scale).background(Palette.raised, RoundedCornerShape(12.dp * scale)).padding(horizontal = 20.dp * scale),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                         Icon(Lucide.Search, null, Modifier.size(28.dp * scale))
                         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
@@ -80,7 +80,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 Spacer(Modifier.height(68.dp * scale))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
                     suggestions.forEach { suggestion ->
-                        TvAction(Modifier.fillMaxWidth().height(52.dp * scale), scale, activate = { query(suggestion) },
+                        TvAction(Modifier.fillMaxWidth().heightIn(min = 52.dp * scale), scale, activate = { query(suggestion) },
                             background = Color.Transparent, arrangement = Arrangement.Start) { tint ->
                             val color = if (tint == Palette.background) tint else Palette.body
                             Icon(Lucide.Search, null, Modifier.size(20.dp * scale), tint = color)
@@ -107,7 +107,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
                         Text(group.label,
-                            Modifier.height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
+                            Modifier.heightIn(min = 40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
                         group.message?.let { message ->
                             if (group.failed) Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
@@ -132,7 +132,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 } }
                 if (channels.isNotEmpty()) item {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-                        Text("Channels", Modifier.height(36.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
+                        Text("Channels", Modifier.heightIn(min = 36.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
 
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
@@ -165,6 +165,6 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
 
 @Composable
 private fun TvSearchRetry(retry: () -> Unit, scale: Float) {
-    TvAction(Modifier.height(52.dp * scale).width(200.dp * scale), scale, primary = true,
+    TvAction(Modifier.heightIn(min = 52.dp * scale).width(200.dp * scale), scale, primary = true,
         activate = retry) { tint -> Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold) }
 }

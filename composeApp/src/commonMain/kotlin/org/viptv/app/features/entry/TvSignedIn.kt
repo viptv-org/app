@@ -27,20 +27,25 @@ internal fun TvSignedIn(identity: TvSignedInIdentity, complete: (() -> Unit)? = 
     LaunchedEffect(identity.sessionId) { progress.animateTo(1f, tween(2500, easing = LinearEasing)); currentComplete?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        TvGreetingPart(Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale), identity.sessionId, 0, scale) {
+        Column(Modifier.align(Alignment.TopCenter).padding(top = 300.dp * scale), horizontalAlignment = Alignment.CenterHorizontally) {
+        TvGreetingPart(Modifier, identity.sessionId, 0, scale) {
             ProfileAvatar(identity.avatar, 168.dp * scale, 84.dp * scale)
         }
-        TvGreetingPart(Modifier.align(Alignment.TopCenter).padding(top = 510.dp * scale), identity.sessionId, 100, scale) {
+        Spacer(Modifier.height(42.dp * scale))
+        TvGreetingPart(Modifier, identity.sessionId, 100, scale) {
             Text("Welcome back, ${identity.displayName}", fontSize = (56 * scale).sp, lineHeight = (64.4f * scale).sp,
                 letterSpacing = (-1.12f * scale).sp, fontWeight = FontWeight.Bold)
         }
-        TvGreetingPart(Modifier.align(Alignment.TopCenter).padding(top = 590.dp * scale), identity.sessionId, 180, scale) {
+        Spacer(Modifier.height(16.dp * scale))
+        TvGreetingPart(Modifier, identity.sessionId, 180, scale) {
             Text("Signed in as ${identity.email}", fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.secondary)
         }
-        Box(Modifier.align(Alignment.TopCenter).padding(top = 700.dp * scale).size(200.dp * scale, 4.dp * scale)
+        Spacer(Modifier.height(72.dp * scale))
+        Box(Modifier.size(200.dp * scale, 4.dp * scale)
             .clip(RoundedCornerShape(2.dp * scale)).background(Color.White.copy(alpha = .12f))) {
             Box(Modifier.fillMaxSize().graphicsLayer { scaleX = progress.value; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, .5f) }
                 .background(Palette.text))
+        }
         }
     }
 }

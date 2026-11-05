@@ -30,11 +30,13 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
     scale: Float, watch: () -> Unit, favourite: (() -> Unit)?, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
     if (phone) {
-        Box(Modifier.fillMaxWidth().height(196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
-            if (art != null) AsyncImage(art, channel.card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
-            LiveBadge(Modifier.padding(12.dp))
-            Column(Modifier.align(Alignment.BottomStart).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.fillMaxWidth().heightIn(min = 196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
+            if (art != null) AsyncImage(art, channel.card.title, Modifier.matchParentSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
+            Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
+            Column(Modifier.fillMaxWidth().heightIn(min = 196.dp)
+                .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            LiveBadge(Modifier)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = 12.sp, color = Palette.secondary)
                 (program?.title ?: channel.card.subtitle)?.let {
                     Text(it, fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -44,6 +46,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                         color = Palette.text, trackColor = Palette.raised)
                     Text("${(program.end - now).coerceAtLeast(0)} min left", fontSize = 11.sp, color = Palette.secondary)
                 }
+            }
             }
         }
     } else BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -61,7 +64,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                 it.description.providerText()?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-                Button(watch, Modifier.height(40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),
+                Button(watch, Modifier.heightIn(min = 40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }

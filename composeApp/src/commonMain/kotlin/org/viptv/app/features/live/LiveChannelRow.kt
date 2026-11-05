@@ -15,7 +15,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
@@ -44,7 +44,8 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { ClampedText("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            favourite?.let { save -> IconButton(save, Modifier.size(28.dp), enabled = !channel.favoritePending) { Icon(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", Modifier.size(18.dp), tint = if (channel.favorite) Palette.accent else Palette.secondary) } }
+            favourite?.let { save -> AccessibleIconButton(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", save,
+                enabled = !channel.favoritePending, iconSize = 18.dp, tint = if (channel.favorite) Palette.accent else Palette.secondary, wash = null) }
         }
         HorizontalDivider(color = Palette.raised)
     }

@@ -52,9 +52,14 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     val returning = remember { restore.lastKey != null }
     val anchored = restore.landing(visible.size) { visible[it].key() }
     AutomaticPage(visible.size, busy, more) { channelList.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+    var previewHeight by remember { mutableStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
         val pageHeight = maxHeight
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        // The preview grows with the system font scale, so the chips and the guide start below it instead of over it.
+        val chipsTop = maxOf(380.dp * scale, with(density) { previewHeight.toDp() } + 12.dp * scale)
+        val guideTop = maxOf(460.dp * scale, chipsTop + 80.dp * scale)
         if (chipsOnly) {
             Box(Modifier.fillMaxSize().focusProperties { onEnter = { when {
                 noChannelsRetry != null -> empty.requestFocus()
@@ -78,9 +83,10 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         // The chip row stays outside the group below: that group's onEnter lands on the guide, and any focus request into it counts as an entry, so a chip inside could never take the remote's focus.
         // onEnter also catches the restore's focus request; only a first visit sends it to the guide's first cell.
         Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (!returning) { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } } }.focusGroup()) {
-            channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } }) { watch(it) } }
-            Box(Modifier.offset(96.dp * scale, 460.dp * scale).width(1728.dp * scale)
-                .height((pageHeight - 510.dp * scale).coerceAtLeast(0.dp))) {
+            channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } },
+                onHeight = { previewHeight = it }) { watch(it) } }
+            Box(Modifier.offset(96.dp * scale, guideTop).width(1728.dp * scale)
+                .height((pageHeight - guideTop - 50.dp * scale).coerceAtLeast(0.dp))) {
                 if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
                     category = AllGroups; groupChanged?.invoke(null)
                 } else if (hasGuide) {
@@ -107,7 +113,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                 }
             }
         }
-        Box(Modifier.offset(96.dp * scale, 380.dp * scale).width(1728.dp * scale).focusGroup()) {
+        Box(Modifier.offset(96.dp * scale, chipsTop).width(1728.dp * scale).focusGroup()) {
             CompositionLocalProvider(LocalTvScale provides scale) {
                 LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
                     favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },

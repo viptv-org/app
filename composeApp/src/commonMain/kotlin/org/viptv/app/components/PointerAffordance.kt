@@ -49,16 +49,16 @@ fun Modifier.handCursor(): Modifier = pointerHoverIcon(PointerIcon.Hand)
 fun Modifier.pointerClickable(enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,
     interactionSource: MutableInteractionSource? = null, shape: Shape? = null, hover: Color? = HoverFill.wash,
     onClick: () -> Unit): Modifier =
-    if (shape == null) cursorIf(enabled).clickable(enabled, onClickLabel, role, interactionSource, onClick)
-    else cursorIf(enabled).clickable(interactionSource, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, onClickLabel, role, onClick)
+    if (shape == null) cursorIf(enabled).clickable(enabled, onClickLabel, role, interactionSource, onClick).minimumTapTarget()
+    else cursorIf(enabled).clickable(interactionSource, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, onClickLabel, role, onClick).minimumTapTarget()
 
 fun Modifier.pointerClickable(interactionSource: MutableInteractionSource?, indication: Indication?,
     enabled: Boolean = true, onClickLabel: String? = null, role: Role? = null,
     shape: Shape? = null, hover: Color? = HoverFill.wash,
     longClickLabel: String? = null, onLongClick: (() -> Unit)? = null, onClick: () -> Unit): Modifier {
     val cursor = cursorIf(enabled)
-    return if (onLongClick == null) cursor.clickable(interactionSource, shaped(indication, shape, hover), enabled, onClickLabel, role, onClick)
-    else cursor.longPressable(interactionSource, enabled, onClickLabel, role, longClickLabel, onLongClick, onClick)
+    return if (onLongClick == null) cursor.clickable(interactionSource, shaped(indication, shape, hover), enabled, onClickLabel, role, onClick).minimumTapTarget()
+    else cursor.longPressable(interactionSource, enabled, onClickLabel, role, longClickLabel, onLongClick, onClick).minimumTapTarget()
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -69,23 +69,23 @@ private fun Modifier.longPressable(interactionSource: MutableInteractionSource?,
 
 fun Modifier.pointerSelectable(selected: Boolean, enabled: Boolean = true, role: Role? = null,
     shape: Shape? = null, hover: Color? = HoverFill.wash, onClick: () -> Unit): Modifier =
-    if (shape == null) cursorIf(enabled).selectable(selected, enabled = enabled, role = role, onClick = onClick)
-    else cursorIf(enabled).selectable(selected, null, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, role, onClick)
+    if (shape == null) cursorIf(enabled).selectable(selected, enabled = enabled, role = role, onClick = onClick).minimumTapTarget()
+    else cursorIf(enabled).selectable(selected, null, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, role, onClick).minimumTapTarget()
 
 fun Modifier.pointerSelectable(selected: Boolean, interactionSource: MutableInteractionSource?, indication: Indication?,
     enabled: Boolean = true, role: Role? = null, shape: Shape? = null, hover: Color? = HoverFill.wash,
     onClick: () -> Unit): Modifier =
-    cursorIf(enabled).selectable(selected, interactionSource, shaped(indication, shape, hover), enabled, role, onClick)
+    cursorIf(enabled).selectable(selected, interactionSource, shaped(indication, shape, hover), enabled, role, onClick).minimumTapTarget()
 
 fun Modifier.pointerToggleable(value: Boolean, enabled: Boolean = true, role: Role? = null,
     shape: Shape? = null, hover: Color? = HoverFill.wash, onValueChange: (Boolean) -> Unit): Modifier =
-    if (shape == null) cursorIf(enabled).toggleable(value, enabled = enabled, role = role, onValueChange = onValueChange)
-    else cursorIf(enabled).toggleable(value, null, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, role, onValueChange)
+    if (shape == null) cursorIf(enabled).toggleable(value, enabled = enabled, role = role, onValueChange = onValueChange).minimumTapTarget()
+    else cursorIf(enabled).toggleable(value, null, ShapedHighlight(shape, hover, null, useLocalIndication = true), enabled, role, onValueChange).minimumTapTarget()
 
 fun Modifier.pointerToggleable(value: Boolean, interactionSource: MutableInteractionSource?, indication: Indication?,
     enabled: Boolean = true, role: Role? = null, shape: Shape? = null, hover: Color? = HoverFill.wash,
     onValueChange: (Boolean) -> Unit): Modifier =
-    cursorIf(enabled).toggleable(value, interactionSource, shaped(indication, shape, hover), enabled, role, onValueChange)
+    cursorIf(enabled).toggleable(value, interactionSource, shaped(indication, shape, hover), enabled, role, onValueChange).minimumTapTarget()
 
 private fun shaped(indication: Indication?, shape: Shape?, hover: Color?): Indication? =
     if (shape == null) indication else ShapedHighlight(shape, hover, indication, useLocalIndication = false)

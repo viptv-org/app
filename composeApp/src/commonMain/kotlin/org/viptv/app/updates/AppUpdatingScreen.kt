@@ -121,11 +121,11 @@ private fun TvUpdating(title: String, body: String, detail: String, fraction: Fl
                     Spacer(Modifier.height(48.dp * scale))
                     TvFocusColumn(Modifier.fillMaxWidth()) {
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale, Alignment.CenterHorizontally)) {
-                            TvAction(Modifier.width(320.dp * scale).height(80.dp * scale), scale, requester = first, activate = act) {
+                            TvAction(Modifier.width(320.dp * scale).heightIn(min = 80.dp * scale), scale, requester = first, activate = act) {
                                 Text(action, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                             }
                             later?.let { dismiss ->
-                                TvAction(Modifier.width(200.dp * scale).height(80.dp * scale), scale, activate = dismiss) {
+                                TvAction(Modifier.width(200.dp * scale).heightIn(min = 80.dp * scale), scale, activate = dismiss) {
                                     Text("Later", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                                 }
                             }

@@ -99,8 +99,8 @@ private fun DesktopMetaLine(card: Card) {
 
 @Composable
 private fun DesktopMetaChip(value: String) {
-    Box(Modifier.height(19.dp).padding(horizontal = 2.dp)) {
-        Text(value, Modifier.wrapContentSize(Alignment.Center).height(19.dp).padding(horizontal = 4.dp),
+    Box(Modifier.heightIn(min = 19.dp).padding(horizontal = 2.dp)) {
+        Text(value, Modifier.wrapContentSize(Alignment.Center).heightIn(min = 19.dp).padding(horizontal = 4.dp),
             fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.02.sp, color = Palette.body)
     }
 }
@@ -116,7 +116,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
-                Button(onClick = { play(resumeCard ?: card) }, modifier = Modifier.width(250.dp).height(44.dp),
+                Button(onClick = { play(resumeCard ?: card) }, modifier = Modifier.width(250.dp).heightIn(min = 44.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 18.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -152,7 +152,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 }
             }
         }
-        Row(Modifier.height(36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
+        Row(Modifier.heightIn(min = 36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
             .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(resumeCard ?: card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(sourceLabel ?: "Best match", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.text)

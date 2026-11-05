@@ -2,6 +2,8 @@ package org.viptv.app.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -26,7 +29,7 @@ import org.viptv.app.resources.ic_remote_zip
 @Composable
 fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
     val destinations = if (LocalAnimeAvailable.current) desktopDestinations else desktopDestinations.filter { it.screen != Screen.Anime }
-    Column(Modifier.width(72.dp).fillMaxHeight().background(Palette.background), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.width(72.dp).fillMaxHeight().verticalScroll(rememberScrollState()).background(Palette.background), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(12.dp))
         destinations.forEach { destination ->
             if (destination.screen == Screen.Library) {
@@ -37,7 +40,7 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
             val hovered by interactions.collectIsHoveredAsState()
             var focused by remember { mutableStateOf(false) }
             val fill by animateColorAsState(railFill(destination.screen == selected, hovered), responseSpec(), label = "Rail row fill")
-            Column(Modifier.width(56.dp).height(48.dp)
+            Column(Modifier.width(56.dp).heightIn(min = 48.dp)
                 .onFocusChanged { focused = it.isFocused }
                 .tvFocusOutline(focused, 10.dp, darkGap = 2.dp, width = 2.dp)
                 .background(fill, RoundedCornerShape(10.dp))
@@ -48,7 +51,7 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
                 if (destination.screen == Screen.Live) Icon(painterResource(Res.drawable.ic_remote_zip), destination.label, Modifier.size(20.dp), tint = tint)
                 else Icon(destination.icon, destination.label, Modifier.size(20.dp), tint = tint)
                 Spacer(Modifier.height(3.dp))
-                Text(destination.label, fontSize = 10.sp, lineHeight = 12.sp, color = Palette.text)
+                Text(destination.label, fontSize = 10.sp, lineHeight = 12.sp, color = Palette.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (destination.screen != Screen.Calendar) Spacer(Modifier.height(4.dp))
         }

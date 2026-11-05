@@ -38,14 +38,17 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
     val presentedSaved = isSaved(presented)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val scale = maxWidth / 1920.dp
-        Box(Modifier.fillMaxWidth().height(800.dp * scale)) {
-        org.viptv.app.components.FadeThrough(card, Modifier.width(1100.dp * scale).height(630.dp * scale), contentKey = { it.identity }) {
+        // Bottom-anchored: a larger font must grow the copy up into the artwork, not down into the shelves below the billboard.
+        Box(Modifier.fillMaxWidth().heightIn(min = 800.dp * scale)) {
+        Column(Modifier.align(Alignment.BottomStart).padding(start = 96.dp * scale, bottom = 16.dp * scale)) {
+        org.viptv.app.components.FadeThrough(card, Modifier.width(1100.dp * scale), contentKey = { it.identity }) {
             SideEffect { presented = it }
             TvHeroSummary(it, scale)
         }
-        Row(Modifier.offset(96.dp * scale, 648.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+        Spacer(Modifier.height(28.dp * scale))
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             // The hero's leading edge dead-ends Left: geometric search would otherwise reach the profile avatar in the nav.
-            TvAction(Modifier.width(220.dp * scale).height(72.dp * scale).focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel }, scale, ring = false,
+            TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale).focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel }, scale, ring = false,
                 primary = true, requester = first, activate = { play(presented) }, contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) {
                 if (presented.isPlayPending()) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = it)
                 else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), it)
@@ -61,8 +64,9 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
-        progress?.let { HeroIndicators(indicators, selected, it, Modifier.offset(96.dp * scale, 760.dp * scale), scale, animated = false) }
-
+        Spacer(Modifier.height(40.dp * scale))
+        progress?.let { HeroIndicators(indicators, selected, it, Modifier, scale, animated = false) }
+        }
         }
     }
 }

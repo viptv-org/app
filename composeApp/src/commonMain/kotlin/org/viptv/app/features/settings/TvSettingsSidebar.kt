@@ -25,8 +25,9 @@ import org.viptv.app.components.pointerClickable
 internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, requester: FocusRequester,
     content: FocusRequester, modal: Boolean = false, select: (TvSettingsSection) -> Unit) {
     Column(Modifier.width(560.dp * scale).fillMaxHeight().background(Color(0xFF161618))) {
-        Box(Modifier.fillMaxWidth().height(149.dp * scale)) {
-            Text("Settings", Modifier.offset(96.dp * scale, 93.dp * scale), fontSize = (44 * scale).sp,
+        Column(Modifier.fillMaxWidth().heightIn(min = 149.dp * scale).padding(start = 96.dp * scale, top = 93.dp * scale)
+            .padding(bottom = 3.dp * scale)) {
+            Text("Settings", fontSize = (44 * scale).sp,
                 lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
         }
         TvFocusScroll(horizontal = false) {
@@ -40,7 +41,7 @@ internal fun TvSettingsSidebar(selected: TvSettingsSection, scale: Float, reques
                     sections.forEach { section ->
                         var focused by remember { mutableStateOf(false) }
                         val highlighted = focused && !modal
-                        Row(Modifier.padding(start = 72.dp * scale, end = 48.dp * scale, bottom = 8.dp * scale).fillMaxWidth().height(72.dp * scale)
+                        Row(Modifier.padding(start = 72.dp * scale, end = 48.dp * scale, bottom = 8.dp * scale).fillMaxWidth().heightIn(min = 72.dp * scale)
                             .then(if (section == selected) Modifier.focusRequester(requester) else Modifier)
                             .focusProperties { right = content }.onFocusChanged { focused = it.isFocused }
                             .background(if (highlighted) Palette.text else if (section == selected) Color(0xFF333333) else Color.Transparent, RoundedCornerShape(12.dp * scale))

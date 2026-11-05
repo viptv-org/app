@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.requestFocusWhenPlaced
@@ -66,9 +66,7 @@ internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, sc
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(SOURCE_DETAILS_LABEL, Modifier.weight(1f).semantics { heading() },
                     fontSize = if (television) 36.sp * scale else 18.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = dismiss, modifier = Modifier.size(if (television) 44.dp * scale else 32.dp)) {
-                    Icon(Lucide.X, "Close", Modifier.size(if (television) 24.dp * scale else 18.dp))
-                }
+                AccessibleIconButton(Lucide.X, "Close", dismiss, iconSize = if (television) 24.dp * scale else 18.dp, wash = null)
             }
             Column(Modifier.heightIn(max = if (television) 420.dp * scale else 320.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 10.dp)) {

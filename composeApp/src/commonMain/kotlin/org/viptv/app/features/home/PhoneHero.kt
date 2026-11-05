@@ -50,11 +50,11 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
             HeroCopyFade(card, Modifier.fillMaxWidth().weight(1f), Alignment.BottomCenter) { shown ->
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title, Modifier.width(180.dp).height(100.dp), contentScale = ContentScale.Fit, alignment = Alignment.BottomCenter)
+                    if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title, Modifier.width(180.dp).heightIn(min = 100.dp), contentScale = ContentScale.Fit, alignment = Alignment.BottomCenter)
                     else Text(shown.title, fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
                     MediaMetadata(shown, fontSize = 13f, lineHeight = 19f)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { play(shown) }, modifier = Modifier.weight(1f).height(46.dp),
+                        Button(onClick = { play(shown) }, modifier = Modifier.weight(1f).heightIn(min = 46.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                             if (shown.isPlayPending()) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
@@ -65,7 +65,7 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                         val mutations = LocalPendingMutation.current
                         val target = saveTarget(shown)
                         val pending = mutations.isPending(target)
-                        Button(onClick = { save(shown) }, modifier = Modifier.weight(1f).height(46.dp),
+                        Button(onClick = { save(shown) }, modifier = Modifier.weight(1f).heightIn(min = 46.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                             if (pending) MutationSpinner(18.dp) else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp))

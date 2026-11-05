@@ -36,7 +36,7 @@ internal fun TvPreferencesMissing(section: TvSettingsSection, busy: Boolean, sca
 
 @Composable
 internal fun TvPreferencesRetry(busy: Boolean, scale: Float, initial: FocusRequester?, sidebar: FocusRequester, retry: (() -> Unit)?) {
-    if (retry != null) TvAction(Modifier.fillMaxWidth().height(96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
+    if (retry != null) TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
         requester = initial, enabled = !busy, keepFocus = true, activate = retry) {
         Text(if (busy) "Loading settings…" else "Retry settings", color = it,
             fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)

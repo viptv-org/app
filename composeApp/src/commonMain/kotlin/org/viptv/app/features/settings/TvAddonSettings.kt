@@ -39,6 +39,7 @@ import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.MutationKind
 import org.viptv.app.state.MutationTarget
+import org.viptv.app.components.tileGlyphSize
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.IntegrationConnection
 
@@ -71,7 +72,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
                         val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
-                        TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                        TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                             .focusProperties { left = sidebar }
                             .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
@@ -80,7 +81,8 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                             AddonLogoTile(logos[addon.id], Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
                                 .background(Color.White.copy(alpha = 0.08f)), Modifier.padding(6.dp * scale)) {
                                 Box(Modifier.fillMaxSize().background(Color(info[addon.id]?.color ?: 0xFF3D6C88)), contentAlignment = Alignment.Center) {
-                                    Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text, fontSize = (28 * scale).sp, fontWeight = FontWeight.Bold)
+                                    Text(info[addon.id]?.letter ?: addon.name.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "A", color = Palette.text,
+                                        fontSize = tileGlyphSize(28f / 60f, 60.dp * scale), fontWeight = FontWeight.Bold)
                                 }
                             }
                             Spacer(Modifier.width(20.dp * scale))
@@ -98,7 +100,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     if (addons.isNotEmpty() && shown.isEmpty()) item(key = "no-matches") {
                         Text("No add-ons match.", Modifier.padding(horizontal = 24.dp * scale), fontSize = (22 * scale).sp, color = Palette.secondary)
                     }
-                    item(key = "add") { if (manage) TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                    item(key = "add") { if (manage) TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                         .focusProperties { left = sidebar; down = FocusRequester.Cancel; if (addons.isEmpty()) up = FocusRequester.Cancel }
                         .then(if (shown.isEmpty()) Modifier.focusRequester(initial) else Modifier), scale, ring = false,
                         enabled = !busy, keepFocus = true, activate = { install() }, arrangement = Arrangement.Start,
@@ -150,7 +152,7 @@ private fun TvAddonFilterChips(modifier: Modifier, total: Int, query: String, pr
 
 @Composable
 private fun TvAddonFilterChip(label: String, icon: ImageVector?, selected: Boolean, scale: Float, requester: FocusRequester?, left: FocusRequester? = null, activate: () -> Unit) {
-    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
+    TvAction(Modifier.heightIn(min = 56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
         background = if (selected) Palette.text.copy(alpha = 0.22f) else Color(0xFF191919),
         contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = activate) { tint ->
         if (icon != null) { Icon(icon, null, Modifier.size(22.dp * scale), tint); Spacer(Modifier.width(10.dp * scale)) }
@@ -164,7 +166,7 @@ private fun TvAddonSearchPanel(query: String, queryChange: (String) -> Unit, sca
         .padding(horizontal = 24.dp * scale, vertical = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Search add-ons", Modifier.weight(1f), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-            TvAction(Modifier.height(56.dp * scale), scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = finish) { tint ->
+            TvAction(Modifier.heightIn(min = 56.dp * scale), scale, contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = finish) { tint ->
                 Text("Done", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }

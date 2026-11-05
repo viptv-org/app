@@ -127,7 +127,7 @@ private fun TvBrowseStatus(scale: Float, icon: androidx.compose.ui.graphics.vect
         Text(message, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp,
             textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 900.dp * scale))
         action?.let { (label, run) ->
-            TvAction(Modifier.height(72.dp * scale).width(320.dp * scale).then(if (!attached) Modifier.focusRequester(focus) else Modifier),
+            TvAction(Modifier.heightIn(min = 72.dp * scale).width(320.dp * scale).then(if (!attached) Modifier.focusRequester(focus) else Modifier),
                 scale, primary = true, activate = run, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                 Text(label, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
             }

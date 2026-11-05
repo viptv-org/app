@@ -15,9 +15,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.tileGlyphSize
 import org.viptv.app.connection.Profile
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.avatar_vynxc
@@ -54,7 +54,7 @@ internal fun ProfileAvatar(profile: Profile?, size: Dp, radius: Dp) {
                 Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             remote != null -> AsyncImage(remote, profile?.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             else -> Text(profile?.name?.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString().orEmpty(),
-                fontSize = if (size <= 40.dp) (size.value * 0.57f).sp else (size.value * 0.45f).sp, fontWeight = FontWeight.Bold)
+                fontSize = tileGlyphSize(if (size <= 40.dp) 0.57f else 0.45f, size), fontWeight = FontWeight.Bold)
         }
     }
 }
