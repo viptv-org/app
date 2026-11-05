@@ -138,6 +138,7 @@ fun App(
             val compact = maxWidth < 640.dp && !television
             val touch = surface == InputSurface.Touch
             val tablet = !compact && touch
+            val phone = compact || phoneShell(maxWidth, maxHeight, television, touch)
             val barFades = barsFadeContent(television, desktopChrome, browser, touch, maxWidth)
             val bottomBar = bottomBarShown(state.screen, compact, browser, desktopChrome)
             val phoneScroll = remember { PhoneScroll() }
@@ -192,10 +193,10 @@ fun App(
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable,
-                      LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll) { Column(Modifier.fillMaxSize()) {
+                      LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll, LocalHeaderPills provides phone) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
-                        if (compact) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                        if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (tablet) TabletHeader()
                     }
 

@@ -20,7 +20,9 @@ import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HomeFilters
+import org.viptv.app.components.LocalHeaderPills
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.TabletMinSide
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.Screen
@@ -40,15 +42,13 @@ internal val TabletHeroPortraitHeight = 640.dp
 
 internal val TabletHeroLandscapeHeight = 520.dp
 
-internal val TabletHeroShortViewport = 600.dp
-
 internal val TabletHeroShortMin = 240.dp
 
 internal data class TabletHeroFrame(val height: Dp, val short: Boolean)
 
 internal fun tabletHeroFrame(contentWidth: Dp, viewportHeight: Dp?): TabletHeroFrame {
     val frame = if (contentWidth < 900.dp) TabletHeroPortraitHeight else TabletHeroLandscapeHeight
-    val short = viewportHeight != null && viewportHeight < TabletHeroShortViewport
+    val short = viewportHeight != null && viewportHeight < TabletMinSide
     return TabletHeroFrame(if (short) viewportHeight!!.coerceIn(TabletHeroShortMin, frame) else frame, short)
 }
 
@@ -64,7 +64,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = 0.85f),
                 0.45f to Palette.background.copy(alpha = 0.4f), 0.7f to Color.Transparent)))
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to Palette.background)))
-            Box(Modifier.align(Alignment.TopStart).padding(start = if (short) 20.dp else 32.dp, top = if (short) 16.dp else 40.dp)) {
+            if (!LocalHeaderPills.current) Box(Modifier.align(Alignment.TopStart).padding(start = if (short) 20.dp else 32.dp, top = if (short) 16.dp else 40.dp)) {
                 HomeFilters(Screen.Home, navigate)
             }
             Column(Modifier.fillMaxHeight().padding(start = if (short) 20.dp else 32.dp, end = if (short) 20.dp else 32.dp, bottom = if (short) 16.dp else 40.dp)

@@ -18,14 +18,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.components.LocalPhoneScroll
 import org.viptv.app.components.PhoneHeader
+import org.viptv.app.components.LocalHeaderPills
 import org.viptv.app.components.PhoneScroll
+import org.viptv.app.components.TabletMinSide
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.home.TABLET_HERO_FRAME_TAG
 import org.viptv.app.features.home.TabletHeroLandscapeHeight
 import org.viptv.app.features.home.TabletHeroPortraitHeight
 import org.viptv.app.features.home.TabletHeroShortMin
-import org.viptv.app.features.home.TabletHeroShortViewport
 import org.viptv.app.features.home.tabletHeroFrame
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -54,8 +55,8 @@ class LandscapeHeroUiTest {
         for (width in listOf(411.dp, 844.dp, 914.dp)) {
             assertEquals(TabletHeroShortMin, tabletHeroFrame(width, 100.dp).height, "$width wide never goes under the floor")
         }
-        assertFalse(tabletHeroFrame(844.dp, TabletHeroShortViewport).short, "a tablet's short side is not short")
-        assertEquals(TabletHeroPortraitHeight, tabletHeroFrame(844.dp, TabletHeroShortViewport).height, "844 wide keeps its portrait frame at the short side")
+        assertFalse(tabletHeroFrame(844.dp, TabletMinSide).short, "a tablet's short side is not short")
+        assertEquals(TabletHeroPortraitHeight, tabletHeroFrame(844.dp, TabletMinSide).height, "844 wide keeps its portrait frame at the short side")
     }
 
     @Test fun thePortraitAndLandscapeTabletFramesStayAsTheyAre() {
@@ -108,7 +109,7 @@ class LandscapeHeroUiTest {
     }
 
     private fun shell(width: Int, height: Int, busy: Boolean = false, tablet: Boolean = true, withHeader: Boolean = true) = scene(width, height) {
-        CompositionLocalProvider(LocalPhoneScroll provides PhoneScroll()) {
+        CompositionLocalProvider(LocalPhoneScroll provides PhoneScroll(), LocalHeaderPills provides withHeader) {
             Column(Modifier.fillMaxSize()) {
                 if (withHeader) PhoneHeader(Screen.Home, profile) {}
                 Box(Modifier.weight(1f).testTag("page")) {
