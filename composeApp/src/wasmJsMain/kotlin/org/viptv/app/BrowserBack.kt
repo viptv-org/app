@@ -6,6 +6,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.browser.document
 import kotlinx.browser.window
+import org.viptv.app.connection.offMainRemoteFactory
 import org.viptv.app.state.ApplicationController
 import org.w3c.dom.PopStateEvent
 import org.w3c.dom.events.Event
@@ -15,7 +16,7 @@ import kotlin.random.Random
 @Composable
 internal fun BrowserApp() {
     val scope = rememberCoroutineScope()
-    val controller = remember { ApplicationController(scope) }
+    val controller = remember { ApplicationController(scope, remoteFactory = offMainRemoteFactory) }
     val back = remember(controller) { GlobalBack(controller) }
     val state by controller.state.collectAsState()
     // Escape that the focused content and any open dialog or menu let pass.

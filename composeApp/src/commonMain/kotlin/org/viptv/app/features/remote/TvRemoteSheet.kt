@@ -33,6 +33,7 @@ import coil3.compose.LocalPlatformContext
 import com.composables.icons.lucide.*
 import kotlinx.coroutines.CoroutineScope
 import org.viptv.app.components.Button
+import org.viptv.app.components.ClampedText
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.TextButton
@@ -135,10 +136,10 @@ private fun RemoteHeader(tv: VizioTv, controller: TvRemoteController, close: () 
             Icon(Lucide.Tv, "TV", Modifier.size(24.dp), tint = Palette.text)
         }
         Column(Modifier.weight(1f).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(tv.name, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Palette.text, maxLines = 1)
+            ClampedText(tv.name, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Palette.text, maxLines = 1)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!controller.online && !controller.checking) Icon(Lucide.WifiOff, null, Modifier.size(13.dp), tint = Palette.secondary)
-                Text(
+                ClampedText(
                     when {
                         controller.online -> "Connected · ${tv.origin.removePrefix("https://")}"
                         controller.checking -> tv.origin.removePrefix("https://")

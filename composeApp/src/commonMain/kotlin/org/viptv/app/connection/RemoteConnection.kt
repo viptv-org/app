@@ -13,6 +13,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,11 +59,16 @@ internal fun Throwable.searchStreamTimeout(): Throwable? {
 private val nativeSessionGate = Mutex()
 internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
 
+val offMainRemoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store ->
+    RemoteConnection(origin, sessionStore = store, workerDispatcher = Dispatchers.Default)
+}
+
 open class RemoteConnection(
     rawOrigin: String,
     private val sessionStore: RemoteSessionStore = remoteSessionStore(),
     client: HttpClient? = null,
     browserMode: Boolean = browserOrigin() != null,
+    internal open val workerDispatcher: CoroutineDispatcher? = null,
 ) {
     private val codec = Json { ignoreUnknownKeys = true }
     private val browser = browserMode
@@ -182,26 +188,28 @@ open class RemoteConnection(
 
     suspend fun bootstrap(): Bootstrap {
         val value = call("/api/bootstrap").jsonObject
-        requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
-            ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
-        val identity = value.getValue("identity").jsonObject
-        csrf = identity["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
-        val profiles = identity["profiles"]?.jsonArray.orEmpty().map {
-            val p = it.jsonObject
-            Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull,
-                p["locked"]?.jsonPrimitive?.booleanOrNull ?: false, p["avatar_id"]?.jsonPrimitive?.contentOrNull,
-                avatarStyle = p["avatar_style"]?.jsonPrimitive?.contentOrNull, avatarChoice = p["avatar_choice"]?.jsonPrimitive?.intOrNull,
-                avatarUrl = p["avatar_url"]?.jsonPrimitive?.contentOrNull)
+        return withWorker {
+            requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
+                ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
+            val identity = value.getValue("identity").jsonObject
+            csrf = identity["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+            val profiles = identity["profiles"]?.jsonArray.orEmpty().map {
+                val p = it.jsonObject
+                Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull,
+                    p["locked"]?.jsonPrimitive?.booleanOrNull ?: false, p["avatar_id"]?.jsonPrimitive?.contentOrNull,
+                    avatarStyle = p["avatar_style"]?.jsonPrimitive?.contentOrNull, avatarChoice = p["avatar_choice"]?.jsonPrimitive?.intOrNull,
+                    avatarUrl = p["avatar_url"]?.jsonPrimitive?.contentOrNull)
+            }
+            val management = value["profile_management"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<ProfileManagement>(it) }
+            Bootstrap(management?.cards() ?: profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,
+                value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) }, profileManagement = management, plugins = value["integrations"]?.let { codec.decodeFromJsonElement(it) } ?: emptyList(),
+                library = value["library"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<CatalogPage>(it).cards },
+                preferences = value["preferences"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+                libraryMembership = value["library_membership"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+                libraryImport = value["library_import"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+                continuation = value["continuation"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
+                revisions = parseRevisions(value["revisions"]))
         }
-        val management = value["profile_management"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<ProfileManagement>(it) }
-        return Bootstrap(management?.cards() ?: profiles, identity["profile_id"]?.jsonPrimitive?.contentOrNull,
-            value["home"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<HomeSnapshot>(it) }, profileManagement = management, plugins = value["integrations"]?.let { codec.decodeFromJsonElement(it) } ?: emptyList(),
-            library = value["library"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement<CatalogPage>(it).cards },
-            preferences = value["preferences"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
-            libraryMembership = value["library_membership"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
-            libraryImport = value["library_import"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
-            continuation = value["continuation"]?.takeUnless { it is JsonNull }?.let { codec.decodeFromJsonElement(it) },
-            revisions = parseRevisions(value["revisions"]))
     }
 
     suspend fun selectProfile(id: String, pin: String? = null): Bootstrap {
@@ -216,7 +224,9 @@ open class RemoteConnection(
         })
     }
 
-    suspend fun search(term: String): CatalogPage = codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
+    suspend fun search(term: String): CatalogPage = withWorker {
+        codec.decodeFromJsonElement(call("/api/discover?type=all&search=${term.encodeURLParameter()}"))
+    }
     suspend fun detail(card: Card, offset: Int = 0, limit: Int = 24): DetailSnapshot = detailRead(card, offset, limit).detail
     suspend fun detailRead(card: Card, offset: Int = 0, limit: Int = 24): DetailRead = (card.parent_identity ?: card.identity).let {
         detailRead(it.kind, it.id, offset, limit, card.provider_id, if (card.parent_identity == null) card else card.copy(identity = it, parent_identity = null))
@@ -237,7 +247,7 @@ open class RemoteConnection(
             parameters += "card=${Json.encodeToString(expected.lookupSelector()).encodeURLParameter()}"
         }
         val page = parameters.takeIf { it.isNotEmpty() }?.joinToString("&", prefix = "?") ?: ""
-        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        return withWorker {
             val value = call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page")
             DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus),
                 codec.decodeFromJsonElement<AddonFailuresBody>(value).failures)
@@ -366,10 +376,13 @@ open class RemoteConnection(
     private suspend fun requestJson(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement =
         decode(send(path, method, body, accessToken, csrf))
 
-    private suspend fun decode(response: HttpResponse): JsonElement {
+    private suspend fun <T> withWorker(block: suspend () -> T): T =
+        workerDispatcher?.let { dispatcher -> withContext(dispatcher) { block() } } ?: block()
+
+    private suspend fun decode(response: HttpResponse): JsonElement = withWorker {
         val body = response.bodyAsText()
         checkStatus(response, body)
-        return codec.parseToJsonElement(body).resolveRemoteImages(origin)
+        codec.parseToJsonElement(body).resolveRemoteImages(origin)
     }
 
     private suspend fun checkStatus(response: HttpResponse, body: String? = null) {

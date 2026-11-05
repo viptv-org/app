@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
 import org.viptv.app.state.*
 import org.viptv.app.connection.browserOrigin
+import org.viptv.app.connection.offMainRemoteFactory
 import org.viptv.app.features.entry.*
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.home.CardActions
@@ -74,7 +75,7 @@ fun App(
 ) {
     org.viptv.app.images.ConfigureImageLoading(imageDiagnostics)
     val scope = rememberCoroutineScope()
-    val controller = providedController ?: remember { ApplicationController(scope) }
+    val controller = providedController ?: remember { ApplicationController(scope, remoteFactory = offMainRemoteFactory) }
     val state by controller.state.collectAsState()
     val deviceLink by controller.deviceLink.collectAsState()
     val routes = rememberSaveableStateHolder()
