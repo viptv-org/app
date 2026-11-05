@@ -33,6 +33,7 @@ data class ApplicationState(
     val savedOverrides: Map<String, Boolean> = emptyMap(),
     val error: String? = null,
     val errorCode: String? = null,
+    val updateRequired: Boolean = false,
     val profiles: List<Profile> = emptyList(),
     val profileToOpen: String? = null,
     val profileToEdit: String? = null,

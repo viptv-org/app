@@ -169,6 +169,40 @@ class AppUpdaterTest {
         assertTrue(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
     }
 
+    @Test fun theNoticeActionRunsTheUpdater() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        val action = assertNotNull(appUpdateAction(updater))
+        action()
+        advanceUntilIdle()
+        assertEquals(listOf(1301L), platform.installs.map { it.versionCode })
+        assertNull(appUpdateAction(null), "This platform has no in-app delivery to open")
+    }
+
+    @Test fun updateNowInstallsABuildTheViewerHadPutOff() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        updater.later()
+        assertTrue(updater.state.value.snoozed.isNotEmpty())
+        updater.updateNow(); advanceUntilIdle()
+        assertEquals(listOf(1301L), platform.installs.map { it.versionCode })
+        assertTrue(updater.state.value.snoozed.isEmpty())
+    }
+
+    @Test fun updateNowChecksTheFeedWhenNothingIsOffered() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1300))
+        val updater = updater(platform)
+        updater.foreground(false); advanceUntilIdle()
+        assertEquals(UpdateStatus.UpToDate, updater.state.value.status)
+        platform.feed = feedJson(1301)
+        updater.updateNow(); advanceUntilIdle()
+        assertEquals(2, platform.fetched.size)
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertTrue(platform.installs.isEmpty(), "The prompt offers the build it just found")
+    }
+
     @Test fun installHandsTheVerifiedBuildToAndroid() = runTest {
         val platform = FakeUpdatePlatform(feedJson(1301))
         val updater = updater(platform)

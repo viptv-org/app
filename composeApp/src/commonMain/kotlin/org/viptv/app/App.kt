@@ -24,6 +24,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
 import org.viptv.app.state.*
+import org.viptv.app.updates.AppUpdateRequiredNotice
+import org.viptv.app.updates.LocalAppUpdater
+import org.viptv.app.updates.appUpdateAction
+import org.viptv.app.updates.dismissUpdateRequired
+import org.viptv.app.updates.updateRequiredNoticeAllowed
 import org.viptv.app.connection.browserOrigin
 import org.viptv.app.connection.offMainRemoteFactory
 import org.viptv.app.features.entry.*
@@ -308,6 +313,11 @@ fun App(
             }
             if (state.pendingCrashReport != null && showsCrashNotice(state.screen)) {
                 CrashReportNotice(television, controller::submitCrashReport, controller::discardCrashReport)
+            }
+            if (state.updateRequired && controller.updateRequiredNoticeAllowed()) {
+                val update = appUpdateAction(LocalAppUpdater.current)
+                AppUpdateRequiredNotice(television, update?.let { act -> { controller.dismissUpdateRequired(); act() } },
+                    controller::dismissUpdateRequired)
             }
         }
     }

@@ -29,6 +29,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
     internal var connection: RemoteConnection? = null
+        set(value) { field = value; value?.onClientUpdateRequired = { updateState { it.copy(updateRequired = true) } } }
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null

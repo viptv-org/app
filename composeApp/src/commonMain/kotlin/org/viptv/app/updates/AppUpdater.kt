@@ -118,6 +118,11 @@ class AppUpdater(
 
     fun checkNow() = maybeCheck(manual = true)
 
+    fun updateNow() {
+        mutable.update { it.copy(snoozed = emptySet()) }
+        if (status.offeredFeed != null) install() else checkNow()
+    }
+
     fun install() {
         val feed = status.offeredFeed ?: return
         mutable.update { it.copy(snoozed = it.snoozed - feed.versionCode) }
