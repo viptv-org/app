@@ -33,7 +33,7 @@ class LivePagingFooterUiTest {
     @Composable
     private fun Host(television: Boolean, busy: Boolean, more: (() -> Unit)?, pageError: String?) {
         ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-            LiveScreen(listOf(channel()), television, start = null, now = null, watch = {}, manage = {},
+            LiveScreen(listOf(channel()), television, start = null, now = null, watch = {},
                 more = more, busy = busy, pageError = pageError)
         } }
     }
