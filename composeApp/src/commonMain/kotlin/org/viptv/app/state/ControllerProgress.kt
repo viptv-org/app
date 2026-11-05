@@ -10,6 +10,7 @@ import kotlin.time.TimeSource
 internal fun ApplicationController.releaseRemotePlayback(): Job? {
     cancelNextEpisode()
     cancelPlaybackSeason()
+    cancelPlaybackStall()
     sourceChoice = SourceChoice.None
     backgroundPlayback = null
     resumeAfterRenewal = null

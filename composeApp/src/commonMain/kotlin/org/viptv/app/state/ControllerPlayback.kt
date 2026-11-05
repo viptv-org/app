@@ -8,8 +8,11 @@ import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.crash.CrashFacts
 import org.viptv.app.crash.playbackAttempt
+import org.viptv.app.features.player.PlaybackWaitingStatuses
 import kotlin.time.TimeSource
 import kotlin.time.Duration.Companion.seconds
+
+internal const val PLAYBACK_STALL_WINDOW_MILLIS = 30_000L
 
 fun ApplicationController.playSource(source: SourceCandidate) = playSource(source, forceGateway = false)
 
@@ -244,6 +247,43 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
     if (fact is PlayerFact.Tracks) noticeMissingAudio(fact.options)
     if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_UNDECODABLE, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
     if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_FAILED) }
+    watchPlaybackStall(fact)
+}
+
+// A renderer that keeps waiting on a dead socket reports a waiting status and no failure: a window without progress is the failure.
+private fun ApplicationController.watchPlaybackStall(fact: PlayerFact) {
+    // A torrent buffers while its runtime gathers pieces, on its own 120 s startup budget, and reports its own failures.
+    if (mutable.value.playingSource?.delivery == "torrent") return
+    when (fact) {
+        is PlayerFact.Status -> {
+            playbackWaiting = fact.name in PlaybackWaitingStatuses
+            if (playbackWaiting) armPlaybackStall(lastProgress?.positionMillis ?: 0L) else cancelPlaybackStall()
+        }
+        is PlayerFact.Progress -> if (playbackWaiting && mutable.value.error == null && fact.positionMillis != playbackStallPosition) armPlaybackStall(fact.positionMillis)
+        PlayerFact.Failed, PlayerFact.Undecodable -> cancelPlaybackStall()
+        else -> Unit
+    }
+}
+
+private fun ApplicationController.armPlaybackStall(positionMillis: Long) {
+    val input = mutable.value.playback ?: return cancelPlaybackStall()
+    if (playbackStall?.isActive == true && playbackStallPosition == positionMillis) return
+    playbackStallPosition = positionMillis
+    playbackStall?.cancel()
+    playbackStall = scope.launch {
+        delay(PLAYBACK_STALL_WINDOW_MILLIS)
+        playbackStall = null
+        if (mutable.value.playback !== input || mutable.value.paused) return@launch
+        if ((lastProgress?.positionMillis ?: positionMillis) != positionMillis) return@launch
+        playbackDiagnostics?.invoke("playback_stalled position_ms=$positionMillis window_ms=$PLAYBACK_STALL_WINDOW_MILLIS")
+        sourceChoice = SourceChoice.None
+        startFailed(FALLBACK_REASON_FAILED)
+    }
+}
+
+internal fun ApplicationController.cancelPlaybackStall() {
+    playbackWaiting = false
+    playbackStall?.cancel(); playbackStall = null
 }
 
 fun ApplicationController.closePlayer() {
