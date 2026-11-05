@@ -42,6 +42,12 @@ internal class PlayerFailureAction(val label: String, val icon: ImageVector?, va
 internal fun failureDescription(reason: String?, positionMillis: Long): String = reason
     ?: if (positionMillis > 0) "$ChooseAnotherSource to continue from ${playbackTime(positionMillis)}." else "$ChooseAnotherSource."
 
+internal fun retryAction(fallbackLabel: String?, activate: () -> Unit) =
+    PlayerFailureAction(fallbackLabel?.let { "Try $it" } ?: "Retry", Lucide.RefreshCw, activate)
+
+internal fun chooseSourceAction(activate: () -> Unit) =
+    PlayerFailureAction(ChooseAnotherSource, Lucide.SlidersHorizontal, activate)
+
 internal data class PlayerFailureStyle(
     val layout: PlayerFailureLayout,
     val scale: Float = 1f,
@@ -72,12 +78,7 @@ internal data class PlayerFailureStyle(
     val corner: Dp,
     val header: Boolean = false,
     val backInRow: Boolean = true,
-) {
-    fun retryAction(fallbackLabel: String?, activate: () -> Unit) =
-        PlayerFailureAction(fallbackLabel?.let { "Try $it" } ?: "Retry", Lucide.RefreshCw, activate)
-
-    fun chooseAction(activate: () -> Unit) = PlayerFailureAction(ChooseAnotherSource, Lucide.SlidersHorizontal, activate)
-}
+)
 
 internal val PhoneFailureStyle = PlayerFailureStyle(PlayerFailureLayout.Phone, scrim = .8f, icon = 32.dp,
     titleSize = 22.sp, titleLine = 28.sp, textSize = 13.sp, textLine = 19.sp, textLines = 3,
