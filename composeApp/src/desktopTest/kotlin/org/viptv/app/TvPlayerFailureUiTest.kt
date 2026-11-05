@@ -34,7 +34,7 @@ class TvPlayerFailureUiTest {
             }
         } }
         try {
-            frames(scene)
+            scene.renderUntil { val texts = nodes(scene).map(::text); "This source stopped working" in texts && "This source could not play. Choose another source." in texts }
             val texts = nodes(scene).map(::text)
             assertTrue("This source stopped working" in texts)
             assertTrue("This source could not play. Choose another source." in texts)
@@ -44,7 +44,6 @@ class TvPlayerFailureUiTest {
         } finally { scene.close() }
     }
 
-    private fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(it * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

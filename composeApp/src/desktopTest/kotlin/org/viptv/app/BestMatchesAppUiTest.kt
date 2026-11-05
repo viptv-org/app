@@ -15,6 +15,7 @@ import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
+import kotlin.time.Duration.Companion.seconds
 import org.viptv.app.connection.*
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.state.*
@@ -67,8 +68,7 @@ class BestMatchesAppUiTest {
         fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun until(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
         }
         fun headings() = nodes().filter { it.config.contains(SemanticsProperties.Heading) }.map(::text)
         fun save(variant: String) {
@@ -78,8 +78,11 @@ class BestMatchesAppUiTest {
         }
         try {
             controller.chooseSource(PreviewData.detail.item)
-            until("the first ranked rows") { controller.state.value.sources.size == FIRST.size }
-            until("the Best matches header") { "BEST MATCHES" in headings() }
+            until("the first batch ranked into its groups") {
+                controller.state.value.sources.size == FIRST.size &&
+                    controller.state.value.sourceGroups.bestMatches == listOf("b1080", "a720") &&
+                    headings() == listOf("BEST MATCHES", "ALL SOURCES")
+            }
             assertTrue(controller.state.value.findingSources)
             assertEquals(listOf("BEST MATCHES", "ALL SOURCES"), headings(), "The camera row sits under All sources")
             assertEquals(listOf("b1080", "a720"), controller.state.value.sourceGroups.bestMatches)
