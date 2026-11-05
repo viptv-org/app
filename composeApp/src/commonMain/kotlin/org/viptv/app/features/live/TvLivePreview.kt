@@ -14,6 +14,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,8 +26,10 @@ import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.pointerClickable
 
 @Composable
-internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null, watch: () -> Unit) {
-    Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null,
+    onHeight: (Int) -> Unit = {}, watch: () -> Unit) {
+    Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
+        verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
             Text("LIVE", Modifier.background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
                 color = Color.White, fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp,
@@ -49,7 +52,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
                 color = Palette.body, maxLines = 2) }
         }
     }
-    if (favorite != null) TvAction(Modifier.offset(96.dp * scale, 306.dp * scale).height(52.dp * scale), scale,
+    if (favorite != null) TvAction(Modifier.offset(96.dp * scale, 306.dp * scale).heightIn(min = 52.dp * scale), scale,
         activate = favorite, enabled = !channel.favoritePending, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
         Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
         Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp)

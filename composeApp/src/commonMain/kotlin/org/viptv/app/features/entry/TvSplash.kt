@@ -28,7 +28,7 @@ internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
     LaunchedEffect(Unit) { opacity.animateTo(1f, tween(600, easing = CubicBezierEasing(0f, 0f, .58f, 1f))) }
     BoxWithConstraints(Modifier.fillMaxSize().semantics { contentDescription = "Starting VIPTV" }) {
         val scale = maxWidth / 1920.dp
-        Box(Modifier.align(Alignment.TopCenter).padding(top = 440.dp * scale).height(104.dp * scale).graphicsLayer { alpha = opacity.value }) {
+        Box(Modifier.align(Alignment.TopCenter).padding(top = 440.dp * scale).heightIn(min = 104.dp * scale).graphicsLayer { alpha = opacity.value }) {
             Brand(88.dp * scale, (104 * scale).sp, 22.dp * scale, (-4.16f * scale).sp, (104 * scale).sp)
         }
         TvStartupProgress(scale, Modifier.align(Alignment.TopCenter).padding(top = 600.dp * scale))
@@ -39,7 +39,7 @@ internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
             Text("Getting VIPTV ready…", Modifier.align(Alignment.TopCenter).padding(top = 664.dp * scale),
                 color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp)
             TvAction(Modifier.align(Alignment.TopCenter).padding(top = 736.dp * scale)
-                .width(360.dp * scale).height(72.dp * scale).onGloballyPositioned { placed = true },
+                .width(360.dp * scale).heightIn(min = 72.dp * scale).onGloballyPositioned { placed = true },
                 scale, requester = first, activate = changeConnection) {
                 Text("Change connection", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }

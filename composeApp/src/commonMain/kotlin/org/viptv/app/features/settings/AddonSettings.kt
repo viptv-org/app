@@ -70,7 +70,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
             end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             item {
-                if (compact) Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
+                if (compact) Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) {
                     back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
                     Text("Add-ons", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -84,7 +84,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
             sessionNotice?.let { item { Text(it, color = Palette.danger) } }
             if (!managementAvailable) item { Text("Add-on management is not available on this connection.", color = Palette.secondary) }
             if (compact && managementAvailable) item {
-                Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(50.dp),
+                Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                     shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(Lucide.Plus, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Add an add-on", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }

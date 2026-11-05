@@ -48,7 +48,7 @@ internal fun TvSettingsAccount(local: Boolean, info: TvAccountInfo?, scale: Floa
         if (error != null) Text(error, Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp, color = Palette.danger)
         if (!local && retry != null && (missing || error != null)) {
-            TvAction(Modifier.fillMaxWidth().height(96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
+            TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale).focusProperties { left = sidebar }, scale, ring = false,
                 requester = if (retryFirst) initial else null, enabled = !busy, keepFocus = true, activate = retry) {
                 Text(if (busy) "Loading account…" else "Retry account",
                     fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold, color = it)

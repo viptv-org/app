@@ -29,7 +29,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
     scale: Float, watch: () -> Unit, favourite: (() -> Unit)?, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
     if (phone) {
-        Box(Modifier.fillMaxWidth().height(196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
+        Box(Modifier.fillMaxWidth().heightIn(min = 196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
             if (art != null) AsyncImage(art, channel.card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
             LiveBadge(Modifier.padding(12.dp))
@@ -60,7 +60,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                 it.description?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-                Button(watch, Modifier.height(40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),
+                Button(watch, Modifier.heightIn(min = 40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }

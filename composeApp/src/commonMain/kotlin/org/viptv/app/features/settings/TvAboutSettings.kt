@@ -96,7 +96,7 @@ private fun TvAboutPanelContent(panel: TvAboutPanel, local: Boolean, address: St
                 val open = openDashboard
                 if (open != null) {
                     var failed by remember { mutableStateOf(false) }
-                    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, ring = false, activate = {
+                    TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, ring = false, activate = {
                         try { open(); failed = false } catch (_: Exception) { failed = true }
                     }) { Text("Open server dashboard", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold) }
                     if (failed) AboutParagraph("Open the address above in a browser on your phone or computer.", scale, Palette.secondary)
@@ -162,7 +162,7 @@ private fun AboutDialogFrame(title: String, scale: Float, dismiss: () -> Unit, w
                     Text(title, fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp,
                         fontWeight = FontWeight.Bold)
                     content()
-                    TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, requester = close, activate = dismiss) {
+                    TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale), scale, requester = close, activate = dismiss) {
                         Text("Close", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }

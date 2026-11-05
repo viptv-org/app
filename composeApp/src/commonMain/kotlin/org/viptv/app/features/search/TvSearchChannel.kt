@@ -39,13 +39,16 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onF
         .focusProperties { if (last) right = androidx.compose.ui.focus.FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
-        Box(Modifier.fillMaxWidth().height(200.dp * scale).clip(shape)
+        Box(Modifier.fillMaxWidth().heightIn(min = 200.dp * scale).clip(shape)
             .background(Brush.linearGradient(listOf(Color(0xFF1D2230), Color(0xFF121318)))), contentAlignment = Alignment.Center) {
             if (card.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(card.logo), card.title, Modifier.size(140.dp * scale), contentScale = ContentScale.Fit)
-            else Text(card.title, fontSize = (56 * scale).sp, lineHeight = (67 * scale).sp, letterSpacing = (-1.12f * scale).sp,
-                fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold)
+            else Box(Modifier.fillMaxSize().padding(top = 56.dp * scale), contentAlignment = Alignment.Center) {
+                Text(card.title, fontSize = (56 * scale).sp, lineHeight = (67 * scale).sp, letterSpacing = (-1.12f * scale).sp,
+                    fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             Box(Modifier.align(Alignment.TopStart).padding(12.dp * scale)) {
-                Box(Modifier.height(28.dp * scale).background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale))
+                Box(Modifier.heightIn(min = 28.dp * scale).background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale))
                     .padding(horizontal = 9.dp * scale), contentAlignment = Alignment.Center) {
                     Text("LIVE", fontSize = (17 * scale).sp, lineHeight = (21 * scale).sp, letterSpacing = (1.02f * scale).sp,
                         fontWeight = FontWeight.ExtraBold, color = Color.White)

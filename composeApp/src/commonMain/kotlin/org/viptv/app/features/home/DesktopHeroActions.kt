@@ -42,7 +42,7 @@ internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, 
     val saveFocused by saveInteractions.collectIsFocusedAsState()
     val saveFill by animateColorAsState(if (saveHovered) HoverFill.surface4 else Palette.raised, responseSpec(), label = "Save fill")
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Button(play, Modifier.width(140.dp).height(44.dp)
+        Button(play, Modifier.width(140.dp).heightIn(min = 44.dp)
             .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = playInteractions, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
@@ -51,7 +51,7 @@ internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, 
             Spacer(Modifier.width(8.dp))
             Text("Play", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
-        Button(info, Modifier.height(44.dp)
+        Button(info, Modifier.heightIn(min = 44.dp)
             .tvFocusOutline(infoFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
             interactionSource = infoInteractions, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {

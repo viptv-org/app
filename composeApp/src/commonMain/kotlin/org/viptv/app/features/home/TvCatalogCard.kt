@@ -135,7 +135,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
             }
         }
         // The caption box holds one meta line; a third clips into the row below.
-        if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().height(76.dp * scale)) {
+        if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().heightIn(min = 76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
         }
         if (menu && menuOpen) {

@@ -129,7 +129,7 @@ private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoF
         if (undo != null) {
             Text("Removed “${undo.card.title}” from Continue Watching.", Modifier.weight(1f), color = Palette.secondary,
                 fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            TvAction(Modifier.height(64.dp * scale).width(200.dp * scale), scale, requester = undoFocus,
+            TvAction(Modifier.heightIn(min = 64.dp * scale).width(200.dp * scale), scale, requester = undoFocus,
                 activate = undoRemove, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                 Text("Undo", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
             }
@@ -137,7 +137,7 @@ private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoF
             Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
                 fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        TvAction(Modifier.height(64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
             activate = { target?.let(request) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(REMOVE_CONTINUE_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
@@ -149,7 +149,7 @@ private fun TvPageMessage(scale: Float, title: String, message: String, action: 
     Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
         Text(title, fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(message, color = Palette.secondary, fontSize = (24 * scale).sp)
-        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
             activate = activate, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(action, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }

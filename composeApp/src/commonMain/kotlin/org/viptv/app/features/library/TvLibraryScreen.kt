@@ -77,7 +77,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 else if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(empty.title, fontSize = (32 * scale).sp)
                     Text(empty.message, fontSize = (24 * scale).sp, color = Palette.secondary)
-                    TvAction(Modifier.height(64.dp * scale), scale, primary = true,
+                    TvAction(Modifier.heightIn(min = 64.dp * scale), scale, primary = true,
                         activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
                 } else {
@@ -106,7 +106,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                         Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
                             fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        TvAction(Modifier.width(560.dp * scale).height(64.dp * scale), scale, requester = removeFocus,
+                        TvAction(Modifier.width(560.dp * scale).heightIn(min = 64.dp * scale), scale, requester = removeFocus,
                             enabled = target != null, activate = { target?.let { confirming = it } },
                             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
                             Text(REMOVE_LIBRARY_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
@@ -126,7 +126,7 @@ private fun TvLibraryFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
         Text("Couldn’t load My List", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
-        TvAction(Modifier.height(64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
+        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }

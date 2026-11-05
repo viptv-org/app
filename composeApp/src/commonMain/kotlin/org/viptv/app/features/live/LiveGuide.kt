@@ -54,7 +54,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
         val minimumMinutes = liveGuideMinimumMinutes(television, scale, unit, programGap)
         val initialProgram = firstChannel?.let { liveGuideSlots(it.programs, start, span, minimumMinutes).initial(now) }?.program
         Column {
-            Row(Modifier.fillMaxWidth().height(headerHeight)) {
+            Row(Modifier.fillMaxWidth().heightIn(min = headerHeight)) {
                 Spacer(Modifier.width(channelWidth + gap))
                 Box(Modifier.weight(1f)) {
                     repeat(if (television) 4 else 5) { index -> Text(liveTime(start + index * 30, period = index == 0), Modifier.offset(x = unit * index * 30 - if (television) 4.dp * scale else 0.dp),
@@ -77,13 +77,13 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             { restore.mark(key, index); select(channel, channel.current(now)) },
                             { restore.mark(key, index); watch(channel) })
                         else
-                        Row(Modifier.width(channelWidth).height(rowHeight).clip(RoundedCornerShape(8.dp * scale))
+                        Row(Modifier.width(channelWidth).heightIn(min = rowHeight).clip(RoundedCornerShape(8.dp * scale))
                             .background(Palette.surface).pointerClickable(shape = RoundedCornerShape(8.dp * scale)) { restore.mark(key, index); watch(channel) }.padding(horizontal = (if (television) 18 else 12).dp * scale),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             channel.number?.let { Text(it, fontSize = (if (television) 20 * scale else 12f).sp, color = Palette.secondary) }
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)
                         }
-                        Box(Modifier.weight(1f).height(rowHeight).clipToBounds()) {
+                        Box(Modifier.weight(1f).heightIn(min = rowHeight).clipToBounds()) {
                             slots.forEach { slot ->
                                 key(slot.program.id) {
                                     LiveProgramCell(slot.program, now, start, television, scale,

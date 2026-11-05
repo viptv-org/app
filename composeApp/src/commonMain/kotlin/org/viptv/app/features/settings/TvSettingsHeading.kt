@@ -11,9 +11,10 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvSettingsHeading(title: String, scale: Float, subtitle: String? = null, reserveSubtitle: Boolean = false) {
-    Box(Modifier.fillMaxWidth().height((if (subtitle != null || reserveSubtitle) 112 else 48).dp * scale)) {
+    Column(Modifier.fillMaxWidth().heightIn(min = (if (subtitle != null || reserveSubtitle) 112 else 48).dp * scale),
+        verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
         Text(title, Modifier.offset(y = (-3).dp * scale), fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp,
             letterSpacing = (-0.8f * scale).sp, fontWeight = FontWeight.Bold)
-        subtitle?.let { Text(it, Modifier.offset(y = 56.dp * scale), fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary) }
+        subtitle?.let { Text(it, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary) }
     }
 }

@@ -109,13 +109,13 @@ internal fun TvProfileLockDialog(profile: Profile?, busy: Boolean, scale: Float,
                 })
                 Spacer(Modifier.height(36.dp * scale))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = save,
+                    TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale, requester = save,
                         enabled = !busy && (if (enteringCurrent) authorized else authorized && valid),
                         activate = { if (enteringCurrent) currentEntered = true else { setPin(currentPin, newPin); dismiss() } }) {
                         Text(if (enteringCurrent) "Continue" else "Save", color = it, fontSize = (26 * scale).sp,
                             lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, activate = dismiss) {
+                    TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale), scale, activate = dismiss) {
                         Text("Cancel", color = it, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }

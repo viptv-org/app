@@ -78,14 +78,14 @@ private fun TvRecoveryCodes(kit: RecoveryKit?, busy: Boolean, error: String?, sa
             Text("This code is shown only now. VIPTV does not save a copy on this device.", color = Palette.secondary, fontSize = (22 * scale).sp)
             error?.let { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                org.viptv.app.components.TvAction(Modifier.height(72.dp * scale).width(300.dp * scale), scale,
+                org.viptv.app.components.TvAction(Modifier.heightIn(min = 72.dp * scale).width(300.dp * scale), scale,
                     primary = true, requester = first, enabled = !busy, activate = {
                         if (saved) proceed() else setSaved(true)
                     }) { tint ->
                     Text(if (!saved) "I saved it" else if (error == null) "Continue" else "Retry sign-in",
                         color = tint, fontSize = (26 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 }
-                if (error != null) org.viptv.app.components.TvAction(Modifier.height(72.dp * scale).width(300.dp * scale), scale,
+                if (error != null) org.viptv.app.components.TvAction(Modifier.heightIn(min = 72.dp * scale).width(300.dp * scale), scale,
                     enabled = saved && !busy, activate = signIn) { tint ->
                     Text("Return to sign in", color = tint, fontSize = (26 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 }

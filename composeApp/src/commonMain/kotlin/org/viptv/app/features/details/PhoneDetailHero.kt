@@ -61,7 +61,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            val titleArea = if (card.logo != null) Modifier.height(PhoneHeroHeader) else Modifier.heightIn(min = PhoneHeroHeader)
+            val titleArea = Modifier.heightIn(min = PhoneHeroHeader)
             TitleLogo(card.logo, card.title, Modifier.fillMaxWidth().then(titleArea),
                 logoModifier = Modifier.width(240.dp).height(PhoneHeroHeader)) {
                 Text(card.title, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
@@ -73,7 +73,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             val label = heroPlayLabel(resume)
             val pending = (resume ?: card).isPlayPending()
             Box(Modifier.fillMaxWidth()) {
-                Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().height(50.dp),
+                Button(onClick = { play(resume ?: card) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                     shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 19.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Color(0xFF111113))) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,

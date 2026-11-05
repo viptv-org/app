@@ -44,7 +44,7 @@ internal fun TvPinKey(label: String, scale: Float, enabled: Boolean, requester: 
         tween(150), label = "PIN key fill")
     val ink by animateColorAsState(if (light || enabled && pressed) Palette.background else Palette.text,
         tween(150), label = "PIN key content")
-    Box(Modifier.size(width.dp * scale, 76.dp * scale).focusRequester(target)
+    Box(Modifier.width(width.dp * scale).heightIn(min = 76.dp * scale).focusRequester(target)
         .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused }
         // Tv3Pin keys paint focus inside their own cell: the outside 4 px outline would grow a 136 px key to 144 px and eat the 12 px pitch.
         .tvFocusOutline(light && ring, 10.dp * scale, scale)

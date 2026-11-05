@@ -38,7 +38,7 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
     val target = requester ?: fallback
     // Without the clamp the geometric search jumps from the last row to the sidebar's last item.
     val column = rememberTvColumnItem(target)
-    Row(Modifier.fillMaxWidth().height(rowHeight.dp * scale).then(column.position).focusRequester(target)
+    Row(Modifier.fillMaxWidth().heightIn(min = rowHeight.dp * scale).then(column.position).focusRequester(target)
         .focusProperties {
             if (left != null) this.left = left
             column.constrain(this)
@@ -70,7 +70,7 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
 
 @Composable
 internal fun TvSettingsDisabledRow(label: String, note: String, scale: Float) {
-    Row(Modifier.fillMaxWidth().height(96.dp * scale).padding(horizontal = 28.dp * scale)
+    Row(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale).padding(horizontal = 28.dp * scale)
         .semantics(mergeDescendants = true) { disabled() }, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
             Text(label, color = Palette.tertiary, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)

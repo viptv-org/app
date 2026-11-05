@@ -55,12 +55,12 @@ internal fun TvAddonInstallConfirm(address: String, profileName: String?, local:
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.tertiary)
                 if (busy) Text("Installing\u2026", fontSize = (24 * scale).sp, color = Palette.secondary)
                 Row(Modifier.padding(top = 18.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, primary = true, requester = initial,
+                    TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true, requester = initial,
                         enabled = !busy, keepFocus = true, activate = confirm) { tint ->
                         Icon(Lucide.Plus, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(12.dp * scale))
                         Text("Install", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, enabled = !busy, keepFocus = true, activate = cancel) { tint ->
+                    TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale), scale, enabled = !busy, keepFocus = true, activate = cancel) { tint ->
                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }

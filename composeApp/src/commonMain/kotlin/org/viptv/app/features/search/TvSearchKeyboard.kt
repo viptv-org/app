@@ -43,7 +43,7 @@ internal fun TvSearchKeyboard(edit: ((String) -> String) -> Unit, scale: Float, 
 @Composable
 private fun TvKeyboardKey(modifier: Modifier, scale: Float, label: String, activate: () -> Unit, content: @Composable (androidx.compose.ui.graphics.Color) -> Unit) {
     var focus by remember { mutableStateOf(false) }
-    Box(modifier.height(68.dp * scale).onFocusChanged { focus = it.isFocused }
+    Box(modifier.heightIn(min = 68.dp * scale).onFocusChanged { focus = it.isFocused }
         .clip(RoundedCornerShape(12.dp * scale)).background(if (focus) Palette.text else Palette.raised)
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClickLabel = label, onClick = activate, shape = RoundedCornerShape(12.dp * scale)), contentAlignment = Alignment.Center) {
         content(if (focus) Palette.background else Palette.text)

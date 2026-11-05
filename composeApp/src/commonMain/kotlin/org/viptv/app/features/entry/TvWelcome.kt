@@ -1,6 +1,8 @@
 package org.viptv.app.features.entry
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -33,35 +35,32 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, e
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { first.requestFocus() }
     TvWelcomeBackdrop(scale)
-    Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxWidth().offset(y = 336.dp * scale), contentAlignment = Alignment.Center) {
-            Brand(80.dp * scale, (92 * scale).sp, 20.dp * scale, (-3.68f * scale).sp, (92 * scale).sp)
-        }
-        Box(Modifier.fillMaxWidth().offset(y = 474.dp * scale), contentAlignment = Alignment.Center) {
-            Text("Your shows, channels and progress. All in one place.", color = Palette.text, fontSize = (34 * scale).sp, lineHeight = (42 * scale).sp)
-        }
-        Row(Modifier.fillMaxWidth().offset(y = 584.dp * scale), horizontalArrangement = Arrangement.spacedBy(20.dp * scale, Alignment.CenterHorizontally)) {
-            TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, primary = true, requester = if (retry == null) first else null, activate = signIn) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 336.dp * scale),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Brand(80.dp * scale, (92 * scale).sp, 20.dp * scale, (-3.68f * scale).sp, (92 * scale).sp)
+        Spacer(Modifier.height(46.dp * scale))
+        Text("Your shows, channels and progress. All in one place.", color = Palette.text, fontSize = (34 * scale).sp, lineHeight = (42 * scale).sp)
+        Spacer(Modifier.height(68.dp * scale))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp * scale, Alignment.CenterHorizontally)) {
+            TvAction(Modifier.width(360.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true, requester = if (retry == null) first else null, activate = signIn) {
                 Text("Sign in", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            if (local != null) TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, activate = local) {
+            if (local != null) TvAction(Modifier.width(360.dp * scale).heightIn(min = 72.dp * scale), scale, activate = local) {
                 Text("Use without an account", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        error?.let { message ->
-            Box(Modifier.fillMaxWidth().offset(y = 720.dp * scale).padding(horizontal = 96.dp * scale), contentAlignment = Alignment.Center) {
-                Text(message, color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp,
-                    textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            }
+        Spacer(Modifier.height(64.dp * scale))
+        // The error and retry slots keep today's rhythm whether or not they hold anything.
+        Box(Modifier.fillMaxWidth().heightIn(min = 132.dp * scale).padding(horizontal = 96.dp * scale), contentAlignment = Alignment.TopCenter) {
+            error?.let { message -> Text(message, color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp,
+                textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis) }
         }
-        if (retry != null) Box(Modifier.fillMaxWidth().offset(y = 852.dp * scale), contentAlignment = Alignment.Center) {
-            TvAction(Modifier.width(360.dp * scale).height(72.dp * scale), scale, primary = true, requester = first, activate = retry) {
+        Box(Modifier.fillMaxWidth().heightIn(min = 108.dp * scale), contentAlignment = Alignment.TopCenter) {
+            if (retry != null) TvAction(Modifier.width(360.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true, requester = first, activate = retry) {
                 Text("Try again", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        if (local != null) Box(Modifier.fillMaxWidth().offset(y = 960.dp * scale), contentAlignment = Alignment.Center) {
-            Text("Without an account, everything stays on this TV. No profiles or sync.", color = Palette.secondary, fontSize = (22 * scale).sp)
-        }
+        if (local != null) Text("Without an account, everything stays on this TV. No profiles or sync.", color = Palette.secondary, fontSize = (22 * scale).sp)
     }
 }
 
