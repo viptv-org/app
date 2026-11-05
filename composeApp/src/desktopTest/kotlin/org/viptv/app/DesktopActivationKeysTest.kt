@@ -16,6 +16,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DesktopActivationKeysTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun onlyThePointerOnlyDesktopClientOmitsActivationKeys() {
         assertEquals(

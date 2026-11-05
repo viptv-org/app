@@ -27,6 +27,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PhoneAddonSettingsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private var frameTime = 0L
     private val fixtures = listOf(

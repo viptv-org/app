@@ -40,6 +40,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class TvDetailsFocusReturnTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -128,7 +129,7 @@ class TvDetailsFocusReturnTest {
         }
 
         val state get() = controller.state.value
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         /** The page's loading placeholders are the only thing it says while a play tap's Details are on their way. */
         fun loadingPage() = nodes().any { node ->

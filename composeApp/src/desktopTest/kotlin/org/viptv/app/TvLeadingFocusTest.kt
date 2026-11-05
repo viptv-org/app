@@ -28,6 +28,7 @@ import kotlinx.coroutines.*
 
 class TvLeadingFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Fixture(width: Int = 900, height: Int = 400, television: Boolean = true, content: @Composable () -> Unit) : AutoCloseable {

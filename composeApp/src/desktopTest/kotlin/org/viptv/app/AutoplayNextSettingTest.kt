@@ -16,6 +16,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AutoplayNextSettingTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private class MemoryStore(var raw: String? = null) : DeviceRecordStore {
         override fun read() = raw
         override fun write(value: String) { raw = value }
@@ -97,7 +98,7 @@ class AutoplayNextSettingTest {
     private fun switch(scene: ImageComposeScene) = nodes(scene).single {
         text(it).startsWith(autoplayNextRow) && it.config.contains(SemanticsProperties.ToggleableState) && it.config.contains(SemanticsActions.OnClick)
     }
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

@@ -49,6 +49,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class SearchPhoneNavTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val profile = Profile("12", "Parent", null)
     private val query = "monster"

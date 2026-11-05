@@ -43,6 +43,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ScrollEdgeFadeUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val fade = ScrollEdgeFadeHeight.value.roundToInt()
     private val barTop = HEIGHT - BottomBarHeight.value.roundToInt()

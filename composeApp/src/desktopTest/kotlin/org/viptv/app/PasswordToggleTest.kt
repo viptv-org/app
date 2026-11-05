@@ -21,6 +21,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class PasswordToggleTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhoneRevealToggleIsA44dpButtonWithState() = toggleTarget("mobile") {
         MobilePasswordPanel("", false, null, { _, _, _ -> })
@@ -36,7 +37,7 @@ class PasswordToggleTest {
         val height = if (kind == "mobile") 844 else 800
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) { panel() } }
         try {
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             val toggle = nodes(scene).singleOrNull {
                 it.config.contains(SemanticsActions.OnClick) &&
                     it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Show password")
@@ -45,7 +46,7 @@ class PasswordToggleTest {
             assertTrue(toggle.boundsInRoot.width >= 44f && toggle.boundsInRoot.height >= 44f,
                 "$kind: the toggle is a 44dp target: ${toggle.boundsInRoot}")
             assertTrue(toggle.config[SemanticsActions.OnClick].action!!.invoke(), "$kind: the toggle toggles")
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             val hidden = nodes(scene).singleOrNull {
                 it.config.contains(SemanticsActions.OnClick) &&
                     it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Hide password")

@@ -26,6 +26,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class ClearTextButtonTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun theSelectFieldClearTextIsA44dpButton() {
         var frame = 0L
@@ -39,12 +40,12 @@ class ClearTextButtonTest {
             }
         }
         try {
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             val trigger = nodes(scene).singleOrNull {
                 it.config.contains(SemanticsActions.OnClick) && text(it) == "Rating: 8.0"
             } ?: fail("no Rating trigger: " + texts(scene))
             assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke(), "the trigger opens the panel")
-            repeat(40) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(40) { scene.render(frame++ * 16_666_667L).close() }
             val clear = nodes(scene).singleOrNull {
                 it.config.contains(SemanticsActions.OnClick) &&
                     it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Clear text")

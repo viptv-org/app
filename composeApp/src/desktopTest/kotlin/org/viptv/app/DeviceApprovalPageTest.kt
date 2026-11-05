@@ -35,6 +35,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class DeviceApprovalPageTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -104,7 +105,7 @@ class DeviceApprovalPageTest {
 
     private class Probe(private val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 6) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 6) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         private fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun label(node: SemanticsNode): String =

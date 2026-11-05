@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvFocusReachabilityTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private data class Target(val key: String, val label: String)

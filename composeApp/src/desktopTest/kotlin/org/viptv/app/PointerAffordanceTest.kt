@@ -36,6 +36,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PointerAffordanceTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun cursor(modifier: Modifier): PointerIcon? = modifier.foldIn<PointerIcon?>(null) { found, element ->
         found ?: (element as? InspectableValue)?.takeIf { it.nameFallback == "pointerHoverIcon" }
             ?.inspectableElements?.firstOrNull { it.name == "icon" }?.value as? PointerIcon

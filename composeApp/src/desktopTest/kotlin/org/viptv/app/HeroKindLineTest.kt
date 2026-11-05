@@ -31,6 +31,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HeroKindLineTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val movie = Card(MediaIdentity("tt473", "movie", emptyList()), provider_id = "addon:21", title = "Fixture film",
         badges = emptyList(),

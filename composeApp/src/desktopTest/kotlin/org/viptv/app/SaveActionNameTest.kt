@@ -40,6 +40,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SaveActionNameTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val card = Card(MediaIdentity("tt812", "movie", emptyList()), provider_id = "addon:4",
         title = "Save Action Title", badges = emptyList())
@@ -101,5 +102,5 @@ class SaveActionNameTest {
     }
 
     private fun frames(scene: ImageComposeScene, count: Int = 20) =
-        repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+        repeat(count) { scene.render(it * 16_666_667L).close() }
 }

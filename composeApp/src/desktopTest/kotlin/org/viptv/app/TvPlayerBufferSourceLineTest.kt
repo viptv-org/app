@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class TvPlayerBufferSourceLineTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val title = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "addon:1",
         title = "Movie", badges = emptyList())
@@ -37,7 +38,7 @@ class TvPlayerBufferSourceLineTest {
             }
         }
         try {
-            repeat(60) { scene.render(it * 16_666_667L).close(); Thread.sleep(8) }
+            repeat(60) { scene.render(it * 16_666_667L).close() }
             val labels = texts(scene)
             assertTrue(labels.any { it == "Movie · Torrentio · 1080p" }, labels.toString())
             assertFalse(labels.any { "1080p 1080p" in it || "1080p · 1080p" in it }, labels.toString())

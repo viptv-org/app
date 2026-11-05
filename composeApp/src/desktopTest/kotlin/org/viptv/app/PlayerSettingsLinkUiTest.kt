@@ -29,13 +29,14 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PlayerSettingsLinkUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val tracks = PlaybackTracks(
         audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en"), PlaybackTrack(2, "Japanese · Stereo", false, "ja")),
         subtitles = listOf(PlaybackTrack(3, "English", true, "en"), PlaybackTrack(4, "English (SDH)", false, "en"), PlaybackTrack(5, "Spanish", false, "es")))
 
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private var frame = 0L
-    private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
     private suspend fun settle(scene: ImageComposeScene) = repeat(4) { repeat(8) { scene.render(frame++ * 16_666_667L).close() }; delay(10) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }

@@ -36,6 +36,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ListBottomEdgeUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class Case(val name: String, val width: Int, val height: Int, val bar: Boolean, val content: @Composable () -> Unit)
 

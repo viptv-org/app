@@ -17,6 +17,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class BrowserSignInSubmitTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private var frame = 0L
     private val origin = "https://watch.example"
     private val logins = mutableListOf<Triple<String, String, String>>()
@@ -30,7 +31,7 @@ class BrowserSignInSubmitTest {
         } }
     }
 
-    private fun frames(count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun field(label: String) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }.single { node ->
         node.config.contains(SemanticsActions.SetText) && flatten(node).any { child ->

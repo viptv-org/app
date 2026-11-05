@@ -30,6 +30,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class BrowserSourceDrawerTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -124,7 +125,7 @@ class BrowserSourceDrawerTest {
         }
 
         val continueCard get() = controller.state.value.home!!.rows.single { it.id == "continue" }.cards.single()
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 30_000_000_000L

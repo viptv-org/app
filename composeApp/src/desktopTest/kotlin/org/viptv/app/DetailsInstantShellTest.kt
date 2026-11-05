@@ -24,6 +24,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsInstantShellTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val show = "tt0903747"
     private fun series() = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))), provider_id = "addon:21",
@@ -52,13 +53,13 @@ class DetailsInstantShellTest {
             }
         } }
         try {
-            repeat(6) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(6) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(scene.shows("Breaking Bad"), "the card's title is on the first frame")
             assertTrue(scene.shows("Play"), "the card's Play is on the first frame")
             assertTrue(scene.loadingSkeleton(), "the meta-only parts are skeletons while the read is in flight")
 
             busy = false; detail = full
-            repeat(24) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(24) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(scene.shows("Breaking Bad"), "the hero stays while the meta swaps in")
             assertTrue(scene.shows("1. Episode 1"), "the episode list replaces the skeleton")
             assertFalse(scene.loadingSkeleton(), "the skeleton is gone once the meta arrives")

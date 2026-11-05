@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class WatchedBadgeUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun card(id: String, badges: List<String>, progress: Double? = null) = Card(
         MediaIdentity(id, "movie", emptyList()), provider_id = "addon:1", title = "Title $id",
         badges = badges, progress = progress)
@@ -84,7 +85,7 @@ class WatchedBadgeUiTest {
         assertTrue(badge.right <= art.right - 4f && badge.top >= art.top + 4f, "Clear of the focus ring")
         assertTrue(badge.bottom < art.top + art.height / 2, "Far from the bottom progress bar")
     }
-    private fun frames(scene: ImageComposeScene) = repeat(12) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene) = repeat(12) { scene.render(it * 16_666_667L).close() }
     private fun capture(scene: ImageComposeScene, name: String) = System.getenv("VIPTV_CARD_CAPTURE_DIR")?.let { path ->
         File(path).mkdirs()
         scene.render(4_000_000_000L).use { image -> image.encodeToData()!!.use { File(path, name).writeBytes(it.bytes) } }

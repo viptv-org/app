@@ -19,6 +19,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class XtreamConnectionsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private var frameTime = 0L
 
     private val connections = listOf(
@@ -145,7 +146,7 @@ class XtreamConnectionsUiTest {
     private fun scene(width: Int, height: Int, content: @Composable () -> Unit) =
         ImageComposeScene(width, height, Density(1f)) { ViptvTheme { content() } }
     private fun frames(scene: ImageComposeScene, count: Int = 24) =
-        repeat(count) { frameTime += 16_666_667L; scene.render(frameTime).close(); Thread.sleep(4) }
+        repeat(count) { frameTime += 16_666_667L; scene.render(frameTime).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

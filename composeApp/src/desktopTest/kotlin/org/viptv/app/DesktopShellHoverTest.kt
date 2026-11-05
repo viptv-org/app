@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DesktopShellHoverTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null

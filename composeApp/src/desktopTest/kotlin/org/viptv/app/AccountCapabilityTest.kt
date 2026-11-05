@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountCapabilityTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private object NoSavedSession : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -60,7 +61,7 @@ class AccountCapabilityTest {
             ViptvTheme { SettingsRoute(state, controller, browser = false, television = false, compact = true) }
         }
 
-        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
 
         fun waitFor(condition: () -> Boolean) {
             val deadline = System.currentTimeMillis() + 5_000

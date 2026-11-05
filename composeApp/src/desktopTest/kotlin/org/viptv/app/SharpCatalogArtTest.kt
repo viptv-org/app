@@ -33,6 +33,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SharpCatalogArtTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val poster = "https://simkl.in/posters/20/204275190b49d24215_m.webp"
     private val anime = Card(MediaIdentity("simkl:anime:1", "series", emptyList()), category = "anime",

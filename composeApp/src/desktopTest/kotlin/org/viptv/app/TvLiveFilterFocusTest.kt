@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvLiveFilterFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun channel() = LiveChannel(
         Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()),
@@ -63,7 +64,7 @@ class TvLiveFilterFocusTest {
             }
         }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

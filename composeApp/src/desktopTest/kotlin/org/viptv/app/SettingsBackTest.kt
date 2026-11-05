@@ -24,6 +24,7 @@ private object NoSavedSession : RemoteSessionStore {
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsBackTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private class Harness(browser: Boolean, start: ApplicationState, height: Int = 844) : AutoCloseable {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also { it.mutable.value = start }
@@ -34,7 +35,7 @@ class SettingsBackTest {
                 entryBackChanged = { systemBack = it }) }
         }
         private var frame = 0L
-        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun labelled(node: SemanticsNode, value: String) =

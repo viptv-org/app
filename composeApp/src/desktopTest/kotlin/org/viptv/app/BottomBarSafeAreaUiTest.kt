@@ -44,6 +44,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class BottomBarSafeAreaUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class Config(val name: String, val width: Dp, val height: Dp, val inset: Dp, val density: Float)
 

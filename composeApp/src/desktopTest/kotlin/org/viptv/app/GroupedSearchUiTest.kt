@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class GroupedSearchUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun suppliedCarouselTitleRemainsVisibleForOneRowAndLaterProviderResultsKeepTheirOwnActions() {
         val first = Card(MediaIdentity("same-id", "movie", emptyList()), provider_id = "stremio", title = "First copy", badges = emptyList())
         val second = first.copy(title = "Second copy")
@@ -346,7 +347,7 @@ class GroupedSearchUiTest {
     }
 
     private fun frames(scene: ImageComposeScene, start: Int) = repeat(20) {
-        scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
+        scene.render((start + it) * 16_666_667L).close()
     }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

@@ -42,6 +42,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AddDeviceAccessTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = "https://watch.example"
     private val code = "00428701"
 
@@ -171,7 +172,7 @@ class AddDeviceAccessTest {
             ViptvTheme(television) { SettingsRoute(state, controller, browser = false, television = television, compact = width < 640) }
         }
 
-        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun texts() = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
         fun shows(value: String) = value in texts()
@@ -189,7 +190,7 @@ class AddDeviceAccessTest {
 
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         private fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun texts() = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }

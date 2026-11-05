@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class WatchOnTvSetupUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class FakeEngine : VizioSetupEngine {
         override suspend fun search(limit: Int, onResult: (VizioTv) -> Unit) {
@@ -193,7 +194,7 @@ class WatchOnTvSetupUiTest {
 
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         private fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun texts() = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }

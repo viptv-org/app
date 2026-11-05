@@ -37,6 +37,7 @@ import kotlin.test.*
 @OptIn(InternalComposeUiApi::class)
 class TvFilterBarTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val posters = PreviewData.posters.map { it.copy(poster = null) }
     private val genre = QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false,
@@ -249,7 +250,7 @@ class TvFilterBarTest {
             }
         }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

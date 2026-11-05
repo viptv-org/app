@@ -36,6 +36,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class NextEpisodeEndPanelUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
@@ -335,10 +336,10 @@ class NextEpisodeEndPanelUiTest {
                     autoplayNext = autoplay, reduceMotion = reduceMotion)
             }
         } }
-        fun frames(start: Int = 0) = repeat(16) { time = maxOf(time, start * 16_666_667L) + 16_666_667L; scene.render(time).close(); Thread.sleep(4) }
+        fun frames(start: Int = 0) = repeat(16) { time = maxOf(time, start * 16_666_667L) + 16_666_667L; scene.render(time).close() }
         fun seconds(value: Double) {
             time += (value * 1_000_000_000).toLong()
-            repeat(4) { time += 1_000_000; scene.render(time).close(); Thread.sleep(4) }
+            repeat(4) { time += 1_000_000; scene.render(time).close() }
         }
         fun press(x: Int, y: Int) {
             scene.sendPointerEvent(PointerEventType.Press, Offset(x.toFloat(), y.toFloat()))

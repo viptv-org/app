@@ -59,6 +59,7 @@ import org.junit.Rule
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class LandscapeRailUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val profile = Profile("qa", "QA profile", null, avatarId = "initial-blue")
     private val genres = HomeGenrePicker(listOf("Action", "Comedy").map { GenreChoice(it, BrowseQuery("movie", genre = it)) }) {}
 
@@ -212,7 +213,7 @@ class LandscapeRailUiTest {
 
         fun frames(count: Int = 20) {
             controller.mutable.value = state
-            repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         }
 
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }

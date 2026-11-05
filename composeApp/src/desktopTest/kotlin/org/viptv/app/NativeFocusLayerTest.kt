@@ -25,6 +25,7 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalComposeUiApi::class)
 class NativeFocusLayerTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun focusedCentre(control: @Composable (Modifier) -> Unit): Int {

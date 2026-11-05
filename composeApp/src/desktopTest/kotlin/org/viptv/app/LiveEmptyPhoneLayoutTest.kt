@@ -38,6 +38,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveEmptyPhoneLayoutTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhoneBlockFitsUnderTheHeaderWithItsActionsClearOfTheBottomBar() {
         for ((width, height) in listOf(360 to 640, 412 to 915)) {
@@ -148,7 +149,7 @@ class LiveEmptyPhoneLayoutTest {
 
     private fun clickable(node: SemanticsNode) = node.config.contains(SemanticsActions.OnClick)
 
-    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flattenChildren(it.rootSemanticsNode) }
 

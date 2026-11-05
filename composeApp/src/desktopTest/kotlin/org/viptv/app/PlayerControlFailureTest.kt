@@ -27,6 +27,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerControlFailureTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun automaticWorkReportsItsFailureOnlyInDiagnostics() {
         val lines = mutableListOf<String>()
@@ -80,7 +81,7 @@ class PlayerControlFailureTest {
             PlayerScreen(null, true, null, {}, {}, {}, preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts)
         } }
         var frame = 0L
-        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render()
             assertFalse(showsNotice(scene), "a healthy player shows no control error")

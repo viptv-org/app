@@ -31,6 +31,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ChangePasswordTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = "https://watch.example"
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -245,7 +246,7 @@ class ChangePasswordTest {
 
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 12) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 12) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun nodes(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::nodes)
         private fun nodes() = scene.semanticsOwners.flatMap { nodes(it.rootSemanticsNode) }
         private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

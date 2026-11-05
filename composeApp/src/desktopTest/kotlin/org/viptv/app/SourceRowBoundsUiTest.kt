@@ -43,6 +43,7 @@ import org.viptv.engine.wire.SourcePresentation
 
 class SourceRowBoundsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun releaseGroupIsParsedFromTheLeadingBracketOrTrailingGroup() {
         assertEquals("EMBER", parseReleaseGroup("[EMBER] The Genius Prince's Guide (Batch)\nS01E03.mkv"))
@@ -229,7 +230,7 @@ class SourceRowBoundsUiTest {
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 3) = repeat(count) {
-        scene.render(++frame * 16_666_667L).close(); Thread.sleep(1)
+        scene.render(++frame * 16_666_667L).close()
     }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
     private fun unmerged(scene: ImageComposeScene): List<SemanticsNode> = nodes(scene)

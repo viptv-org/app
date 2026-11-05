@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsPageTitleTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private var frame = 0L
     private val background = Palette.background.toArgb()
@@ -35,7 +36,7 @@ class SettingsPageTitleTest {
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun frames(scene: ImageComposeScene, count: Int = 16) =
-        repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
     // The fade and the header both read their colour from the page background, so name the provider explicitly.
     private fun scene(width: Int = 390, height: Int = 844, content: @Composable () -> Unit) =

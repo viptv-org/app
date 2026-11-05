@@ -56,6 +56,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HeroMotionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val base = PreviewData.hero.copy(landscape = FirstArt, poster = null, logo = LogoArt)
     private val first = base
@@ -69,7 +70,6 @@ class HeroMotionTest {
 
         fun frames(count: Int = 1) = repeat(count) {
             scene.render(frame++ * 16_666_667L).close()
-            Thread.sleep(2)
         }
 
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
