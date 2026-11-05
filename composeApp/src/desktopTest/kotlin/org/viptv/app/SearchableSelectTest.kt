@@ -26,6 +26,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.junit.Rule
 import kotlin.test.*
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SearchableSelectTest {
@@ -195,6 +197,21 @@ class SearchableSelectTest {
             it.key(Key.Enter)
             assertEquals(listOf(listOf("g200")), picked)
         }
+    }
+
+    @Test fun closingADesktopChipReturnsFocusWithoutAWarning() {
+        val original = System.out
+        val buf = ByteArrayOutputStream()
+        System.setOut(PrintStream(buf, true))
+        try {
+            Ui(800, 700) { SearchableSelect("Genre", genres, emptyList(), {}, Modifier.width(240.dp)) }.use {
+                it.open("Genre: Any")
+                it.key(Key.Escape)
+            }
+        } finally {
+            System.setOut(original)
+        }
+        assertFalse(buf.toString().contains("FocusRequester is not initialized"), "chip close focus warning:\n$buf")
     }
 
     private class Ui(width: Int, height: Int, pointer: Boolean = true, content: @Composable () -> Unit) : AutoCloseable {

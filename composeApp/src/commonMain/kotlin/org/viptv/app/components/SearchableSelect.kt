@@ -234,13 +234,14 @@ private fun SelectChip(title: String, value: String, valueSet: Boolean, highligh
     // On a TV, closing the panel puts focus back on the chip that opened it.
     val own = remember { FocusRequester() }
     val chipFocus = entry ?: own
+    val attached = chipFocus.takeIf { metrics.tv }
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(open.value) {
         if (open.value) wasOpen = true
-        else if (wasOpen) runCatching { chipFocus.requestFocus() }
+        else if (wasOpen) attached?.requestFocus()
     }
     Box(modifier) {
-        SelectTrigger(title, value, valueSet, highlighted, metrics, chipFocus.takeIf { metrics.tv }, down) { open.value = true }
+        SelectTrigger(title, value, valueSet, highlighted, metrics, attached, down) { open.value = true }
         when (presentation) {
             SelectPresentation.Sheet -> SelectSheet(open.value, title, close) { listMax ->
                 panel(SelectMetrics(48.dp, listMax, sheet = true), close) }
