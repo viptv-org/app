@@ -237,18 +237,18 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         else close()
                         true
                     }
-                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!phone || !failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
                     Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
                     Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
-                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked) { visible = !visible; interaction++ })
+                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked && !failed && error == null) { visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
                 }
-                AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && (showTracks || failed || error != null)),
+                AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null),
                     modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
                     exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
                 Box(Modifier.fillMaxSize()) {
@@ -292,7 +292,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     }
                 }
                 }
-                if (showTracks && !(phone && (failed || error != null))) PlaybackTrackPicker(tracks, { choice ->
+                if (showTracks && !failed && error == null) PlaybackTrackPicker(tracks, { choice ->
                     if (choice.kind == PlaybackTrackKind.Subtitle) chooseSubtitle(choice.id)
                     else choice.id?.let(::chooseAudio) ?: send(choice)
                     trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
@@ -317,18 +317,19 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 val stopped = failed || error != null
                 when {
                     stopped && fallback != null -> PhonePlayerFallback(fallback, stopFallback, controlInsets)
-                    stopped && phone -> PhonePlayerFailure(tvExtras.failureDescription ?: error ?:
-                        "Choose another source to continue from ${playbackTime(position)}.", tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
+                    stopped -> PlayerFailurePage(if (phone) PhoneFailureStyle else DesktopFailureStyle,
+                        tvExtras.failureDescription ?: error ?: "Choose another source to continue from ${playbackTime(position)}.",
+                        tvExtras.fallbackLabel, retry, chooseSources, close, title, controlInsets)
                     else -> {
-                        val opening = openingSource?.takeUnless { failed || error != null }
+                        val opening = openingSource
                         if (opening != null) {
                             Column(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally) {
                                 CircularProgressIndicator(Modifier.size(40.dp), color = Palette.text)
                                 Text("Opening ${opening.label}…", Modifier.padding(top = 16.dp), color = Palette.text, fontSize = 14.sp)
                             }
-                        } else if ((buffering || seekPending != null) && !failed && error == null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
-                        (error ?: controlError)?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
+                        } else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                        controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }
                 if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
