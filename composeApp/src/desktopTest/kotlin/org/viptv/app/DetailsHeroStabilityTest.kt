@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsHeroStabilityTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val show = "tt0903747"
     private val metadata = CardMetadata(year = 2008, runtime_minutes = 47, genres = listOf("Crime", "Drama"), rating = 9.5)
@@ -54,7 +55,7 @@ class DetailsHeroStabilityTest {
                 DetailsScreen(detail, busy, error = null, back = {}, sources = {})
             }
         } }
-        fun render(frames: Int = 8) = repeat(frames) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(frames: Int = 8) = repeat(frames) { scene.render(frame++ * 16_666_667L).close() }
         override fun close() = scene.close()
     }
 

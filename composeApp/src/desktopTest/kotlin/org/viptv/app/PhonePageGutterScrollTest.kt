@@ -36,6 +36,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class PhonePageGutterScrollTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun card(i: Int, prefix: String) =
         Card(MediaIdentity("$prefix-$i", "movie", emptyList()), provider_id = "simkl", title = "$prefix $i", badges = emptyList())

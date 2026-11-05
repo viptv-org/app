@@ -38,6 +38,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ClampedTextOverflowTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val overflows = listOf(
         "A long running title that keeps going far past any single line. ".repeat(10),
@@ -126,7 +127,7 @@ class ClampedTextOverflowTest {
             results.singleOrNull()
         }
 
-    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render((it + 1) * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render((it + 1) * 16_666_667L).close() }
 
     private data class SurfaceCase(val name: String, val render: (String) -> ImageComposeScene)
 }

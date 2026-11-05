@@ -21,6 +21,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ProfilePickerAvatarTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val advanced = Profile("1", "Stremio import QA", avatar = null, avatarUrl = "https://avatars.example/art.png")
 
@@ -46,7 +47,7 @@ class ProfilePickerAvatarTest {
         }
     }
 
-    private fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(it * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode): String =

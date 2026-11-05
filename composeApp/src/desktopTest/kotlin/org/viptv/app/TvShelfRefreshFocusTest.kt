@@ -31,6 +31,7 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvShelfRefreshFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun cards(vararg ids: Int) = ids.map { index ->
         Card(MediaIdentity("tt$index", "series", emptyList()), provider_id = "simkl",

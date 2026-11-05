@@ -28,6 +28,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PhoneHeroHeaderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val series = Card(MediaIdentity("tt560", "series", emptyList()), provider_id = "addon:21",
         title = "The End of Oak Street", description = "A description.", badges = emptyList(),

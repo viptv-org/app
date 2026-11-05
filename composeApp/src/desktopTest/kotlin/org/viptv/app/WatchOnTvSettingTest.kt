@@ -21,6 +21,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class WatchOnTvSettingTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class MemoryStore(var raw: String? = null) : DeviceRecordStore {
         override fun read() = raw
@@ -89,7 +90,7 @@ class WatchOnTvSettingTest {
                 openWatchOnTv = {})
         } }
 
-    private fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(it * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }

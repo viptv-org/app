@@ -51,6 +51,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PageRestoreUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val shows = (1..30).map(::card)
     private val week = listOf(
@@ -350,7 +351,7 @@ class PageRestoreUiTest {
         } }
 
     private fun frames(scene: ImageComposeScene, count: Int = 10) =
-        repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
 

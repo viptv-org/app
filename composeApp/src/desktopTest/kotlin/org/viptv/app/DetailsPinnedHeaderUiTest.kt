@@ -39,6 +39,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class DetailsPinnedHeaderUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val title = "The End of Oak Street"
     private val series = Card(MediaIdentity("oak-street", "series", emptyList()), provider_id = "addon:21",

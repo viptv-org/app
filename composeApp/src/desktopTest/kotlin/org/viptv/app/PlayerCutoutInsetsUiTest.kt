@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerCutoutInsetsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val width = 844; private val height = 390
     private val cutout = 48; private val bottomBar = 16
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
@@ -103,7 +104,7 @@ class PlayerCutoutInsetsUiTest {
         assertEquals(Palette.surface.toArgb(), pixel(scene, x, y), "The panel surface must reach the screen edge at ($x, $y)")
     }
     private fun label(node: SemanticsNode) = text(node).ifEmpty { node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString().orEmpty() }
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

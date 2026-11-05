@@ -19,6 +19,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class GatewaySettingsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private var clock = 0L
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }

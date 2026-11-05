@@ -17,6 +17,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class MobileWebPlayerControlsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
@@ -118,12 +119,12 @@ class MobileWebPlayerControlsUiTest {
                 tvExtras = TvPlaybackExtras(sourceLabel = sourceLabel, episodes = episodes, nextEpisode = episode(25)),
                 playEpisode = {}, controlInsets = WindowInsets(0, 0, 0, 0))
         } }
-        repeat(20) { scene.render(time).close(); time += 16_666_667L; Thread.sleep(4) }
+        repeat(20) { scene.render(time).close(); time += 16_666_667L }
         return scene
     }
 
     private fun frames(scene: ImageComposeScene, count: Int = 20) {
         var time = 10_000_000_000L
-        repeat(count) { scene.render(time).close(); time += 16_666_667L; Thread.sleep(4) }
+        repeat(count) { scene.render(time).close(); time += 16_666_667L }
     }
 }

@@ -40,6 +40,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class LandscapePosterFallbackTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val posterUrl = "https://art.example/poster/tt0903747.jpg"

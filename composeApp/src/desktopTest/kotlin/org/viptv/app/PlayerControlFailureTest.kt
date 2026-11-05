@@ -23,10 +23,12 @@ import org.viptv.app.player.playbackControlErrorCopy
 import org.viptv.app.player.playbackControlErrorVisibleMillis
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerControlFailureTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun automaticWorkReportsItsFailureOnlyInDiagnostics() {
         val lines = mutableListOf<String>()
@@ -80,15 +82,15 @@ class PlayerControlFailureTest {
             PlayerScreen(null, true, null, {}, {}, {}, preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts)
         } }
         var frame = 0L
-        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
         try {
             render()
             assertFalse(showsNotice(scene), "a healthy player shows no control error")
             assertTrue(facts.tryEmit(PlayerFact.ControlFailed(PlaybackControl.Seek)))
             render(6)
             assertTrue(showsNotice(scene), "a failed viewer command is visible in the middle of the picture")
-            val deadline = System.nanoTime() + (playbackControlErrorVisibleMillis + 10_000) * 1_000_000
-            while (showsNotice(scene) && System.nanoTime() < deadline) { render(); Thread.sleep(50) }
+            frame = scene.renderUntil(timeout = (playbackControlErrorVisibleMillis + 10_000).milliseconds, from = frame,
+                what = "the control error notice to clear") { !showsNotice(scene) }
             assertFalse(showsNotice(scene), "the notice clears instead of staying over working playback")
         } finally { scene.close() }
     }

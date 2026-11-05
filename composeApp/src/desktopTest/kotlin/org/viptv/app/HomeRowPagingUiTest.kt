@@ -23,6 +23,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class HomeRowPagingUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun card(n: Int) = Card(identity = MediaIdentity("tt$n", "movie", emptyList()),
         provider_id = "stremio", title = "Movie Title $n", badges = emptyList())

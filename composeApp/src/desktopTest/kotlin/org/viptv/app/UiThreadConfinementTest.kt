@@ -17,6 +17,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class UiThreadConfinementTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun layoutCallbacksOfASlowFrameNeverRunBesideTheTest() {
         val testThread = Thread.currentThread()

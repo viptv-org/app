@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class BackArrowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -41,7 +42,7 @@ class BackArrowsUiTest {
             appLoader = SingletonImageLoader.get(context)
         }
         private var frame = 0L
-        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render() = repeat(12) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun clickBack() {
             val node = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }.firstOrNull {

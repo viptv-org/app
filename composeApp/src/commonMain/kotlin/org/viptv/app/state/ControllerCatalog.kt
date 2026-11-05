@@ -592,7 +592,7 @@ internal fun sourceTarget(card: Card, detail: org.viptv.engine.wire.DetailSnapsh
     } else card
     detail.item.identity.kind == "series" -> detail.episodes.firstOrNull {
         val coordinates = it.identity.episode
-        coordinates != null && (coordinates.season ?: 1L) > 0L && coordinates.episode > 0L
+        coordinates != null && coordinates.seasonNumber() > 0L && coordinates.episode > 0L
     } ?: throw LocalFailure("Choose an episode from this title’s details.")
     else -> detail.item
     }

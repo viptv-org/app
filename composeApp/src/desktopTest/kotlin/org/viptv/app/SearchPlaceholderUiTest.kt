@@ -25,6 +25,7 @@ import kotlin.test.assertTrue
 
 class SearchPlaceholderUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private class Fixture(val width: Int, height: Int, content: @Composable () -> Unit) : AutoCloseable {

@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ChromeFontScaleUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun headerTitleNeverClipsOrWrapsAtLargerFontScales() {
         for (scale in listOf(1.3f, 2.0f)) {
@@ -74,7 +75,7 @@ class ChromeFontScaleUiTest {
             ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) { content() } }
         }
 
-    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render((it + 1) * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(30) { scene.render((it + 1) * 16_666_667L).close() }
 
     private fun unmerged(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
 

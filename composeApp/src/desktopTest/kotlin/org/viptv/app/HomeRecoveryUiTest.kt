@@ -24,6 +24,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HomeRecoveryUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private val scope = Scope("local", "device", "one", 1)
     private val card = Card(MediaIdentity("tt1", "movie", emptyList()), provider_id = "simkl", title = "Cached title", badges = emptyList())

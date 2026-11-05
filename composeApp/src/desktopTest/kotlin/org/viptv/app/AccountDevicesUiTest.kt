@@ -21,6 +21,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountDevicesUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val snapshot = Json.decodeFromString<AccountDevices>(accountFixture)
 
     @Test fun devicesLoadOnceAndCurrentBrowserHasNoPerDeviceSignOut() {
@@ -110,7 +111,7 @@ class AccountDevicesUiTest {
 
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = if (node.config.contains(SemanticsProperties.Text)) node.config[SemanticsProperties.Text].joinToString(" ") { it.text } else ""

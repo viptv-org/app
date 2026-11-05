@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailFocusLayoutsTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val show = "tt0388629"
     private val series = Card(MediaIdentity(show, "series", listOf(ExternalId("imdb", show))),
         provider_id = "addon:4", title = "One Piece", badges = emptyList())

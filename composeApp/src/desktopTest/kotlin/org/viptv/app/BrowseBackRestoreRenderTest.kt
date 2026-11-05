@@ -33,6 +33,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class BrowseBackRestoreRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val captureDir = File("/tmp/viptv-back-restore").apply { mkdirs() }
 

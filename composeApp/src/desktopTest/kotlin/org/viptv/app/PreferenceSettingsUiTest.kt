@@ -18,6 +18,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PreferenceSettingsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val original = ProfilePreferences("cs-CZ", "uk", true, "best", 480, 1.1, "#AA1122", "#60223344")
 
     @Test fun tvPreferenceFailureFocusesRetryDisablesDuplicatesAndRestoresLoadedControls() {
@@ -154,7 +155,7 @@ class PreferenceSettingsUiTest {
     private fun phone(section: String, save: (ProfilePreferences) -> Unit) = ImageComposeScene(390, 844, Density(1f)) {
         ViptvTheme { PhoneProfilePreferences(section, PreferencesSnapshot(9, original), false, null, {}, save) }
     }
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

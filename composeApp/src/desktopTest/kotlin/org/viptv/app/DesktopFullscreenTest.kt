@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, androidx.compose.ui.InternalComposeUiApi::class)
 class DesktopFullscreenTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun episode(number: Long) = Card(
         MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
@@ -145,7 +146,7 @@ class DesktopFullscreenTest {
                 fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
         } }
 
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
 

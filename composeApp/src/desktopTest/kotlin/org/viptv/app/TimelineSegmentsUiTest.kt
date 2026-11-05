@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class TimelineSegmentsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
@@ -107,7 +108,7 @@ class TimelineSegmentsUiTest {
             }
         } }
         init { frames(); facts.tryEmit(PlayerFact.Progress(0, 1_800_000)); facts.tryEmit(PlayerFact.Status("Playing")); frames() }
-        fun frames() = repeat(16) { time += 16_666_667L; scene.render(time).close(); Thread.sleep(4) }
+        fun frames() = repeat(16) { time += 16_666_667L; scene.render(time).close() }
         fun descriptions() = nodes(scene).mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString() }
         fun pixels(): Set<Int> { time += 16_666_667L; return collectedColors(scene.render(time)) }
         fun close() = scene.close()

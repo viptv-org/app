@@ -40,6 +40,7 @@ import kotlin.test.*
 // AND-TV-ROW-EDGE-001: a TV media row runs to the viewport's right edge, keeping only its start inset.
 class TvRowEndEdgeTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val viewport = 1920f

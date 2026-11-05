@@ -26,6 +26,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvRowRightEdgeTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun focused(scene: ImageComposeScene): SemanticsNode? = scene.semanticsOwners

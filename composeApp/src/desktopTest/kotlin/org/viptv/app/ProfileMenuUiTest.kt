@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileMenuUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val profile = Profile("qa", "Stremio import QA", null, avatarId = "initial-blue")
 
     @Test fun phoneHeaderOpensTheProfileMenuInPortraitAndLandscape() {
@@ -117,7 +118,7 @@ class ProfileMenuUiTest {
         frames(scene, 40)
     }
     private var frame = 0L
-    private fun frames(s: ImageComposeScene, count: Int = 20) = repeat(count) { s.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(s: ImageComposeScene, count: Int = 20) = repeat(count) { s.render(frame++ * 16_666_667L).close() }
     private fun nodes(s: ImageComposeScene) = s.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun unmergedNodes(s: ImageComposeScene) = s.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
     private fun flatten(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flatten)

@@ -12,9 +12,10 @@ import org.viptv.app.connection.LocalFailure
 import org.viptv.app.state.sourceTarget
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
+import org.viptv.app.connection.seasonNumber
 
 internal data class DetailResume(val season: Long?, val episode: Long, val progress: Double?, val card: Card) {
-    fun matches(card: Card): Boolean = card.identity.episode?.let { it.season == season && it.episode == episode } == true
+    fun matches(card: Card): Boolean = card.identity.episode?.let { it.seasonNumber() == season.seasonNumber() && it.episode == episode } == true
 
     fun mark(card: Card): Card {
         val value = progress?.takeIf { it.isFinite() && it > 0.0 && it < 1.0 } ?: return card
@@ -32,7 +33,7 @@ internal fun detailResume(detail: DetailSnapshot?, continuing: List<Card>): Deta
     if (item.identity.kind != "series" || item.identity.episode != null) return null
     val card = continuing.firstOrNull { continues(it, item) } ?: seriesResumeEpisode(detail) ?: return null
     val coordinates = card.identity.episode ?: return null
-    return DetailResume(coordinates.season, coordinates.episode, card.progress, card)
+    return DetailResume(coordinates.seasonNumber(), coordinates.episode, card.progress, card)
 }
 
 internal fun DetailResume?.heroEpisode(detail: DetailSnapshot): Card? {
@@ -44,7 +45,7 @@ internal fun DetailResume?.heroEpisode(detail: DetailSnapshot): Card? {
 internal fun resuming(card: Card?): Boolean = card?.progress?.let { it > 0.0 && it < 1.0 } == true
 
 internal fun heroPlayLabel(card: Card?): String =
-    (if (resuming(card)) "Resume" else "Play") + card?.identity?.episode?.let { " S${it.season ?: 1L} E${it.episode}" }.orEmpty()
+    (if (resuming(card)) "Resume" else "Play") + card?.identity?.episode?.let { " S${it.seasonNumber()} E${it.episode}" }.orEmpty()
 
 private fun continues(card: Card, item: Card): Boolean {
     val coordinates = card.identity.episode ?: return false

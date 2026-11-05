@@ -24,10 +24,12 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.VizioPairingChallenge
 import org.junit.Rule
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class WatchOnTvSetupUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class FakeEngine : VizioSetupEngine {
         override suspend fun search(limit: Int, onResult: (VizioTv) -> Unit) {
@@ -193,7 +195,7 @@ class WatchOnTvSetupUiTest {
 
     private class Probe(val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         private fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun texts() = nodes().flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
@@ -214,11 +216,7 @@ class WatchOnTvSetupUiTest {
             frames()
         }
         fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "Timed out waiting for $what: ${texts()}")
-                frames(6); Thread.sleep(50)
-            }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
             frames()
         }
     }

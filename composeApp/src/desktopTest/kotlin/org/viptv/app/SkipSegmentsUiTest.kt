@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SkipSegmentsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
     private val parent = MediaIdentity("private-show", "series", emptyList())
     private fun episode(number: Long) = Card(MediaIdentity("private-$number", "series", emptyList(), EpisodeCoordinates("aired", 1, number)),
@@ -174,7 +175,7 @@ class SkipSegmentsUiTest {
             facts.tryEmit(PlayerFact.Status("Playing"))
             frames()
         }
-        fun frames() { repeat(16) { time += 16_666_667L; scene.render(time).close(); Thread.sleep(4) } }
+        fun frames() { repeat(16) { time += 16_666_667L; scene.render(time).close() } }
         fun facts(vararg values: PlayerFact) { values.forEach { assertTrue(facts.tryEmit(it)) }; frames() }
         fun focus(value: String) { action(value).config[SemanticsActions.RequestFocus].action!!.invoke(); frames() }
         fun keyDown(key: Key) { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }

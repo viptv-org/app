@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class HomeHeaderControlsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val profile = Profile("qa", "Stremio import QA", null, avatarId = "initial-blue")
     private val genres = listOf("Action", "Comedy", "Science Fiction").map { GenreChoice(it, BrowseQuery("movie", "top", "addon:1", genre = it)) }
     private val removed = listOf("Cast", "Remote control", "Calendar filters")

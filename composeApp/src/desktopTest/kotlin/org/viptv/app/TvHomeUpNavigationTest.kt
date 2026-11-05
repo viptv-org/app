@@ -29,6 +29,7 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvHomeUpNavigationTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode): String =

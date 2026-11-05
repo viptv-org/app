@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HomeHeroContinueHoverTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val featured = PreviewData.hero
     private val watched = PreviewData.watching.first()

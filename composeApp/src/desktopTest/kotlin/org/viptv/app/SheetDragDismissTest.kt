@@ -33,6 +33,7 @@ import kotlin.test.*
 
 class SheetDragDismissTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val sources = (1..40).map { n ->
         SourceCandidate("s$n", "addon:torrentio", "Stream $n", detail = "Release $n",

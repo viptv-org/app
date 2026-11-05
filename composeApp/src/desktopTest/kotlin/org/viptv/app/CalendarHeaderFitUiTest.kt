@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class CalendarHeaderFitUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val full = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     private val short = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")

@@ -3,8 +3,12 @@ package org.viptv.app
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import org.viptv.app.connection.DetailFocus
+import org.viptv.app.features.details.DetailResume
 import org.viptv.app.features.details.detailSeasons
+import org.viptv.app.features.details.episodeIn
 import org.viptv.app.features.details.episodeKey
+import org.viptv.app.features.details.seasonIn
 import org.viptv.engine.wire.*
 
 class DetailEpisodesTest {
@@ -34,6 +38,25 @@ class DetailEpisodesTest {
     @Test fun identitySeparatorsCannotCollide() {
         assertNotEquals(episodeKey(episode(1, 1, id = "b|c", provider = "a")),
             episodeKey(episode(1, 1, id = "c", provider = "a|b")))
+    }
+
+    @Test fun anAbsentSeasonNumberGroupsAsSeasonOneAndOnlyCoordinateLessCardsStayOther() {
+        val flat = episode(null, 7)
+        val groups = detailSeasons(listOf(episode(1, 1), flat, episode(2, 1), episode(null, 1).copy(identity = MediaIdentity("unknown", "series", emptyList()))))
+        assertEquals(listOf(1L, 2L, null), groups.map { it.number })
+        assertEquals(listOf(1L, 7L), groups.first().episodes.map { it.identity.episode?.episode })
+        assertEquals("Other episodes", groups.last().label)
+    }
+
+    @Test fun aSeasonlessFocusAndResumeLandOnSeasonOne() {
+        val flat = episode(null, 2)
+        val seasons = detailSeasons(listOf(episode(1, 1), flat, episode(2, 1)))
+        val focus = DetailFocus(season = null, episode = 2)
+        assertEquals(1L, focus.seasonIn(seasons)?.number)
+        assertEquals(1, focus.episodeIn(focus.seasonIn(seasons)))
+        assertEquals(2L, DetailFocus(season = 2, episode = 1).seasonIn(seasons)?.number)
+        assertEquals(true, DetailResume(season = null, episode = 2, progress = null, card = flat).matches(episode(1, 2)))
+        assertEquals(false, DetailResume(season = null, episode = 2, progress = null, card = flat).matches(episode(2, 2)))
     }
 
     @Test fun seasonIndexExposesUnloadedSeasonsAndKeepsPaginationAtTheirCanonicalOffset() {

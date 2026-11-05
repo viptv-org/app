@@ -20,6 +20,7 @@ import java.io.File
 @OptIn(ExperimentalComposeUiApi::class)
 class ProfileAdministrationUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val parentLocked=Profile("other","Other",null,locked=true,lockKind="parent")
     @Test fun remoteParentNameAndAvatarEditsNeverAskForALocalPin(){
         var renamed:Pair<String,String>?=null
@@ -44,7 +45,7 @@ class ProfileAdministrationUiTest {
         val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){Surface(Modifier.fillMaxSize(),color=Palette.background){SettingsScreen(false,emptyList(),emptySet(),false,null,null,{}, {_,_->},{},{},{},initialSection="Subtitles & audio",television=true,tvPreferences=TvSettingsPreferences(),changeTvPreferences={_,_->})}}}
         try{frames(scene);assertTrue(nodes(scene).any{text(it).startsWith("Audio language")});assertTrue(nodes(scene).any{text(it).startsWith("Subtitle language")});capture(scene,"profile-audio-settings")}finally{scene.close()}
     }
-    private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(16){s.render((offset+it)*16_666_667L).close();Thread.sleep(3)}
+    private fun frames(s:ImageComposeScene,offset:Int=0)=repeat(16){s.render((offset+it)*16_666_667L).close()}
     private fun nodes(s:ImageComposeScene)=s.semanticsOwners.flatMap{flatten(it.rootSemanticsNode)}
     private fun flatten(n:SemanticsNode):List<SemanticsNode> = listOf(n)+n.children.flatMap(::flatten)
     private fun text(n:SemanticsNode)=n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" "){it.text}

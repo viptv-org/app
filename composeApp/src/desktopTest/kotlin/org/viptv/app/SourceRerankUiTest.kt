@@ -24,6 +24,7 @@ import kotlin.test.*
 
 class SourceRerankUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private fun row(id: String) = SourceCandidate(id, "addon:fixture", "Source $id", detail = "[Source $id] Release $id")

@@ -40,6 +40,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
 class MyListSeeAllTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
@@ -49,7 +50,7 @@ class MyListSeeAllTest {
     }
     private fun tap(scene: ImageComposeScene, text: String) =
         assertTrue(requireNotNull(clickable(scene, text)) { "$text is not on screen" }.config[SemanticsActions.OnClick].action?.invoke() == true)
-    private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) { scene.render(it * 16_666_667L).close() }
 
     private fun savedCard(number: Int) = Card(MediaIdentity("saved-%02d".format(number), "movie", emptyList()),
         provider_id = "library", title = "Saved %02d".format(number), badges = emptyList())
@@ -202,7 +203,7 @@ class MyListSeeAllTest {
         }
 
         val state get() = controller.state.value
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun focused() = nodes(scene).filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::label)
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 10_000_000_000L

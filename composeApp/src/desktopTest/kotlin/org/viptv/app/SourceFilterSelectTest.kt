@@ -22,6 +22,7 @@ import kotlin.test.*
 
 class SourceFilterSelectTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun source(id: String, height: Long, provider: String) = SourceCandidate(id, "addon:$provider", "Stream $id",
         detail = "[Stream $id] Release $id", quality_height = height, presentation = SourcePresentation(provider_name = provider, source_id = provider))
 
@@ -102,7 +103,7 @@ class SourceFilterSelectTest {
             } }
         }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flatten)
         fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

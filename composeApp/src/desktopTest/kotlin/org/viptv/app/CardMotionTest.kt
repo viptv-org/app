@@ -49,6 +49,7 @@ import kotlin.test.*
 
 class CardMotionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
     private val card = Card(MediaIdentity("tt0111161", "movie", emptyList()), provider_id = "addon:4",
