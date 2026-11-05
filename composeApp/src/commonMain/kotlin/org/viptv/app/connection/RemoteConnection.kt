@@ -249,8 +249,7 @@ open class RemoteConnection(
         val page = parameters.takeIf { it.isNotEmpty() }?.joinToString("&", prefix = "?") ?: ""
         return withWorker {
             val value = call("/api/meta/${kind.encodeURLPathPart()}/${id.encodeURLPathPart()}$page")
-            DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus),
-                codec.decodeFromJsonElement<AddonFailuresBody>(value).failures)
+            DetailRead(codec.decodeFromJsonElement<DetailSnapshot>(value), (value as? JsonObject)?.let(::detailFocus))
         }
     }
 

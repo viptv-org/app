@@ -6,6 +6,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 @Serializable
+data class AddonFailure(
+    val addon_id: Long,
+    val addon_name: String,
+    val error_code: String,
+)
+
+@Serializable
 enum class Availability {
     @SerialName("Available") AVAILABLE,
     @SerialName("NeedsConfiguration") NEEDSCONFIGURATION,
@@ -75,6 +82,7 @@ data class CatalogPage(
     val cards: List<Card>,
     val next_cursor: String? = null,
     val complete: Boolean,
+    val failures: List<AddonFailure> = emptyList(),
 )
 
 @Serializable
@@ -129,6 +137,7 @@ data class DetailSnapshot(
     val episodes: List<Card>,
     val next_cursor: String? = null,
     val seasons: List<EpisodeSeason> = emptyList(),
+    val failures: List<AddonFailure> = emptyList(),
 )
 
 @Serializable

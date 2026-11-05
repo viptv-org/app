@@ -24,7 +24,7 @@ data class BrowseQuery(val type: String, val catalog: String? = null, val connec
 internal suspend fun RemoteConnection.discoveryControls(type: String, genre: String? = null): DiscoveryControls =
     Json { ignoreUnknownKeys = true }.decodeFromJsonElement(call("/api/discovery-controls?type=${type.encodeURLParameter()}" + (genre?.let { "&genre=${it.encodeURLParameter()}" } ?: "")))
 
-internal suspend fun RemoteConnection.browse(query: BrowseQuery, controls: DiscoveryControls?): BrowsePage {
+internal suspend fun RemoteConnection.browse(query: BrowseQuery, controls: DiscoveryControls?): CatalogPage {
     val params = linkedMapOf("type" to query.type, "skip" to query.skip.toString())
     query.catalog?.let { params["catalog"] = it }
     query.search?.let { params["search"] = it }
@@ -33,11 +33,7 @@ internal suspend fun RemoteConnection.browse(query: BrowseQuery, controls: Disco
     if (query.extras.isNotEmpty()) params["extras"] = Json.encodeToString(query.extras)
     if (query.values.isNotEmpty()) params["values"] = Json.encodeToString(query.values)
     val element = call("/api/discover?" + params.entries.joinToString("&") { "${it.key}=${it.value.encodeURLParameter()}" })
-    val codec = Json { ignoreUnknownKeys = true }
-    return BrowsePage(
-        codec.decodeFromJsonElement<CatalogPage>(element),
-        codec.decodeFromJsonElement<AddonFailuresBody>(element).failures,
-    )
+    return Json { ignoreUnknownKeys = true }.decodeFromJsonElement<CatalogPage>(element)
 }
 
 internal data class HomeRowPageQuery(val type: String, val catalog: String, val connectionId: String?,

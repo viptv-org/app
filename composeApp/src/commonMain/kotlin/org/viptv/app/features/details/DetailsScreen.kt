@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.DetailFocus
-import org.viptv.app.connection.AddonFailure
+import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card

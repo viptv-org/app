@@ -38,13 +38,12 @@ class DetailsStagedRenderTest {
         genres = listOf("Comedy", "Drama"), rating = 8.1, rating_votes = 1200, certification = "TV-Y7")).heroMetadataParts().joinToString(" · ")
     private val castLine = "Starring Lena, Marcus, Piper"
 
-    private val shell = DetailSnapshot(series.copy(description = shortDescription, poster = "https://card/poster.jpg",
+    private val shell = DetailSnapshot(series.copy(description = shortDescription,
         metadata = CardMetadata(year = 2025, runtime_minutes = 30, genres = listOf("Comedy", "Drama"),
             rating = 8.1, rating_votes = 1200, certification = "TV-Y7", cast = emptyList()), badges = listOf("4K")),
         episodes = emptyList())
 
-    private val full = DetailSnapshot(series.copy(description = longDescription, poster = "https://detail/poster-full.jpg",
-        landscape = "https://detail/backdrop.jpg", logo = "https://detail/logo.png",
+    private val full = DetailSnapshot(series.copy(description = longDescription,
         metadata = CardMetadata(cast = listOf("Lena", "Marcus", "Piper")),
         badges = listOf("4K", "HDR", "CC")),
         episodes = (1L..2L).map { episode(it) }, seasons = listOf(EpisodeSeason(1, 4, 0)))
