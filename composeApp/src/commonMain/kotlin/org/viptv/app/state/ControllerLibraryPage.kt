@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.LibraryQuery
 import kotlinx.coroutines.CancellationException
 
@@ -14,6 +15,13 @@ fun ApplicationController.libraryMore() = run {
     loadLibraryPage(mutable.value.libraryQuery.copy(offset = offset), append = true)
 }
 fun ApplicationController.refreshLibraryPage() = run { loadLibraryPage(refresh = true) }
+// A My List write re-reads the page it is showing in place: the pages already loaded stay, and the title the
+// write un-saved leaves them.
+internal suspend fun ApplicationController.reloadMyListAfterWrite(unsaved: Card? = null) {
+    if (mutable.value.screen != Screen.Library) return
+    loadLibraryPage(refresh = true)
+    if (unsaved != null) updateState { it.withoutSavedCard(unsaved) }
+}
 fun ApplicationController.retryLibrary() {
     if (mutable.value.screen != Screen.Library) return
     run { loadLibraryPage() }
