@@ -319,8 +319,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 when {
                     stopped && fallback != null -> PlayerFallbackPage(fallback, stopFallback, failureStyle, controlInsets)
                     stopped -> PlayerFailurePage(failureStyle, "This source stopped working", tvExtras.failureDescription ?: error, position,
-                        primary = retry?.let { failureStyle.retryAction(tvExtras.fallbackLabel, it) },
-                        choose = chooseSources?.let(failureStyle::chooseAction),
+                        primary = retry?.let { retryAction(tvExtras.fallbackLabel, it) },
+                        choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)
                     else -> {
                         val opening = openingSource
