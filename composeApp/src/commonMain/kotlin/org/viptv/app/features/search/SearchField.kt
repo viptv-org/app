@@ -24,6 +24,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.AppBasicTextField
 import org.viptv.app.components.IconButton
 
+internal const val SEARCH_PLACEHOLDER = "Search movies and series"
+
 @Composable
 internal fun SearchField(term: String, query: (String) -> Unit) {
     val focus = remember { FocusRequester() }
@@ -35,7 +37,7 @@ internal fun SearchField(term: String, query: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Lucide.Search, "Search", Modifier.size(18.dp), tint = Palette.text)
                 Box(Modifier.weight(1f)) {
-                    if (term.isEmpty()) Text("Search movies and series", fontSize = 14.sp, color = Palette.secondary)
+                    if (term.isEmpty()) Text(SEARCH_PLACEHOLDER, fontSize = 14.sp, color = Palette.secondary)
                     input()
                 }
                 IconButton(onClick = { query("") }, modifier = Modifier.size(44.dp), enabled = term.isNotEmpty()) {
