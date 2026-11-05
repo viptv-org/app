@@ -61,7 +61,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                 it.description.providerText()?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-                Button(watch, Modifier.height(40.dp * if (television) scale * 1.5f else 1f), shape = RoundedCornerShape(12.dp),
+                Button(watch, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }
