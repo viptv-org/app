@@ -37,7 +37,7 @@ internal fun Card.isCaughtUp(): Boolean =
         progress == null && subtitle == null && isWatched()
 
 internal fun EpisodeCoordinates.caption(): String =
-    season?.let { "S$it E$episode" } ?: "E$episode"
+    "S${season ?: 1L} E$episode"
 
 internal fun Card.caughtUpCaption(): String? =
     identity.episode?.takeIf { isCaughtUp() }?.let { "${it.caption()} · $WATCHED_BADGE" }

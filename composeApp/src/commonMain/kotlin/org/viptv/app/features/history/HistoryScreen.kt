@@ -63,7 +63,7 @@ internal fun HistoryDisplay.watchState(): String = when {
 }
 
 internal fun HistoryDisplay.descriptor(): String = entry.card.identity.episode?.let { episode ->
-    "S${episode.season ?: "?"} · E${episode.episode}"
+    "S${episode.season ?: 1L} · E${episode.episode}"
 } ?: entry.card.identity.kind.replaceFirstChar { it.uppercase() }
 
 internal fun HistoryDisplay.watchStateLine(): String = "${descriptor()} · ${watchState()}"

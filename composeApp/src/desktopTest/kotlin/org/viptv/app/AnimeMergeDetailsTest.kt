@@ -94,7 +94,7 @@ class AnimeMergeDetailsTest {
         val finished = resume.copy(badges = listOf("Watched"), subtitle = null, progress = null)
         assertEquals("S3 E5 · Watched", finished.caughtUpCaption())
         val unnumbered = finished.copy(identity = finished.identity.copy(episode = EpisodeCoordinates("aired", null, 7)))
-        assertEquals("E7 · Watched", unnumbered.caughtUpCaption())
+        assertEquals("S1 E7 · Watched", unnumbered.caughtUpCaption())
     }
 
     @Test fun theTvShelfKeepsSeasonZeroReachableAndLandsOnSeasonThree() = onEdt {

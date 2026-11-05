@@ -39,7 +39,7 @@ internal fun phonePlaybackEpisodes(current: Card?, episodes: List<Card>): List<C
 internal fun nextEpisodeAfter(current: Card?, episodes: List<Card>): Card? {
     val here = current ?: return null
     val ordered = phonePlaybackEpisodes(here, episodes).sortedWith(
-        compareBy<Card> { it.identity.episode?.season ?: 0L }.thenBy { it.identity.episode?.episode ?: 0L })
+        compareBy<Card> { it.identity.episode?.season ?: 1L }.thenBy { it.identity.episode?.episode ?: 0L })
     val index = ordered.indexOfFirst { cardLookupKey(it) == cardLookupKey(here) }
     return ordered.getOrNull(index + 1)?.takeIf { index >= 0 && validNextEpisode(here, it) }
 }

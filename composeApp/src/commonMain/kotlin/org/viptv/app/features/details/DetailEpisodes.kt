@@ -16,7 +16,7 @@ internal data class DetailSeason(val number: Long?, val episodes: List<Card>, va
 }
 
 internal fun detailSeasons(episodes: List<Card>, index: List<EpisodeSeason> = emptyList()): List<DetailSeason> {
-    val groups = episodes.distinctBy(::episodeKey).groupBy { it.identity.episode?.season }
+    val groups = episodes.distinctBy(::episodeKey).groupBy { it.identity.episode?.let { episode -> episode.season ?: 1L } }
     return (groups.keys + index.map { it.season }).distinct().sortedWith(compareBy({ it == null }, { it ?: 0L }))
         .map { season ->
             val descriptor = index.find { it.season == season }

@@ -36,6 +36,14 @@ class DetailEpisodesTest {
             episodeKey(episode(1, 1, id = "c", provider = "a|b")))
     }
 
+    @Test fun anAbsentSeasonNumberGroupsAsSeasonOneAndOnlyCoordinateLessCardsStayOther() {
+        val flat = episode(null, 7)
+        val groups = detailSeasons(listOf(episode(1, 1), flat, episode(2, 1), episode(null, 1).copy(identity = MediaIdentity("unknown", "series", emptyList()))))
+        assertEquals(listOf(1L, 2L, null), groups.map { it.number })
+        assertEquals(listOf(1L, 7L), groups.first().episodes.map { it.identity.episode?.episode })
+        assertEquals("Other episodes", groups.last().label)
+    }
+
     @Test fun seasonIndexExposesUnloadedSeasonsAndKeepsPaginationAtTheirCanonicalOffset() {
         val index = listOf(EpisodeSeason(1, 35, 0), EpisodeSeason(2, 49, 35))
         val groups = detailSeasons(listOf(episode(1, 1)), index)
