@@ -18,10 +18,13 @@ class AppUpdaterTest {
     private val hour = UPDATE_CHECK_INTERVAL_MILLIS
 
     // Not backgroundScope: advanceUntilIdle does not run background work once the test body is idle.
-    private fun TestScope.updater(platform: FakeUpdatePlatform, origin: String? = "https://viptv.example"): AppUpdater {
+    private fun TestScope.updater(platform: FakeUpdatePlatform, origin: String? = "https://viptv.example"): AppUpdater =
+        updater(platform) { updateFeedUrl(origin, null) }
+
+    private fun TestScope.updater(platform: FakeUpdatePlatform, feedUrl: () -> String?): AppUpdater {
         val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
         backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { scope.cancel() }
-        return AppUpdater(platform, scope) { updateFeedUrl(origin, null) }
+        return AppUpdater(platform, scope, feedUrl)
     }
 
     @Test fun launchChecksTheServerDownloadsQuietlyThenOffersTheUpdate() = runTest {
@@ -331,5 +334,40 @@ class AppUpdaterTest {
         updater.foreground(false); advanceUntilIdle()
         assertIs<UpdateStatus.Ready>(updater.state.value.status)
         assertEquals(0, platform.downloads)
+    }
+
+    @Test fun switchingServersWithinTheHourDropsTheOldBuildAndChecksTheNewServerAtOnce() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        var origin: String? = "https://viptv.example"
+        val updater = updater(platform) { updateFeedUrl(origin, null) }
+        updater.foreground(playing = false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+
+        platform.feed = feedJson(1302)
+        origin = "https://other.example"
+        platform.now += 1_000
+        updater.connectionChanged(); advanceUntilIdle()
+
+        assertEquals("https://other.example/updates/android/update.json", platform.fetched.last())
+        val ready = assertIs<UpdateStatus.Ready>(updater.state.value.status)
+        assertEquals("https://other.example/updates/android/viptv-1302.apk", ready.feed.url)
+        assertTrue(null in platform.kept, "The old server's download is dropped")
+    }
+
+    @Test fun signingOutDropsTheDownloadAndOffersNothing() = runTest {
+        val platform = FakeUpdatePlatform(feedJson(1301))
+        var origin: String? = "https://viptv.example"
+        val updater = updater(platform) { updateFeedUrl(origin, null) }
+        updater.foreground(playing = false); advanceUntilIdle()
+        assertIs<UpdateStatus.Ready>(updater.state.value.status)
+
+        origin = null
+        updater.connectionChanged(); advanceUntilIdle()
+
+        assertEquals(UpdateStatus.NoServer, updater.state.value.status)
+        assertTrue(null in platform.kept, "The download is dropped on sign-out")
+        assertFalse(showUpdatePrompt(updater.state.value.status, true, updater.state.value.snoozed))
+        updater.install(); advanceUntilIdle()
+        assertTrue(platform.installs.isEmpty(), "The old server's build cannot be installed")
     }
 }
