@@ -86,7 +86,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
                         item(key = "error") {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
                                 Text(message, color = Palette.danger, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
-                                TvAction(Modifier.height(64.dp * scale), scale, activate = retry,
+                                TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = retry,
                                     contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                                     Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
                                 }
@@ -103,7 +103,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
                         val requester = requesters.getOrPut(row.vodId) {
                             if (row.vodId == state.rows.firstOrNull()?.vodId) initial else FocusRequester()
                         }
-                        TvAction(Modifier.fillMaxWidth().height(112.dp * scale).focusProperties { left = sidebar },
+                        TvAction(Modifier.fillMaxWidth().heightIn(min = 112.dp * scale).focusProperties { left = sidebar },
                             scale, requester = requester, ring = false, enabled = !state.saving, background = Color(0xFF191919),
                             arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { openForm(row) }) { tint ->
@@ -124,7 +124,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
                     }
                     if (state.nextCursor != null) {
                         item(key = "more") {
-                            TvAction(Modifier.fillMaxWidth().height(80.dp * scale), scale, enabled = !state.loading,
+                            TvAction(Modifier.fillMaxWidth().heightIn(min = 80.dp * scale), scale, enabled = !state.loading,
                                 background = Color(0xFF191919), activate = loadMore) { tint ->
                                 Text("Load more titles", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
                             }
@@ -171,7 +171,7 @@ private fun TvVodMatchFilters(state: VodMatchesState, scale: Float, searchChip: 
 @Composable
 private fun TvVodMatchChip(label: String, icon: ImageVector?, selected: Boolean, scale: Float,
     requester: FocusRequester?, left: FocusRequester? = null, activate: () -> Unit) {
-    TvAction(Modifier.height(56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
+    TvAction(Modifier.heightIn(min = 56.dp * scale), scale, requester = requester, left = left, ring = false, cornerRadius = 28.dp * scale,
         background = if (selected) Palette.text.copy(alpha = 0.22f) else Color(0xFF191919),
         contentPadding = PaddingValues(horizontal = 22.dp * scale), activate = activate) { tint ->
         if (icon != null) { Icon(icon, null, Modifier.size(22.dp * scale), tint); Spacer(Modifier.width(10.dp * scale)) }
@@ -186,7 +186,7 @@ private fun TvVodMatchSearchPanel(query: String, queryChange: (String) -> Unit, 
         .padding(horizontal = 24.dp * scale, vertical = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Search titles", Modifier.weight(1f), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
-            TvAction(Modifier.height(56.dp * scale), scale, contentPadding = PaddingValues(horizontal = 22.dp * scale),
+            TvAction(Modifier.heightIn(min = 56.dp * scale), scale, contentPadding = PaddingValues(horizontal = 22.dp * scale),
                 activate = finish) { tint ->
                 Text("Done", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
             }
@@ -236,12 +236,12 @@ private fun TvVodMatchForm(form: VodMatchForm, saving: Boolean, error: String?, 
         }
         Spacer(Modifier.height(6.dp * scale))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
-            TvAction(Modifier.width(300.dp * scale).height(72.dp * scale), scale, primary = true,
+            TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true,
                 enabled = form.metadataId.isNotBlank() && !saving, activate = save) { tint ->
                 Text(if (saving) "Saving…" else "Save match", color = tint, fontSize = (26 * scale).sp,
                     lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
-            TvAction(Modifier.width(220.dp * scale).height(72.dp * scale), scale, enabled = !saving, activate = cancel) { tint ->
+            TvAction(Modifier.width(220.dp * scale).heightIn(min = 72.dp * scale), scale, enabled = !saving, activate = cancel) { tint ->
                 Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }

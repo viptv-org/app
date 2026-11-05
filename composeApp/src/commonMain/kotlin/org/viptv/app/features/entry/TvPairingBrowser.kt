@@ -26,7 +26,7 @@ internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: F
         Text(session?.browserAddress ?: if (busy) "Creating a code…" else "Your server", Modifier.padding(start = 62.dp * scale),
             fontSize = (44 * scale).sp, lineHeight = (63.8f * scale).sp, fontWeight = FontWeight.Bold)
         TvPairingInstruction("2", "Enter this code", scale)
-        Box(Modifier.padding(start = 62.dp * scale).size(640.dp * scale, 120.dp * scale)
+        Box(Modifier.padding(start = 62.dp * scale).width(640.dp * scale).heightIn(min = 120.dp * scale)
             .background(Color.White.copy(alpha = .08f), RoundedCornerShape(16.dp * scale))
             .border(1.dp * scale, Color.White.copy(alpha = .12f), RoundedCornerShape(16.dp * scale)), contentAlignment = Alignment.Center) {
             Text(session?.code ?: if (busy) "Waiting…" else "No code", fontSize = ((if (session == null) 36 else 72) * scale).sp,
@@ -35,7 +35,7 @@ internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: F
         Row(Modifier.padding(start = 62.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
             session?.expiryLabel?.let { Text("Code expires in $it", fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Color(0xFF8F8D89)) }
             refresh?.let { newCode ->
-                TvAction(Modifier.height(48.dp * scale), scale, requester = first, activate = newCode, cornerRadius = 10.dp * scale,
+                TvAction(Modifier.heightIn(min = 48.dp * scale), scale, requester = first, activate = newCode, cornerRadius = 10.dp * scale,
                     contentPadding = PaddingValues(horizontal = 18.dp * scale)) {
                     Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), it); Spacer(Modifier.width(10.dp * scale))
                     Text("New code", color = it, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.SemiBold)
@@ -48,7 +48,7 @@ internal fun TvPairingBrowser(session: TvPairingSession?, scale: Float, first: F
 @Composable
 private fun TvPairingInstruction(number: String, label: String, scale: Float) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp * scale)) {
-        Box(Modifier.size(44.dp * scale).border(2.dp * scale, Color.White.copy(alpha = .3f), CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.sizeIn(minWidth = 44.dp * scale, minHeight = 44.dp * scale).border(2.dp * scale, Color.White.copy(alpha = .3f), CircleShape), contentAlignment = Alignment.Center) {
             Text(number, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
         }
         Text(label, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.secondary)

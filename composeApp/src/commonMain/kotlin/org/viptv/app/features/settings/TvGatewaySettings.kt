@@ -36,7 +36,7 @@ internal fun TvGatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, G
         if (loadError != null) {
             Text(loadError, color = Palette.danger, fontSize = (22 * scale).sp)
             Spacer(Modifier.height(12.dp * scale))
-            TvAction(Modifier.height(60.dp * scale), scale, requester = first, enabled = !busy, keepFocus = true, activate = refresh) { tint ->
+            TvAction(Modifier.heightIn(min = 60.dp * scale), scale, requester = first, enabled = !busy, keepFocus = true, activate = refresh) { tint ->
                 Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
             }
         } else if (error != null) {
@@ -64,7 +64,7 @@ internal fun TvGatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, G
                         requester = if (index == 0) first else null, left = left,
                         leading = Lucide.Network,
                         activate = { if (gateway.can_manage && !enabling) setEnabled(gateway.id, !gateway.enabled) })
-                    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, ring = false,
+                    TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, ring = false,
                         enabled = !busy && !checking, keepFocus = true, activate = { check(gateway.id) },
                         background = androidx.compose.ui.graphics.Color(0xFF191919),
                         arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->

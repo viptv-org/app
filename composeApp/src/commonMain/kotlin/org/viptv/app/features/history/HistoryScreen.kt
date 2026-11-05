@@ -102,7 +102,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                 bottom = if (phone) 8.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item(key = "heading") {
-                if (phone) Box(Modifier.fillMaxWidth().height(56.dp)) {
+                if (phone) Box(Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                     BackControl(back, Modifier.align(Alignment.CenterStart))
                     Text("History", Modifier.align(Alignment.Center), fontSize = 16.sp,
                         fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -110,7 +110,7 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                         enabled = !busy && history.isNotEmpty()) {
                         Text("Clear", fontSize = 13.sp)
                     }
-                } else Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+                } else Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("History", Modifier.weight(1f), fontSize = 28.sp,
                         fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Start)
                     TextButton(onClick = { confirm = true }, enabled = !busy && history.isNotEmpty()) {
@@ -155,7 +155,7 @@ private fun HistoryFailure(reason: String, retry: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Couldn’t load history", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
-        Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
+        Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.heightIn(min = 46.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
     }
 }

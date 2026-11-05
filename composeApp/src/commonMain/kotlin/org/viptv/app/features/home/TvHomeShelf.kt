@@ -89,7 +89,7 @@ internal fun TvHomeShelf(row: HomeRow, scale: Float, first: FocusRequester?, sho
         .then(if (rowAlpha != null) Modifier.graphicsLayer { alpha = rowAlpha.value } else Modifier)
         .then(if (onHeightChange != null) Modifier.onSizeChanged { onHeightChange(it.height) } else Modifier)
         .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-        Text(row.title, Modifier.padding(start = 96.dp * scale).height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
+        Text(row.title, Modifier.padding(start = 96.dp * scale).heightIn(min = 40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
             letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
 
         LazyRow(state = state, modifier = arrival.focusRestorer(if (lastFocusedKey != null) recover else FocusRequester.Default).focusGroup().onFocusChanged {

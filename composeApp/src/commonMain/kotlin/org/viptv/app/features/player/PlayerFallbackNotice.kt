@@ -48,7 +48,7 @@ internal fun BoxScope.TvAudioNotice(notice: String, scale: Float, nextSource: ((
         .semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
         Text(notice, Modifier.weight(1f, fill = false), color = Palette.text, fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp)
-        if (nextSource != null) TvAction(Modifier.height(64.dp * scale), scale, requester = requester, activate = nextSource,
+        if (nextSource != null) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, requester = requester, activate = nextSource,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) { ink ->
             Text("Next source", color = ink, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
         }

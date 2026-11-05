@@ -80,7 +80,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                         shown.description.providerText()?.let { ClampedText(it, fontSize = if (short) 15.sp else 16.sp, lineHeight = if (short) 21.sp else 23.sp,
                             color = Palette.body, maxLines = if (short) 1 else 2) }
                         Row(Modifier.padding(top = if (short) 2.dp else 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
+                            Button(onClick = { play(shown) }, modifier = Modifier.width(160.dp).heightIn(min = 48.dp), shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                 if (shown.isPlayPending()) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
                                 else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))

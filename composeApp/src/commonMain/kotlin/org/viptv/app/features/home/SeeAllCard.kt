@@ -105,7 +105,7 @@ internal fun TvSeeAllCard(seeAll: RowSeeAll, scale: Float, open: () -> Unit, mod
             }
             FocusOutline(focus.value, 10.dp * scale, 3.dp * scale, Modifier.matchParentSize())
         }
-        Column(Modifier.fillMaxWidth().height(76.dp * scale).padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
+        Column(Modifier.fillMaxWidth().heightIn(min = 76.dp * scale).padding(top = 14.dp * scale), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
             Text(seeAll.title, fontSize = (24 * scale).sp, lineHeight = (29 * scale).sp,
                 color = if (focus.value) Palette.text else Palette.body, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(seeAll.caption, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.secondary,

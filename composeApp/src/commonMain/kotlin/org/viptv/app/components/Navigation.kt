@@ -42,7 +42,7 @@ fun TopNavigation(selected: Screen, television: Boolean, navigate: (Screen) -> U
         it.screen in listOf(Screen.Home, Screen.Movies, Screen.Series, Screen.Live)
     } else destinations
     var overflow by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().height(68.dp)
+    Row(Modifier.fillMaxWidth().heightIn(min = 68.dp)
         .padding(horizontal = pageGutter(television = false, tablet = false, browser = true, maxWidth)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
         Box(Modifier.padding(end = if (collapsed) 0.dp else 14.dp).testTag("top-nav-brand")) { Brand(28.dp, 20.sp, 9.dp) }

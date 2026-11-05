@@ -175,7 +175,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                     Spacer(Modifier.height(16.dp * scale))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.height(72.dp * scale).width(280.dp * scale), scale, primary = true, enabled = !busy, keepFocus = true, activate = {
+                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(280.dp * scale), scale, primary = true, enabled = !busy, keepFocus = true, activate = {
                         val configuration = buildJsonObject {
                             values.forEach { (key, value) -> if (value.isNotBlank()) put(key, value.trim()) }
                             if (schema.provider_choices.isNotEmpty()) put("providers", JsonArray(selected.map { kotlinx.serialization.json.JsonPrimitive(it) }))
@@ -185,7 +185,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
                         if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.size(28.dp * scale), color = tint, strokeWidth = 3.dp * scale)
                         else Text("Save", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, requester = cancelFocus, enabled = !busy, keepFocus = true, activate = back) { tint ->
+                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(220.dp * scale), scale, requester = cancelFocus, enabled = !busy, keepFocus = true, activate = back) { tint ->
                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -206,7 +206,7 @@ internal fun TvSourceIntegrationList(snapshot: SourceIntegrationSnapshot, busy: 
     if (error != null) {
         Text(error, color = Palette.danger, fontSize = (22 * scale).sp)
         Spacer(Modifier.height(12.dp * scale))
-        TvAction(Modifier.height(60.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, keepFocus = true, activate = retry) { tint ->
+        TvAction(Modifier.heightIn(min = 60.dp * scale).width(200.dp * scale), scale, requester = first, enabled = !busy, keepFocus = true, activate = retry) { tint ->
             Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(16.dp * scale))
@@ -239,26 +239,46 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
     val configured = schema.connection_id != null
     val available = schema.runtime_enabled
     val ready = available && schema.state == "Ready"
-    Box(Modifier.fillMaxWidth().height(160.dp * scale).graphicsLayer { this.alpha = alpha }
+    Column(Modifier.fillMaxWidth().heightIn(min = 160.dp * scale).graphicsLayer { this.alpha = alpha }
         .clip(RoundedCornerShape(16.dp * scale))
-        .background(if (available) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.03f))) {
-        Row(Modifier.padding(start = 28.dp * scale, top = 24.dp * scale)) {
+        .background(if (available) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.03f))
+        .padding(start = 28.dp * scale, end = 28.dp * scale, top = 24.dp * scale, bottom = 20.dp * scale),
+        verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+        Row(Modifier.fillMaxWidth()) {
             Box(Modifier.size(64.dp * scale).clip(RoundedCornerShape(14.dp * scale)).background(Color.White.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center) {
                 Icon(sourceIntegrationIcon(schema.plugin_id), null, Modifier.size(32.dp * scale))
             }
             Spacer(Modifier.width(24.dp * scale))
-            Column(Modifier.width(560.dp * scale)) {
+            Column(Modifier.weight(1f)) {
                 Text(schema.name, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(6.dp * scale))
                 Text(sourceIntegrationRole(schema.plugin_id), color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                when {
+                    ready -> Icon(Lucide.CircleCheck, null, Modifier.size(24.dp * scale), tint = Palette.body)
+                    available -> Box(Modifier.size(10.dp * scale).clip(RoundedCornerShape(5.dp * scale)).background(Palette.accent))
+                    else -> Icon(Lucide.Info, null, Modifier.size(24.dp * scale), tint = Palette.tertiary)
+                }
+                Text(
+                    when {
+                        ready -> "Ready"
+                        available -> "Needs configuration"
+                        else -> "Unavailable on this connection"
+                    },
+                    fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold,
+                    color = when {
+                        ready -> Palette.body
+                        available -> Palette.text
+                        else -> Palette.tertiary
+                    })
+            }
         }
-        Row(Modifier.align(Alignment.BottomStart).padding(start = (28 + 64 + 24).dp * scale, bottom = 20.dp * scale),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
             if (configured) {
-                Row(Modifier.height(32.dp * scale).clip(RoundedCornerShape(6.dp * scale))
+                Row(Modifier.heightIn(min = 32.dp * scale).clip(RoundedCornerShape(6.dp * scale))
                     .border(1.5.dp * scale, Color.White.copy(alpha = 0.14f), RoundedCornerShape(6.dp * scale))
                     .padding(horizontal = 10.dp * scale), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp * scale)) {
@@ -266,48 +286,25 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                     Text("Saved", fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, color = Palette.body)
                 }
             }
-            Text(sourceIntegrationDetail(schema), color = Palette.secondary, fontSize = (22 * scale).sp,
+            Text(sourceIntegrationDetail(schema), Modifier.weight(1f), color = Palette.secondary, fontSize = (22 * scale).sp,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        Row(Modifier.align(Alignment.TopEnd).padding(top = 28.dp * scale, end = 28.dp * scale),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-            when {
-                ready -> Icon(Lucide.CircleCheck, null, Modifier.size(24.dp * scale), tint = Palette.body)
-                available -> Box(Modifier.size(10.dp * scale).clip(RoundedCornerShape(5.dp * scale)).background(Palette.accent))
-                else -> Icon(Lucide.Info, null, Modifier.size(24.dp * scale), tint = Palette.tertiary)
-            }
-            Text(
-                when {
-                    ready -> "Ready"
-                    available -> "Needs configuration"
-                    else -> "Unavailable on this connection"
-                },
-                fontSize = (22 * scale).sp, fontWeight = FontWeight.SemiBold,
-                color = when {
-                    ready -> Palette.body
-                    available -> Palette.text
-                    else -> Palette.tertiary
-                })
-        }
-        if (available && canManage) {
-            Row(Modifier.align(Alignment.BottomEnd).padding(end = 28.dp * scale, bottom = 16.dp * scale),
-                horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+            if (available && canManage) {
                 if (configured) {
-                    TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, primary = true,
+                    TvAction(Modifier.heightIn(min = 60.dp * scale).width(210.dp * scale), scale, primary = true,
                         requester = requester, left = left, ring = false, enabled = enabled, keepFocus = true, activate = configure) { tint ->
                         Icon(Lucide.Pencil, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
                         Text("Replace", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
                     }
                     remove?.let { onRemove ->
-                        TvAction(Modifier.height(60.dp * scale).width(210.dp * scale), scale, left = left, ring = false, enabled = enabled, keepFocus = true, activate = onRemove) { tint ->
+                        TvAction(Modifier.heightIn(min = 60.dp * scale).width(210.dp * scale), scale, left = left, ring = false, enabled = enabled, keepFocus = true, activate = onRemove) { tint ->
                             Icon(Lucide.Trash2, null, Modifier.size(24.dp * scale), tint = Palette.danger)
                             Spacer(Modifier.width(12.dp * scale))
                             Text("Remove", color = Palette.danger, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 } else {
-                    TvAction(Modifier.height(60.dp * scale).width(240.dp * scale), scale, requester = requester,
+                    TvAction(Modifier.heightIn(min = 60.dp * scale).width(240.dp * scale), scale, requester = requester,
                         left = left, ring = false, enabled = enabled, keepFocus = true, activate = configure) { tint ->
                         Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
@@ -374,11 +371,11 @@ internal fun TvSourceRemoveConfirmation(schema: SourceIntegrationSchema, profile
                     "Content from this provider stops showing until you set it up again. Nothing else on the account changes.",
                     fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
                 Row(Modifier.padding(top = 18.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                    TvAction(Modifier.width(240.dp * scale).height(72.dp * scale), scale, primary = true, requester = initial,
+                    TvAction(Modifier.width(240.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true, requester = initial,
                         enabled = !busy, keepFocus = true, activate = dismiss) { tint ->
                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
-                    TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, enabled = !busy, keepFocus = true, activate = confirm) {
+                    TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale, enabled = !busy, keepFocus = true, activate = confirm) {
                         Icon(Lucide.Trash2, null, Modifier.size(28.dp * scale), Palette.danger); Spacer(Modifier.width(12.dp * scale))
                         Text("Remove", color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     }
