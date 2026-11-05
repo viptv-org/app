@@ -131,6 +131,18 @@ class PlaybackStallTest {
         assertNull(controller.state.value.error)
     }
 
+    @Test fun aTorrentKeepsItsOwnStartupBudget() = runTest {
+        val server = Server()
+        val controller = controller(server)
+        controller.mutable.value = controller.state.value.copy(sources = listOf(source.copy(delivery = "torrent")))
+        controller.playSource(source.copy(delivery = "torrent")); runCurrent()
+        val input = assertNotNull(controller.state.value.playback)
+        controller.observePlaybackFor(input, PlayerFact.Status("Buffering"))
+        advanceTimeBy(3 * PLAYBACK_STALL_WINDOW_MILLIS); runCurrent()
+        assertNull(controller.state.value.error)
+        controller.closePlayer()
+    }
+
     @Test fun retryAfterAStallSavesThePositionAndReopensTheSameSource() = runTest {
         val server = Server()
         val controller = controller(server)

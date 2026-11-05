@@ -252,6 +252,8 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
 
 // A renderer that keeps waiting on a dead socket reports a waiting status and no failure: a window without progress is the failure.
 private fun ApplicationController.watchPlaybackStall(fact: PlayerFact) {
+    // A torrent buffers while its runtime gathers pieces, on its own 120 s startup budget, and reports its own failures.
+    if (mutable.value.playingSource?.delivery == "torrent") return
     when (fact) {
         is PlayerFact.Status -> {
             playbackWaiting = fact.name in PlaybackWaitingStatuses
