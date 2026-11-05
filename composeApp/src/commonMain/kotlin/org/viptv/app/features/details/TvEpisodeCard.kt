@@ -44,10 +44,10 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         val shape = RoundedCornerShape(12.dp * scale)
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(shape).background(Palette.surface)) {
             val art = card.landscape ?: card.poster
-            val artwork = remember(art) { ArtFailure() }
+            val artwork = remember(art) { ArtFailure(art) }
             val attempt = artwork.retryAfterFailure()
-            if (art != null) key(attempt) { AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                onSuccess = { artwork.failed = false }, onError = { artwork.failed = true }) }
+            if (art != null && !artwork.gone) key(attempt) { AsyncImage(art, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                onSuccess = { artwork.ready() }, onError = { artwork.fail(it.result.throwable, art) }) }
             if (art == null || artwork.failed) {
                 Text(card.episodeArtLabel() ?: card.title, Modifier.align(Alignment.Center).padding(24.dp * scale),
                     color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,

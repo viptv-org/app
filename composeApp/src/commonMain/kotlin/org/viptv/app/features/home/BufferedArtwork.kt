@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.filterNotNull
 internal data class LoadedArtwork(val url: String, val painter: Painter)
 
 @Composable
-internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String) -> Unit = {}) {
+internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String, Throwable?) -> Unit = { _, _ -> }) {
     if (!org.viptv.app.components.LocalTvFocusAnchoring.current) {
         LegacyBufferedArtwork(url, modifier, alignment, onReady, onError)
         return
@@ -30,7 +30,8 @@ internal fun BufferedArtwork(url: String?, modifier: Modifier, alignment: Alignm
     val incoming = rememberAsyncImagePainter(ImageRequest.Builder(LocalPlatformContext.current).data(url).size(size).build(), contentScale = ContentScale.Crop)
     val status by incoming.state.collectAsState()
     LaunchedEffect(url, status) {
-        if (status is AsyncImagePainter.State.Error && url != null) onError(url)
+        val error = status as? AsyncImagePainter.State.Error
+        if (error != null && url != null) onError(url, error.result.throwable)
     }
     val ready = (status as? AsyncImagePainter.State.Success)?.takeIf { it.result.request.data == url }
     ArtworkDissolve(if (ready != null && url != null) LoadedArtwork(url, ready.painter) else null,
@@ -70,7 +71,7 @@ internal fun ArtworkDissolve(ready: LoadedArtwork?, modifier: Modifier, alignmen
 }
 
 @Composable
-private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String) -> Unit = {}) {
+private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: Alignment = Alignment.Center, onReady: (String?) -> Unit = {}, onError: (String, Throwable?) -> Unit = { _, _ -> }) {
     val size = rememberConstraintsSizeResolver()
     val incoming = rememberAsyncImagePainter(ImageRequest.Builder(LocalPlatformContext.current).data(url).size(size).build(), contentScale = ContentScale.Crop)
     val status by incoming.state.collectAsState()
@@ -80,7 +81,8 @@ private fun LegacyBufferedArtwork(url: String?, modifier: Modifier, alignment: A
     val reveal = motionSpec<Float>(tween(200))
     LaunchedEffect(url, status) {
         if (url == null) { shown = null; outgoing = null; return@LaunchedEffect }
-        if (status is AsyncImagePainter.State.Error) onError(url)
+        val error = status as? AsyncImagePainter.State.Error
+        if (error != null) onError(url, error.result.throwable)
         val ready = status as? AsyncImagePainter.State.Success
         if (ready != null && ready.result.request.data == url && shown?.url != url) {
             outgoing = shown

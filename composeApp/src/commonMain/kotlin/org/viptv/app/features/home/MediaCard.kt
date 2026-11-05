@@ -249,17 +249,18 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
 private fun CardArtwork(card: Card, portrait: Boolean, slotW: Int, slotH: Int, labelScale: Float) {
     val landscape = if (portrait) null else card.landscapeArt()
     val url = if (portrait) card.poster?.takeIf { it.isNotBlank() } else (landscape as? LandscapeArt.Still)?.url
+    val posterUrl = (landscape as? LandscapeArt.Poster)?.url
     // Keyed on what is drawn, so a slot reused for other art or the other orientation never keeps a stale failure.
-    val art = remember(card.poster, card.landscape, portrait) { ArtFailure() }
+    val art = remember(card.poster, card.landscape, portrait) { ArtFailure(url ?: posterUrl) }
     val attempt = art.retryAfterFailure()
     Box(Modifier.fillMaxSize()) {
         when {
-            url != null -> key(attempt) { AsyncImage(org.viptv.app.images.sizedArtwork(url, slotW, slotH),
+            url != null && !art.gone -> key(attempt) { AsyncImage(org.viptv.app.images.sizedArtwork(url, slotW, slotH),
                 card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                onSuccess = { art.failed = false }, onError = { art.failed = true }) }
-            landscape is LandscapeArt.Poster -> key(attempt) { PosterInLandscape(
-                org.viptv.app.images.sizedArtwork(landscape.url, slotH * 2 / 3, slotH) ?: landscape.url, card.title,
-                onSuccess = { art.failed = false }, onError = { art.failed = true }) }
+                onSuccess = { art.ready() }, onError = { art.fail(it.result.throwable, url) }) }
+            posterUrl != null && !art.gone -> key(attempt) { PosterInLandscape(
+                org.viptv.app.images.sizedArtwork(posterUrl, slotH * 2 / 3, slotH) ?: posterUrl, card.title,
+                onSuccess = { art.ready() }, onError = { art.fail(it.result.throwable, posterUrl) }) }
         }
         if (art.failed || url == null && landscape !is LandscapeArt.Poster) MissingArtTile(card.title, labelScale)
     }

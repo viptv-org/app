@@ -56,6 +56,24 @@ class TvDetailsArtworkRetryTest {
         }
     }
 
+    @Test fun anEpisodeStillThatIsMissingIsAskedOnceAndSettlesOnTheTitleText() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/episode.png" to 99), failStatus = 404) { art ->
+            val card = art.card(title = "Episode One", landscape = art.url("episode"))
+            val shot = render(520, 420, frames = 200) { TvEpisodeCard(card, 1f, {}, {}, null, FocusRequester()) }
+            assertEquals(1, art.paths["/episode.png"] ?: 0, "a 404 is not retried: ${art.paths}")
+            assertEquals(0, shot.count(StillInk), "a missing still leaves the title text")
+        }
+    }
+
+    @Test fun aBackdropThatIsMissingFallsBackToThePosterWithoutRetryingTheStill() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/landscape.png" to 99), failStatus = 404) { art ->
+            val card = art.card(title = "Show", landscape = art.url("landscape"), poster = art.url("poster"))
+            render(400, 400, frames = 200) { TvDetailBackdrop(card, 1f) { 0f } }
+            assertEquals(1, art.paths["/landscape.png"] ?: 0, "a missing backdrop is not retried: ${art.paths}")
+            assertEquals(1, art.paths["/poster.png"] ?: 0, "the poster is the fallback: ${art.paths}")
+        }
+    }
+
     @Test fun aCancelledBackdropRequestIsRetriedInsteadOfFallingBackToThePoster() = runBlocking {
         withFakeArtwork(failFirst = mapOf("/landscape.png" to 1)) { art ->
             val card = art.card(title = "Show", landscape = art.url("landscape"), poster = art.url("poster"))
@@ -86,7 +104,7 @@ class TvDetailsArtworkRetryTest {
             title = title, badges = emptyList(), poster = poster, landscape = landscape)
     }
 
-    private suspend fun withFakeArtwork(failFirst: Map<String, Int> = emptyMap(), block: suspend (Artwork) -> Unit) {
+    private suspend fun withFakeArtwork(failFirst: Map<String, Int> = emptyMap(), failStatus: Int = 500, block: suspend (Artwork) -> Unit) {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val art = Artwork("http://127.0.0.1:${server.address.port}")
         server.createContext("/") { exchange ->
@@ -94,7 +112,7 @@ class TvDetailsArtworkRetryTest {
             val served = (art.paths[name] ?: 0) + 1
             art.paths[name] = served
             if (served <= (failFirst[name] ?: 0)) {
-                exchange.sendResponseHeaders(500, -1)
+                exchange.sendResponseHeaders(failStatus, -1)
                 exchange.close()
                 return@createContext
             }
