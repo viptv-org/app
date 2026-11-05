@@ -127,8 +127,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                     source = failedSource, positionMillis = state.position,
                     description = extras.failureDescription ?: (if (state.undecodable || failure == PlaybackFailure.Undecodable)
                         "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else null),
-                    primary = retry?.let { failureStyle.retryAction(extras.fallbackLabel, it) },
-                    choose = chooseSources?.let(failureStyle::chooseAction),
+                    primary = retry?.let { retryAction(extras.fallbackLabel, it) },
+                    choose = chooseSources?.let(::chooseSourceAction),
                     back = close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,

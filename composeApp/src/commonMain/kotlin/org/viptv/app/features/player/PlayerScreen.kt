@@ -324,8 +324,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     stopped -> PlayerFailurePage(failureStyle, "This source stopped working",
                         failure = if (undecodable) PlaybackFailure.Undecodable else failure,
                         source = failedSource, positionMillis = position, description = tvExtras.failureDescription,
-                        primary = retry?.let { failureStyle.retryAction(tvExtras.fallbackLabel, it) },
-                        choose = chooseSources?.let(failureStyle::chooseAction),
+                        primary = retry?.let { retryAction(tvExtras.fallbackLabel, it) },
+                        choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)
                     else -> {
                         val opening = openingSource
