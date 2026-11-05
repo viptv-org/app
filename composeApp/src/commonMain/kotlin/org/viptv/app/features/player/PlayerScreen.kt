@@ -243,7 +243,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
-                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked && !failed && error == null) { visible = !visible; interaction++ })
+                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                    enabled = !locked && !failed && error == null,
+                    onClickLabel = if (visible) "Hide controls" else "Show controls") { visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
