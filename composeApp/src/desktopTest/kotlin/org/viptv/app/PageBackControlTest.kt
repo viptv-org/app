@@ -26,7 +26,8 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.entry.ProfileEditScreen
 import org.viptv.app.features.entry.ProfilePinScreen
 import org.viptv.app.features.history.HistoryScreen
-import org.viptv.app.features.player.PhonePlayerFailure
+import org.viptv.app.features.player.PhoneFailureStyle
+import org.viptv.app.features.player.PlayerFailurePage
 import org.viptv.app.features.settings.AccountDevicesScreen
 import org.viptv.app.features.settings.AddonSettings
 import org.viptv.app.features.settings.PhoneSettings
@@ -92,7 +93,7 @@ class PageBackControlTest {
         "Continue watching" to { ContinueWatchingScreen(ContinueWatchingPage(emptyList(), loaded = true), play = { _ -> }, open = { _ -> },
             more = null, retry = {}, back = {}, home = {}) },
         "Details" to { DetailsScreen(DetailSnapshot(card, episodes = emptyList()), busy = false, error = null, back = {}, sources = { _ -> }) },
-        "Player failure" to { PhonePlayerFailure("The source stopped.", null, retry = null, choose = null, close = {}, title = null,
+        "Player failure" to { PlayerFailurePage(PhoneFailureStyle, "This source stopped working", "The source stopped.", back = {},
             insets = WindowInsets(0)) },
     )
 

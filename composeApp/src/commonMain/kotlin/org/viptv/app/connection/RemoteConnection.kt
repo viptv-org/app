@@ -107,7 +107,6 @@ open class RemoteConnection(
         private set
     // Raised from checkStatus, not a call site: a background call that swallows the failure must still say so.
     internal var onClientUpdateRequired: (() -> Unit)? = null
-    // Every API response means the backend answered, whatever it answered; a request that never got one means it is unreachable.
     internal var onBackendReachability: ((Boolean) -> Unit)? = null
 
     internal fun devicePairing(active: () -> Boolean = { true }) = RemoteDevicePairing(

@@ -106,9 +106,9 @@ class PhonePlayerActionsUiTest {
             frames(scene); capture(scene, "phone-player-source-failure")
             assertEquals(0, retry); assertEquals(0, choose)
             click(scene, "Try Fixture 1080p"); assertEquals(1, retry)
-            click(scene, "Choose a source"); assertEquals(1, choose)
+            click(scene, "Choose another source"); assertEquals(1, choose)
             available = false; frames(scene, 20)
-            assertFalse(nodes(scene).any { text(it) == "Choose a source" || text(it).startsWith("Try ") })
+            assertFalse(nodes(scene).any { text(it) == "Choose another source" || text(it).startsWith("Try ") })
             nodes(scene).single { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains("Back") == true && it.config.contains(SemanticsActions.OnClick) }
                 .config[SemanticsActions.OnClick].action!!.invoke()
             assertEquals(1, close)

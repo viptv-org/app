@@ -7,72 +7,79 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
     startupDatabase = localDatabase
     updateState { it.copy(starting = true) }
     val operation = generation
-    val origin = browserOrigin()
+    val origin = launchOrigin()
     if (origin != null) {
-        val remote = remoteFactory(origin, sessionStore)
-        connection = remote
-        val restored = remote.restoreBrowser()
+        val restored = launchRestore(operation, connect = { remoteFactory(origin, sessionStore) },
+            restore = { remote -> remote.restoreBrowser() })
+        if (generation != operation) return@run
+        if (restored == null) { connection?.close(); connection = null; return@run }
+        accept(restored)
+        resumeNavigation()
+        return@run
+    }
+    val savedConnection = try { sessionStore.savedConnection() }
+    catch (error: CancellationException) { throw error }
+    catch (_: Exception) {
         currentCoroutineContext().ensureActive()
-        if (generation != operation || connection !== remote) return@run
-        if (restored == null) { remote.close(); connection = null }
-        else { accept(restored); resumeNavigation() }
-    } else {
-        val savedConnection = try { sessionStore.savedConnection() }
-        catch (error: CancellationException) { throw error }
-        catch (_: Exception) {
-            currentCoroutineContext().ensureActive()
-            if (generation == operation) updateState { next -> next.copy(error = "Your saved connection could not be read from secure storage. Choose a connection to continue.") }
+        if (generation == operation) updateState { next -> next.copy(error = "Your saved connection could not be read from secure storage. Choose a connection to continue.") }
+        null
+    }
+    currentCoroutineContext().ensureActive()
+    if (generation != operation) return@run
+    if (savedConnection == SavedConnection.Local) {
+        if (localDatabase == null) return@run
+        accept(openLocalConnection(localDatabase))
+        resumeNavigation()
+        return@run
+    }
+    val saved = (savedConnection as? SavedConnection.Remote)?.session ?: return@run
+    val restored = launchRestore(operation, connect = {
+        try { remoteFactory(saved.origin, sessionStore) }
+        catch (_: IllegalArgumentException) {
+            withNativeSessionStoreLock {
+                if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
+            }
             null
         }
-        currentCoroutineContext().ensureActive()
-        if (generation != operation) return@run
-        if (savedConnection == SavedConnection.Local) {
-            if (localDatabase == null) return@run
-            accept(openLocalConnection(localDatabase))
-            resumeNavigation()
-            return@run
+    }, restore = { remote -> remote.restoreFromStore() })
+    if (generation != operation) return@run
+    if (restored == null) { connection?.close(); connection = null; return@run }
+    accept(restored)
+    resumeNavigation()
+}
+
+private suspend fun ApplicationController.launchRestore(operation: Long, connect: suspend () -> RemoteConnection?,
+    restore: suspend (RemoteConnection) -> Bootstrap?): Bootstrap? {
+    var attempt = 0
+    while (true) {
+        val remote = connect() ?: return null
+        connection = remote
+        val failure = try {
+            val restored = restore(remote)
+            currentCoroutineContext().ensureActive()
+            if (generation != operation || connection !== remote) return null
+            return restored
         }
-        val saved = (savedConnection as? SavedConnection.Remote)?.session ?: return@run
-        var attempt = 0
-        while (true) {
-            val remote = try { remoteFactory(saved.origin, sessionStore) }
-            catch (_: IllegalArgumentException) {
-                withNativeSessionStoreLock {
-                    if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
-                }
-                return@run
-            }
-            connection = remote
-            val failure = try {
-                val restored = remote.restoreFromStore()
-                currentCoroutineContext().ensureActive()
-                if (generation == operation && connection === remote) {
-                    accept(restored)
-                    resumeNavigation()
-                }
-                return@run
-            }
-            catch (error: CancellationException) { throw error }
-            catch (error: Exception) {
-                currentCoroutineContext().ensureActive()
-                if (generation != operation || connection !== remote) return@run
-                // Release the failed connection before the next attempt or Connect so no token-bearing client survives the restore.
-                remote.close(); connection = null
-                error
-            }
-            if (!failure.retriesStartup() || attempt >= startupRetryDelays.size) {
-                when (failure) {
-                    is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
-                        error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
-                    else -> {
-                        updateState { it.copy(startupRetryable = true) }
-                        throw failure
-                    }
-                }
-                return@run
-            }
-            delay(startupRetryDelays[attempt++])
+        catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            currentCoroutineContext().ensureActive()
+            if (generation != operation || connection !== remote) return null
+            // Release the failed connection before the next attempt or Connect so no token-bearing client survives the restore.
+            remote.close(); connection = null
+            error
         }
+        if (!failure.retriesStartup() || attempt >= startupRetryDelays.size) {
+            when (failure) {
+                is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
+                    error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
+                else -> {
+                    updateState { it.copy(startupRetryable = true) }
+                    throw failure
+                }
+            }
+            return null
+        }
+        delay(startupRetryDelays[attempt++])
     }
 }
 
