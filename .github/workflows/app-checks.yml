@@ -93,6 +93,8 @@ jobs:
     name: build desktop natives
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      APT_PACKAGES: libdbus-1-dev
     steps:
       - uses: actions/checkout@v7
         with:
@@ -106,15 +108,24 @@ jobs:
         with:
           go-version: '1.25.11'
           cache: false
-      - name: Cache native build dependencies
-        uses: actions/cache@v6
+      - name: Compute the apt deb cache key
+        run: bash scripts/ci/apt-cache-key.sh >> "$GITHUB_ENV"
+      - name: Restore the apt deb cache
+        id: apt-debs
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install native build dependencies
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev
+        run: bash scripts/ci/install-apt-packages.sh
+      - name: Save the apt deb cache
+        if: always() && steps.apt-debs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/apt-debs
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install pinned Rust
         shell: bash
         run: |
@@ -160,6 +171,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: native-prep
+    env:
+      APT_PACKAGES: libmpv2 mpv patchelf
     strategy:
       fail-fast: false
       matrix:
@@ -183,15 +196,24 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
-      - name: Cache native media dependencies
-        uses: actions/cache@v6
+      - name: Compute the apt deb cache key
+        run: bash scripts/ci/apt-cache-key.sh >> "$GITHUB_ENV"
+      - name: Restore the apt deb cache
+        id: apt-debs
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libmpv2-mpv-patchelf
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install native media dependencies
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libmpv2 mpv patchelf
+        run: bash scripts/ci/install-apt-packages.sh
+      - name: Save the apt deb cache
+        if: always() && steps.apt-debs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/apt-debs
+          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Download desktop natives
         uses: actions/download-artifact@v7
         with:
