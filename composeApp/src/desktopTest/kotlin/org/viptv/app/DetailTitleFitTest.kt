@@ -31,6 +31,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailTitleFitTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val artwork = "https://images.example/backdrop.jpg"
     private val title = "The Extraordinary Chronicle of a Night City Mercenary Crew Without Any Logo Artwork to Stand In for the Name of the Year"
