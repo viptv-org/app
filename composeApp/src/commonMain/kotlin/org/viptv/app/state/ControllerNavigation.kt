@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.*
+import org.viptv.engine.wire.LiveQuery
 import kotlinx.coroutines.CancellationException
 
 fun ApplicationController.navigate(screen: Screen, record: Boolean = true, browse: BrowseQuery? = null) {
@@ -89,7 +90,7 @@ private fun ApplicationController.recoverBackEntryLoads(screen: Screen, browse: 
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
     else if (screen == Screen.Home) freshen()
     if (screen != Screen.Live) liveGuideJob?.cancel()
-    if (!skip && screen == Screen.Live) run { loadLive(LiveQuery()) }
+    if (!skip && screen == Screen.Live) run { loadLive(LiveQuery(offset = 0)) }
     if (screen == Screen.Settings && connection?.browserSession != true) refreshAddons()
     if (!skip && screen == Screen.Library) run { loadLibraryPage() }
     if (!skip && screen == Screen.ContinueWatching) loadContinueWatching(navigation)

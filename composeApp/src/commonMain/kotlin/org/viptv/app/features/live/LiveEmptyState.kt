@@ -30,8 +30,9 @@ import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.connection.AccountAccess
-import org.viptv.app.connection.LiveCatalogPage
 import org.viptv.app.theme.Palette
+import org.viptv.engine.wire.Availability
+import org.viptv.engine.wire.LivePage
 
 internal const val LiveEyebrow = "LIVE TV"
 internal const val LiveNoSourceHeadline = "Live TV isn't set up yet."
@@ -54,11 +55,11 @@ internal const val LiveAddonsSection = "Add-ons"
 enum class LiveSpread { Channels, Filtered, Loading, NoSource, NoChannels, Failed }
 
 // The page's own facts decide the state; a source pick is how a working second connection is reached, so it never masquerades as an empty filter.
-internal fun liveSpread(page: LiveCatalogPage?, busy: Boolean, filtered: Boolean): LiveSpread = when {
+internal fun liveSpread(page: LivePage?, busy: Boolean, filtered: Boolean): LiveSpread = when {
     page != null && page.channels.isNotEmpty() -> LiveSpread.Channels
     filtered -> LiveSpread.Filtered
     page == null -> if (busy) LiveSpread.Loading else LiveSpread.Failed
-    page.connections.isEmpty() || page.availability == "NeedsConfiguration" -> LiveSpread.NoSource
+    page.connections.isEmpty() || page.availability == Availability.NEEDSCONFIGURATION -> LiveSpread.NoSource
     busy -> LiveSpread.Loading
     else -> LiveSpread.NoChannels
 }

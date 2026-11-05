@@ -36,8 +36,8 @@ internal val stremioCompletion = StremioCompletion("2", mapOf("favorites_added" 
     "existing_preserved" to 0, "already_imported" to 0, "needs_review" to 0, "skipped_items" to 0))
 
 internal class FakeStremioTransport : StremioImportTransport {
-    val calls = mutableListOf<String>()
-    val passwords = mutableListOf<String>()
+    val calls: MutableList<String> = java.util.concurrent.CopyOnWriteArrayList()
+    val passwords: MutableList<String> = java.util.concurrent.CopyOnWriteArrayList()
     var preview: suspend () -> StremioPreview = { stremioAddons() }
     var review: suspend (List<String>, Long) -> StremioReview = { _, _ -> stremioReview(reviews.toLong()) }
     var apply: suspend () -> StremioCompletion = { stremioCompletion }

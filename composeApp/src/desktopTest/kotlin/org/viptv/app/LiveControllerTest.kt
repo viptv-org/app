@@ -13,11 +13,11 @@ import org.viptv.engine.wire.*
 import kotlin.test.*
 
 class LiveControllerTest {
-    private fun channel(id: String) = LiveCatalogChannel(id, "m3u:1", Card(MediaIdentity(id, "live", emptyList()), provider_id = "m3u:1", title = id, badges = emptyList()))
-    private fun page(vararg ids: String, next: String? = null) = Json.encodeToString(LiveCatalogPage(ids.map(::channel), next_cursor = next, complete = next == null, availability = "Available"))
-    private fun guide(id: String, available: Boolean = true) = Json.encodeToString(LiveGuideSnapshot(id,
-        programs = if (available) listOf(LiveGuideProgram("program", "Program", 1000, 2000)) else emptyList(),
-        availability = if (available) "Available" else "Unsupported", reason = if (available) null else "No XMLTV guide configured for this channel"))
+    private fun channel(id: String) = LiveChannel(id, "m3u:1", Card(MediaIdentity(id, "live", emptyList()), provider_id = "m3u:1", title = id, badges = emptyList()))
+    private fun page(vararg ids: String, next: String? = null) = Json.encodeToString(LivePage(channels = ids.map(::channel), groups = emptyList(), connections = emptyList(), next_cursor = next, complete = next == null, availability = Availability.AVAILABLE))
+    private fun guide(id: String, available: Boolean = true) = Json.encodeToString(LiveGuide(channel_id = id,
+        programs = if (available) listOf(LiveProgram(id = "program", title = "Program", start_millis = 1000, end_millis = 2000)) else emptyList(),
+        availability = if (available) Availability.AVAILABLE else Availability.UNSUPPORTED, reason = if (available) null else "No XMLTV guide configured for this channel"))
     private inner class Fixture(scope: CoroutineScope, scheduler: TestCoroutineScheduler, reply: suspend (HttpRequestData) -> String) {
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
@@ -31,7 +31,7 @@ class LiveControllerTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val controller = ApplicationController(scope, store).also {
             it.connection = remote
-            it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "1", livePage = LiveCatalogPage(listOf(channel("one"), channel("two")), availability = "Available"), liveFavoritesAvailable = true)
+            it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "1", livePage = LivePage(channels = listOf(channel("one"), channel("two")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE), liveFavoritesAvailable = true)
         }
         fun close() { controller.job?.cancel(); controller.liveGuideJob?.cancel(); controller.liveFavoriteJobs.values.toList().forEach { it.cancel() }; remote.close() }
     }
@@ -82,14 +82,14 @@ class LiveControllerTest {
         var reads = 0
         val f = Fixture(this, testScheduler) { request ->
             assertTrue(request.url.encodedPath.endsWith("/guide")); reads++
-            if (reads == 1) """{"channel_id":"one","availability":"TemporarilyUnavailable","reason":"Try again"}""" else guide("one")
+            if (reads == 1) """{"channel_id":"one","programs":[],"availability":"TemporarilyUnavailable","reason":"Try again"}""" else guide("one")
         }
         try {
             f.controller.showLiveGuide("one"); advanceUntilIdle(); assertEquals(1, reads)
             f.controller.showLiveGuide("one"); advanceUntilIdle(); assertEquals(2, reads)
             f.controller.showLiveGuide("one"); advanceUntilIdle(); assertEquals(2, reads)
             f.controller.retryLiveGuide(); advanceUntilIdle(); assertEquals(3, reads)
-            assertEquals("Available", f.controller.state.value.liveGuides["one"]?.availability); assertFalse(f.controller.state.value.liveGuideLoading)
+            assertEquals(Availability.AVAILABLE, f.controller.state.value.liveGuides["one"]?.availability); assertFalse(f.controller.state.value.liveGuideLoading)
         } finally { f.close() }
     }
 
@@ -100,7 +100,7 @@ class LiveControllerTest {
             f.controller.showLiveGuide("one"); advanceTimeBy(250); runCurrent()
             f.controller.mutable.value = f.controller.state.value.copy(screen = Screen.Home)
             finish.complete(Unit); advanceUntilIdle(); assertTrue(f.controller.state.value.liveGuides.isEmpty())
-            f.controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "2", livePage = LiveCatalogPage(listOf(channel("two"))))
+            f.controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "2", livePage = LivePage(channels = listOf(channel("two")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.UNSUPPORTED))
             f.controller.showLiveGuide("one"); advanceUntilIdle(); assertTrue(f.controller.state.value.liveGuides.isEmpty())
         } finally { finish.complete(Unit); f.close() }
     }
@@ -118,7 +118,7 @@ class LiveControllerTest {
             assertEquals(listOf("two"), f.controller.state.value.livePage!!.channels.filter { it.id in f.controller.state.value.liveFavorites }.map { it.id })
             f.controller.moreLive(); advanceUntilIdle(); assertEquals(listOf("0", "100"), offsets, "All known favourites are loaded; do not scan unrelated pages")
             assertEquals("two", f.controller.state.value.liveGuideChannel)
-            assertEquals("Unsupported", f.controller.state.value.liveGuides["two"]?.availability)
+            assertEquals(Availability.UNSUPPORTED, f.controller.state.value.liveGuides["two"]?.availability)
             assertTrue(f.controller.state.value.liveFavoritesAvailable, "A missing EPG does not disable host favourites")
         } finally { f.close() }
     }
@@ -156,9 +156,9 @@ class LiveControllerTest {
     private fun connections() = listOf("m3u:1" to "Playlist", "xtream:2" to "Other feed").map { (id, name) ->
         IntegrationConnection(id, if (id.startsWith("m3u")) "m3u" else "xtream", "local", "1", name, true, 0, listOf(Capability.LIVETV))
     }
-    private fun feedPage(feed: String, vararg ids: String, next: String? = null) = Json.encodeToString(LiveCatalogPage(
-        ids.map { channel(it).let { channel -> channel.copy(connection_id = feed, card = channel.card.copy(provider_id = feed)) } },
-        next_cursor = next, complete = next == null, availability = "Available", connections = connections()))
+    private fun feedPage(feed: String, vararg ids: String, next: String? = null) = Json.encodeToString(LivePage(
+        channels = ids.map { channel(it).let { channel -> channel.copy(connection_id = feed, card = channel.card.copy(provider_id = feed)) } },
+        groups = emptyList(), connections = connections(), next_cursor = next, complete = next == null, availability = Availability.AVAILABLE))
 
     @Test fun advertisedHostConnectionsSelectTheFeedAndResetItsGuideAndPaging() = runTest {
         val queries = mutableListOf<Parameters>()
@@ -188,7 +188,7 @@ class LiveControllerTest {
                 if (request.url.parameters["offset"] == "100") feedPage(feed, "two") else feedPage(feed, "one", next = "100") }
         } }
         try {
-            f.controller.mutable.value = f.controller.state.value.copy(livePage = LiveCatalogPage(connections = connections()))
+            f.controller.mutable.value = f.controller.state.value.copy(livePage = LivePage(channels = emptyList(), groups = emptyList(), connections = connections(), complete = true, availability = Availability.UNSUPPORTED))
             f.controller.filterLiveFavorites(); advanceUntilIdle()
             assertEquals(listOf("m3u:1", "m3u:1"), feeds); assertTrue(f.controller.state.value.livePage!!.complete)
             assertTrue(f.controller.state.value.livePage!!.channels.none { it.id in f.controller.state.value.liveFavorites })
@@ -205,7 +205,7 @@ class LiveControllerTest {
             else -> feedPage("xtream:2", "three")
         } }
         try {
-            f.controller.mutable.value = f.controller.state.value.copy(livePage = LiveCatalogPage(listOf(channel("one")), connections = connections()))
+            f.controller.mutable.value = f.controller.state.value.copy(livePage = LivePage(channels = listOf(channel("one")), groups = emptyList(), connections = connections(), complete = true, availability = Availability.UNSUPPORTED))
             f.controller.showLiveGuide("one"); advanceTimeBy(250); runCurrent()
             f.controller.selectLiveConnection("xtream:2"); runCurrent(); old.complete(Unit); advanceUntilIdle()
             assertFalse(f.controller.state.value.liveGuides.containsKey("one")); assertEquals("three", f.controller.state.value.liveGuideChannel)

@@ -375,7 +375,6 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
         if (index in rows.indices) { active = index; keyboardMoves++ }
     }
 
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     LaunchedEffect(keyboardMoves) {
         val info = list.layoutInfo
         if (keyboardMoves == 0 || active !in rows.indices || info.visibleItemsInfo.isEmpty()) return@LaunchedEffect
@@ -397,8 +396,8 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
             Key.Escape, Key.Back -> { close(); true }
             else -> false
         }
-    }.then(if (searchFirst) Modifier else Modifier.focusRequester(focus).focusable())) {
-        if (searchable) SelectField(query, searchPlaceholder, Lucide.Search, metrics, if (searchFirst) Modifier.focusRequester(focus) else Modifier) {
+    }.then(if (searchFirst) Modifier else focus.requestFocusWhenPlaced().focusable())) {
+        if (searchable) SelectField(query, searchPlaceholder, Lucide.Search, metrics, if (searchFirst) focus.requestFocusWhenPlaced() else Modifier) {
             query = it; active = 0
             scope.launch { list.scrollToItem(0) }
         }
@@ -511,8 +510,6 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
         if (next != value) onChange(next)
         close()
     }
-    // Typing is the point of this panel, so its field takes focus on every layout.
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     // A fullscreen keyboard takes the window focus and Compose releases the panel's; Back hands it back with nothing focused.
     LaunchedEffect(windowFocused) {
         if (!windowFocused) return@LaunchedEffect
@@ -531,7 +528,7 @@ private fun TextPanel(title: String, value: String, number: Boolean, metrics: Se
         }
     }) {
         SelectField(draft, "Enter ${title.lowercase()}", null, metrics,
-            Modifier.focusRequester(focus).onFocusChanged { if (it.isFocused) lastFocus = focus },
+            focus.requestFocusWhenPlaced().onFocusChanged { if (it.isFocused) lastFocus = focus },
             KeyboardOptions(keyboardType = if (number) KeyboardType.Number else KeyboardType.Text, imeAction = ImeAction.Done),
             KeyboardActions(onDone = { apply(draft.trim()) })) { draft = it }
         if (LocalPointerHover.current) Text("Press Enter to apply", Modifier.padding(horizontal = 16.dp, vertical = 6.dp),

@@ -4,6 +4,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
+import org.viptv.engine.wire.Availability
+import org.viptv.engine.wire.LivePage
+import org.viptv.engine.wire.LiveQuery
 import uniffi.viptv_core.SecretStore
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
@@ -21,9 +24,9 @@ internal class LocalSetupFixture {
     var liveReads = 0
     @Volatile var closed = false
     val local = object : LocalConnection by native {
-        override suspend fun liveChannels(profile: String, query: LiveQuery): LiveCatalogPage {
+        override suspend fun liveChannels(profile: String, query: LiveQuery): LivePage {
             liveReads++
-            return LiveCatalogPage(availability = "Available")
+            return LivePage(channels = emptyList(), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE)
         }
         override fun close() { if (!closed) { closed = true; native.close() } }
     }
