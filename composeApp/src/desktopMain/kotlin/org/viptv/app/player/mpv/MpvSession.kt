@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.*
 import org.viptv.app.player.*
+import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.subtitleMode
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -17,6 +18,9 @@ internal data class MpvState(
     val width: Int = 0, val height: Int = 0, val hwdec: String = "no", val dropped: Long = 0,
     val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null, val transfer: String? = null,
 )
+
+internal fun mpvSubtitlesOn(audio: List<PlaybackTrack>, preferences: ProfilePreferences): Boolean =
+    subtitleModeEnabled(preferences.subtitleMode, preferences.preferred_audio_language, audio.firstOrNull { it.selected }?.language)
 
 // libmpv's 8-digit colour form is #AARRGGBB; sending #RRGGBBAA swaps alpha into the red channel.
 internal fun mpvSubtitleColour(value: Int): String = "#%08X".format(value)
@@ -60,9 +64,8 @@ internal class MpvSession(input: PlaybackInput) {
             option("demuxer-max-bytes", (64L shl 20).toString()); option("demuxer-max-back-bytes", (16L shl 20).toString())
             option("demuxer-readahead-secs", "10"); option("video-timing-offset", "0")
             input.preferences.preferred_audio_language?.let { option("alang", it) }
-            val subtitles = input.preferences.subtitleMode != "never"
-            option("sub-auto", "no"); option("sid", if (subtitles) "auto" else "no")
-            if (subtitles) input.preferences.preferred_subtitle_language?.let { option("slang", it) }
+            option("sub-auto", "no"); option("sid", "no")
+            input.preferences.preferred_subtitle_language?.let { option("slang", it) }
             val caption = desktopSubtitleConfig(input.preferences)
             subtitleOption("sub-scale", caption.fontScale.toString())
             caption.style?.let { style ->
