@@ -10,6 +10,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,11 @@ internal class PendingMutationUi(val pending: PendingMutations = PendingMutation
 }
 
 internal val LocalPendingMutation = compositionLocalOf { PendingMutationUi() }
+
+internal fun saveActionLabel(saved: Boolean) = if (saved) "Remove from My List" else "Add to My List"
+
+// The name belongs to the control: the pending state swaps its icon for an unnamed spinner.
+internal fun Modifier.saveActionName(saved: Boolean) = semantics { contentDescription = saveActionLabel(saved) }
 
 @Composable
 internal fun MutationSpinner(size: Dp, color: Color = Palette.text, strokeWidth: Dp = 2.dp, scale: Float = 1f) {

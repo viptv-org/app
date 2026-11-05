@@ -24,6 +24,7 @@ import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.saveActionName
 import org.viptv.app.components.kindLabel
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
@@ -139,12 +140,11 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 }
             }
             IconButton(onClick = { save(card) }, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(22.dp))
-                .background(Color.White.copy(alpha = 0.12f))) {
+                .background(Color.White.copy(alpha = 0.12f)).saveActionName(saved)) {
                 val target = saveTarget(card)
                 val mutations = LocalPendingMutation.current
                 if (mutations.isPending(target)) MutationSpinner(22.dp, scale = 1f)
-                else Icon(if (saved) Lucide.Check else Lucide.Plus,
-                    if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp), tint = Palette.text)
+                else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
             }
             if (partway && playFromStart != null) {
                 TextButton(onClick = { playFromStart(resumeCard ?: card) }, contentPadding = PaddingValues(horizontal = 8.dp)) {

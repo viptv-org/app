@@ -24,6 +24,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.Screen
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -64,10 +65,10 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                             }
                             val mutations = LocalPendingMutation.current
                             val target = saveTarget(shown)
-                            FilledIconButton(onClick = { save(shown) }, modifier = Modifier.size(48.dp),
+                            FilledIconButton(onClick = { save(shown) }, modifier = Modifier.size(48.dp).saveActionName(saved),
                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {
                                 if (mutations.isPending(target)) MutationSpinner(24.dp)
-                                else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(24.dp))
+                                else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(24.dp))
                             }
                             FilledIconButton(onClick = { open(shown) }, modifier = Modifier.size(48.dp),
                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .12f), contentColor = Palette.text)) {

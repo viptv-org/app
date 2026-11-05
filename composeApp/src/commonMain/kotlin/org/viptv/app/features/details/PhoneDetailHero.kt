@@ -28,6 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.saveActionLabel
 import org.viptv.app.components.TitleLogo
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -102,7 +103,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 verticalAlignment = Alignment.CenterVertically) {
                 val mutations = LocalPendingMutation.current
                 val target = saveTarget(card)
-                val saveLabel = if (saved) "Remove from My List" else "Add to My List"
+                val saveLabel = saveActionLabel(saved)
                 Column(Modifier.width(76.dp)
                     .pointerClickable(role = Role.Button) { save(card) }
                     .semantics { contentDescription = saveLabel }, horizontalAlignment = Alignment.CenterHorizontally,
