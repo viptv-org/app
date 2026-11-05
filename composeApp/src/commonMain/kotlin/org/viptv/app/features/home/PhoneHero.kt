@@ -25,6 +25,7 @@ import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.MediaMetadata
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
@@ -42,9 +43,7 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
             val art = card.landscape ?: card.poster
             if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
             else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                0f to Color.Transparent, 0.48f to Color.Transparent,
-                0.8f to Color.Black.copy(alpha = 0.65f), 1f to Palette.background.copy(alpha = 0.96f))))
+            Box(Modifier.fillMaxSize().background(Scrim.phoneHero))
         }
         Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -21,6 +21,7 @@ import org.viptv.app.features.entry.ProfileAvatar
 import org.viptv.app.state.Screen
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 
 @Composable
 internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
@@ -29,6 +30,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         val destinations = desktopDestinations.filter { it.screen !in listOf(Screen.Discover, Screen.History) && (it.screen != Screen.Anime || LocalAnimeAvailable.current) }
         val initial = remember { FocusRequester() }
         val onARail = destinations.any { it.screen == selected }
+        Box(Modifier.fillMaxWidth().height(132.dp * scale).background(Scrim.tvTopBar))
         // Up from the page lands on the selected rail: Compose's 2D search would pick the left-most icon instead.
         Box(Modifier.fillMaxWidth().height(132.dp * scale).focusProperties {
             onEnter = {
