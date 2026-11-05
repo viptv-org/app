@@ -173,13 +173,22 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                 catch (error: Exception) { input.controlFailed(command.control, error.controlCause(), command.failureObserver(latestObserve)) }
             }
         }
-        LaunchedEffect(candidates, opened, subtitleTouched) {
+        LaunchedEffect(candidates, opened, subtitleTouched, state.audio, input.preferences) {
             if (!opened || subtitleTouched) return@LaunchedEffect
-            val candidate = preferredProviderSubtitle(input, candidates) ?: return@LaunchedEffect
-            val desired = input.preferences.preferred_subtitle_language ?: return@LaunchedEffect
-            val embedded = state.subtitles.firstOrNull { it.selected }
-            if (embedded?.language?.let { canonicalLanguageTag(it).substringBefore('-') == canonicalLanguageTag(desired).substringBefore('-') } != true)
-                selectSubtitle(candidate, null)
+            if (!mpvSubtitlesOn(state.audio, input.preferences)) {
+                if (state.subtitles.any { it.selected }) selectSubtitle(null, null)
+                return@LaunchedEffect
+            }
+            val candidate = preferredProviderSubtitle(input, candidates)
+            val desired = input.preferences.preferred_subtitle_language
+            val selected = state.subtitles.firstOrNull { it.selected }
+            val selectedMatches = desired != null && selected?.language != null &&
+                canonicalLanguageTag(selected.language).substringBefore('-') == canonicalLanguageTag(desired).substringBefore('-')
+            when {
+                selectedMatches -> Unit
+                candidate != null -> selectSubtitle(candidate, null)
+                selected == null -> session.property("sid", "auto")
+            }
         }
         LaunchedEffect(state, candidates) {
             if (state.error != null) latestObserve(PlayerFact.Failed)
