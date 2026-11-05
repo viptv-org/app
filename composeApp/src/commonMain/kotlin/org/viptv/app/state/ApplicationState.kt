@@ -35,6 +35,7 @@ data class ApplicationState(
     val errorCode: String? = null,
     val updateRequired: Boolean = false,
     val backendUnreachableSince: Long? = null,
+    val backendRetrySeconds: Int = 0,
     val backendBannerDismissed: Boolean = false,
     val profiles: List<Profile> = emptyList(),
     val profileToOpen: String? = null,

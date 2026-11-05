@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
@@ -47,6 +48,15 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
         }
         // One focus target per item, chained left/right: Compose's 2D search would otherwise drop from the nav into a card below.
         val navFocus = remember(destinations.size) { List(destinations.size + 1) { androidx.compose.ui.focus.FocusRequester() } }
+        // The outage banner floats above the rail and never takes focus; Up is how the D-pad reaches its Dismiss.
+        val banner = LocalTvBannerFocus.current
+        val topStop = banner?.requester ?: androidx.compose.ui.focus.FocusRequester.Cancel
+        var bannerHadFocus by remember { mutableStateOf(false) }
+        LaunchedEffect(banner) {
+            if (banner == null) {
+                if (bannerHadFocus) { initial.requestPlacedFocus(); bannerHadFocus = false }
+            } else snapshotFlow { banner.focused.value }.collect { bannerHadFocus = it }
+        }
         val profileFocus = remember { androidx.compose.ui.focus.FocusRequester() }
         Row(Modifier.offset(300.dp * scale, 38.dp * scale).height(56.dp * scale).focusGroup(),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
@@ -57,7 +67,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     modifier = Modifier.fillMaxSize().focusRequester(navFocus[0]).focusProperties {
                         left = androidx.compose.ui.focus.FocusRequester.Cancel
                         right = navFocus[1]
-                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                        up = topStop
                     }.onFocusChanged { searchFocused = it.isFocused }) {
                     Icon(Lucide.Search, "Search", Modifier.size(30.dp * scale))
                 }
@@ -70,7 +80,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     .focusProperties {
                         left = if (index == 0) navFocus[0] else navFocus[index]
                         right = if (index == destinations.lastIndex) profileFocus else navFocus[index + 2]
-                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                        up = topStop
                     }
                     .onFocusChanged { focused = it.isFocused }
                     // The selected item still needs a visible focus state: the ring sits on whatever the remote is on.
@@ -93,7 +103,7 @@ internal fun TvNavigation(selected: Screen, profile: Profile?, navigate: (Screen
                     modifier = Modifier.fillMaxSize().focusRequester(profileFocus).focusProperties {
                         left = navFocus[destinations.size]
                         right = androidx.compose.ui.focus.FocusRequester.Cancel
-                        up = androidx.compose.ui.focus.FocusRequester.Cancel
+                        up = topStop
                     }.onFocusChanged { profileFocused = it.isFocused }) {
                     if (profile != null) ProfileAvatar(profile, 56.dp * scale, 28.dp * scale)
                     else Icon(Lucide.UserRound, "Profile menu", Modifier.size(28.dp * scale))

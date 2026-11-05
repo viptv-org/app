@@ -80,9 +80,32 @@ class BackendBannerTest {
         controller.tick(server, time)
         assertTrue(controller.state.value.backendBannerShown)
         assertEquals(started, controller.state.value.backendUnreachableSince, "The banner holds when the backend stopped answering, not the latest attempt")
+        assertEquals(10, controller.state.value.backendRetrySeconds, "The first retry is the interval the copy states")
         time += 5.minutes
         controller.tick(server, time)
         assertEquals(started, controller.state.value.backendUnreachableSince, "A repeat failure is the same outage")
+        controller.connection?.close()
+    }
+
+    @Test fun theBannerNamesTheRetryInForceAsTheBackoffGrows() = runBlocking<Unit> {
+        var dead = true
+        val server = Server { path -> if (dead) throw IOException("Connection refused") else answer(path) }
+        val time = TestTimeSource()
+        val controller = controller(server, time)
+        controller.freshness.homeBuilt(null)
+        time += 5.minutes
+
+        val shown = mutableListOf<Int>()
+        repeat(30) { step ->
+            controller.tick(server, time)
+            val seconds = controller.state.value.backendRetrySeconds
+            if (seconds != shown.lastOrNull()) shown += seconds
+        }
+        assertEquals(listOf(10, 20, 40, 60), shown, "The banner follows the backoff in force, so it never promises a delay the app is not keeping")
+
+        dead = false
+        repeat(12) { controller.tick(server, time) }
+        assertEquals(0, controller.state.value.backendRetrySeconds, "Recovery resets the interval")
         controller.connection?.close()
     }
 

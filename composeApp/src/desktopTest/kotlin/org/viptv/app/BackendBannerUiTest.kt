@@ -16,9 +16,9 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
-import org.viptv.app.components.BACKEND_BANNER_BODY
 import org.viptv.app.components.BACKEND_BANNER_TITLE
 import org.viptv.app.components.BackendBanner
+import org.viptv.app.components.backendBannerBody
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -52,12 +52,13 @@ class BackendBannerUiTest {
         }
     }
 
-    private fun bannerScene(width: Int, height: Int, television: Boolean, dismiss: () -> Unit, page: () -> Unit) =
+    private fun bannerScene(width: Int, height: Int, television: Boolean, retrySeconds: Int, dismiss: () -> Unit, page: () -> Unit) =
         ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television) {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
                     Box(Modifier.fillMaxSize().pointerClickable { page() })
-                    BackendBanner(television, phone = width < 640, aboveNav = width < 640, unreachableSince = started, dismiss = dismiss)
+                    BackendBanner(television, phone = width < 640, aboveNav = width < 640, unreachableSince = started,
+                        retrySeconds = retrySeconds, dismiss = dismiss)
                 }
             }
         }
@@ -66,12 +67,13 @@ class BackendBannerUiTest {
         for ((width, height, phone) in listOf(Triple(390, 844, true), Triple(1280, 900, false), Triple(1440, 900, false))) {
             var dismissed = 0
             var page = 0
-            val scene = bannerScene(width, height, television = false, dismiss = { dismissed++ }, page = { page++ })
+            val scene = bannerScene(width, height, television = false, retrySeconds = 20, dismiss = { dismissed++ }, page = { page++ })
             try {
                 val probe = Probe(scene); probe.frames()
                 val texts = probe.texts()
                 assertTrue(BACKEND_BANNER_TITLE in texts, "$width: the title is on screen")
-                assertTrue(BACKEND_BANNER_BODY in texts, "$width: the explanation is on screen")
+                assertTrue(backendBannerBody(20) in texts, "$width: the explanation names the delay in force")
+                assertTrue(texts.none { it.contains("refused") }, "$width: the banner never claims a cause it did not observe")
                 assertTrue(texts.any { it.startsWith("Backend unreachable since ") && it.endsWith(".") }, "$width: the outage time is on screen")
                 val card = probe.card().boundsInRoot
                 assertTrue(card.width <= if (phone) 358.5f else 520.5f, "$width: the banner keeps its width cap (${card.width})")
@@ -84,15 +86,27 @@ class BackendBannerUiTest {
         }
     }
 
+    @Test fun theDelayInTheCopyFollowsTheBackoffInForce() {
+        assertEquals("The backend is down or unreachable. Retrying in 20 seconds; this clears itself once the backend answers.",
+            backendBannerBody(20), "the explanation is copy.md's, with [n] filled")
+        for (seconds in listOf(10, 20, 40, 60)) {
+            val scene = bannerScene(390, 844, television = false, retrySeconds = seconds, dismiss = {}, page = {})
+            try {
+                val probe = Probe(scene); probe.frames()
+                assertTrue(backendBannerBody(seconds) in probe.texts(), "the banner says $seconds seconds")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun televisionShowsTheSameCopyWithoutCoveringThePage() {
         var dismissed = 0
         var page = 0
-        val scene = bannerScene(1920, 1080, television = true, dismiss = { dismissed++ }, page = { page++ })
+        val scene = bannerScene(1920, 1080, television = true, retrySeconds = 40, dismiss = { dismissed++ }, page = { page++ })
         try {
             val probe = Probe(scene); probe.frames()
             val texts = probe.texts()
             assertTrue(BACKEND_BANNER_TITLE in texts, "the title is on screen")
-            assertTrue(BACKEND_BANNER_BODY in texts, "the explanation is on screen")
+            assertTrue(backendBannerBody(40) in texts, "the explanation names the delay in force")
             assertTrue(texts.any { it.startsWith("Backend unreachable since ") && it.endsWith(".") }, "the outage time is on screen")
             val card = probe.card().boundsInRoot
             assertTrue(card.height < 1080f * 0.5f, "the banner covers a strip, not the page (${card.height})")
