@@ -31,6 +31,7 @@ import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.PendingActionSpinner
@@ -61,9 +62,8 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
             val art = card.landscape ?: card.poster
             if (art == null) HeroArtworkFallback(Modifier.fillMaxSize())
             else BufferedArtwork(art, Modifier.fillMaxSize(), onReady = { carousel?.artworkReady(it) })
-            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = 0.85f),
-                0.45f to Palette.background.copy(alpha = 0.4f), 0.7f to Color.Transparent)))
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to Palette.background)))
+            Box(Modifier.fillMaxSize().background(Scrim.tabletHeroWide))
+            Box(Modifier.fillMaxSize().background(Scrim.tabletHeroTall))
             if (!LocalHeaderPills.current) Box(Modifier.align(Alignment.TopStart).padding(start = if (short) 20.dp else 32.dp, top = if (short) 16.dp else 40.dp)) {
                 HomeFilters(Screen.Home, navigate)
             }

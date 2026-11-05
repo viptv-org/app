@@ -13,10 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.motionSpec
 import org.viptv.engine.wire.Card
-
-private const val ScrimWidth = .7f
 
 @Composable
 internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = false, hero: Card? = card, heroReady: (String?) -> Unit = {}) {
@@ -34,8 +33,8 @@ internal fun TvHomeBackdrop(card: Card?, browsing: Boolean, portrait: Boolean = 
             clip = true; compositingStrategy = CompositingStrategy.Auto
         }.drawWithContent { if (motion.value < 1f) drawContent() }) {
             BufferedArtwork(hero?.landscape ?: hero?.poster, Modifier.fillMaxSize(), onReady = heroReady)
-            Box(Modifier.fillMaxHeight().fillMaxWidth(ScrimWidth).background(Brush.horizontalGradient(0f to Palette.background.copy(alpha = .86f), (.36f / ScrimWidth) to Palette.background.copy(alpha = .4f), 1f to Color.Transparent)))
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Palette.background.copy(alpha = .3f), .45f to Color.Transparent, .8f to Palette.background.copy(alpha = .9f), 1f to Palette.background)))
+            Box(Modifier.fillMaxSize().background(Scrim.tvHeroWide))
+            Box(Modifier.fillMaxSize().background(Scrim.tvHeroTall))
         }
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = motion.value; clip = true; compositingStrategy = CompositingStrategy.Auto
