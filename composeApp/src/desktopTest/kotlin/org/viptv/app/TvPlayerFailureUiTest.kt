@@ -35,7 +35,7 @@ class TvPlayerFailureUiTest {
             }
         } }
         try {
-            scene.renderUntil { val texts = nodes(scene).map(::text); "This source stopped working" in texts && "This source could not play. Choose another source." in texts }
+            scene.renderUntil { val texts = nodes(scene).map(::text); "This source stopped working" in texts && "LordStreams 4K didn’t respond. Choose another source." in texts }
             val texts = nodes(scene).map(::text)
             assertTrue("This source stopped working" in texts)
             assertTrue("LordStreams 4K didn’t respond. Choose another source." in texts, "the page names the source; saw $texts")
