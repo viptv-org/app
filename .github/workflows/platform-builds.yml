@@ -37,12 +37,12 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev-pkg-config-libmpv-dev-mpv-patchelf
+          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev-libmpv2-mpv-patchelf
       - name: Install Linux keyring build dependencies
         if: runner.os == 'Linux'
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev pkg-config libmpv-dev mpv patchelf
+        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev libmpv2 mpv patchelf
       - name: Install macOS mpv
         if: runner.os == 'macOS'
         run: brew install mpv ffmpeg-full

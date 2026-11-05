@@ -110,11 +110,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev-pkg-config
+          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libdbus-1-dev
       - name: Install native build dependencies
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev pkg-config
+        run: bash scripts/ci/install-apt-packages.sh libdbus-1-dev
       - name: Install pinned Rust
         shell: bash
         run: |
@@ -187,11 +187,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/apt-debs
-          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libmpv-dev-mpv-patchelf
+          key: apt-debs-${{ runner.os }}-${{ runner.arch }}-libmpv2-mpv-patchelf
       - name: Install native media dependencies
         timeout-minutes: 12
         shell: bash
-        run: bash scripts/ci/install-apt-packages.sh libmpv-dev mpv patchelf
+        run: bash scripts/ci/install-apt-packages.sh libmpv2 mpv patchelf
       - name: Download desktop natives
         uses: actions/download-artifact@v7
         with:
