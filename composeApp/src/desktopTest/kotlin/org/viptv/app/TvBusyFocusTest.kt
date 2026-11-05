@@ -45,6 +45,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvBusyFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend () -> Unit) = runBlocking { block() }
 
     private class Tv(content: @Composable () -> Unit) : AutoCloseable {

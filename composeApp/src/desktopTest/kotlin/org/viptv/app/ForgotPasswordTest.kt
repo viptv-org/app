@@ -19,6 +19,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class ForgotPasswordTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhoneForgotPasswordLinkOpensTheServerWebSignInPage() = verify(mobile = true)
     @Test fun theDesktopForgotPasswordLinkOpensTheServerWebSignInPage() = verify(mobile = false)
@@ -33,7 +34,7 @@ class ForgotPasswordTest {
             else DesktopPasswordPanel("https://watch.example", false, null, {}, { _, _, _ -> }, forgot = { opened = it })
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val link = nodes(scene).singleOrNull { text(it) == "Forgot password?" && it.config.contains(SemanticsActions.OnClick) }
                 ?: fail("${if (mobile) "phone" else "desktop"}: no Forgot password link")
             assertTrue(link.config[SemanticsActions.OnClick].action!!.invoke())
@@ -47,7 +48,7 @@ class ForgotPasswordTest {
             else DesktopPasswordPanel("", false, null, {}, { _, _, _ -> })
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val link = nodes(scene).firstOrNull { text(it) == "Forgot password?" && it.config.contains(SemanticsActions.OnClick) }
             assertTrue(link == null, "${if (mobile) "phone" else "desktop"}: Forgot password is clickable without a server")
             assertTrue(nodes(scene).any { text(it) == "Enter your server address first." },

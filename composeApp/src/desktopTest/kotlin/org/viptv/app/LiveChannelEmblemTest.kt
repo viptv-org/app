@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveChannelEmblemTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun monogramUsesShortInitialsOfTheChannelNotItsProvidersPrefix() {
         assertEquals("DC", liveChannelMonogram("LAT | Discovery Channel HD"))
@@ -78,7 +79,7 @@ class LiveChannelEmblemTest {
     private fun channel(title: String, landscape: String? = null) =
         Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = title, badges = emptyList(), landscape = landscape)
 
-    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
     private fun occurrences(texts: List<String>, value: String) = texts.sumOf { it.split(value).size - 1 }
     private fun texts(scene: ImageComposeScene): List<String> { frames(scene); return nodes(scene).map(::text) }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }

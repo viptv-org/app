@@ -18,6 +18,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PairingScanScreenTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun texts(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
@@ -32,7 +33,7 @@ class PairingScanScreenTest {
             ViptvTheme { PairingScanScreen(preview = { preview -> Box(preview.background(Color(0xFF17171A))) }, allowed = true, dismiss = { dismissed++ }) }
         }
         try {
-            repeat(12) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(12) { scene.render(it * 16_666_667L).close() }
             assertTrue("Scan the code on your TV" in texts(scene), texts(scene).toString())
             assertTrue("Point your camera at the code the TV shows." in texts(scene))
             click(scene, "Enter the code instead")
@@ -49,7 +50,7 @@ class PairingScanScreenTest {
             ViptvTheme { PairingScanScreen(preview = { _ -> }, allowed = false, dismiss = {}) }
         }
         try {
-            repeat(12) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(12) { scene.render(it * 16_666_667L).close() }
             assertTrue("Enter the code on your TV instead." in texts(scene), texts(scene).toString())
             assertTrue("VIPTV needs the camera to read the code. Allow it in Settings, or type the code instead." in texts(scene))
             assertTrue("Enter the code instead" in texts(scene))

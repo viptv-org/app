@@ -34,6 +34,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SourcePickerBrowseRetryTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun page(width: Int, height: Int, television: Boolean = false, content: @Composable () -> Unit): ImageComposeScene =
         ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television, pointer = true) {
@@ -42,7 +43,7 @@ class SourcePickerBrowseRetryTest {
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 30) =
-        repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }

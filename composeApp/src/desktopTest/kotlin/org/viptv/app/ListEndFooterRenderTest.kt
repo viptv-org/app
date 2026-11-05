@@ -25,6 +25,7 @@ import kotlin.test.Test
 @OptIn(ExperimentalComposeUiApi::class)
 class ListEndFooterRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Composable
     private fun FooterView(loading: Boolean = false, ended: Boolean = false, failed: Boolean = false,

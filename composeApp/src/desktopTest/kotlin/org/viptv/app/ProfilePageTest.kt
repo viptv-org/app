@@ -38,6 +38,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ProfilePageTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val calls = mutableListOf<String>()
     private var frame = 0L
@@ -65,7 +66,7 @@ class ProfilePageTest {
             } }
         }
 
-        fun render() = repeat(12) { scene.render(++frame * 16_666_667L).close(); Thread.sleep(3) }
+        fun render() = repeat(12) { scene.render(++frame * 16_666_667L).close() }
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         fun shows(label: String) = nodes().any { node ->
             values(node).any { it == label || it.startsWith("$label ") }
@@ -310,7 +311,7 @@ class ProfilePageTest {
     }
 
     private fun render(scene: ImageComposeScene) {
-        repeat(12) { scene.render(++frame * 16_666_667L).close(); Thread.sleep(3) }
+        repeat(12) { scene.render(++frame * 16_666_667L).close() }
     }
 
     private suspend fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(++frame * 16_666_667L).close(); delay(4) }

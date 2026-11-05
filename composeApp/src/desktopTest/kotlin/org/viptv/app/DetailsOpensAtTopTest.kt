@@ -32,6 +32,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class DetailsOpensAtTopTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val show = "tt681"
     private val artwork = "https://images.example/edgerunners.jpg"

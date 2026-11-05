@@ -29,6 +29,7 @@ import kotlin.test.Test
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class PhoneSeriesRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val series = Card(
         MediaIdentity("tt560", "series", emptyList()),

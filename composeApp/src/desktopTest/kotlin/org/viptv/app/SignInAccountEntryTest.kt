@@ -21,6 +21,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class SignInAccountEntryTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhoneCreateAccountEntryOpensTheServerWebSignInPage() = verify(mobile = true)
     @Test fun theDesktopCreateAccountEntryOpensTheServerWebSignInPage() = verify(mobile = false)
@@ -37,7 +38,7 @@ class SignInAccountEntryTest {
             }
         } }
         try {
-            repeat(30) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(30) { scene.render(it * 16_666_667L).close() }
             val choice = nodes(scene).firstOrNull { node ->
                 node.config.contains(SemanticsActions.OnClick) && subtreeText(node).contains("Create account")
             } ?: fail("${if (mobile) "phone" else "desktop"}: no Create account entry")

@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class, ExperimentalCoroutinesApi::class)
 class StartupShellUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun safeStartingScreenAllowsConnectionChangeBeforeAnimationAndHidesCachedPrivateContent() {
         repeat(5) { exerciseRecreation() }
     }

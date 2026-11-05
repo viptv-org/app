@@ -15,6 +15,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerSeekFeedbackUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun aSeekKeepsThePlaybackIndicatorUntilPlaybackSettles() {
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
@@ -85,7 +86,7 @@ class PlayerSeekFeedbackUiTest {
         }.config[SemanticsActions.OnClick].action!!.invoke(), "the transport seeks ahead")
     }
 
-    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
 }

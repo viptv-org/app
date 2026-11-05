@@ -23,6 +23,7 @@ import kotlin.test.Test
 @OptIn(ExperimentalComposeUiApi::class)
 class LivePagingFooterRenderTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private data class Case(val name: String, val width: Int, val height: Int, val television: Boolean)
 

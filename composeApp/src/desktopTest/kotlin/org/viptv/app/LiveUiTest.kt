@@ -42,6 +42,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class LiveUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun channel() = LiveChannel(Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "Fixture news", badges = emptyList()), id = "one", connectionId = "m3u:1")
     @Test fun tvFavoriteAndCategoryAreRealActionsWithinTheExistingLayout() {
         var saved = 0; var filtered = 0
@@ -214,14 +215,14 @@ class LiveUiTest {
                 } }
             }
             try {
-                repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(30) { scene.render(frame++ * 16_666_667L).close() }
                 assertEquals(if (returnFocus) LiveSetUp else "", focusedText(scene),
                     "the primary takes focus only when the empty state is re-entered, otherwise the navigation keeps it")
                 val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
                 scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
-                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(20) { scene.render(frame++ * 16_666_667L).close() }
                 if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
-                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(20) { scene.render(frame++ * 16_666_667L).close() }
                 assertEquals(if (returnFocus) LiveAddons else LiveSetUp, focusedText(scene),
                     if (returnFocus) "Down from the primary reaches the secondary" else "Down from the navigation lands on the primary")
             } finally { scene.close() }
@@ -248,12 +249,12 @@ class LiveUiTest {
                 } }
             }
             try {
-                repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(30) { scene.render(frame++ * 16_666_667L).close() }
                 val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
                 scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
-                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(20) { scene.render(frame++ * 16_666_667L).close() }
                 if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
-                repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+                repeat(20) { scene.render(frame++ * 16_666_667L).close() }
                 assertEquals(LiveTryAgain, focusedText(scene), "Down from the navigation lands on Try again")
             } finally { scene.close() }
         }
@@ -277,12 +278,12 @@ class LiveUiTest {
             } }
         }
         try {
-            repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(30) { scene.render(frame++ * 16_666_667L).close() }
             val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
             scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(focusedText(scene)?.startsWith("Source:") == true, "Down from the navigation lands on the Source chip when there is no retry")
         } finally { scene.close() }
     }
@@ -464,14 +465,14 @@ class LiveUiTest {
             } }
         }
         try {
-            repeat(30) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(30) { scene.render(frame++ * 16_666_667L).close() }
             assertTrue(nodes(scene).map(::text).contains(LiveMemberWho))
             assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.OnClick) }, "the member page has no action to focus")
             val consumed = scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))
             scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp))
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             if (!consumed) focusManager.last().moveFocus(FocusDirection.Down)
-            repeat(20) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(3) }
+            repeat(20) { scene.render(frame++ * 16_666_667L).close() }
             assertEquals("", focusedText(scene).orEmpty(), "Down stays on the navigation: the block has no focus stop")
         } finally { scene.close() }
     }
@@ -577,7 +578,7 @@ class LiveUiTest {
         val row = nodes(scene).single { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) && text(it).startsWith(label) }
         assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke()); frames(scene)
     }
-    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

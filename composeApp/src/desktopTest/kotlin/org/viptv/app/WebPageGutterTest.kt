@@ -32,6 +32,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class WebPageGutterTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val genre = QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false,
         listOf("Action", "Drama").map { Choice(it.lowercase(), it) })

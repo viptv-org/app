@@ -34,6 +34,7 @@ import kotlin.test.*
 @OptIn(InternalComposeUiApi::class)
 class FilterBarPagesTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val posters = PreviewData.posters.map { it.copy(poster = null) }
     private val genre = QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false,
@@ -230,7 +231,7 @@ class FilterBarPagesTest {
             ViptvTheme(false, pointer = pointer) { Surface(Modifier.fillMaxSize(), color = Palette.background) { content() } }
         }.also { s -> repeat(30) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 30) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 30) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flatten)
         fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

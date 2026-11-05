@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class WebPreferencesSettingsTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun subtitlesAndAudioRenderSelectorsAndPreviewAtDesktopWidth() {
         Ui(1920, 1080) {
@@ -109,9 +110,9 @@ class WebPreferencesSettingsTest {
         private var frame = 0L
         private val scene = ImageComposeScene(width, height, Density(1f)) {
             ViptvTheme(television = false, pointer = true) { Surface(Modifier.fillMaxSize(), color = Palette.background) { content() } }
-        }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close(); Thread.sleep(2) } }
+        }.also { s -> repeat(20) { s.render(frame++ * 16_666_667L).close() } }
 
-        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(2) }
+        fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

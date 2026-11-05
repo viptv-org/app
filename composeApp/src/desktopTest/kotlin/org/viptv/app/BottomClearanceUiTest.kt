@@ -81,6 +81,7 @@ import kotlin.test.fail
 @OptIn(ExperimentalComposeUiApi::class)
 class BottomClearanceUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class Case(val name: String, val content: @Composable () -> Unit)
 

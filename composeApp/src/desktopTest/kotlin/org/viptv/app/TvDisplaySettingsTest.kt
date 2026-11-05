@@ -31,6 +31,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class TvDisplaySettingsTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class MemoryStore(var raw: String? = null) : DeviceRecordStore {
         override fun read() = raw

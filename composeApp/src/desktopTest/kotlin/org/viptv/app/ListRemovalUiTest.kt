@@ -30,6 +30,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ListRemovalUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
@@ -41,7 +42,7 @@ class ListRemovalUiTest {
         assertTrue(requireNotNull(clickable(scene, text)) { "$text is not on screen" }
             .config[SemanticsActions.OnClick].action?.invoke() == true)
     private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) {
-        scene.render(it * 16_666_667L).close(); Thread.sleep(4)
+        scene.render(it * 16_666_667L).close()
     }
     private fun withScene(width: Int, content: @Composable () -> Unit, test: (ImageComposeScene) -> Unit) {
         val scene = ImageComposeScene(width, 900, Density(1f)) { ViptvTheme { Box(Modifier.fillMaxSize()) { content() } } }

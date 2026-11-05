@@ -27,6 +27,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class StremioImportRealFixtureTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val directory = System.getenv("VIPTV_STREMIO_REAL_FIXTURES")?.takeIf { it.isNotBlank() }?.let(::File)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     @AfterTest fun close() = scope.cancel()

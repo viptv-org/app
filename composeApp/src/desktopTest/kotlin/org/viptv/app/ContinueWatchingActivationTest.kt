@@ -35,6 +35,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class ContinueWatchingActivationTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val origin = MetadataOrigin("stremio", "addon:4", "c".repeat(32))
     private val series = Card(MediaIdentity("tt38262097", "series", listOf(ExternalId("imdb", "tt38262097"))),
         provider_id = "addon:4", title = "Level 999 no Murabito", badges = emptyList(), metadata_origin = origin)

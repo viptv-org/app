@@ -14,6 +14,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class SignInMethodListTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun thePhoneAndDesktopChoicesOfferNoEmailMethod() {
         verify(phone = true)
@@ -25,7 +26,7 @@ class SignInMethodListTest {
             ConnectScreen(false, "https://fixture.example", false, null, {}, { _, _, _ -> }, desktop = !phone, phone = phone)
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+            repeat(20) { scene.render(it * 16_666_667L).close() }
             val texts = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
                 .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
             assertTrue(texts.none { it.contains("Email", ignoreCase = true) }, "sign-in list still offers email: $texts")

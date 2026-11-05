@@ -20,6 +20,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountCapabilityTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private object NoSavedSession : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -60,7 +61,7 @@ class AccountCapabilityTest {
             ViptvTheme { SettingsRoute(state, controller, browser = false, television = false, compact = true) }
         }
 
-        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
 
         fun waitFor(condition: () -> Boolean) {
             val deadline = System.currentTimeMillis() + 5_000
@@ -105,8 +106,7 @@ class AccountCapabilityTest {
     @Test fun aMemberReadsDevicesAndSelfServiceRowsWithoutOwnerWrites() {
         Host("""{"manage_account":false}""", accountRole = "member", sessionRole = "member").use { ui ->
             ui.render()
-            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
-            ui.render()
+            ui.waitFor { ui.shows("Devices & sessions") }
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
             assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
             assertTrue(ui.shows("Delete account"), "Any account session keeps the self-service delete row")
@@ -121,7 +121,7 @@ class AccountCapabilityTest {
     @Test fun aPairedTelevisionCannotReadTheDeviceListSoTheRowIsAbsent() {
         Host("""{"manage_account":false}""", accountRole = "owner", sessionRole = "device").use { ui ->
             ui.render()
-            ui.waitFor { ui.server.paths.contains("/api/auth/me") }
+            ui.waitFor { ui.controller.state.value.accountRole == "device" }
             ui.render()
             assertFalse(ui.shows("Devices & sessions"), "GET /account/devices answers account_session_required to a device session")
             assertFalse(ui.shows("Household PIN"))

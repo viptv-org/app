@@ -32,6 +32,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class HistoryCorrectionUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun card(id: String, kind: String = "movie") =
         Card(identity = MediaIdentity(id, kind, emptyList()), provider_id = "simkl", title = "The title", badges = emptyList())
@@ -47,7 +48,7 @@ class HistoryCorrectionUiTest {
 
     private var frame = 0L
     private fun frames(scene: ImageComposeScene, count: Int = 10) =
-        repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(count) { scene.render(frame++ * 16_666_667L).close() }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> =
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }

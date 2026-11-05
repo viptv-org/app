@@ -22,6 +22,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.connection.seasonNumber
 
 @Composable
 internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () -> Unit, keepWatching: () -> Unit,
@@ -48,7 +49,7 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
                 onTextLayout = { headingLines = it.lineCount },
                 fontSize = (52 * scale).sp, lineHeight = (59.8f * scale).sp, letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, style = fixedLines)
             TvMediaMetadata(next, scale = scale, lineHeight = 30f, subtitleParts = listOfNotNull(
-                next.identity.episode?.let { listOfNotNull(it.season?.let { season -> "S$season" }, "E${it.episode}").joinToString(" ") }, next.subtitle))
+                next.identity.episode?.let { "S${it.seasonNumber()} E${it.episode}" }, next.subtitle))
             next.description.providerText()?.let { Text(it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body, maxLines = 3, overflow = TextOverflow.Ellipsis) }
             Spacer(Modifier.height(2.dp * scale))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {

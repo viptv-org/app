@@ -24,6 +24,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class SettingsGroupsLayoutTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private data class Layout(val name: String, val width: Int, val height: Int, val desktop: Boolean, val web: Boolean, val devices: Boolean, val stremio: Boolean,
         val rows: Map<SettingsGroup, List<SettingsRow>>)
@@ -113,7 +114,7 @@ class SettingsGroupsLayoutTest {
 
     private fun render(scene: ImageComposeScene): List<SemanticsNode> {
         var frame = 0L
-        repeat(12) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        repeat(12) { scene.render(frame++ * 16_666_667L).close() }
         return scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     }
 

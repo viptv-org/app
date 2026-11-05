@@ -18,6 +18,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountIdentityUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -41,7 +42,7 @@ class AccountIdentityUiTest {
                 AccountIdentityScreen(controller.state.value.accountIdentity, false, null, {})
             } }
             try {
-                repeat(16) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+                repeat(16) { scene.render(it * 16_666_667L).close() }
                 val texts = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }.map(::text)
                 assertTrue(texts.contains("Name Viewer Name"))
                 assertTrue(texts.contains("Username @viewer"))

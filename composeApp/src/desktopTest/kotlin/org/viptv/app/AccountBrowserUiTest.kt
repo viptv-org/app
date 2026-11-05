@@ -18,6 +18,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AccountBrowserUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun televisionWithoutBrowserKeepsValidatedDashboardAddressVisible() {
         var attempts = 0
         val address = "https://example.test:18457/"
@@ -45,7 +46,7 @@ class AccountBrowserUiTest {
             assertFalse(nodes(scene).any { text(it) == address })
         } finally { scene.close() }
     }
-    private fun frames(scene: ImageComposeScene, offset: Int) = repeat(20) { scene.render((offset + it) * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene, offset: Int) = repeat(20) { scene.render((offset + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }

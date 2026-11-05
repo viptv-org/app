@@ -31,6 +31,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvEntryAndSourcesUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun firstProfileReceivesFocusAfterAsyncLoginEnablesTheLazyRow() {
         val busy = mutableStateOf(true)
         val profiles = mutableStateOf(emptyList<Profile>())
@@ -111,7 +112,7 @@ class TvEntryAndSourcesUiTest {
     }
 
     private fun frames(scene: ImageComposeScene, start: Int, count: Int) = repeat(count) {
-        scene.render((start + it) * 16_666_667L).close(); Thread.sleep(4)
+        scene.render((start + it) * 16_666_667L).close()
     }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun focused(scene: ImageComposeScene): SemanticsNode? =

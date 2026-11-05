@@ -15,6 +15,7 @@ import kotlin.test.assertEquals
 
 class TvLandingScrollSafetyTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val show = Card(MediaIdentity("show", "series", emptyList()), provider_id = "fixture", title = "Show", badges = emptyList())
     private fun episodes(count: Int) = (1..count).map { number ->

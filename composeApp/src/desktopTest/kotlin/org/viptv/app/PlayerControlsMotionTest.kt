@@ -21,6 +21,7 @@ import kotlin.test.*
 
 class PlayerControlsMotionTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 

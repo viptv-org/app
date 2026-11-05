@@ -31,10 +31,12 @@ import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class DeviceApprovalPageTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
@@ -104,7 +106,7 @@ class DeviceApprovalPageTest {
 
     private class Probe(private val scene: ImageComposeScene) {
         private var frame = 0L
-        fun frames(count: Int = 6) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames(count: Int = 6) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         private fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun label(node: SemanticsNode): String =
@@ -124,11 +126,7 @@ class DeviceApprovalPageTest {
             frames()
         }
         fun await(what: String, condition: () -> Boolean) {
-            val deadline = System.nanoTime() + 10_000_000_000L
-            while (!condition()) {
-                assertTrue(System.nanoTime() < deadline, "timed out waiting for $what: ${texts()}")
-                frames(); Thread.sleep(20)
-            }
+            frame = scene.renderUntil(timeout = 10.seconds, from = frame, what = what, condition = condition)
             frames()
         }
     }

@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PendingPlaybackUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val card = ContinueWatchingHost.card(1)
     private val key = cardLookupKey(card)
@@ -33,7 +34,7 @@ class PendingPlaybackUiTest {
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
             .flatMap { node -> node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() }
 
-    private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) { scene.render(it * 16_666_667L).close(); Thread.sleep(4) }
+    private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) { scene.render(it * 16_666_667L).close() }
     private fun save(scene: ImageComposeScene, path: String) {
         scene.render(4_000_000_000L).use { image -> image.encodeToData()!!.use { File(path).writeBytes(it.bytes) } }
     }

@@ -43,6 +43,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class AnimeTabAvailabilityTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val profile = Profile("12", "Parent", null)
 
     @Test fun onlyTheSimklProviderHasAnAnimeCatalog() {

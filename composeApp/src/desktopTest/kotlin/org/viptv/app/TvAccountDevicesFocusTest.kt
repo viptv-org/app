@@ -29,6 +29,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvAccountDevicesFocusTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val snapshot = AccountDevices(
         account = AccountIdentity("1", "viewer", "Viewer", "member"),

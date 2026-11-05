@@ -19,6 +19,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class DesktopPlayerFirstClickTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun theTransportTakesAPointerPressAndTheTimelineSeeksAtTheClick() {
         var toggles = 0

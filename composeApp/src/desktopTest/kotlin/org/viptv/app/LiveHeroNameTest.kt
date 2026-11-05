@@ -21,6 +21,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class LiveHeroNameTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun desktopHeroPrintsTheChannelNameOnceWhenNoProgrammeIsScheduled() {
         val scene = ImageComposeScene(1200, 800, Density(1f)) {
@@ -80,7 +81,7 @@ class LiveHeroNameTest {
         Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "LAT | Animal Planet HD", badges = emptyList()),
         id = "one", connectionId = "m3u:1")
 
-    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close(); Thread.sleep(3) }
+    private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
     private fun occurrences(texts: List<String>, value: String) = texts.sumOf { it.split(value).size - 1 }
     private fun texts(scene: ImageComposeScene): List<String> { frames(scene); return nodes(scene).map(::text) }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }

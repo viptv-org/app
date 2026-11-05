@@ -29,6 +29,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class PullToRefreshUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null

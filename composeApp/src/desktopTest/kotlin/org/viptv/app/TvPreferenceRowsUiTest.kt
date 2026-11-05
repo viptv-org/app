@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TvPreferenceRowsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun playbackStartsOnTheFirstStoredRowAndMovesUpDownAndLeft() = runBlocking {
         val choices = mutableListOf<String>()

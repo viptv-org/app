@@ -23,6 +23,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class ContinueWatchingPlayerEpisodesTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit
@@ -211,7 +212,7 @@ class ContinueWatchingPlayerEpisodesTest {
                 tvExtras = TvPlaybackExtras(episodes = episodes, nextEpisode = next), playEpisode = { played += it })
         } }
         var frame = 0
-        fun frames() = repeat(16) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+        fun frames() = repeat(16) { scene.render(frame++ * 16_666_667L).close() }
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

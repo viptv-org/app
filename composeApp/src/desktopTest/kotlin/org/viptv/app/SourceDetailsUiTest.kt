@@ -28,6 +28,7 @@ import kotlin.test.*
 
 class SourceDetailsUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val description = "Oak.Street.2026.2160p.WEB-DL.DUAL.DDP5.1.Atmos.DV.HDR10.H.265.MSubs-GROUP.mkv · MKV · HEVC · EAC3 · 14.2 GB · a tail the two-line window cannot hold"
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)

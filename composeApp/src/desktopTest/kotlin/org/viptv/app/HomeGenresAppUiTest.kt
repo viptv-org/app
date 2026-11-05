@@ -25,6 +25,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, DelicateCoilApi::class)
 class HomeGenresAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun genresChipOpensFilteredBrowseInThePhoneApp() = runBlocking {
         val discover = mutableListOf<Url>()
         val client = HttpClient(MockEngine { request ->
@@ -59,7 +60,7 @@ class HomeGenresAppUiTest {
             appLoader = SingletonImageLoader.get(context)
         }
         var frame = 0L
-        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close(); Thread.sleep(5) }
+        fun frames(count: Int = 10) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 10_000_000_000L

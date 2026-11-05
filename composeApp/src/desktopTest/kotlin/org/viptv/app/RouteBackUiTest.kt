@@ -17,8 +17,9 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class RouteBackUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private var frame = 0L
-    private fun ImageComposeScene.frames(count: Int = 16) = repeat(count) { render(frame++ * 16_666_667L).close(); Thread.sleep(4) }
+    private fun ImageComposeScene.frames(count: Int = 16) = repeat(count) { render(frame++ * 16_666_667L).close() }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     private fun ImageComposeScene.nodes() = semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +

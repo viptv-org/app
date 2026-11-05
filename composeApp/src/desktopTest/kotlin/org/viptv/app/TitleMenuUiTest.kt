@@ -41,6 +41,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class TitleMenuUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val episode = Card(MediaIdentity("show:1:2", "series", emptyList(), EpisodeCoordinates("aired", 1, 2)),
         provider_id = "addon:4", title = "Show", subtitle = "S1 E2 · 10m left", progress = 0.4, badges = emptyList(),
@@ -74,7 +75,7 @@ class TitleMenuUiTest {
         assertTrue(requireNotNull(clickable(scene, name)) { "$name is not on screen" }
             .config[SemanticsActions.OnClick].action?.invoke() == true)
     private fun frames(scene: ImageComposeScene, count: Int = 8) = repeat(count) {
-        scene.render(it * 16_666_667L).close(); Thread.sleep(4)
+        scene.render(it * 16_666_667L).close()
     }
     private fun withMenu(card: Card = movie, removal: ListRemoval? = null, actions: CardActions?,
         test: (ImageComposeScene) -> Unit) {

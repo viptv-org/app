@@ -23,6 +23,7 @@ import kotlin.test.*
 
 class DesktopShortWindowHomeTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private val windowWidth = 800
     private val windowHeight = 600
