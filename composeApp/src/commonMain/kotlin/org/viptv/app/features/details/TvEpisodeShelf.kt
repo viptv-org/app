@@ -186,7 +186,7 @@ private fun TvEpisodePageFailure(scale: Float, message: String, retry: (() -> Un
         Text(message, color = Palette.danger, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp,
             fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         retry?.let { again ->
-            TvAction(Modifier.height(60.dp * scale).width(180.dp * scale), scale, primary = true, activate = again) { tint ->
+            TvAction(Modifier.heightIn(min = 60.dp * scale).width(180.dp * scale), scale, primary = true, activate = again) { tint ->
                 Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }

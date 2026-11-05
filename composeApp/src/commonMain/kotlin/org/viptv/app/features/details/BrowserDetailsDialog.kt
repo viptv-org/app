@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -34,6 +33,7 @@ import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.connection.DetailFocus
 import org.viptv.engine.wire.AddonFailure
 import org.viptv.app.connection.epochMillis
@@ -88,7 +88,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                     // One step per press: the key-down dismisses and neither half reaches the page's Back as well.
                     if (event.key == Key.Escape) { if (event.type == KeyEventType.KeyDown) requestDismiss(); true } else false
                 }.semantics { paneTitle = detail?.item?.title ?: "Title details" },
-                color = Color(0xFF181818), shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
+                color = Palette.dialog, shape = RoundedCornerShape(14.dp), shadowElevation = 24.dp) {
                 Box {
                     LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp), topEdgeFade = false) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
@@ -141,7 +141,7 @@ private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, p
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(maxOf(260.dp, maxWidth * (8.2f / 16f)))) {
             AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(.45f to Color.Transparent, 1f to Color(0xFF181818))))
+            Box(Modifier.fillMaxSize().background(Scrim.webDetailHero))
             Column(Modifier.align(Alignment.BottomStart).padding(start = gutter, end = gutter, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 TitleLogo(card.logo, card.title, logoModifier = Modifier.widthIn(max = 340.dp).fillMaxWidth().height(96.dp)) {
                     Text(card.title, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)

@@ -132,11 +132,11 @@ private fun TvUpdateNotice(title: String, body: String, primary: String?, second
                     Text(body, color = Palette.body, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp)
                     Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                         primary?.let { label ->
-                            TvAction(Modifier.width(260.dp * scale).height(72.dp * scale), scale, requester = first, activate = act) {
+                            TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale), scale, requester = first, activate = act) {
                                 Text(label, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                             }
                         }
-                        TvAction(Modifier.width(200.dp * scale).height(72.dp * scale), scale,
+                        TvAction(Modifier.width(200.dp * scale).heightIn(min = 72.dp * scale), scale,
                             requester = if (primary == null) first else null, activate = dismiss) {
                             Text(secondary, color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                         }

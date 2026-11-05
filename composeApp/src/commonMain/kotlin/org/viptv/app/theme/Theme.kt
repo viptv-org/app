@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 object Palette {
     val background = Color(0xFF0B0B0C)
     val surface = Color(0xFF161618)
+    val dialog = Color(0xFF181818)
     val raised = Color(0xFF212124)
     val text = Color(0xFFF4F2EE)
     val body = Color(0xFFDAD8D3)

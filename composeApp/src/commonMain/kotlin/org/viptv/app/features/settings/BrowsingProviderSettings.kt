@@ -31,7 +31,7 @@ internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plu
             val selected = configuration.profile.browsing_plugin == plugin
             val available = selected || configuration.connections.any { it.plugin_id == plugin && it.enabled && Capability.DISCOVERY in it.capabilities }
             if (choices.size == 1) Text(name)
-            else if (tv) TvAction(Modifier.fillMaxWidth().height(64.dp * scale), scale,
+            else if (tv) TvAction(Modifier.fillMaxWidth().heightIn(min = 64.dp * scale), scale,
                 enabled = available && !busy, left = left, activate = { select(plugin) }, arrangement = Arrangement.Start,
                 contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                 Icon(if (selected) Lucide.CircleCheck else Lucide.Circle, null, Modifier.size(24.dp * scale), tint)

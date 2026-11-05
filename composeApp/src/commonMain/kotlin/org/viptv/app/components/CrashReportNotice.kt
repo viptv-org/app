@@ -53,10 +53,10 @@ private fun TvCrashNotice(send: () -> Unit, discard: () -> Unit) {
             Text("VIPTV closed unexpectedly. Send a crash report?", color = Palette.text,
                 fontSize = (28 * scale).sp, lineHeight = (38 * scale).sp, fontWeight = FontWeight.Bold)
             Row(Modifier.padding(top = 8.dp * scale), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                TvAction(Modifier.width(260.dp * scale).height(72.dp * scale).testTag("crash-report-send"), scale, activate = send) {
+                TvAction(Modifier.width(260.dp * scale).heightIn(min = 72.dp * scale).testTag("crash-report-send"), scale, activate = send) {
                     Text("Send report", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
-                TvAction(Modifier.width(180.dp * scale).height(72.dp * scale).testTag("crash-report-dismiss"), scale, activate = discard) {
+                TvAction(Modifier.width(180.dp * scale).heightIn(min = 72.dp * scale).testTag("crash-report-dismiss"), scale, activate = discard) {
                     Text("No", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }

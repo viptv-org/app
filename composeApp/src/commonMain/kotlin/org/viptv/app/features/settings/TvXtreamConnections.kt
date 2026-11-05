@@ -105,7 +105,7 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
         val list = connections
         if (list == null) {
             Text(if (busy) "Loading connections…" else "Could not load connections.", color = Palette.secondary, fontSize = (22 * scale).sp)
-            TvAction(Modifier.height(72.dp * scale).width(240.dp * scale), scale, requester = first, left = sidebar,
+            TvAction(Modifier.heightIn(min = 72.dp * scale).width(240.dp * scale), scale, requester = first, left = sidebar,
                 enabled = !busy, keepFocus = true, activate = request) { tint ->
                 Text("Retry", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
             }
@@ -124,7 +124,7 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
                         Text("No Xtream connections yet.", Modifier.padding(horizontal = 24.dp * scale), color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
                     if (canManage) item(key = "add") {
-                        TvAction(Modifier.fillMaxWidth().height(100.dp * scale)
+                        TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                             .focusProperties { left = sidebar; down = FocusRequester.Cancel; if (list.isEmpty()) up = FocusRequester.Cancel }
                             .then(if (list.isEmpty()) Modifier.focusRequester(first) else Modifier.focusRequester(addFocus)), scale, ring = false,
                             enabled = !busy, keepFocus = true, activate = { creating = true }, arrangement = Arrangement.Start,
@@ -144,7 +144,7 @@ internal fun TvXtreamConnections(connections: List<XtreamConnection>?, defaultLi
 @Composable
 private fun TvXtreamRow(connection: XtreamConnection, defaultLive: Boolean, scale: Float, sidebar: FocusRequester,
     requester: FocusRequester?, activate: () -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(100.dp * scale), scale, requester = requester, left = sidebar, ring = false,
+    TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale), scale, requester = requester, left = sidebar, ring = false,
         background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
         activate = activate) { tint ->
         Icon(Lucide.Server, null, Modifier.size(30.dp * scale), tint)
@@ -253,7 +253,7 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
                                     change(active) { it + input }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                                    TvAction(Modifier.height(72.dp * scale).width(280.dp * scale), scale, primary = true,
+                                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(280.dp * scale), scale, primary = true,
                                         enabled = valid && !busy, keepFocus = valid, activate = {
                                             val target = connection
                                             when {
@@ -265,7 +265,7 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
                                         }) { tint ->
                                         Text(if (creating) "Add connection" else "Save", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                                     }
-                                    TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, enabled = !busy, keepFocus = true,
+                                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(220.dp * scale), scale, enabled = !busy, keepFocus = true,
                                         activate = { if (creating) close() else mode = TvXtreamMode.Actions }) { tint ->
                                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                                     }
@@ -275,12 +275,12 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
                                 Text("This removes the connection and its saved credentials. Its catalogues and live channels stop showing. Viewing history is kept.",
                                     color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                                    TvAction(Modifier.height(72.dp * scale).width(260.dp * scale), scale, requester = initial, enabled = !busy, keepFocus = true,
+                                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(260.dp * scale), scale, requester = initial, enabled = !busy, keepFocus = true,
                                         activate = { remove(requireNotNull(connection).id) }) {
                                         Icon(Lucide.Trash2, null, Modifier.size(28.dp * scale), Palette.danger); Spacer(Modifier.width(12.dp * scale))
                                         Text("Remove", color = Palette.danger, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                                     }
-                                    TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, enabled = !busy, keepFocus = true,
+                                    TvAction(Modifier.heightIn(min = 72.dp * scale).width(220.dp * scale), scale, enabled = !busy, keepFocus = true,
                                         activate = { mode = TvXtreamMode.Actions }) { tint ->
                                         Text("Cancel", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
                                     }
@@ -299,34 +299,34 @@ private fun TvXtreamActions(connection: XtreamConnection, defaultLive: Boolean, 
     initial: FocusRequester, sync: () -> Unit, useDefault: () -> Unit, edit: () -> Unit, password: () -> Unit,
     delete: () -> Unit, close: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-        TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, requester = initial, enabled = editable && !connection.refresh.running, keepFocus = keepFocus,
+        TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale), scale, requester = initial, enabled = editable && !connection.refresh.running, keepFocus = keepFocus,
             arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 28.dp * scale), activate = sync) { tint ->
             Icon(Lucide.RefreshCw, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(24.dp * scale))
             Text("Sync now", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
-        if (connection.scopes.enabled && connection.scopes.live && !defaultLive) TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale,
+        if (connection.scopes.enabled && connection.scopes.live && !defaultLive) TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale), scale,
             enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 28.dp * scale),
             activate = useDefault) { tint ->
             Icon(Lucide.Star, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(24.dp * scale))
             Text("Use as default live playlist", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
-        TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
+        TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
             contentPadding = PaddingValues(horizontal = 28.dp * scale), activate = edit) { tint ->
             Icon(Lucide.Pencil, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(24.dp * scale))
             Text("Edit name and content", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
-        TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
+        TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
             contentPadding = PaddingValues(horizontal = 28.dp * scale), activate = password) { tint ->
             Icon(Lucide.KeyRound, null, Modifier.size(28.dp * scale), tint); Spacer(Modifier.width(24.dp * scale))
             Text("Replace password", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
-        TvAction(Modifier.fillMaxWidth().height(96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
+        TvAction(Modifier.fillMaxWidth().heightIn(min = 96.dp * scale), scale, enabled = editable, keepFocus = keepFocus, arrangement = Arrangement.Start,
             contentPadding = PaddingValues(horizontal = 28.dp * scale), activate = delete) {
             Icon(Lucide.Trash2, null, Modifier.size(28.dp * scale), Palette.danger); Spacer(Modifier.width(24.dp * scale))
             Text("Remove connection", color = Palette.danger, fontSize = (26 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
         connection.refresh.error?.let { Text(it, color = Palette.danger, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
-        TvAction(Modifier.height(72.dp * scale).width(220.dp * scale), scale, activate = close) { tint ->
+        TvAction(Modifier.heightIn(min = 72.dp * scale).width(220.dp * scale), scale, activate = close) { tint ->
             Text("Back", color = tint, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
         }
     }
@@ -356,7 +356,7 @@ private fun TvXtreamField(label: String, value: String, secret: Boolean, active:
 @Composable
 private fun TvXtreamScopeRow(label: String, checked: Boolean, enabled: Boolean, scale: Float, requester: FocusRequester?,
     activate: () -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, requester = requester, enabled = enabled,
+    TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, requester = requester, enabled = enabled,
         arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale), activate = activate) { tint ->
         Box(Modifier.size((24 * scale).dp).clip(RoundedCornerShape(6.dp * scale))
             .background(if (checked) Palette.text else Color.White.copy(alpha = 0.12f))) {

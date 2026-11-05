@@ -103,7 +103,7 @@ private fun TvBackendBanner(focus: TvBannerFocus?, unreachableSince: Long, retry
             Text(backendBannerBody(retrySeconds), color = Palette.body, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
             Text(backendUnreachableLabel(unreachableSince), color = Palette.tertiary, fontSize = (22 * scale).sp)
             Row(Modifier.padding(top = 10.dp * scale)) {
-                TvAction(Modifier.height(72.dp * scale).testTag("backend-banner-dismiss")
+                TvAction(Modifier.heightIn(min = 72.dp * scale).testTag("backend-banner-dismiss")
                     .onFocusChanged { focus?.focused?.value = it.isFocused }, scale, requester = focus?.requester,
                     contentPadding = PaddingValues(horizontal = 34.dp * scale), activate = dismiss) {
                     Text("Dismiss", fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)

@@ -55,7 +55,7 @@ internal fun TvSignInChoice(scale: Float, local: (() -> Unit)?, select: (TvSignI
 @Composable
 private fun TvEntryOption(scale: Float, title: String, subtitle: String?, requester: FocusRequester?, activate: () -> Unit,
     icon: @Composable (androidx.compose.ui.graphics.Color) -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(100.dp * scale), scale, requester = requester, activate = activate,
+    TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale), scale, requester = requester, activate = activate,
         contentPadding = PaddingValues(horizontal = 32.dp * scale), arrangement = Arrangement.Start,
         cornerRadius = 16.dp * scale, background = Color.White.copy(alpha = .07f)) { tint ->
         icon(tint)

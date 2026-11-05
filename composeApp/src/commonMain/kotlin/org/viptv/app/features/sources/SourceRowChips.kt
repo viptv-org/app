@@ -5,8 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,7 +70,7 @@ internal fun SourceAudioSubsLine(source: SourceCandidate, color: Color, sectionF
     val subs = source.subtitleChips()
     FlowRow(horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(gap)) {
         if (audio == null && subs == null) {
-            Text("Audio not listed", Modifier.height(chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
+            Text("Audio not listed", Modifier.heightIn(min = chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
             return@FlowRow
         }
         if (audio != null) {
@@ -81,7 +81,7 @@ internal fun SourceAudioSubsLine(source: SourceCandidate, color: Color, sectionF
             SourceSectionLabel(Lucide.Captions, "Subs", color, sectionFontSize, iconSize, chipHeight)
             subs.forEach { SourceLanguageChip(it.label, color, it.dashed, chipFontSize, padH, chipHeight, outline, radius) }
         } else if (audio != null) {
-            Text("Subs not listed", Modifier.height(chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
+            Text("Subs not listed", Modifier.heightIn(min = chipHeight), fontSize = sectionFontSize, color = color.copy(alpha = .55f))
         }
     }
 }
@@ -127,7 +127,7 @@ internal fun SourceFactsRow(source: SourceCandidate, addon: String?, color: Colo
 
 @Composable
 private fun SourceSectionLabel(icon: ImageVector, text: String, color: Color, fontSize: TextUnit, iconSize: Dp, chipHeight: Dp) {
-    Box(Modifier.height(chipHeight), contentAlignment = Alignment.Center) {
+    Box(Modifier.heightIn(min = chipHeight), contentAlignment = Alignment.Center) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(icon, null, Modifier.size(iconSize), tint = color.copy(alpha = .6f))
             Text(text, fontSize = fontSize, color = color.copy(alpha = .6f), fontWeight = FontWeight.SemiBold)
@@ -137,7 +137,7 @@ private fun SourceSectionLabel(icon: ImageVector, text: String, color: Color, fo
 
 @Composable
 private fun SourceLanguageChip(text: String, color: Color, dashed: Boolean, fontSize: TextUnit, padH: Dp, chipHeight: Dp, outline: Dp, radius: Dp) {
-    Box(Modifier.height(chipHeight).chipOutline(color.copy(alpha = .5f), outline, radius, dashed).padding(horizontal = padH), contentAlignment = Alignment.Center) {
+    Box(Modifier.heightIn(min = chipHeight).chipOutline(color.copy(alpha = .5f), outline, radius, dashed).padding(horizontal = padH), contentAlignment = Alignment.Center) {
         Text(text, fontSize = fontSize, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
     }
 }

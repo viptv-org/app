@@ -229,7 +229,7 @@ internal fun LiveFilteredEmpty(television: Boolean, scale: Float, phone: Boolean
     Column(verticalArrangement = Arrangement.spacedBy(if (television) 24.dp * scale else 16.dp * scale)) {
         if (television) Text(message, color = Palette.secondary, fontSize = (24 * scale).sp)
         else Text(message, color = Palette.secondary)
-        if (television) TvAction(Modifier.height(64.dp * scale), scale, activate = allChannels, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
+        if (television) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = allChannels, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(LiveAllChannels, color = it, fontSize = (24 * scale).sp)
         } else TextButton(allChannels) { Text(LiveAllChannels) }
     }

@@ -57,7 +57,7 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
 
 @Composable
 private fun TvPasswordAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float, enabled: Boolean = true, activate: () -> Unit) {
-    TvAction(Modifier.fillMaxWidth().height(72.dp * scale), scale, enabled = enabled, activate = activate) {
+    TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, enabled = enabled, activate = activate) {
         Icon(icon, null, Modifier.size(28.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
         Text(label, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold, color = it)
     }

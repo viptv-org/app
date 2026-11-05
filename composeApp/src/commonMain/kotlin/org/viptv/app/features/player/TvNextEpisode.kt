@@ -53,7 +53,7 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
             next.description.providerText()?.let { Text(it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, color = Palette.body, maxLines = 3, overflow = TextOverflow.Ellipsis) }
             Spacer(Modifier.height(2.dp * scale))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-                TvAction(Modifier.height(72.dp * scale), scale, primary = true, requester = initial, activate = play,
+                TvAction(Modifier.heightIn(min = 72.dp * scale), scale, primary = true, requester = initial, activate = play,
                     contentPadding = PaddingValues(horizontal = 28.dp * scale)) {
                     val ink = it
                     NextEpisodeCountdownRing(countdown, ink, 40.dp * scale, 3.dp * scale, reduceMotion) {
@@ -62,7 +62,7 @@ internal fun TvNextEpisode(current: Card?, next: Card, scale: Float, play: () ->
                     Spacer(Modifier.width(14.dp * scale))
                     Text(if (countdown.running) "Next episode in ${countdown.secondsLeft}" else "Play next episode", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
-                TvGlassAction(Modifier.width(340.dp * scale).height(72.dp * scale), scale, activate = keepWatching) {
+                TvGlassAction(Modifier.width(340.dp * scale).heightIn(min = 72.dp * scale), scale, activate = keepWatching) {
                     Text("Keep watching credits", color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
                 }
             }
