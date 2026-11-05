@@ -37,7 +37,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         { back -> ChangePasswordScreen(connection, back, changed = { controller.passwordChanged() }, compact = compact) } }
     val accountRole = state.accountRole
     val ownerWrites = accountRole == "owner" || (state.accountIdentity != null && state.manageAccount)
-    val accountSession = accountRole != "device"
+    val accountSession = state.accountSession
     // The identity loads after the page: until it does, leave the writes to the server rather than flashing an owner note at the owner.
     val xtreamCanManage = state.accountIdentity == null || ownerWrites
     val xtreamManageNote = if (ownerWrites) "Only the account owner can change connections." else xtreamManagedElsewhere
@@ -127,8 +127,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         devices = if (!state.localMode && accountSession) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null,
             canSignOut = ownerWrites, retryable = state.devicesRetryable) }) else null,
-        addDevice = { compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
-            deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) },
+        addDevice = if (accountSession) ({ compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
+            deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) }) else null,
         addonsManageable = ownerWrites,
         addonLogos = state.addonLogos,
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
