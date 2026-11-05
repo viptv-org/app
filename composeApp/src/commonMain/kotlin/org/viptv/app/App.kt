@@ -13,13 +13,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.*
@@ -112,6 +120,22 @@ fun App(
             chooseSource = controller::chooseSource, playFromStart = controller::playTitleFromStart,
             markWatched = if (localMode) null else controller::toggleWatched)
     }
+    val bannerSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
+    val bannerFocus = remember { TvBannerFocus() }
+    val focusManager = LocalFocusManager.current
+    var appHasFocus by remember { mutableStateOf(false) }
+    var bannerHadFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(bannerSince != null) {
+        if (bannerSince != null) {
+            snapshotFlow { bannerFocus.focused.value }.collect { if (it) bannerHadFocus = true }
+            return@LaunchedEffect
+        }
+        if (!bannerHadFocus) return@LaunchedEffect
+        bannerHadFocus = false
+        // The banner's Dismiss leaves composition while it holds focus, so Compose clears focus with it: put the D-pad back on the page.
+        repeat(2) { withFrameNanos { } }
+        if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
+    }
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
@@ -122,6 +146,13 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
+            // The banner takes no focus: Up from a page's topmost control is how the D-pad reaches Dismiss, with or without a header rail.
+            .onKeyEvent { event ->
+                if (!television || bannerSince == null || event.type != KeyEventType.KeyDown || event.key != Key.DirectionUp) false
+                else if (focusManager.moveFocus(FocusDirection.Up)) true
+                else { bannerFocus.requester.requestFocus(); true }
+            }
+            .onFocusChanged { appHasFocus = it.hasFocus }
             .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
             .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background)
             .then(if (playerDrawsEdgeToEdge(state.screen, television)) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
@@ -190,13 +221,11 @@ fun App(
                       if (watchOnTvPlatform && remoteTvName != null && state.screen in listOf(Screen.Discover, Screen.Live, Screen.Library)) {
                           { RemoteHeaderButton(remoteTvName, showTip = !prefs.tipDismissed, dismissTip = watchOnTvState::dismissRemoteTip, open = { remoteOpen = true }) }
                       } else null
-                  val unreachableSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
-                  val bannerFocus = remember { TvBannerFocus() }
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
                       LocalBarsFadeContent provides barFades, LocalBottomBarFades provides bottomBar,
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable,
                       LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll, LocalHeaderPills provides phone,
-                      LocalTvBannerFocus provides bannerFocus.takeIf { television && unreachableSince != null }) { Column(Modifier.fillMaxSize()) {
+                      LocalTvBannerFocus provides bannerFocus.takeIf { television && bannerSince != null }) { Column(Modifier.fillMaxSize()) {
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
                         if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
@@ -296,8 +325,8 @@ fun App(
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       PhoneBottomBar(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate, hidden = phoneScroll.barHidden)
                   }
-                  if (unreachableSince != null) {
-                      BackendBanner(television, phone, bottomBar, unreachableSince, state.backendRetrySeconds,
+                  if (bannerSince != null) {
+                      BackendBanner(television, phone, bottomBar, bannerSince, state.backendRetrySeconds,
                           controller::dismissBackendBanner, bannerFocus)
                   }
                 }
