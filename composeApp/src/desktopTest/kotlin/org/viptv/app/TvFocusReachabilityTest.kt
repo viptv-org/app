@@ -63,6 +63,7 @@ class TvFocusReachabilityTest {
     private fun isInteractive(node: SemanticsNode): Boolean {
         val config = node.config
         if (config.contains(SemanticsActions.OnClick)) return true
+        if (config.contains(SemanticsActions.SetProgress)) return true
         return config.getOrNull(SemanticsProperties.Role) != null
     }
 
@@ -164,7 +165,7 @@ class TvFocusReachabilityTest {
             }
         }
         // Transition/loading screens legitimately have nothing to focus, and so does pairing without a server challenge.
-        val exempt = setOf("splash", "signed-in", "home-loading", "sources-empty", "player", "pairing")
+        val exempt = setOf("splash", "signed-in", "home-loading", "sources-empty", "pairing")
         val noFocus = reports.filter { it.targets.isNotEmpty() && it.initialFocus == null && it.name !in exempt }
         assertTrue(noFocus.isEmpty(), "TV screens with no initial focus: ${noFocus.map { it.name }}")
         val clickableNotFocusable = reports.filter { it.unrequestable.isNotEmpty() }
