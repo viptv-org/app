@@ -22,6 +22,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.Button
+import org.viptv.app.format.providerPlainText
 
 @Composable
 internal fun SharedTitlePage(detail: DetailSnapshot, signIn: () -> Unit) {
@@ -74,7 +75,7 @@ private fun SharedTitleSummary(card: Card, signIn: () -> Unit, modifier: Modifie
             Text(card.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
         }
         MediaMetadata(card)
-        card.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body) }
+        card.description?.let { Text(providerPlainText(it), fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body) }
         Button(onClick = signIn, modifier = Modifier.width(200.dp).height(48.dp), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
             Text("Sign in to watch", fontSize = 16.sp, fontWeight = FontWeight.Bold)
