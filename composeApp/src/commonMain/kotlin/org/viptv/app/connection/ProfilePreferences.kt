@@ -19,6 +19,7 @@ data class ProfilePreferences(
     val next_episode_button: Boolean = true,
     val skip_intros: Boolean = false,
     val remembered_source_reuse: Boolean = true,
+    val match_frame_rate: Boolean = true,
 )
 
 private val subtitleModes = setOf("always", "foreign", "never")
