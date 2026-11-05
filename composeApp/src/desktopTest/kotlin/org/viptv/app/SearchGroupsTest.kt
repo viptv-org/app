@@ -113,6 +113,23 @@ class SearchGroupsTest {
         assertTrue(groups[1].cards.isEmpty())
     }
 
+    @Test fun onlyTheGroupsThatFailedAreRetryable() {
+        val returned = SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1")))
+        val partial = SearchResultRow("addon:2", "Second add-on", "stremio", addon_id = 2, cards = listOf(card("addon:2")), message = "private partial failure")
+        val failed = SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed")
+        val groups = searchResultGroups(listOf(returned, partial, failed))
+        assertEquals(listOf(false, true, true), groups.map { it.failed })
+    }
+
+    @Test fun aProviderStillAnsweringIsNotRetryable() {
+        val rows = listOf(
+            SearchResultRow("addon:1", "Cinemeta", "stremio", addon_id = 1, cards = listOf(card("addon:1"))),
+            SearchResultRow("addon:2", "Slow add-on", "stremio", addon_id = 2, state = "Loading"))
+        val answering = searchResultGroups(rows).last()
+        assertEquals("Searching…", answering.message)
+        assertFalse(answering.failed)
+    }
+
     @Test fun episodeCoordinatesDoNotCollide() {
         val first = card("addon", "series").copy(identity = MediaIdentity("same", "series", emptyList(), EpisodeCoordinates("aired", 1, 1)))
         val second = first.copy(identity = first.identity.copy(episode = EpisodeCoordinates("aired", 1, 2)))

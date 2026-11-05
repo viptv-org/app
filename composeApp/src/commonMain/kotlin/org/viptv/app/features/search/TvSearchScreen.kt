@@ -101,8 +101,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 error?.let { item {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                         Text(it, fontSize = (24 * scale).sp, color = Palette.danger)
-                        if (retry != null) TvAction(Modifier.height(52.dp * scale).width(200.dp * scale), scale, primary = true,
-                            activate = retry) { tint -> Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold) }
+                        if (retry != null) TvSearchRetry(retry, scale)
                     }
                 } }
                 groups.forEachIndexed { rowIndex, group -> item(key = group.id) {
@@ -110,7 +109,12 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                         Text(group.label,
                             Modifier.height(40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
                             letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
-                        group.message?.let { Text(it, fontSize = (22 * scale).sp, color = Palette.secondary) }
+                        group.message?.let { message ->
+                            if (group.failed) Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                                Text(message, fontSize = (22 * scale).sp, color = Palette.danger)
+                                retry?.let { again -> TvSearchRetry(again, scale) }
+                            } else Text(message, fontSize = (22 * scale).sp, color = Palette.secondary)
+                        }
 
                         LazyRow(modifier = Modifier.focusRestorer(), horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                             itemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
@@ -147,10 +151,20 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                     ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                 }
                 if (!busy && term.isNotBlank() && error == null && !hasResults) item {
-                    Text(searchNoResultsCopy(searchRows), fontSize = (24 * scale).sp, color = Palette.secondary)
+                    val copy = searchNoResultsCopy(searchRows)
+                    if (searchFailed(searchRows)) Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                        Text(copy, fontSize = (24 * scale).sp, color = Palette.danger)
+                        retry?.let { again -> TvSearchRetry(again, scale) }
+                    } else Text(copy, fontSize = (24 * scale).sp, color = Palette.secondary)
                 }
             }
         }
 
     }
+}
+
+@Composable
+private fun TvSearchRetry(retry: () -> Unit, scale: Float) {
+    TvAction(Modifier.height(52.dp * scale).width(200.dp * scale), scale, primary = true,
+        activate = retry) { tint -> Text("Try again", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold) }
 }
