@@ -71,12 +71,13 @@ class LandscapeHeroUiTest {
             val scene = shell(width, height)
             try {
                 frames(scene, 40)
-                assertHeroFits(scene, width, height, false)
                 for (label in listOf(title, "Play", "More info")) {
                     val node = nodes(scene).firstOrNull { text(it) == label || description(it) == label }
                     assertNotNull(node, "$width x $height: $label is drawn: ${nodes(scene).map { text(it).ifEmpty { description(it) } }}")
-                    assertTrue(node.boundsInRoot.top >= 0f && node.boundsInRoot.bottom <= height, "$width x $height: $label sits in the window, was ${node.boundsInRoot}")
+                    val bottom = node.positionInRoot.y + node.size.height
+                    assertTrue(node.positionInRoot.y >= 0f && bottom <= height, "$width x $height: $label sits in the window, ends at $bottom")
                 }
+                assertHeroFits(scene, width, height, false)
             } finally { scene.close() }
         }
     }
@@ -102,10 +103,11 @@ class LandscapeHeroUiTest {
     private fun assertHeroFits(scene: ImageComposeScene, width: Int, height: Int, skeleton: Boolean) {
         val page = nodes(scene).first { tag(it) == "page" }
         val hero = nodes(scene).first { tag(it) == TABLET_HERO_FRAME_TAG }
-        assertTrue(hero.boundsInRoot.bottom <= page.boundsInRoot.bottom + 1f,
-            "$width x $height: the hero${if (skeleton) "skeleton" else ""} ends inside the page, was ${hero.boundsInRoot} in ${page.boundsInRoot}")
-        val expected = tabletHeroFrame(Dp(page.boundsInRoot.width), Dp(page.boundsInRoot.height)).height
-        assertEquals(expected.value, hero.boundsInRoot.height, 1f, "$width x $height: the hero takes the page height it is given")
+        val pageBottom = page.positionInRoot.y + page.size.height
+        val heroBottom = hero.positionInRoot.y + hero.size.height
+        assertTrue(heroBottom <= pageBottom + 1f, "$width x $height: the hero${if (skeleton) "skeleton" else ""} ends inside the page, ends at $heroBottom of $pageBottom")
+        val expected = tabletHeroFrame(Dp(page.size.width.toFloat()), Dp(page.size.height.toFloat())).height
+        assertEquals(expected.value, hero.size.height.toFloat(), 1f, "$width x $height: the hero takes the page height it is given")
     }
 
     private fun shell(width: Int, height: Int, busy: Boolean = false, tablet: Boolean = true, withHeader: Boolean = true) = scene(width, height) {

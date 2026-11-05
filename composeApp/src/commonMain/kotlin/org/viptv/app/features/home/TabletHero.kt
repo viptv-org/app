@@ -48,8 +48,8 @@ internal data class TabletHeroFrame(val height: Dp, val short: Boolean)
 
 internal fun tabletHeroFrame(contentWidth: Dp, viewportHeight: Dp?): TabletHeroFrame {
     val frame = if (contentWidth < 900.dp) TabletHeroPortraitHeight else TabletHeroLandscapeHeight
-    val short = viewportHeight != null && viewportHeight < TabletMinSide
-    return TabletHeroFrame(if (short) viewportHeight!!.coerceIn(TabletHeroShortMin, frame) else frame, short)
+    val short = viewportHeight?.takeIf { it < TabletMinSide }
+    return TabletHeroFrame(short?.coerceIn(TabletHeroShortMin, frame) ?: frame, short != null)
 }
 
 @Composable
