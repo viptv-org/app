@@ -7,12 +7,14 @@ import com.sun.net.httpserver.HttpServer
 import java.io.File
 import java.net.InetSocketAddress
 import java.security.MessageDigest
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -75,9 +77,18 @@ class AndroidAppUpdateTest {
         assertEquals("http://127.0.0.1:${server.address.port}/updates/android/viptv-999999.apk", ready.feed.url)
 
         shadowOf(application.packageManager).setCanRequestPackageInstalls(true)
-        // Every status the Updating screen would show, in order (app#139).
+        // Every status the Updating screen would show, in order (app#139). The history is read only once the
+        // collector has seen the state that waits for Android: the updater publishes it from the install
+        // coroutine after the session is committed, which can land after Robolectric has already reported
+        // the session finished on the main looper.
         val seen = java.util.Collections.synchronizedList(mutableListOf<UpdateStatus>())
-        val collector = scope.launch { updater.state.collect { seen += it.status } }
+        val confirmed = CompletableDeferred<Unit>()
+        val collector = scope.launch {
+            updater.state.collect { state ->
+                seen += state.status
+                if ((state.status as? UpdateStatus.Installing)?.confirming == true) confirmed.complete(Unit)
+            }
+        }
         val installer = application.packageManager.packageInstaller
         val created = mutableListOf<Int>()
         val finished = mutableListOf<Boolean>()
@@ -94,8 +105,9 @@ class AndroidAppUpdateTest {
         assertEquals(1, created.size, "One PackageInstaller session for the verified APK")
         assertEquals(listOf(true), finished, "The session was written and committed")
         // app#139: the Updating screen sees the session write, then waits for Android's confirmation.
-        // Robolectric reports the fake install as failed right after committing, so look at the history
-        // instead of the current status.
+        // Robolectric finishes the session as soon as it is committed, so the history is asserted instead
+        // of the current status, and only after the collector has recorded that settled state.
+        runBlocking { withTimeout(15_000) { confirmed.await() } }
         val progress = seen.toList().filterIsInstance<UpdateStatus.Installing>()
         assertTrue(progress.any { it.bytes in 1 until apk.size.toLong() }, "The session write reports progress: \$progress")
         assertTrue(progress.any { it.bytes == apk.size.toLong() && it.confirming },
