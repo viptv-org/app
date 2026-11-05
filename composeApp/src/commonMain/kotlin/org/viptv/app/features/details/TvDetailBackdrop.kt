@@ -7,8 +7,8 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
-import org.viptv.app.components.ART_ATTEMPTS
 import org.viptv.app.components.ArtFailure
+import org.viptv.app.components.GoneArtwork
 import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
@@ -24,12 +24,13 @@ internal fun TvDetailBackdrop(card: Card?, scale: Float, scrollPixels: () -> Flo
             // A card's landscape can be a dead link, so fall back to the poster once the landscape's retries run out.
             val primary = card?.landscape ?: card?.poster
             val fallback = card?.poster?.takeIf { it != primary }
-            val art = remember(card?.identity) { ArtFailure() }
+            val art = remember(card?.identity) { ArtFailure(primary) }
             val attempt = art.retryAfterFailure()
-            key(attempt) { BufferedArtwork(if (fallback != null && art.attempts >= ART_ATTEMPTS) fallback else primary,
+            val drawn = if (fallback != null && art.settled) fallback else primary
+            if (drawn != null && !GoneArtwork.contains(drawn)) key(attempt) { BufferedArtwork(drawn,
                 Modifier.fillMaxSize(),
                 if (card?.identity?.kind == "series") BiasAlignment(.2f, -.6f) else BiasAlignment(0f, -.4f),
-                onReady = { art.failed = false }, onError = { art.failed = true }) }
+                onReady = { art.ready() }, onError = { _, throwable -> art.fail(throwable, drawn) }) }
             Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
                 0f to Palette.background.copy(alpha = .92f),
                 .36f to Palette.background.copy(alpha = if (card?.identity?.kind == "series") .7f else .65f),

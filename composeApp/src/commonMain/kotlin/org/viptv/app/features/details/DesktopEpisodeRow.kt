@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.GoneArtwork
+import org.viptv.app.components.isGoneArtwork
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
@@ -40,7 +42,9 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
         Text(number, Modifier.width(if (browser) 28.dp else 32.dp),
             fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary, textAlign = TextAlign.Center)
         Box(Modifier.width(if (browser) 170.dp else 220.dp).aspectRatio(16f / 9).clip(RoundedCornerShape(8.dp)).background(Palette.surface)) {
-            AsyncImage(episode.landscape ?: episode.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            val art = episode.landscape ?: episode.poster
+            if (art != null && !GoneArtwork.contains(art)) AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                onError = { error -> if (error.result.throwable.isGoneArtwork()) GoneArtwork.record(art) })
             if (episode.isPlayPending()) {
                 Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                     PendingActionSpinner(Modifier.size(30.dp), size = 30.dp, strokeWidth = 3.dp, color = Palette.text)

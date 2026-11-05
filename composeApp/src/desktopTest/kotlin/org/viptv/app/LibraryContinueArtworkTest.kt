@@ -86,6 +86,18 @@ class LibraryContinueArtworkTest {
         }
     }
 
+    @Test fun aMissingStillInContinueWatchingIsAskedOnceAndKeepsItsNoArtTile() = runBlocking {
+        withFakeArtwork(failFirst = 99, failStatus = 404) { art ->
+            val cards = listOf(art.card("Missing still", poster = null, landscape = art.url("still-missing")))
+            val shot = render(frames = 200) {
+                ContinueWatchingScreen(ContinueWatchingPage(cards, loaded = true), play = {}, open = {},
+                    more = null, retry = {}, back = {}, home = {})
+            }
+            assertEquals(1, art.paths["/still-missing.png"] ?: 0, "a 404 is not retried: ${art.paths}")
+            assertEquals(0, shot.count(StillInk), "a missing still leaves the no-art tile")
+        }
+    }
+
     private class Artwork(val origin: String) {
         private val run = UUID.randomUUID()
         val paths = ConcurrentHashMap<String, Int>()
@@ -98,7 +110,7 @@ class LibraryContinueArtworkTest {
             title = title, badges = emptyList(), poster = poster, landscape = landscape)
     }
 
-    private suspend fun withFakeArtwork(failFirst: Int = 0, block: suspend (Artwork) -> Unit) {
+    private suspend fun withFakeArtwork(failFirst: Int = 0, failStatus: Int = 500, block: suspend (Artwork) -> Unit) {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val art = Artwork("http://127.0.0.1:${server.address.port}")
         server.createContext("/") { exchange ->
@@ -106,7 +118,7 @@ class LibraryContinueArtworkTest {
             val served = (art.paths[name] ?: 0) + 1
             art.paths[name] = served
             if (served <= failFirst) {
-                exchange.sendResponseHeaders(500, -1)
+                exchange.sendResponseHeaders(failStatus, -1)
                 exchange.close()
                 return@createContext
             }

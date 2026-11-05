@@ -19,6 +19,8 @@ import coil3.SingletonImageLoader
 import coil3.asImage
 import coil3.decode.DataSource
 import coil3.intercept.Interceptor
+import coil3.network.HttpException
+import coil3.network.NetworkResponse
 import coil3.request.ImageResult
 import coil3.request.SuccessResult
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +35,7 @@ import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import java.io.IOException
+import java.util.UUID
 import kotlin.math.roundToInt
 import kotlin.test.*
 
@@ -101,6 +104,19 @@ class MissingArtTileUiTest {
         }
     }
 
+    @Test fun aMissingStillIsAskedOnceAndThenNeverAgain() = onEdt {
+        val url = "https://art.example/missing/${UUID.randomUUID()}.jpg"
+        val card = artless.copy(landscape = url)
+        withMissingArtwork { requested ->
+            val first = render(card, portrait = false, frames = 240)
+            assertEquals(1, requested[url], "a 404 for a still is not retried: $requested")
+            assertEquals(1, first.nodes.count { it.tag == MISSING_ART_TAG }, "a missing still draws the tile")
+            val second = render(card, portrait = false, frames = 40)
+            assertEquals(1, requested[url], "a still already known missing is not asked for again: $requested")
+            assertEquals(1, second.nodes.count { it.tag == MISSING_ART_TAG }, "the tile is drawn without a request")
+        }
+    }
+
     private class Shown(val art: Rect, val nodes: List<Node>, private val pixels: Bitmap) {
         fun pixel(x: Int, y: Int) = pixels.getColor(x, y)
 
@@ -128,7 +144,7 @@ class MissingArtTileUiTest {
     private fun SemanticsNode.tag() = config.getOrNull(SemanticsProperties.TestTag)
     private fun SemanticsNode.description() = config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()
 
-    private suspend fun render(card: Card, portrait: Boolean): Shown {
+    private suspend fun render(card: Card, portrait: Boolean, frames: Int = 20): Shown {
         val height = if (portrait) ART * 3 / 2 else ART * 9 / 16
         val scene = ImageComposeScene(ART + 80, height + 80, Density(1f)) { ViptvTheme {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
@@ -136,7 +152,7 @@ class MissingArtTileUiTest {
             }
         } }
         try {
-            repeat(20) { scene.render(it * 16_666_667L).close(); delay(10) }
+            repeat(frames) { scene.render(it * 16_666_667L).close(); delay(10) }
             scene.render(1_000_000_000L).use { image ->
                 val pixels = Bitmap.makeFromImage(image)
                 // Read the bounds while the scene is open: closing it detaches the tree, and a detached node reports Rect.Zero.
@@ -159,6 +175,20 @@ class MissingArtTileUiTest {
                 if (fail) throw IOException("unreachable art")
                 SuccessResult(Bitmap().apply { allocN32Pixels(160, 240); erase(artColor(url)) }.asImage(),
                     chain.request, DataSource.MEMORY) as ImageResult
+            })
+        }.build()
+        SingletonImageLoader.setUnsafe(loader)
+        try { block(requested) } finally { loader.shutdown(); SingletonImageLoader.setUnsafe(previous) }
+    }
+
+    private suspend fun withMissingArtwork(block: suspend (requested: Map<String, Int>) -> Unit) {
+        val requested = java.util.concurrent.ConcurrentHashMap<String, Int>()
+        val context = PlatformContext.INSTANCE
+        val previous = SingletonImageLoader.get(context)
+        val loader = ImageLoader.Builder(context).components {
+            add(Interceptor { chain ->
+                requested.merge(chain.request.data.toString(), 1, Int::plus)
+                throw HttpException(NetworkResponse(code = 404))
             })
         }.build()
         SingletonImageLoader.setUnsafe(loader)

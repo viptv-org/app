@@ -2,6 +2,7 @@ package org.viptv.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -19,6 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.ART_ATTEMPTS
+import org.viptv.app.features.details.DesktopEpisodeRow
+import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.features.details.TvDetailBackdrop
 import org.viptv.app.features.details.TvEpisodeCard
 import org.viptv.app.images.ConfigureImageLoading
@@ -56,6 +59,24 @@ class TvDetailsArtworkRetryTest {
         }
     }
 
+    @Test fun anEpisodeStillThatIsMissingIsAskedOnceAndSettlesOnTheTitleText() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/episode.png" to 99), failStatus = 404) { art ->
+            val card = art.card(title = "Episode One", landscape = art.url("episode"))
+            val shot = render(520, 420, frames = 200) { TvEpisodeCard(card, 1f, {}, {}, null, FocusRequester()) }
+            assertEquals(1, art.paths["/episode.png"] ?: 0, "a 404 is not retried: ${art.paths}")
+            assertEquals(0, shot.count(StillInk), "a missing still leaves the title text")
+        }
+    }
+
+    @Test fun aBackdropThatIsMissingFallsBackToThePosterWithoutRetryingTheStill() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/landscape.png" to 99), failStatus = 404) { art ->
+            val card = art.card(title = "Show", landscape = art.url("landscape"), poster = art.url("poster"))
+            render(400, 400, frames = 200) { TvDetailBackdrop(card, 1f) { 0f } }
+            assertEquals(1, art.paths["/landscape.png"] ?: 0, "a missing backdrop is not retried: ${art.paths}")
+            assertEquals(1, art.paths["/poster.png"] ?: 0, "the poster is the fallback: ${art.paths}")
+        }
+    }
+
     @Test fun aCancelledBackdropRequestIsRetriedInsteadOfFallingBackToThePoster() = runBlocking {
         withFakeArtwork(failFirst = mapOf("/landscape.png" to 1)) { art ->
             val card = art.card(title = "Show", landscape = art.url("landscape"), poster = art.url("poster"))
@@ -74,6 +95,22 @@ class TvDetailsArtworkRetryTest {
         }
     }
 
+    @Test fun detailsEpisodeRowsAskNothingForAStillTheirScreenAlreadyKnowsIsMissing() = runBlocking {
+        withFakeArtwork(failFirst = mapOf("/phone.png" to 99, "/desktop.png" to 99), failStatus = 404) { art ->
+            val phone = art.card(title = "Phone Episode", landscape = art.url("phone"))
+            val desktop = art.card(title = "Desktop Episode", landscape = art.url("desktop"))
+            render(520, 420, frames = 120) { TvEpisodeCard(phone, 1f, {}, {}, null, FocusRequester()) }
+            render(520, 420, frames = 120) { TvEpisodeCard(desktop, 1f, {}, {}, null, FocusRequester()) }
+            assertEquals(1, art.paths["/phone.png"] ?: 0, "the first look at the still asks once: ${art.paths}")
+            assertEquals(1, art.paths["/desktop.png"] ?: 0, "the first look at the still asks once: ${art.paths}")
+            render(560, 420, frames = 60) {
+                Column { DetailEpisodeCard(episode = phone, phone = false, play = {}); DesktopEpisodeRow(desktop, play = {}) }
+            }
+            assertEquals(1, art.paths["/phone.png"] ?: 0, "the phone episode row asks nothing for a known-missing still: ${art.paths}")
+            assertEquals(1, art.paths["/desktop.png"] ?: 0, "the desktop episode row asks nothing for a known-missing still: ${art.paths}")
+        }
+    }
+
     private class Artwork(val origin: String) {
         private val run = UUID.randomUUID()
         val paths = ConcurrentHashMap<String, Int>()
@@ -86,7 +123,7 @@ class TvDetailsArtworkRetryTest {
             title = title, badges = emptyList(), poster = poster, landscape = landscape)
     }
 
-    private suspend fun withFakeArtwork(failFirst: Map<String, Int> = emptyMap(), block: suspend (Artwork) -> Unit) {
+    private suspend fun withFakeArtwork(failFirst: Map<String, Int> = emptyMap(), failStatus: Int = 500, block: suspend (Artwork) -> Unit) {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val art = Artwork("http://127.0.0.1:${server.address.port}")
         server.createContext("/") { exchange ->
@@ -94,7 +131,7 @@ class TvDetailsArtworkRetryTest {
             val served = (art.paths[name] ?: 0) + 1
             art.paths[name] = served
             if (served <= (failFirst[name] ?: 0)) {
-                exchange.sendResponseHeaders(500, -1)
+                exchange.sendResponseHeaders(failStatus, -1)
                 exchange.close()
                 return@createContext
             }
