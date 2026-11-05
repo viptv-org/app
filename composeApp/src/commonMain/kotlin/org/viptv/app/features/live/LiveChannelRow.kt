@@ -14,6 +14,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.ClampedText
 import org.viptv.app.components.IconButton
 import androidx.compose.ui.graphics.RectangleShape
 
@@ -41,7 +42,7 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                         color = Palette.text, trackColor = Palette.raised)
                     Text("${liveTime(program.start)}–${liveTime(program.end)}", fontSize = 11.sp, lineHeight = 14.sp, color = Palette.secondary)
                 }
-                next?.let { Text("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
+                next?.let { ClampedText("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
             favourite?.let { save -> IconButton(save, Modifier.size(28.dp), enabled = !channel.favoritePending) { Icon(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", Modifier.size(18.dp), tint = if (channel.favorite) Palette.accent else Palette.secondary) } }
         }

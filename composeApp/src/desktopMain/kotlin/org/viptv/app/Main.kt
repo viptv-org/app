@@ -13,6 +13,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
 import kotlinx.coroutines.launch
+import org.viptv.app.connection.offMainRemoteFactory
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.SourceMemory
 import org.viptv.app.state.closeForExit
@@ -31,7 +32,7 @@ private fun launchApplication() = application {
     val windowState = rememberWindowState(width = 1100.dp, height = 720.dp)
     val mac = remember { System.getProperty("os.name").startsWith("Mac") }
     val scope = rememberCoroutineScope()
-    val controller = remember { ApplicationController(scope) }
+    val controller = remember { ApplicationController(scope, remoteFactory = offMainRemoteFactory) }
     var visible by remember { mutableStateOf(true) }
     var closing by remember { mutableStateOf(false) }
     val requestClose = {

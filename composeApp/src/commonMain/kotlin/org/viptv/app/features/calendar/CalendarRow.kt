@@ -21,6 +21,7 @@ import coil3.compose.AsyncImage
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.ClampedText
 
 @Composable
 internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boolean, scale: Float,
@@ -44,7 +45,7 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 8.dp * scale)) {
                 Text(entry.card.title, fontSize = (if (phone) 14f else 28 * scale).sp, fontWeight = FontWeight.SemiBold, color = color,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                entry.subtitle?.let { Text(it, fontSize = (if (phone) 12f else 24 * scale).sp, color = color.copy(alpha = 0.7f), maxLines = 1) }
+                entry.subtitle?.let { ClampedText(it, fontSize = (if (phone) 12f else 24 * scale).sp, color = color.copy(alpha = 0.7f), maxLines = 1) }
                 if (phone && (entry.status != null || entry.library)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     entry.status?.let { status ->
                         Surface(shape = RoundedCornerShape(6.dp), color = if (entry.aired) Palette.raised else Palette.accent.copy(alpha = 0.14f)) {

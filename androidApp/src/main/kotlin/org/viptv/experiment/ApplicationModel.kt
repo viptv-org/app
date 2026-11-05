@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.viptv.app.connection.offMainRemoteFactory
 import org.viptv.app.state.ApplicationController
 import org.viptv.app.state.Screen
 import org.viptv.app.state.disconnect
@@ -17,7 +18,7 @@ import org.viptv.app.updates.updateServerOrigin
 
 class ApplicationModel : ViewModel() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val controller = ApplicationController(scope)
+    val controller = ApplicationController(scope, remoteFactory = offMainRemoteFactory)
     private var started = false
     var updater: AppUpdater? = null
         private set

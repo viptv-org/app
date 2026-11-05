@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -40,7 +41,7 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
                     verticalArrangement = Arrangement.Center) {
                     Icon(if (destination.screen == Screen.Live) Lucide.Tv else destination.icon,
                         destination.label, Modifier.size(22.dp), tint = if (selected == destination.screen) Palette.text else Palette.secondary)
-                    Text(destination.label, color = Palette.text, fontSize = 10.sp, lineHeight = 14.sp)
+                    Text(destination.label, color = Palette.text, fontSize = 10.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

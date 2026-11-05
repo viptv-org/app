@@ -62,6 +62,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.ArtWatchedBadge
+import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HoverFill
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.pointerHovered
@@ -162,9 +163,9 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             } else BoxWithConstraints(Modifier.matchParentSize()) {
                 CardArtwork(card, portrait, constraints.maxWidth, constraints.maxHeight, labelScale.coerceAtLeast(1f))
             }
-            card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
+            card.cardChip()?.let { chip -> Surface(Modifier.align(Alignment.TopStart).padding(8.dp).widthIn(max = (width - 16).coerceAtLeast(0).dp), shape = RoundedCornerShape(4.dp), color = Palette.text) {
                 val spoken = newEpisodesDescription(chip)
-                Text(chip, Modifier.padding(horizontal = 6.dp, vertical = 3.dp).semantics { contentDescription = spoken }, color = Palette.background, fontSize = (10 * labelScale.coerceAtLeast(1f)).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                ClampedText(chip, Modifier.padding(horizontal = 6.dp, vertical = 3.dp).semantics { contentDescription = spoken }, color = Palette.background, fontSize = (10 * labelScale.coerceAtLeast(1f)).sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
             } }
             if (card.isWatched()) {
                 if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))

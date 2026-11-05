@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
+import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HomeFilters
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.resources.Res
@@ -52,7 +53,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                             alignment = Alignment.CenterStart, contentScale = ContentScale.Fit)
                         else Text(shown.title, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold)
                         MediaMetadata(shown)
-                        shown.description?.let { Text(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body, maxLines = 2) }
+                        shown.description?.let { ClampedText(it, fontSize = 16.sp, lineHeight = 23.sp, color = Palette.body, maxLines = 2) }
                         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(onClick = { play(shown) }, modifier = Modifier.size(160.dp, 48.dp), shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
