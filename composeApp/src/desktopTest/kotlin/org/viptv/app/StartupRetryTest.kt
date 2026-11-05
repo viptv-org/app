@@ -21,12 +21,14 @@ class StartupRetryTest {
         val requests = mutableListOf<String>()
         var failWith: (Int) -> Unit = {}
         var gate: CompletableDeferred<Unit>? = null
+        var malformed: (Int) -> Boolean = { false }
+        var clears = 0
         val body = """{"identity":{"profiles":[{"id":"p1","name":"Me"}],"profile_id":"p1"},"home":null}"""
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = session
             override suspend fun savedConnection() = SavedConnection.Remote(session)
             override suspend fun save(value: SavedRemoteSession) = Unit
-            override suspend fun clear() = Unit
+            override suspend fun clear() { clears++ }
         }
         val controller: ApplicationController
 
@@ -46,7 +48,9 @@ class StartupRetryTest {
                     attempts++
                     failWith(attempts)
                     gate?.await()
-                    respond("""{"access_token":"a1","refresh_token":"r1"}""", HttpStatusCode.OK,
+                    if (malformed(attempts)) respond("<html>Sign in to the network</html>", HttpStatusCode.OK,
+                        headersOf(HttpHeaders.ContentType, "text/html"))
+                    else respond("""{"access_token":"a1","refresh_token":"r1"}""", HttpStatusCode.OK,
                         headersOf(HttpHeaders.ContentType, "application/json"))
                 }
                 "/api/bootstrap" -> respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -210,6 +214,51 @@ class StartupRetryTest {
             observer.onStateChanged(NoOwner, Lifecycle.Event.ON_STOP)
             fixture.controller.disconnect()
         }
+    }
+
+    @Test fun aMalformedAnswerIsRetriedQuietlyAndReachesHome() = runBlocking<Unit> {
+        val fixture = Fixture(this, saved, delays = listOf(0L, 0L, 0L))
+        fixture.malformed = { attempt -> attempt <= 2 }
+        try {
+            fixture.launch()
+            val state = fixture.controller.state.value
+            assertEquals(Screen.Home, state.screen, "The fourth attempt answers in JSON")
+            assertEquals("p1", state.selectedProfile)
+            assertNull(state.error, "A quiet retry never shows the reason")
+            assertFalse(state.starting)
+            assertFalse(state.startupRetryable)
+            assertEquals(3, fixture.refreshes())
+            assertEquals(1, fixture.bootstraps())
+            assertEquals(0, fixture.clears, "The saved session is never cleared")
+        } finally { fixture.controller.disconnect() }
+    }
+
+    @Test fun aMalformedAnswerSettlesWithTheReasonAndTryAgainRestoresTheSession() = runBlocking<Unit> {
+        val fixture = Fixture(this, saved, delays = listOf(0L, 0L, 0L))
+        fixture.malformed = { true }
+        try {
+            fixture.launch()
+            val settled = fixture.controller.state.value
+            assertEquals(Screen.Connect, settled.screen, "A captive portal lands on the entry screen")
+            assertEquals("The server returned an incompatible response.", settled.error)
+            assertTrue(settled.startupRetryable, "Try again is offered")
+            assertFalse(settled.starting)
+            assertFalse(settled.busy)
+            assertEquals(4, fixture.refreshes(), "The launch attempt and its three quiet retries")
+            assertEquals(0, fixture.clears, "The saved session stays")
+
+            fixture.malformed = { false }
+            fixture.controller.retryStartup()
+            fixture.controller.job?.join()
+            val restored = fixture.controller.state.value
+            assertEquals(Screen.Home, restored.screen, "Try again restores without a sign-in")
+            assertNull(restored.error)
+            assertFalse(restored.startupRetryable, "A successful retry retires the action")
+            assertEquals(5, fixture.refreshes())
+            assertEquals(1, fixture.bootstraps())
+            assertEquals(0, fixture.logins(), "No sign-in is needed")
+            assertEquals(0, fixture.clears)
+        } finally { fixture.controller.disconnect() }
     }
 
     @Test fun repeatedPressesWhileTheRetryRunsDispatchOneRestore() = runBlocking<Unit> {
