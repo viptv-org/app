@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +27,7 @@ import org.viptv.app.components.saveActionName
 import org.viptv.app.components.kindLabel
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
@@ -49,8 +49,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
         art?.let { url ->
             AsyncImage(url, null, Modifier.matchParentSize().blur(60.dp), contentScale = ContentScale.Crop)
         }
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(
-            listOf(Color(0x8C0B0B0C), Color(0xB30B0B0C), Palette.background))))
+        Box(Modifier.matchParentSize().background(Scrim.desktopDetail))
         Row(Modifier.padding(horizontal = 40.dp, vertical = 40.dp),
             horizontalArrangement = Arrangement.spacedBy(48.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
