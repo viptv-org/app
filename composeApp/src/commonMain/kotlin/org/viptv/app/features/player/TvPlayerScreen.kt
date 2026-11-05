@@ -109,6 +109,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         }
     }.focusable()) {
         val scale = maxWidth / 1920.dp
+        val failureStyle = tvFailureStyle(scale)
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (rendering != null) PlayerSurface(rendering, paused || input == null, LocalFitToScreen.current, Modifier.fillMaxSize(), {
@@ -118,9 +119,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
             .45f to Color.Black.copy(alpha = .55f), 1f to Color.Black.copy(alpha = .82f))))
         when {
-            state.failed || state.undecodable || error != null -> if (fallback != null) TvPlayerFallback(fallback, scale, stopFallback) else TvPlayerFailure(extras, state.position,
-                if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error,
-                scale, retry, chooseSources, close)
+            state.failed || state.undecodable || error != null ->
+                if (fallback != null) PlayerFallbackPage(fallback, stopFallback, failureStyle)
+                else PlayerFailurePage(failureStyle, "This source stopped working",
+                    extras.failureDescription ?: (if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error),
+                    state.position,
+                    primary = retry?.let { failureStyle.retryAction(extras.fallbackLabel, it) },
+                    choose = chooseSources?.let(failureStyle::chooseAction),
+                    back = close)
             state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
                 // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
