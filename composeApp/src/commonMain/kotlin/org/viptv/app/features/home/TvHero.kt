@@ -24,6 +24,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -53,9 +54,10 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             }
             val mutations = LocalPendingMutation.current
             val target = saveTarget(presented)
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { save(presented) }) {
+            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }.saveActionName(presentedSaved),
+                scale, round = true, ring = false, activate = { save(presented) }) {
                 if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
-                else Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, if (presentedSaved) "Remove from My List" else "Add to My List", Modifier.size(30.dp * scale), it)
+                else Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }

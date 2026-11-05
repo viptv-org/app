@@ -70,6 +70,7 @@ import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.pressScale
 import org.viptv.app.components.responseSpec
 import org.viptv.app.components.retryAfterFailure
+import org.viptv.app.components.saveActionLabel
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.caughtUpCaption
@@ -411,7 +412,7 @@ internal fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null
                         fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 val saving = LocalPendingMutation.current.isPending(saveTarget(card))
-                PreviewCircle(if (saving) "Saving…" else if (saved) "Remove from My List" else "Add to My List", onSave) {
+                PreviewCircle(if (saving) "Saving…" else saveActionLabel(saved), onSave) {
                     if (saving) MutationSpinner(18.dp)
                     else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp), tint = Palette.text)
                 }

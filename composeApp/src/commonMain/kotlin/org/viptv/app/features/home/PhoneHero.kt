@@ -69,7 +69,7 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                         Button(onClick = { save(shown) }, modifier = Modifier.weight(1f).height(46.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                            if (pending) MutationSpinner(18.dp) else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(18.dp))
+                            if (pending) MutationSpinner(18.dp) else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(if (pending) "Saving…" else "My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }

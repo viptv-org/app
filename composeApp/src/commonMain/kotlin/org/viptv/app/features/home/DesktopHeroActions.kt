@@ -18,6 +18,7 @@ import org.viptv.app.components.responseSpec
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
 import org.viptv.engine.wire.Card
 import org.viptv.app.theme.Palette
@@ -58,11 +59,11 @@ internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, 
             Text("More info", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
         FilledIconButton(onClick = save, modifier = Modifier.size(44.dp)
-            .tvFocusOutline(saveFocused, 22.dp, darkGap = 2.dp, width = 2.dp),
+            .tvFocusOutline(saveFocused, 22.dp, darkGap = 2.dp, width = 2.dp).saveActionName(saved),
             interactionSource = saveInteractions,
             colors = IconButtonDefaults.filledIconButtonColors(containerColor = saveFill, contentColor = Palette.text)) {
             if (mutations.isPending(target)) MutationSpinner(22.dp)
-            else Icon(if (saved) Lucide.Check else Lucide.Plus, if (saved) "Remove from My List" else "Add to My List", Modifier.size(22.dp))
+            else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp))
         }
     }
 }

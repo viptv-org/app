@@ -12,6 +12,7 @@ import org.viptv.app.components.InlineMutationError
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.OutlinedButton
+import org.viptv.app.components.saveActionLabel
 import org.viptv.app.state.saveTarget
 
 @Composable
@@ -23,7 +24,7 @@ internal fun FavoriteAction(card: Card, saved: Boolean, save: (Card) -> Unit) {
         OutlinedButton(onClick = { save(card) }, shape = RoundedCornerShape(12.dp)) {
             if (pending) MutationSpinner(18.dp) else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(if (pending) "Saving…" else if (saved) "Remove from My List" else "Add to My List")
+            Text(if (pending) "Saving…" else saveActionLabel(saved))
         }
         mutations.failure(target)?.let { InlineMutationError(it, retry = { mutations.retry(target) }, Modifier.padding(top = 6.dp)) }
     }
