@@ -18,14 +18,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -44,7 +41,7 @@ import com.composables.icons.lucide.X
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.requestPlacedFocus
+import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
@@ -54,7 +51,6 @@ internal const val SOURCE_DETAILS_LABEL = "Source details"
 internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, scale: Float, dismiss: () -> Unit) {
     val close = remember { FocusRequester() }
     val inset = if (television) 48.dp * scale else 24.dp
-    LaunchedEffect(Unit) { if (!close.requestPlacedFocus()) { withFrameNanos { }; close.requestPlacedFocus() } }
     Box(Modifier.fillMaxSize(), contentAlignment = if (television) Alignment.CenterEnd else Alignment.Center) {
         Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = if (television) .6f else .62f))
             .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
@@ -81,7 +77,7 @@ internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, sc
                     lineHeight = if (television) 34.sp * scale else 19.sp, color = Palette.secondary) }
             }
             TextButton(onClick = dismiss, modifier = Modifier.padding(top = if (television) 24.dp * scale else 16.dp)
-                .heightIn(min = if (television) 72.dp * scale else 44.dp).focusRequester(close)) {
+                .heightIn(min = if (television) 72.dp * scale else 44.dp).then(close.requestFocusWhenPlaced())) {
                 Text("Close", fontSize = if (television) 24.sp * scale else 15.sp, fontWeight = FontWeight.Bold)
             }
         }
