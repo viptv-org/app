@@ -17,4 +17,15 @@ internal object Scrim {
     val tabletHeroTall = Brush.verticalGradient(0f to Color.Transparent, .5f to Color.Transparent, .76f to ground(.84f), 1f to ground(.98f))
 
     val pageBackdrop = Brush.verticalGradient(0f to ground(.3f), .55f to ground(.78f), 1f to Palette.background)
+
+    val tvDetailWide = Brush.horizontalGradient(0f to ground(.95f), .46f to ground(.92f), .6f to ground(.55f), .8f to Color.Transparent)
+    val tvDetailTall = Brush.verticalGradient(0f to Color.Transparent, .6f to ground(.95f), 1f to Palette.background)
+    val phoneDetailArt = Brush.verticalGradient(0f to ground(.55f), .3f to Color.Transparent, .55f to Color.Transparent, 1f to Palette.background)
+    val tabletDetailPane = Brush.verticalGradient(0f to ground(.3f), .3f to Color.Transparent, .7f to ground(.95f))
+    val desktopDetail = Brush.verticalGradient(0f to ground(.88f), .5f to ground(.92f), 1f to Palette.background)
+
+    private fun dialog(alpha: Float) = Palette.dialog.copy(alpha = alpha)
+    val webDetailHero = Brush.verticalGradient(0f to Color.Transparent, .3f to Color.Transparent, .52f to dialog(.55f), .7f to dialog(.86f), 1f to Palette.dialog)
+
+    val detailArtFade = Brush.verticalGradient(listOf(Color.Transparent, Palette.background))
 }

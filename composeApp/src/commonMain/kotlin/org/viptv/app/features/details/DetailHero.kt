@@ -8,8 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,6 +15,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.TitleLogo
 import org.jetbrains.compose.resources.painterResource
@@ -36,8 +35,7 @@ internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.fillMaxWidth().height(280.dp)) {
                 DetailArtwork(card, Modifier.fillMaxSize())
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                    listOf(Color.Transparent, Palette.background))))
+                Box(Modifier.fillMaxSize().background(Scrim.detailArtFade))
             }
             DetailSummary(card, play, Modifier.fillMaxWidth(), save, saved, playFromStart)
         }

@@ -12,6 +12,7 @@ import org.viptv.app.components.GoneArtwork
 import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.engine.wire.Card
 
 @Composable
@@ -31,13 +32,8 @@ internal fun TvDetailBackdrop(card: Card?, scale: Float, scrollPixels: () -> Flo
                 Modifier.fillMaxSize(),
                 if (card?.identity?.kind == "series") BiasAlignment(.2f, -.6f) else BiasAlignment(0f, -.4f),
                 onReady = { art.ready() }, onError = { _, throwable -> art.fail(throwable, drawn) }) }
-            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
-                0f to Palette.background.copy(alpha = .92f),
-                .36f to Palette.background.copy(alpha = if (card?.identity?.kind == "series") .7f else .65f),
-                .64f to Palette.background.copy(alpha = .05f))))
-            Box(Modifier.offset(y = 600.dp * scale).fillMaxWidth().height(480.dp * scale)
-                .background(Brush.verticalGradient(0f to Color.Transparent,
-                    .6f to Palette.background.copy(alpha = .95f), 1f to Palette.background)))
+            Box(Modifier.fillMaxSize().background(Scrim.tvDetailWide))
+            Box(Modifier.offset(y = 600.dp * scale).fillMaxWidth().height(480.dp * scale).background(Scrim.tvDetailTall))
         }
     }
 }

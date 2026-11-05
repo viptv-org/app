@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -36,6 +35,7 @@ import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.format.providerPlainText
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.state.DetailSourcePreview
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
@@ -55,9 +55,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
             if (art != null) {
                 BufferedArtwork(art, Modifier.fillMaxSize())
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                    0f to Palette.background.copy(alpha = .55f), .3f to Color.Transparent,
-                    .55f to Color.Transparent, 1f to Palette.background)))
+                Box(Modifier.fillMaxSize().background(Scrim.phoneDetailArt))
             } else Box(Modifier.fillMaxSize().background(Palette.raised))
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
