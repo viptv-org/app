@@ -99,9 +99,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     })
     tracking = if (lease != null && remote != null) {
         val events = RemotePlaybackEvents(remote, input, card)
-        PlaybackTracking(scope, { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }, {
-            if (mutable.value.playback === input) updateState { next -> next.copy(error = "Could not update your tracking account.") }
-        })
+        PlaybackTracking(scope) { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }
     } else null
     firstFrameSeen = false
     if (lease != null) keepPlaybackLease(lease, source, forceGateway, input)
@@ -147,9 +145,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
     remotePlayback = lease
     CrashFacts.playbackAttempt = playbackAttempt(source, if (lease.gateway) "gateway" else "direct")
     val events = RemotePlaybackEvents(remote, input, card)
-    tracking = PlaybackTracking(scope, { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }, {
-        if (mutable.value.playback === input) updateState { next -> next.copy(error = "Could not update your tracking account.") }
-    })
+    tracking = PlaybackTracking(scope) { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }
     firstFrameSeen = false
     keepPlaybackLease(lease, source, forceGateway = false, input)
     lastProgress = null
@@ -226,7 +222,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
             fun active() = remotePlayback === lease && mutable.value.playback === capturedInput
             try { acknowledgePlaybackFrame(::active, lease::firstFrame) }
             catch (error: CancellationException) { throw error }
-            catch (_: Exception) { if (active()) updateState { next -> next.copy(error = "Could not confirm playback with the server.") } }
+            catch (_: Exception) { }
         } }
     }
     if (fact is PlayerFact.Progress) {
