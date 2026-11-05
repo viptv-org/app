@@ -26,7 +26,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
-    internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L)) {
+    internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L),
+    internal val launchOrigin: () -> String? = ::browserOrigin) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
