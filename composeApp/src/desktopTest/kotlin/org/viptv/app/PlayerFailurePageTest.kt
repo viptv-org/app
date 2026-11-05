@@ -28,6 +28,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerFailurePageTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val title = Card(MediaIdentity("private-movie", "movie", emptyList()), provider_id = "addon:7", title = "A Movie",
         subtitle = "2026 · 1h 52m", badges = emptyList())
     private val failure = "This source could not play. Choose another source."
@@ -154,7 +155,7 @@ class PlayerFailurePageTest {
 
     private fun frames(scene: ImageComposeScene, count: Int = 20) {
         var time = 0L
-        repeat(count) { scene.render(time).close(); time += 16_666_667L; Thread.sleep(4) }
+        repeat(count) { scene.render(time).close(); time += 16_666_667L }
     }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
