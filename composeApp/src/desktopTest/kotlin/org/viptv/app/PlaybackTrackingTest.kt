@@ -13,7 +13,7 @@ class PlaybackTrackingTest {
         val tracker = PlaybackTracking(this, { event, position, _, _ ->
             if (event == PlaybackEvent.Start) first.await()
             received += event to position
-        }, { fail("Unexpected tracking failure") })
+        })
         tracker.transition(PlaybackEvent.Start, PlayerFact.Progress(10, 100))
         tracker.transition(PlaybackEvent.Start, PlayerFact.Progress(20, 100))
         tracker.transition(PlaybackEvent.Pause, PlayerFact.Progress(30, 100))
@@ -27,7 +27,7 @@ class PlaybackTrackingTest {
         val scope = CoroutineScope(owner + Dispatchers.Default)
         owner.cancel()
         val received = CompletableDeferred<PlaybackEvent>()
-        val tracker = PlaybackTracking(scope, { event, _, _, _ -> received.complete(event); Unit }, { fail("Stop failed") })
+        val tracker = PlaybackTracking(scope, { event, _, _, _ -> received.complete(event); Unit })
         tracker.transition(PlaybackEvent.Stop, PlayerFact.Progress(12, 100))?.join()
         assertEquals(PlaybackEvent.Stop, withTimeout(1_000) { received.await() })
     }
