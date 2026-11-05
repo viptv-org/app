@@ -76,7 +76,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     var localPage by remember { mutableStateOf<SettingsPage?>(null) }
     val watchOnTv = rememberWatchOnTvAvailable()
     val savedPage = if (pageChanged != null) page else localPage
-    val current = savedPage ?: SettingsPage(initialSection)
+    // A session that cannot approve a device keeps no page for it, so a sign-in link that arrived before the role was known lands on the list.
+    val current = (savedPage ?: SettingsPage(initialSection)).takeUnless { it.section == addDeviceSection && addDevice == null } ?: SettingsPage()
     val section = current.section
     val show: (SettingsPage) -> Unit = pageChanged ?: { localPage = it }
     var leaving by remember { mutableStateOf(initialLeave) }
@@ -121,7 +122,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             Box(Modifier.weight(1f, fill = !webAccount).then(if (webAccount) Modifier.widthIn(max = 760.dp) else Modifier)) {
                 when {
                     compact && section == null -> PhoneSettings(profile, addons.size, local, sessionNotice, profiles,
-                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open("Add a device") } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, xtreamConnections = if (xtreamConnections != null) ({ open(xtreamConnectionsSection) }) else null, gateways = if (gateways != null) ({ open("Gateways") }) else null, password = password?.let { { open("Password") } }, deleteAccount = deleteAccount?.let { { open("Delete account") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, vodMatches = vodMatches?.let { { open("VOD matches") } }, watchOnTv = watchOnTv, watchOnTvValue = watchOnTvValue, openWatchOnTv = if (watchOnTvSettings != null) ({ open("Watch on TV") }) else null, listState = listState)
+                        { open("Add-ons") }, { leaving = true }, back = leaveSettings, account = account?.let { { open("Account") } }, devices = devices?.let { { open("Devices") } }, stremioImport = stremioImport?.let { { open(stremioImportSection) } }, preferences = if (preferences != null || sectionPreferences != null) ({ open(it) }) else null, parental = parental?.let { { open("Parental controls") } }, information = { open(it) }, addDevice = addDevice?.let { { open(addDeviceSection) } }, householdPin = householdPin?.let { { open("Household PIN") } }, sourceIntegrations = if (sourceIntegrations != null) ({ open("Source integrations") }) else null, xtreamConnections = if (xtreamConnections != null) ({ open(xtreamConnectionsSection) }) else null, gateways = if (gateways != null) ({ open("Gateways") }) else null, password = password?.let { { open("Password") } }, deleteAccount = deleteAccount?.let { { open("Delete account") } }, profilePage = profilePage?.let { { open("Profile") } }, linkedServices = linkedServices?.let { { open("Linked services") } }, vodMatches = vodMatches?.let { { open("VOD matches") } }, watchOnTv = watchOnTv, watchOnTvValue = watchOnTvValue, openWatchOnTv = if (watchOnTvSettings != null) ({ open("Watch on TV") }) else null, listState = listState)
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         managementAvailable = addonsManageable,
@@ -159,7 +160,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     section in listOf("Playback", "Subtitles & audio") && (preferences != null || sectionPreferences != null) -> SettingsDetailContent(compact, back, title = requireNotNull(section), backLabel = backLabel) {
                         if (sectionPreferences != null) sectionPreferences(requireNotNull(section), compact) else preferences?.invoke()
                     }
-                    section == "Add a device" && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
+                    section == addDeviceSection && addDevice != null -> SettingsDetailContent(compact, back) { addDevice(compact) { leaving = true } }
                     section == "Watch on TV" && watchOnTvSettings != null -> SettingsDetailContent(compact, back, title = "Watch on TV") { watchOnTvSettings.invoke(compact, back) }
                     section in listOf("Help", "About") -> SettingsDetailContent(compact, back, title = if (section == "About") "About VIPTV" else "Help") {
                         SettingsInformation(requireNotNull(section), local, serverAddress, compact)
@@ -172,6 +173,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
 }
 
 internal const val stremioImportSection = "Import from Stremio"
+internal const val addDeviceSection = "Add a device"
 internal const val xtreamConnectionsSection = "Xtream connections"
 
 @Composable

@@ -124,6 +124,30 @@ class TvSearchEdgeUiTest {
         }
     }
 
+    @Test fun aFailedProviderShelfOffersTheSameTryAgainAsAFailedPage() = ui {
+        var retried = 0
+        val rows = listOf(
+            SearchResultRow("addon:1", "First provider", "stremio", addon_id = 1, cards = cards(2)),
+            SearchResultRow("simkl:tv", "TV Shows", "simkl", state = "Failed"))
+        Fixture(screenWidth) {
+            SearchScreen("whisper", emptyList(), emptyList(), false, null, true, {}, {},
+                television = true, editQuery = {}, searchRows = rows, retry = { retried++ })
+        }.use { screen ->
+            screen.settle()
+            screen.capture("search-tv-provider-retry")
+            val nodes = screen.nodes()
+            val line = nodes.single { "could not respond" in titles(it) }
+            val action = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Try again" }
+            assertTrue(action.boundsInRoot.top >= line.boundsInRoot.bottom - 1f, "the action sits below the failure line")
+            assertTrue(action.config[SemanticsActions.RequestFocus].action!!.invoke(), "the D-pad can reach Try again")
+            screen.settle()
+            assertTrue(titles(screen.focused()) == "Try again", "focus is on the retry action, was ${titles(screen.focused())}")
+            assertEquals(0, retried)
+            assertTrue(action.config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(1, retried)
+        }
+    }
+
     @Test fun aQueryWhereEveryProviderFailedShowsOneFailureLineInsteadOfProviderBlocks() = ui {
         val rows = listOf("Movies Search", "Series Search", "People Search Movies", "People Search Series")
             .map { SearchResultRow(it.lowercase().replace(' ', '-'), it, "stremio", state = "Failed") }

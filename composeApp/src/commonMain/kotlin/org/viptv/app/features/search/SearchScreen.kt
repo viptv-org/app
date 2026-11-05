@@ -89,16 +89,12 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             }
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
-        if (!hasResults) error?.let { message ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = gutter), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
-                if (retry != null) Text("Try again", Modifier
-                    .pointerClickable(onClickLabel = "Try again", shape = RoundedCornerShape(8.dp)) { retry() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
+        if (!hasResults) error?.let { message -> SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter)) }
+        if (!busy && term.isNotBlank() && !hasResults && error == null) {
+            val copy = searchNoResultsCopy(searchRows, filters)
+            if (searchFailed(searchRows)) SearchFailureLine(copy, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
+            else Text(copy, Modifier.padding(horizontal = gutter), color = Palette.secondary)
         }
-        if (!busy && term.isNotBlank() && !hasResults && error == null) Text(searchNoResultsCopy(searchRows, filters), Modifier.padding(horizontal = gutter), color = Palette.secondary)
         if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         val footer: (@Composable (Modifier) -> Unit)? = when {
             !busy && error != null && hasResults -> { { ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
@@ -124,7 +120,10 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                         PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
                         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
-                            group.message?.let { Text(it, Modifier.padding(horizontal = gutter), color = Palette.secondary) }
+                            group.message?.let { message ->
+                                if (group.failed) SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
+                                else Text(message, Modifier.padding(horizontal = gutter), color = Palette.secondary)
+                            }
                             LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
                                     val key = searchCardKey(card)
@@ -156,6 +155,17 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
         }
     }
 }
+}
+
+@Composable
+private fun SearchFailureLine(message: String, retry: (() -> Unit)?, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(message, Modifier.weight(1f, fill = false), color = Palette.danger)
+        if (retry != null) Text("Try again", Modifier
+            .pointerClickable(onClickLabel = "Try again", shape = RoundedCornerShape(8.dp)) { retry() }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+            color = Palette.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
 }
 
 @Composable
