@@ -17,6 +17,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -140,6 +141,26 @@ class LiveUiTest {
             } finally { scene.close() }
         }
     }
+    @Test fun favouritesChipReflectsItsStateAndClearResetsOnPhoneDesktopAndTv() {
+        for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
+            var resets = 0
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(listOf(channel()), television, null, null, {}, favoritesOnly = true, favoritesFilter = {},
+                        groupChanged = { resets++ }, groupLabels = mapOf("news" to "News"))
+                } }
+            }
+            try {
+                frames(scene)
+                val favorites = nodes(scene).single { text(it) == "Favourites" && it.config.contains(SemanticsProperties.ToggleableState) }
+                assertEquals(ToggleableState.On, favorites.config[SemanticsProperties.ToggleableState], "${width}px ${if (television) "TV" else "app"}: Favourites renders on")
+                assertTrue(clickable(scene, "Clear").config[SemanticsActions.OnClick].action!!.invoke())
+                assertEquals(1, resets, "${width}px: Clear resets the filter")
+                capture(scene, "${if (television) "tv" else if (width == 390) "phone" else "desktop"}-live-favourites")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun tvNoSourceIsOneBroadcastFrameAndBothSetupActionsReachTheirSettingsSection() {
         val controller = liveController(livePage())
         val scene = liveScene(1920, 1080, true, controller)

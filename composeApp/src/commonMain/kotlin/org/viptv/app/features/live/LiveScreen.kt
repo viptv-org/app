@@ -55,7 +55,7 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (phone) 8.dp else 28.dp * scale),
             verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
             if (hasFilters) LiveFilters(if (chipsOnly) emptyMap() else groups, if (chipsOnly) null else category.takeUnless { it == AllGroups }, chooseGroup,
-                false, if (chipsOnly) null else favoritesFilter, reset,
+                favoritesOnly, if (chipsOnly) null else favoritesFilter, reset,
                 sources, selectedSource, sourceChanged, gutter = gutter)
             statusNotice?.let { message ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
