@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Rule
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.features.player.PlayerFallbackNotice
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.player.TvPlaybackExtras
@@ -32,15 +33,19 @@ class PlayerFailurePageTest {
     private val title = Card(MediaIdentity("private-movie", "movie", emptyList()), provider_id = "addon:7", title = "A Movie",
         subtitle = "2026 · 1h 52m", badges = emptyList())
     private val failure = "This source could not play. Choose another source."
+    private val source = "LordStreams 1080p"
+    private val named = "$source didn’t respond. Choose another source."
+    private val decode = "This device can’t decode this stream. Choose another source."
 
     private class Clicks { var retry = 0; var choose = 0; var close = 0 }
 
     @Test fun phoneDrawsTheSharedPage() {
         val clicks = Clicks()
         scene(844, 390) { PlayerScreen(null, true, failure, {}, {}, { clicks.close++ }, title, phone = true,
-            tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ }) }
+            tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ },
+            failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
-                assertPage(scene, failure, listOf("Try Fixture 1080p", "Choose another source"), back = false)
+                assertPage(scene, named, listOf("Try Fixture 1080p", "Choose another source"), back = false)
                 click(scene, "Try Fixture 1080p"); click(scene, "Choose another source")
                 assertEquals(1, clicks.retry); assertEquals(1, clicks.choose)
             }
@@ -49,9 +54,10 @@ class PlayerFailurePageTest {
     @Test fun desktopDrawsTheSharedPageInsteadOfAnErrorLineOverTheFrame() {
         val clicks = Clicks()
         scene(1440, 900) { PlayerScreen(null, true, failure, {}, {}, { clicks.close++ }, title,
-            tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ }) }
+            tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ },
+            failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
-                assertPage(scene, failure, listOf("Try Fixture 1080p", "Choose another source"))
+                assertPage(scene, named, listOf("Try Fixture 1080p", "Choose another source"))
                 assertFalse(nodes(scene).any { label(it) in listOf("Play", "Pause", "Close playback", "Audio and subtitles") },
                     "the failure page replaces the controls")
                 click(scene, "Try Fixture 1080p"); click(scene, "Choose another source"); click(scene, "Back")
@@ -62,9 +68,10 @@ class PlayerFailurePageTest {
     @Test fun webDrawsTheSharedPageAtBothWidthsWithoutOverflowing() {
         for ((width, height) in listOf(1440 to 900, 390 to 844)) {
             scene(width, height) { PlayerScreen(null, true, failure, {}, {}, {}, title, canvasColor = androidx.compose.ui.graphics.Color.Transparent,
-                tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {}) }
+                tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {},
+                failure = PlaybackFailure.Failed, failedSource = source) }
                 .use { scene ->
-                    assertPage(scene, failure, listOf("Try Fixture 1080p", "Choose another source"))
+                    assertPage(scene, named, listOf("Try Fixture 1080p", "Choose another source"))
                     nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.forEach {
                         assertTrue(it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= width,
                             "$width: \"${label(it)}\" leaves the viewport at ${it.boundsInRoot}")
@@ -74,16 +81,19 @@ class PlayerFailurePageTest {
     }
 
     @Test fun desktopDrawsThePageForARendererFailureAndForAnUndecodableStream() {
-        for (fact in listOf(PlayerFact.Failed, PlayerFact.Undecodable)) {
+        for ((fact, description) in listOf(
+                PlayerFact.Failed to "$source didn’t respond. Choose another source to continue from 14:02.",
+                PlayerFact.Undecodable to "This device can’t decode this stream. Choose another source to continue from 14:02.")) {
             val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
             scene(1440, 900, Dispatchers.Unconfined) { PlayerScreen(null, true, null, {}, {}, {}, title,
-                preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts, retry = {}, chooseSources = {}) }
+                preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts, retry = {}, chooseSources = {},
+                failedSource = source) }
                 .use { scene ->
                     frames(scene)
                     assertFalse(nodes(scene).any { text(it) == "This source stopped working" }, "$fact: nothing failed yet")
                     assertTrue(facts.tryEmit(fact))
                     frames(scene)
-                    assertPage(scene, "Choose another source to continue from 14:02.", listOf("Retry", "Choose another source"))
+                    assertPage(scene, description, listOf("Retry", "Choose another source"))
                 }
         }
     }
@@ -91,9 +101,10 @@ class PlayerFailurePageTest {
     @Test fun televisionDrawsTheSamePage() {
         val clicks = Clicks()
         scene(1920, 1080, television = true) { TvPlayerScreen(null, false, null, {}, {}, { clicks.close++ }, title,
-            TvPlaybackExtras(fallbackLabel = "Fixture 4K"), { clicks.choose++ }, null, { clicks.retry++ }, {}, scene = TvPlayerScene.Error) }
+            TvPlaybackExtras(fallbackLabel = "Fixture 4K"), { clicks.choose++ }, null, { clicks.retry++ }, {}, scene = TvPlayerScene.Error,
+            failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
-                assertPage(scene, "Choose another source.", listOf("Try Fixture 4K", "Choose another source"))
+                assertPage(scene, named, listOf("Try Fixture 4K", "Choose another source"))
                 click(scene, "Try Fixture 4K"); click(scene, "Choose another source"); click(scene, "Back")
                 assertEquals(1, clicks.retry); assertEquals(1, clicks.choose); assertEquals(1, clicks.close)
             }
@@ -102,38 +113,51 @@ class PlayerFailurePageTest {
     @Test fun everyPlatformWithdrawsTheActionsTheControllerCannotOffer() {
         for (television in listOf(false, true)) {
             scene(if (television) 1920 else 1440, if (television) 1080 else 900, television = television) {
-                if (television) TvPlayerScreen(null, false, null, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Error)
-                else PlayerScreen(null, true, failure, {}, {}, {}, title)
+                if (television) TvPlayerScreen(null, false, null, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Error,
+                    failure = PlaybackFailure.Timeout, failedSource = source)
+                else PlayerScreen(null, true, failure, {}, {}, {}, title, failure = PlaybackFailure.Timeout, failedSource = source)
             }.use { scene ->
-                assertPage(scene, if (television) "Choose another source." else failure, emptyList())
+                assertPage(scene, named, emptyList())
             }
         }
     }
 
     @Test fun everyPlatformSaysTheSameThingAboutTheSameFailure() {
-        for ((reason, position, description) in listOf(
-                Triple(failure, 0L, failure),
-                Triple(null, 0L, "Choose another source."),
-                Triple(null, 842_000L, "Choose another source to continue from 14:02."))) {
+        for ((cause, position, description) in listOf(
+                Triple(PlaybackFailure.Failed, 0L, "$source didn’t respond. Choose another source."),
+                Triple(PlaybackFailure.Timeout, 0L, "$source didn’t respond. Choose another source."),
+                Triple(PlaybackFailure.Failed, 842_000L, "$source didn’t respond. Choose another source to continue from 14:02."))) {
             val expected = listOf("Back", "Choose another source", description, "This source stopped working", "Try Fixture 1080p")
-            fun pointer(phone: Boolean, web: Boolean = false) = pageLabels(if (phone) 844 else 1440, if (phone) 390 else 900) {
-                val facts = MutableSharedFlow<PlayerFact>(replay = 1)
-                if (reason == null) facts.tryEmit(PlayerFact.Failed)
-                PlayerScreen(null, true, reason, {}, {}, {}, null, phone = phone,
-                    canvasColor = if (web) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black,
-                    preview = PlayerFact.Progress(position, 3_132_000), externalFacts = facts,
-                    tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {})
-            }
-            val pages = mapOf(
-                "phone" to pointer(phone = true),
-                "desktop" to pointer(phone = false),
-                "web" to pointer(phone = false, web = true),
-                "television" to pageLabels(1920, 1080, television = true) { TvPlayerScreen(null, false, reason, {}, {}, {}, null,
-                    TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), {}, null, {}, {}, scene = TvPlayerScene.Error,
-                    initialFacts = listOf(PlayerFact.Progress(position, 3_132_000))) },
-            )
-            for ((name, labels) in pages) assertEquals(expected, labels, "$name at $position with reason $reason")
+            for ((name, labels) in failurePages(cause, position)) assertEquals(expected, labels, "$name with $cause at $position")
         }
+    }
+
+    @Test fun aDecodeFailureKeepsItsDeviceSentenceOnEveryPlatform() {
+        for ((name, labels) in failurePages(PlaybackFailure.Undecodable, 0L)) {
+            assertTrue("This source stopped working" in labels, "$name: the page headline")
+            assertTrue(labels.any { it.startsWith("This ") && it.contains("can’t decode this stream") && it.contains("Choose another source") },
+                "$name keeps a device-decode sentence; saw $labels")
+            assertFalse(labels.any { it.contains("didn’t respond") }, "$name must not blame the source for the device; saw $labels")
+        }
+        assertTrue(failurePages(PlaybackFailure.Undecodable, 0L).getValue("television")
+            .any { it.contains("4K Dolby Vision releases are not supported") }, "TV keeps its decode guidance")
+    }
+
+    private fun failurePages(cause: PlaybackFailure, position: Long): Map<String, List<String>> {
+        fun pointer(phone: Boolean, web: Boolean = false) = pageLabels(if (phone) 844 else 1440, if (phone) 390 else 900) {
+            PlayerScreen(null, true, failure, {}, {}, {}, null, phone = phone,
+                canvasColor = if (web) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black,
+                preview = PlayerFact.Progress(position, 3_132_000), tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"),
+                retry = {}, chooseSources = {}, failure = cause, failedSource = source)
+        }
+        return mapOf(
+            "phone" to pointer(phone = true),
+            "desktop" to pointer(phone = false),
+            "web" to pointer(phone = false, web = true),
+            "television" to pageLabels(1920, 1080, television = true) { TvPlayerScreen(null, false, failure, {}, {}, {}, null,
+                TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), {}, null, {}, {}, initialFacts = listOf(PlayerFact.Progress(position, 3_132_000)),
+                failure = cause, failedSource = source) },
+        )
     }
 
     private fun pageLabels(width: Int, height: Int, television: Boolean = false, content: @androidx.compose.runtime.Composable () -> Unit): List<String> =

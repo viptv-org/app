@@ -34,13 +34,22 @@ import org.viptv.engine.wire.Card
 
 internal enum class PlayerFailureLayout { Phone, Desktop, Tv }
 
+enum class PlaybackFailure { Failed, Undecodable, Timeout }
+
 internal const val ChooseAnotherSource = "Choose another source"
 
 internal class PlayerFailureAction(val label: String, val icon: ImageVector?, val activate: () -> Unit)
 
-// The reason the player reports wins; otherwise the page says the one thing the viewer can do, and where playback resumes when it can.
-internal fun failureDescription(reason: String?, positionMillis: Long): String = reason
-    ?: if (positionMillis > 0) "$ChooseAnotherSource to continue from ${playbackTime(positionMillis)}." else "$ChooseAnotherSource."
+// A decode failure is the device's, not the source's, so it keeps its own sentence.
+internal fun failureDescription(failure: PlaybackFailure?, source: String?, positionMillis: Long): String {
+    val cause = when {
+        failure == PlaybackFailure.Undecodable -> "This device can’t decode this stream."
+        source != null -> "$source didn’t respond."
+        else -> null
+    }
+    val action = if (positionMillis > 0) "$ChooseAnotherSource to continue from ${playbackTime(positionMillis)}." else "$ChooseAnotherSource."
+    return listOfNotNull(cause, action).joinToString(" ")
+}
 
 internal data class PlayerFailureStyle(
     val layout: PlayerFailureLayout,
@@ -99,7 +108,8 @@ internal fun tvFailureStyle(scale: Float) = PlayerFailureStyle(PlayerFailureLayo
     actionShadow = 50.dp * scale, actionLift = 18.dp * scale, maxWidth = 1400.dp * scale, corner = 12.dp * scale)
 
 @Composable
-internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, reason: String?, positionMillis: Long = 0,
+internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, failure: PlaybackFailure? = null,
+    source: String? = null, positionMillis: Long = 0, description: String? = null,
     primary: PlayerFailureAction? = null, choose: PlayerFailureAction? = null, back: (() -> Unit)? = null,
     title: Card? = null, insets: WindowInsets = WindowInsets(0, 0, 0, 0)) {
     val initial = remember { FocusRequester() }
@@ -121,7 +131,7 @@ internal fun PlayerFailurePage(style: PlayerFailureStyle, headline: String, reas
                 Modifier.height(height).wrapContentHeight(Alignment.CenterVertically, unbounded = true) } ?: Modifier),
                 fontSize = style.titleSize, lineHeight = style.titleLine, letterSpacing = style.titleTracking,
                 fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text(failureDescription(reason, positionMillis), fontSize = style.textSize, lineHeight = style.textLine, color = Palette.secondary,
+            Text(description ?: failureDescription(failure, source, positionMillis), fontSize = style.textSize, lineHeight = style.textLine, color = Palette.secondary,
                 textAlign = TextAlign.Center, maxLines = style.textLines, overflow = TextOverflow.Ellipsis)
             FailureActions(style, primary, choose, back, initial)
         }

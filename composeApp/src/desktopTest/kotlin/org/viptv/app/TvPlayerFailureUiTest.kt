@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.features.player.TvPlaybackExtras
 import org.viptv.app.features.player.TvPlayerScreen
 import org.viptv.app.theme.Palette
@@ -29,14 +30,14 @@ class TvPlayerFailureUiTest {
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 TvPlayerScreen(null, false, "This source could not play. Choose another source.", {}, {}, {}, title,
-                    TvPlaybackExtras(), null, null, { retried++ }, {})
+                    TvPlaybackExtras(), null, null, { retried++ }, {}, failure = PlaybackFailure.Failed, failedSource = "LordStreams 4K")
             }
         } }
         try {
             frames(scene)
             val texts = nodes(scene).map(::text)
             assertTrue("This source stopped working" in texts)
-            assertTrue("This source could not play. Choose another source." in texts)
+            assertTrue("LordStreams 4K didn’t respond. Choose another source." in texts, "the page names the source; saw $texts")
             val retry = nodes(scene).single { text(it) == "Retry" && it.config.contains(SemanticsActions.OnClick) }
             retry.config[SemanticsActions.OnClick].action!!.invoke()
             assertEquals(1, retried)
