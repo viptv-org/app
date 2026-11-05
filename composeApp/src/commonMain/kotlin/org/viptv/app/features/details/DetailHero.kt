@@ -25,6 +25,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
+import org.viptv.app.format.providerPlainText
 
 @Composable
 internal fun DetailHero(card: Card, compact: Boolean, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
@@ -82,7 +83,7 @@ private fun DetailSummary(card: Card, play: (Card) -> Unit, modifier: Modifier, 
             Text("Play from the beginning", fontWeight = FontWeight.SemiBold)
         }
         FavoriteAction(card, saved, save)
-        card.description?.let { Text(it, fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,
+        card.description?.let { Text(providerPlainText(it), fontSize = 14.sp, lineHeight = 22.sp, color = Palette.body,
             maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
     }
 }

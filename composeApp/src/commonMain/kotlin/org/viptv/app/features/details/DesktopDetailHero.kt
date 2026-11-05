@@ -38,6 +38,7 @@ import org.viptv.app.components.TitleLogo
 import org.viptv.app.features.home.BufferedArtwork
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
+import org.viptv.app.format.providerPlainText
 
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
@@ -55,7 +56,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 DesktopTitleArt(card)
                 DesktopMetaLine(card)
-                card.description?.let { Text(it, fontSize = 15.sp, lineHeight = (15 * 1.45).sp, color = Palette.body,
+                card.description?.let { Text(providerPlainText(it), fontSize = 15.sp, lineHeight = (15 * 1.45).sp, color = Palette.body,
                     maxLines = 3, overflow = TextOverflow.Ellipsis) }
                 DesktopHeroActions(card, resumeEpisode, play, save, saved, playFromStart, chooseSource, sourceLabel)
             }
