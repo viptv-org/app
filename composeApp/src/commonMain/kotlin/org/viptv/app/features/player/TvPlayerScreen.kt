@@ -24,6 +24,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.LocalActivationKeys
 import org.viptv.app.components.TvBackdrop
+import org.viptv.app.components.frameDelay
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.tvBackdropSource
 
@@ -59,7 +60,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); if (state.checkFirstFrame()) observe(PlayerFact.Undecodable) } }
     LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
-    LaunchedEffect(state.controlError) { state.controlError?.let { delay(playbackControlErrorVisibleMillis); state.controlError = null } }
+    LaunchedEffect(state.controlError) { state.controlError?.let { frameDelay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = activeSkip != null && !state.visible
     val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable && error == null }
@@ -71,7 +72,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
     }
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
-        if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { delay(5000); state.visible = false }
+        if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
     }
     LaunchedEffect(state.position, extras.skips, extras.skipIntros, paused) {
         if (extras.skipIntros && !paused) extras.skips.firstOrNull { it.automatic && state.position in it.startMillis until it.endMillis }

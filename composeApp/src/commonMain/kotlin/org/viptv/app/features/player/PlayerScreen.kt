@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalDensity
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.ProfilePreferences
 import com.composables.icons.lucide.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -43,6 +42,7 @@ import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
+import org.viptv.app.components.frameDelay
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -160,7 +160,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(paused) { if (paused) visible = true }
     LaunchedEffect(visible, paused, interaction, buffering, phonePanel, showTracks, failed) {
         // Hiding before the first interaction swallows the click that reaches for the transport.
-        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
+        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { frameDelay(controlsAutoHideMillis); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
     fun chooseSubtitle(id: Int?) {
@@ -221,7 +221,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
-    LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
+    LaunchedEffect(controlError) { if (controlError != null) { frameDelay(playbackControlErrorVisibleMillis); controlError = null } }
     val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
