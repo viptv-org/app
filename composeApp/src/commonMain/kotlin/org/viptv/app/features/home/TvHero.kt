@@ -25,6 +25,7 @@ import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.TvRetryAction
 import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
@@ -58,14 +59,15 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             }
             val mutations = LocalPendingMutation.current
             val target = saveTarget(presented)
-            TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }.saveActionName(presentedSaved),
+            if (mutations.failure(target) != null) TvRetryAction(target, scale, Modifier.heightIn(min = 72.dp * scale).focusProperties { if (down != null) this.down = down })
+            else TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }.saveActionName(presentedSaved),
                 scale, round = true, ring = false, activate = { save(presented) }) {
                 if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
                 else Icon(if (presentedSaved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
-        MutationFailure(saveTarget(presented), Modifier.padding(top = 12.dp * scale), scale = 2f * scale)
+        MutationFailure(saveTarget(presented), Modifier.padding(top = 10.dp * scale).width(1100.dp * scale), scale = scale * 1.7f, retry = false)
         Spacer(Modifier.height(40.dp * scale))
         progress?.let { HeroIndicators(indicators, selected, it, Modifier, scale, animated = false) }
         }

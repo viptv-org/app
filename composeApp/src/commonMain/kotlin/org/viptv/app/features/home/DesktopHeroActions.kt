@@ -42,7 +42,7 @@ internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, 
     val saveHovered = saveInteractions.pointerHovered()
     val saveFocused by saveInteractions.collectIsFocusedAsState()
     val saveFill by animateColorAsState(if (saveHovered) HoverFill.surface4 else Palette.raised, responseSpec(), label = "Save fill")
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Button(play, Modifier.width(140.dp).heightIn(min = 44.dp)
                 .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),

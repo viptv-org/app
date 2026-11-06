@@ -57,7 +57,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     clearRecents: () -> Unit = {}) {
     if (television) {
         TvSearchScreen(term, results, addons, busy, error, query, open, editQuery, searchRows = searchRows, focusResults = focusResults,
-            retry = retry)
+            retry = retry, recentSearches = recentSearches, trendingSearches = trendingSearches, clearRecents = clearRecents)
         return
     }
     val restore = rememberPageRestore("search")
