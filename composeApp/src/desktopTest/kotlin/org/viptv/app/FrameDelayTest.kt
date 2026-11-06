@@ -12,39 +12,40 @@ import kotlin.test.*
 class FrameDelayTest {
     @get:Rule val uiThread = UiThreadRule()
 
-    private class Timed(val scene: ImageComposeScene, val fired: () -> Boolean) : AutoCloseable {
-        var frame = 0L
-        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 250_000_000L).close() }
-        fun sceneMillis() = frame * 250_000_000L / 1_000_000
-        override fun close() = scene.close()
-    }
-
-    private fun timer(millis: Long): Timed {
+    private class Timer(millis: Long) : AutoCloseable {
         var fired = false
+            private set
+        private var frame = 0L
         val scene = ImageComposeScene(100, 100, Density(1f)) {
             LaunchedEffect(Unit) { frameDelay(millis); fired = true }
         }
-        return Timed(scene) { fired }
+
+        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * StepNanos).close() }
+        fun sceneMillis() = frame * StepNanos / 1_000_000
+        fun jumpTo(nanos: Long) = scene.render(frame++ * nanos).close()
+        override fun close() = scene.close()
     }
 
     @Test fun aFrameDelayFinishesOnlyOnceTheSceneHasRunOutItsWindow() {
-        val timer = timer(5_000)
+        val timer = Timer(5_000)
         try {
             timer.render(19)
-            assertFalse(timer.fired(), "at ${timer.sceneMillis()} ms of scene time the delay has not run out")
+            assertFalse(timer.fired, "at ${timer.sceneMillis()} ms of scene time the delay has not run out")
             timer.render(3)
             assertTrue(timer.sceneMillis() > 5_000, "the delay interval is counted in the frames the scene renders")
-            assertTrue(timer.fired(), "a frame past the window finishes the delay")
+            assertTrue(timer.fired, "a frame past the window finishes the delay")
         } finally { timer.close() }
     }
 
     @Test fun aFrameThatJumpsOverTheWindowFinishesTheDelayInOneStep() {
-        val timer = timer(5_000)
+        val timer = Timer(5_000)
         try {
             timer.render()
-            assertFalse(timer.fired())
-            timer.scene.render(timer.frame++ * 9_000_000_000L).close()
-            assertTrue(timer.fired(), "a stalled window that comes back past the window finishes the delay")
+            assertFalse(timer.fired)
+            timer.jumpTo(9_000_000_000L)
+            assertTrue(timer.fired, "a stalled window that comes back past the window finishes the delay")
         } finally { timer.close() }
     }
 }
+
+private const val StepNanos = 250_000_000L
