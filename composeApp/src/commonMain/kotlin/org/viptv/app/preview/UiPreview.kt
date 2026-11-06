@@ -24,6 +24,7 @@ import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.home.TvHomeScreen
 import org.viptv.app.features.browse.TvBrowseScreen
 import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.player.TvPlaybackExtras
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.features.library.TvLibraryScreen
@@ -92,7 +93,9 @@ fun UiPreview(initialScreen: Screen = Screen.Home, television: Boolean = false, 
                                     PreviewNativePairing(desktop, tvDetailVariant) { go(Screen.Profiles) }
                                 else ConnectScreen(browser, "https://your-server.example", false, null, { go(Screen.Profiles) }, { _, _, _ -> }, desktop, phone, false, entryBackChanged)
                             Screen.Player -> if (television && liveTitle == null) PreviewTvPlayer(tvDetailVariant, go, entryBackChanged)
-                                else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged)
+                                else PlayerScreen(null, true, null, {}, {}, { go(if (liveTitle == null) Screen.Home else Screen.Live) }, liveTitle ?: PreviewData.playerTitle, if (liveTitle == null) PlayerFact.Progress(842000, 3132000) else PlayerFact.Progress(0, null), phone = handheld, previewFrame = liveTitle?.landscape ?: PreviewData.playerFrame, television = television, backChanged = entryBackChanged,
+                                    tvExtras = if (liveTitle == null) TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams") else TvPlaybackExtras(),
+                                    playEpisode = {}, chooseSources = {})
                             Screen.Details -> if (television && tvDetailVariant in listOf("SeriesSeasons", "SeriesDelayed")) PreviewTvSeasons(tvDetailVariant, go)
                                 else if (television) TvDetailsScreen(
                                 if (tvDetailVariant == "Series") PreviewTvDetails.series else PreviewTvDetails.movie,

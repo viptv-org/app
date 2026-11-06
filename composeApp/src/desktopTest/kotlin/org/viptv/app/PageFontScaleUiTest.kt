@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,6 +40,10 @@ import org.viptv.app.features.details.FavoriteAction
 import org.viptv.app.features.live.LiveChannel
 import org.viptv.app.features.live.LiveChannelRow
 import org.viptv.app.features.live.LiveProgram
+import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.player.TvPlaybackExtras
+import org.viptv.app.player.PlayerFact
+import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
 import org.viptv.app.theme.Palette
@@ -191,6 +196,37 @@ class PageFontScaleUiTest {
 
     private fun label(node: SemanticsNode): String =
         node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+
+    @Test fun thePhonePlayerKeepsItsBandsAndItsWordsAtLargerFontScales() {
+        val failures = mutableMapOf<String, List<String>>()
+        for (scale in scales) {
+            val scene = ImageComposeScene(390, 844, Density(1f, scale)) { ViptvTheme(false) {
+                Box(Modifier.fillMaxSize()) {
+                    PlayerScreen(null, true, null, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
+                        tvExtras = TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams"),
+                        playEpisode = {}, chooseSources = {})
+                }
+            } }
+            try {
+                settle(scene)
+                val found = check(scene, 390, 844) + transportCoversTimeline(scene)
+                if (found.isNotEmpty()) failures["phone player @${scale}x"] = found
+            } finally { scene.close() }
+        }
+        assertTrue(failures.isEmpty(), failures.entries.joinToString("\n") { (where, found) ->
+            "$where: ${found.size} problems: " + found.take(3).joinToString("; ")
+        })
+    }
+
+    private fun transportCoversTimeline(scene: ImageComposeScene): List<String> {
+        val play = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }.firstOrNull { node ->
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it == "Play" } == true && node.config.contains(SemanticsActions.OnClick)
+        } ?: return listOf("the phone transport was not drawn")
+        val labels = textNodes(scene).filter { text -> text.label.matches(Regex("-?(\\d+:)?\\d{1,2}:\\d{2}")) }
+        assertTrue(labels.size >= 2, "the timeline labels were not drawn: ${labels.map { it.label }}")
+        return labels.filter { overlap(play.boundsInRoot, it.node.boundsInRoot) > 0f }
+            .map { "the transport covers the time label '${it.label}' at ${it.node.boundsInRoot}" }
+    }
 
     // The components #866 names, driven directly so a page that hides them below the fold or behind a modal still gets checked.
     @Test fun everyPhoneComponentClipsNothingAtLargerFontScales() {
