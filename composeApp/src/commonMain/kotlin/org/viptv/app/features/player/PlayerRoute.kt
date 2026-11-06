@@ -50,7 +50,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
         audioNotice = state.audioNotice,
         nextSource = if (state.bestMatch != null) controller::playNextSource else null,
-        openingSource = state.openingSource,
+        startup = state.startup,
         fullscreen = fullscreen, toggleFullscreen = toggleFullscreen,
         failure = state.playbackFailure, failedSource = state.playingSource?.failureName())
 }

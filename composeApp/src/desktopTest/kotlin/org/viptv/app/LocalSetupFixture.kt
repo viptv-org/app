@@ -36,10 +36,8 @@ internal class LocalSetupFixture {
         override suspend fun save(session: SavedRemoteSession) = Unit
         override suspend fun clear() = Unit
     }
-    fun controller(graceMillis: Long = BEST_MATCH_GRACE_MILLIS, capMillis: Long = BEST_MATCH_CAP_MILLIS,
-        factory: (String) -> LocalConnection = { local }) =
-        ApplicationController(scope, store, localFactory = factory, bestMatchGraceMillis = graceMillis,
-            bestMatchCapMillis = capMillis)
+    fun controller(scope: CoroutineScope = this.scope, factory: (String) -> LocalConnection = { local }) =
+        ApplicationController(scope, store, localFactory = factory)
     suspend fun idle(controller: ApplicationController) = withTimeout(5000) { controller.state.first { !it.busy } }
     fun close(controller: ApplicationController) {
         controller.disconnect()
