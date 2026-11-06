@@ -214,6 +214,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         firstFrameSeen = true
         mutable.value.selectedProfile?.let { profile ->
             rememberStartedSource(profile, mutable.value.sourceTitle, mutable.value.playingSource)
+            rememberProviderAffinity(profile)
         }
         startDeadlineJob?.cancel(); startDeadlineJob = null
         rememberSourceChoice()

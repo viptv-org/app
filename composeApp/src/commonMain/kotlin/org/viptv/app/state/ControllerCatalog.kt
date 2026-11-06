@@ -480,7 +480,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val context = rankingContext(seriesMemoryOf(profile, card), capability)
+        val context = rankingContext(seriesMemoryOf(profile, card), sourceMemory.affinity(profile), capability)
         val preferences = mutable.value.preferences?.preferences
         var started = false
         coroutineScope {
