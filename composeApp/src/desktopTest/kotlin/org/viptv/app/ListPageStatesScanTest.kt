@@ -46,6 +46,27 @@ class ListPageStatesScanTest {
         assertTrue(source("features/calendar/CalendarScreen.kt").contains("ReleaseRowSkeleton("), "the calendar draws release rows")
     }
 
+    @Test fun homeTakesItsPageStateFromTheSameRuleAndBlock() {
+        assertTrue(Regex("""\blistPageState\(""").containsMatchIn(source("features/home/HomeCopy.kt")),
+            "Home's page state is the shared rule")
+        for (page in listOf("features/home/HomeScreen.kt", "features/home/TvHomeScreen.kt")) {
+            val text = source(page)
+            assertTrue(text.contains("homePageState("), "$page derives its body from the shared page state")
+            assertTrue(text.contains("HomeStatus("), "$page draws the shared page state block")
+        }
+        val block = source("features/home/HomeStatus.kt")
+        assertTrue(block.contains("PageState("), "the block is the shared component")
+        assertFalse(block.contains("Surface("), "a page state is never a card")
+    }
+
+    @Test fun theOldHomeStatesAreGoneFromEverySource() {
+        val old = listOf("Could not load Home", "Retry Home", "No catalogs configured", "Nothing to show yet",
+            "Home isn’t available yet", "Your catalogs could not load", "Refreshing Home…")
+        val found = root.walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .flatMap { file -> old.filter { file.readText().contains(it) }.map { "${file.name}: $it" } }.toList()
+        assertEquals(emptyList(), found, "copy.md owns Home's empty and failure strings")
+    }
+
     @Test fun continueWatchingStatesComeFromTheSharedRule() {
         val page = source("features/continuewatching/ContinueWatchingRoute.kt")
         assertTrue(page.contains("val state get() = listPageState("), "the page state is the shared rule")
