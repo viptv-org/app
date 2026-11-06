@@ -123,12 +123,12 @@ internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, actions
         }
         if (toggleSave != null || removal != null) {
             MenuDivider(metrics)
+            if (removal != null) MenuItem(removal.label, Lucide.Trash2, onDismiss, action = { removal.request(card) }, danger = true, scale = scale, metrics = metrics)
             if (toggleSave != null) {
                 val pending = LocalPendingMutation.current.isPending(saveTarget(card))
                 MenuItem(if (pending) "Saving…" else if (saved) "In My List" else "Add to My List",
                     if (saved) Lucide.Check else Lucide.Plus, onDismiss, toggleSave, scale = scale, pending = pending, metrics = metrics)
             }
-            if (removal != null) MenuItem(removal.label, Lucide.Trash2, onDismiss, action = { removal.request(card) }, danger = true, scale = scale, metrics = metrics)
         }
         MenuDivider(metrics)
         MenuItem("More info", Lucide.Info, onDismiss, onInfo, scale = scale, metrics = metrics)
