@@ -3,7 +3,8 @@ package org.viptv.app.features.entry
 import org.viptv.app.components.AppTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import org.viptv.app.connection.validatedRemoteOrigin
+import org.viptv.app.connection.SERVER_ADDRESS_ERROR
+import org.viptv.app.connection.remoteOriginOrNull
 import org.viptv.app.components.TextButton
 
 @Composable
@@ -27,8 +28,8 @@ internal fun DevicePairingRequest(server: String, serverChanged: (String) -> Uni
             onEscape = { if (server.isBlank()) back() else editing = false },
             supportingText = { inputError?.let { Text(it) } }) },
         confirmButton = { TextButton(onClick = {
-            val selected = runCatching { validatedRemoteOrigin(draft) }.getOrNull()
-            if (selected == null) inputError = "Enter an HTTPS server address, without a page path."
+            val selected = remoteOriginOrNull(draft)
+            if (selected == null) inputError = SERVER_ADDRESS_ERROR
             else { serverChanged(selected); revision++; editing = false }
         }, enabled = draft.isNotBlank()) { Text("Connect") } },
         dismissButton = { TextButton(onClick = { if (server.isBlank()) back() else editing = false }) { Text("Cancel") } })
