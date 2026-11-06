@@ -177,7 +177,7 @@ class ParentRequiredStateTest {
     }
 
     @Test fun theManageProfilesEditorUnlocksTheHouseholdBeforeEachWrite() = runBlocking<Unit> {
-        val writes = ConcurrentLinkedQueue<String>()
+        val writes = EngineRequests<String>()
         var unlocked = false
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             val path = request.url.encodedPath

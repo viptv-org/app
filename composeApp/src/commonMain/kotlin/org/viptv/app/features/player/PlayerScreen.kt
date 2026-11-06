@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
+import org.viptv.app.state.StartupProgress
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -53,7 +53,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
-    autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false, startup: StartupProgress? = null,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
     preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null,
@@ -63,7 +63,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
             fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource,
-            failure = failure, failedSource = failedSource)
+            failure = failure, failedSource = failedSource, startup = startup)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -205,6 +205,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     position = fact.positionMillis; seekTarget = null
                 }
             }
+            is PlayerFact.Startup -> Unit
             is PlayerFact.Status -> {
                 buffering = !failed && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
@@ -330,14 +331,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)
                     else -> {
-                        val opening = openingSource
-                        if (opening != null) {
-                            Column(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(Modifier.size(40.dp), color = Palette.text)
-                                Text("Opening ${opening.label}…", Modifier.padding(top = 16.dp), color = Palette.text, fontSize = 14.sp)
-                            }
-                        } else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                        if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp,
+                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion)
+                        else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }

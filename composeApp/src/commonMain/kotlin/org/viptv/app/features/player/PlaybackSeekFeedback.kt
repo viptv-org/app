@@ -15,5 +15,5 @@ internal fun PlayerFact.settlesSeek(targetMillis: Long?): Boolean = when (this) 
     is PlayerFact.Progress -> targetMillis != null && positionMillis > targetMillis + SeekClockResumedMillis
     PlayerFact.Failed, PlayerFact.Undecodable, is PlayerFact.Presentation -> true
     is PlayerFact.ControlFailed -> control == PlaybackControl.Seek
-    is PlayerFact.Properties, is PlayerFact.Tracks, is PlayerFact.Buffered -> false
+    is PlayerFact.Properties, is PlayerFact.Tracks, is PlayerFact.Buffered, is PlayerFact.Startup -> false
 }
