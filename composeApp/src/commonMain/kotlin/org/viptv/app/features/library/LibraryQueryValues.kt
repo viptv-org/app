@@ -13,6 +13,8 @@ internal fun LibraryQuery.withValues(values: Map<String, String>) = copy(offset 
     rated = values["rated"]?.takeIf(String::isNotBlank), added = values["added"]?.takeIf(String::isNotBlank),
     episodes_left_max = values["episodes_left_max"]?.toLongOrNull())
 
+internal fun LibraryQuery.sameList(other: LibraryQuery) = values() == other.values()
+
 internal fun LibraryQuery.forList(id: String) = copy(source = id, offset = 0, show = "all", status = null,
     genre = null, rated = null, added = null, episodes_left_max = null)
 

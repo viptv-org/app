@@ -13,12 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.theme.Palette
@@ -39,6 +41,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
         ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
     val byDay = remember(entries) { entries.groupBy { it.day } }
     val visible = byDay[activeDay].orEmpty()
+    val pageState = listPageState(visible.size, busy, error)
     val byId = remember(visible) { visible.associateBy { it.id } }
     var focusedId by remember { mutableStateOf<String?>(null) }
     val focused = byId[focusedId] ?: visible.firstOrNull()
@@ -89,11 +92,11 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message ->
                 item {
-                    if (visible.isEmpty()) TvCalendarFailure(message, retry, scale)
+                    if (pageState == ListPageState.Failed) TvCalendarFailure(message, retry, scale)
                     else Text(message, color = Palette.danger)
                 }
             }
-            if (visible.isEmpty() && !busy && error == null) item {
+            if (pageState == ListPageState.Empty) item {
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)

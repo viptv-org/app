@@ -25,8 +25,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
-import org.viptv.app.components.rememberTvLoadingShimmer
+import org.viptv.app.components.ListPageState
+import org.viptv.app.components.PosterSkeleton
 import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.listPageState
+import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.connection.BrowseQuery
@@ -103,6 +106,7 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
         val label = catalog?.catalogTitle(peers)
         val source = catalog?.catalogSource(peers)
         val loading = busy || (loadedCards == null && home == null)
+        val pageState = listPageState(cards.size, busy, error)
         val serverSort = controls?.selectedCatalog(query)?.controls?.any { it.id == "sort" } == true ||
             controls?.controls?.any { it.id == "sort" } == true
         Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = if (compact) PhoneBrowseTitleGap else 24.dp)) {
@@ -123,9 +127,10 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 val footerLoading = cards.isNotEmpty() && busy
                 val footerEnded = cards.isNotEmpty() && !busy && pageError == null && more == null
                 val footerFailed = cards.isNotEmpty() && !busy && pageError != null
-                if (error != null && cards.isEmpty()) BrowseErrorState(label, catalog?.connection_name, error, Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
-                else if (loading && cards.isEmpty()) BrowseSkeletonGrid(GridCells.Fixed(columns), Modifier.weight(1f))
-                else if (cards.isEmpty()) BrowseEmptyState(source, applied, noun, Modifier.weight(1f),
+                if (pageState == ListPageState.Failed) BrowseErrorState(label, catalog?.connection_name, error.orEmpty(), Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
+                else if (pageState == ListPageState.Loading) PosterSkeleton(phone = compact, modifier = Modifier.weight(1f),
+                    columns = columns, gap = if (compact) 10.dp else 14.dp, rows = 3)
+                else if (pageState == ListPageState.Empty) BrowseEmptyState(source, applied, noun, Modifier.weight(1f),
                     clearAll = { applyQuery(clearedFilters(query)) },
                     remove = { chip -> if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value) else filterChanged(chip.id, "") })
                 else LazyVerticalGrid(GridCells.Fixed(columns),
@@ -174,15 +179,6 @@ private fun BrowseHeaderSkeleton() {
     val shimmer = rememberTvLoadingShimmer(1f)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(170, 120, 110).forEach { Box(Modifier.width(it.dp).height(40.dp).clip(RoundedCornerShape(20.dp)).then(shimmer)) }
-    }
-}
-
-@Composable
-private fun BrowseSkeletonGrid(columns: GridCells, modifier: Modifier) {
-    val shimmer = rememberTvLoadingShimmer(1f)
-    LazyVerticalGrid(columns, modifier.fillMaxWidth(), userScrollEnabled = false,
-        horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        items(12) { Box(Modifier.fillMaxWidth().aspectRatio(2f / 3).clip(RoundedCornerShape(8.dp)).then(shimmer)) }
     }
 }
 
