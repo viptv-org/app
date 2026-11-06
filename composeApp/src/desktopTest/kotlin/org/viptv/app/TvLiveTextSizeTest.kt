@@ -63,6 +63,10 @@ class TvLiveTextSizeTest {
                     assertFalse(node.boundsInRoot.overlaps(action.boundsInRoot),
                         "${scale}x: '${page.text(node)}' runs through the Favourite channel action: ${node.boundsInRoot} vs ${action.boundsInRoot}")
                 }
+                // The gap is 12 dp at Default and follows the display text size with it.
+                val lowest = summary.maxOf { it.boundsInRoot.bottom }
+                assertTrue(action.boundsInRoot.top - lowest >= 12f * scale - 1f,
+                    "${scale}x: the action starts ${action.boundsInRoot.top - lowest} px under the summary, not the ${12f * scale} px gap")
                 for (node in page.nodes().filter { it.config.getOrNull(SemanticsProperties.Text) != null }) {
                     assertFalse(node.boundsInRoot.overlaps(tile.boundsInRoot) && !tile.boundsInRoot.contains(node.boundsInRoot.center),
                         "${scale}x: '${page.text(node)}' runs under the watch tile")

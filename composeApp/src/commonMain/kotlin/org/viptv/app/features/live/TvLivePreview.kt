@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import org.viptv.app.format.providerText
 import org.viptv.app.state.liveFavoriteTarget
 
 internal val TvLivePreviewTop = 12.dp
+internal val TvLivePreviewGap = 12.dp
 internal val TvLivePreviewActionTop = 306.dp
 
 @Composable
@@ -44,9 +46,12 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
     val target = liveFavoriteTarget(channel.id)
     val pending = mutations.isPending(target)
     val failure = mutations.failure(target)
+    // The gap grows with the display text size, so the action keeps the board's spacing above it at every setting.
+    val gap = TvLivePreviewGap * scale * LocalDensity.current.fontScale
     // The action sits at the board's y, and below the summary when the display text size makes the summary taller than that.
-    Column(Modifier.offset(96.dp * scale, TvLivePreviewTop * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) }) {
-        Column(Modifier.fillMaxWidth().heightIn(min = (TvLivePreviewActionTop - TvLivePreviewTop) * scale),
+    Column(Modifier.offset(96.dp * scale, TvLivePreviewTop * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
+        verticalArrangement = Arrangement.spacedBy(gap)) {
+        Column(Modifier.fillMaxWidth().heightIn(min = TvLivePreviewActionTop * scale - TvLivePreviewTop * scale - gap),
             verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                 if (program == null || liveFraming(program, now) == LiveFraming.OnAir)
