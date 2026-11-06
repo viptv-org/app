@@ -4,6 +4,8 @@ import io.ktor.http.*
 
 internal const val SERVER_ADDRESS_ERROR = "Enter an HTTPS server address, without a page path."
 
+internal fun remoteOriginOrNull(raw: String): String? = runCatching { validatedRemoteOrigin(raw) }.getOrNull()
+
 internal fun validatedRemoteOrigin(raw: String): String {
     val origin = raw.trim().trimEnd('/')
     val url = try { Url(origin) } catch (_: Exception) { throw IllegalArgumentException(SERVER_ADDRESS_ERROR) }

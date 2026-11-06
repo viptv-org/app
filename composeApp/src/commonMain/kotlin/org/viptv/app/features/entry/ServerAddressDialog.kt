@@ -5,8 +5,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import org.viptv.app.components.AppTextField
 import org.viptv.app.components.TextButton
-import org.viptv.app.connection.validatedRemoteOrigin
 import org.viptv.app.connection.SERVER_ADDRESS_ERROR
+import org.viptv.app.connection.remoteOriginOrNull
 
 @Composable
 internal fun ServerAddressDialog(server: String, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
@@ -22,7 +22,7 @@ internal fun ServerAddressDialog(server: String, onConfirm: (String) -> Unit, on
                 supportingText = { inputError?.let { Text(it) } })
         },
         confirmButton = { TextButton(onClick = {
-            val selected = runCatching { validatedRemoteOrigin(draft) }.getOrNull()
+            val selected = remoteOriginOrNull(draft)
             if (selected == null) inputError = SERVER_ADDRESS_ERROR
             else onConfirm(selected)
         }, enabled = draft.isNotBlank()) { Text("Continue") } },
