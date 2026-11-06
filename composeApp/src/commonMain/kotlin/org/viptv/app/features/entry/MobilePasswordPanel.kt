@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.connection.openAccountAuthorization
+import org.viptv.app.connection.SERVER_ADDRESS_ERROR
+import org.viptv.app.connection.remoteOriginOrNull
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
@@ -28,6 +30,7 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?,
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
     var editServer by remember { mutableStateOf(origin.isBlank()) }
+    var serverError by remember { mutableStateOf<String?>(null) }
     Spacer(Modifier.height(16.dp))
     Text("Sign in with a password", color = Palette.text, fontSize = 25.sp, lineHeight = 31.sp, fontWeight = FontWeight.Bold)
     Spacer(Modifier.height(18.dp))
@@ -45,7 +48,11 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?,
     }
     error?.let { Text(it, Modifier.padding(top = 12.dp), color = Palette.danger, fontSize = 13.sp) }
     Spacer(Modifier.height(16.dp))
-    Button(onClick = { connect(server, email, password); password = "" },
+    Button(onClick = {
+        val selected = remoteOriginOrNull(server)
+        if (selected == null) { serverError = SERVER_ADDRESS_ERROR; editServer = true }
+        else { connect(selected, email, password); password = "" }
+    },
         enabled = !busy && server.isNotBlank() && email.isNotBlank() && password.isNotEmpty(),
         modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
@@ -54,12 +61,16 @@ internal fun MobilePasswordPanel(origin: String, busy: Boolean, error: String?,
     if (server.isBlank()) {
         Text("Forgot password?", Modifier.padding(top = 8.dp), color = Palette.text.copy(alpha = 0.4f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         Text("Enter your server address first.", Modifier.padding(top = 2.dp), color = Palette.secondary, fontSize = 12.sp)
-    } else TextButton(onClick = { forgot(server) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+    } else TextButton(onClick = {
+        val selected = remoteOriginOrNull(server)
+        if (selected == null) { serverError = SERVER_ADDRESS_ERROR; editServer = true } else forgot(selected)
+    }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Text("Forgot password?", color = Palette.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
-    TextButton(onClick = { editServer = !editServer }, modifier = Modifier.fillMaxWidth()) {
+    TextButton(onClick = { editServer = !editServer; serverError = null }, modifier = Modifier.fillMaxWidth()) {
         Text("Use another server", color = Palette.secondary, fontSize = 12.sp)
     }
-    if (editServer) AppTextField(server, { server = it; serverChanged(it) }, Modifier.fillMaxWidth(),
-        label = "Server address", shape = RoundedCornerShape(12.dp))
+    if (editServer) AppTextField(server, { server = it; serverChanged(it); serverError = null }, Modifier.fillMaxWidth(),
+        label = "HTTPS server address", isError = serverError != null, supportingText = { serverError?.let { Text(it) } },
+        shape = RoundedCornerShape(12.dp))
 }

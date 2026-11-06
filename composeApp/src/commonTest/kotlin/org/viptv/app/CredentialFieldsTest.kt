@@ -22,13 +22,13 @@ class CredentialFieldsTest {
     }
 
     @Test fun accountCreationUsesNewPasswordForBothPasswordFields() {
-        val fields = CredentialFields.register("someone", "Someone", "secret-12", "secret-12", null)
+        val fields = CredentialFields.register("someone", "Someone", "secret-12", "secret-12")
         assertEquals(listOf(autocompleteUsername, autocompleteName, autocompleteNewPassword, autocompleteNewPassword), fields.map { it.autocomplete })
         assertEquals(listOf(false, false, true, true), fields.map { it.secret })
     }
 
     @Test fun recoveryKeepsTheCodeSecretAndAutocompletesOnlyTheNewPasswords() {
-        val fields = CredentialFields.recover("someone", "code-1", "next-password-12", "next-password-12", null)
+        val fields = CredentialFields.recover("someone", "code-1", "next-password-12", "next-password-12")
         assertEquals(listOf(autocompleteUsername, autocompleteOff, autocompleteNewPassword, autocompleteNewPassword), fields.map { it.autocomplete })
         assertTrue(fields[1].secret)
     }

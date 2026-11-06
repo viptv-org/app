@@ -219,7 +219,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     onPlay = { menuOpen = false; activate(card) },
                     onInfo = { menuOpen = false; open(card) },
                     onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
-                    visible = menuOpen, onClosed = { menuAt = null }, scale = scale)
+                    visible = menuOpen, onClosed = { menuAt = null }, scale = scale, television = television)
             }
             menuAt?.let { at ->
                 Popup(popupPositionProvider = CardMenuPosition(at),

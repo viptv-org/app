@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvStartupProgress(scale: Float, modifier: Modifier = Modifier) {
+internal fun StartupProgressBar(scale: Float, modifier: Modifier = Modifier) {
     val position = rememberInfiniteTransition(label = "Startup progress").animateFloat(-1f, 2.6f,
         infiniteRepeatable(tween(1200, easing = CubicBezierEasing(.4f, 0f, .2f, 1f))), label = "Indicator movement")
     Box(modifier.size(240.dp * scale, 4.dp * scale).clip(RoundedCornerShape(2.dp * scale)).background(Color.White.copy(alpha = .12f))) {
