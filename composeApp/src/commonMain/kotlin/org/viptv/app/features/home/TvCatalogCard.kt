@@ -145,7 +145,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                     onPlay = { menuOpen = false; (actions?.play ?: open).invoke(card) },
                     onInfo = { menuOpen = false; info(card) },
                     onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
-                    scale = scale)
+                    scale = scale, television = true)
             }
         }
     }
