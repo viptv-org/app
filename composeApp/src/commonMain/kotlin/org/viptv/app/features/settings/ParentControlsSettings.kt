@@ -30,9 +30,9 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
     var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { unlocking = false; editing = null; leavePinFor = null }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = settingsPanePadding(compact)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        if (!compact) Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
+        if (!compact) SettingsPaneTitle("Parental controls")
         Text("The household PIN is required to leave a restricted profile or manage settings from it. Each profile has its own age limit.", color = Palette.secondary)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         error?.let {

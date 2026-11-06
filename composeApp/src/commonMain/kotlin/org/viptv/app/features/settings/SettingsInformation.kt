@@ -20,8 +20,8 @@ import org.viptv.app.updates.*
 @Composable
 internal fun SettingsInformation(section: String, local: Boolean, address: String?, compact: Boolean = false) {
     var license by remember { mutableStateOf<String?>(null) }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        if (!compact) Text(if (section == "About") "About VIPTV" else section, style = MaterialTheme.typography.headlineMedium)
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = settingsPanePadding(compact)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        if (!compact) SettingsPaneTitle(if (section == "About") "About VIPTV" else section)
         when (section) {
             "Help" -> {
                 HelpTopic("No titles or sources", "Enable the right integrations for your selected profile. Browsing and search integrations supply titles; stream integrations supply playable sources.")

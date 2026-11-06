@@ -88,11 +88,11 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
                 }
             }
         }
-        LaunchedEffect(Unit) {
-            repeat(60) {
+        LaunchedEffect(focus) {
+            repeat(60) { attempt ->
                 if (focus?.focus() == true) return@LaunchedEffect
-                // A control the server would reject is not a focus stop, so land on the first one that is.
-                stops.forEach { if (it.focus()) return@LaunchedEffect }
+                // A control the server would reject is not a focus stop, so land on the first one that is — once the named one has had a frame to be placed.
+                if (attempt >= 10) stops.forEach { if (it.focus()) return@LaunchedEffect }
                 withFrameNanos { }
             }
         }

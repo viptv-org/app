@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,8 +67,10 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     val shown = filter.filtered(addons)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
-        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(start = if (compact) 16.dp else 32.dp,
-            end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
+        val pane = settingsPanePadding(compact)
+        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(start = pane.calculateStartPadding(LocalLayoutDirection.current),
+            top = if (compact) 0.dp else pane.calculateTopPadding(), end = pane.calculateEndPadding(LocalLayoutDirection.current),
+            bottom = pane.calculateBottomPadding()),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             item {
                 if (compact) Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) {
@@ -75,7 +78,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                     Text("Add-ons", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     back?.let { BackControl(it, desktop = true) }
-                    Text("Add-ons", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    SettingsPaneTitle("Add-ons")
                 }
             }
             item { Text(if (local) "Add-ons find the movies, series and channels you watch. Installed add-ons are shared by profiles on this device; switches apply to the current profile."
