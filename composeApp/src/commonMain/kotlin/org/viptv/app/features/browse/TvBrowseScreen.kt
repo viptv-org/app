@@ -63,6 +63,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     val chromeFocus = remember { FocusRequester() }
     val gridFocus = remember { FocusRequester() }
     val noticeFocus = remember { FocusRequester() }
+    val stateFocus = remember { FocusRequester() }
     val grid = rememberLazyGridState()
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(selected.size) { cardLookupKey(selected[it]) } })
     AutomaticPage(selected.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
@@ -80,10 +81,10 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                 }
                 Spacer(Modifier.height(40.dp * scale))
                 if (pageState == ListPageState.Failed || pageState == ListPageState.Empty) {
-                    CatalogPageState(
-                        if (pageState == ListPageState.Failed) catalogFailureState(label, error, otherCatalog = false)
-                        else catalogEmptyState(label, source, catalogNoun(query.type),
-                            applied, otherCatalog = false),
+                    val catalogState = if (pageState == ListPageState.Failed) catalogFailureState(label, error, otherCatalog = false)
+                        else catalogEmptyState(label, source, catalogNoun(query.type), applied, otherCatalog = false)
+                    if (catalogState.actions.isEmpty()) TvRequestedFocus(chromeFocus, pageState, true)
+                    CatalogPageState(catalogState,
                         activate = { action ->
                             when (action.kind) {
                                 CatalogActionKind.Retry -> (retry ?: { applyQuery(query) }).invoke()
@@ -94,7 +95,8 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                                 }
                                 CatalogActionKind.ChooseCatalog -> Unit
                             }
-                        }, Modifier.weight(1f), layout = PageStateLayout.Tv, scale = scale, focus = chromeFocus)
+                        }, Modifier.weight(1f), layout = PageStateLayout.Tv, scale = scale,
+                        focus = stateFocus.takeIf { catalogState.actions.isNotEmpty() })
                 } else {
                     if (pageState == ListPageState.Loading) {
                         TvBrowseLoading(scale)

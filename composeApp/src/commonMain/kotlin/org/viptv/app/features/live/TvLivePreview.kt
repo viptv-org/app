@@ -17,7 +17,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -35,6 +37,10 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.format.providerText
 import org.viptv.app.state.liveFavoriteTarget
 
+internal val TvLivePreviewTop = 12.dp
+internal val TvLivePreviewGap = 12.dp
+internal val TvLivePreviewActionTop = 306.dp
+
 @Composable
 internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null,
     favoriteFocus: FocusRequester? = null, watchFocus: FocusRequester? = null, down: FocusRequester? = null,
@@ -43,41 +49,47 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
     val target = liveFavoriteTarget(channel.id)
     val pending = mutations.isPending(target)
     val failure = mutations.failure(target)
-    Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
-        verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-            if (program == null || liveFraming(program, now) == LiveFraming.OnAir)
-                LiveBadge(scale = scale, television = true)
-            Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (22 * scale).sp,
-                lineHeight = (26 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
-        }
-        (program?.title ?: channel.card.subtitle)?.let {
-            Text(it, fontSize = (52 * scale).sp, lineHeight = (59.8f * scale).sp,
-                letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2)
-        }
-        program?.let {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                Text("${liveTime(it.start)} – ${liveTime(it.end, true)}${liveRangeStatus(it, now)}", fontSize = (24 * scale).sp,
-                    lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
-                channel.card.badges.withoutLiveTag().forEach { TvMediaBadge(it, scale) }
+    // The gap grows with the display text size, so the action keeps the board's spacing above it at every setting.
+    val gap = TvLivePreviewGap * scale * LocalDensity.current.fontScale
+    // The action sits at the board's y, and below the summary when the display text size makes the summary taller than that.
+    Column(Modifier.offset(96.dp * scale, TvLivePreviewTop * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
+        verticalArrangement = Arrangement.spacedBy(gap)) {
+        Column(Modifier.fillMaxWidth().heightIn(min = TvLivePreviewActionTop * scale - TvLivePreviewTop * scale - gap),
+            verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
+                if (program == null || liveFraming(program, now) == LiveFraming.OnAir)
+                    LiveBadge(scale = scale, television = true)
+                Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (22 * scale).sp,
+                    lineHeight = (26 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
             }
-            it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
-                color = Palette.body, maxLines = 2) }
+            (program?.title ?: channel.card.subtitle)?.let {
+                Text(it, fontSize = (52 * scale).sp, lineHeight = (59.8f * scale).sp,
+                    letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            program?.let {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
+                    Text("${liveTime(it.start)} – ${liveTime(it.end, true)}${liveRangeStatus(it, now)}", fontSize = (24 * scale).sp,
+                        lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
+                    channel.card.badges.withoutLiveTag().forEach { TvMediaBadge(it, scale) }
+                }
+                it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
+                    color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+            }
+            failure?.let { Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.danger) }
         }
-        failure?.let { Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.danger) }
-    }
-    if (favorite != null) TvAction(Modifier.offset(96.dp * scale, 306.dp * scale).heightIn(min = 52.dp * scale).focusProperties { if (down != null) this.down = down }, scale,
-        requester = favoriteFocus, activate = if (failure != null) ({ mutations.retry(target) }) else favorite, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
-        when {
-            pending -> { MutationSpinner(24.dp * scale, scale = scale, color = it); Spacer(Modifier.width(10.dp * scale)); Text("Saving…", color = it, fontSize = (22 * scale).sp) }
-            failure != null -> { Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale)); Text("Retry", color = it, fontSize = (22 * scale).sp) }
-            else -> { FavouriteStar(channel.favorite, 24.dp * scale, it); Spacer(Modifier.width(10.dp * scale))
-                Text(favouriteActionLabel(channel.favorite), color = it, fontSize = (22 * scale).sp) }
+        if (favorite != null) TvAction(Modifier.heightIn(min = 52.dp * scale).focusProperties { if (down != null) this.down = down }, scale,
+            requester = favoriteFocus, activate = if (failure != null) ({ mutations.retry(target) }) else favorite, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
+            when {
+                pending -> { MutationSpinner(24.dp * scale, scale = scale, color = it); Spacer(Modifier.width(10.dp * scale)); Text("Saving…", color = it, fontSize = (22 * scale).sp) }
+                failure != null -> { Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale)); Text("Retry", color = it, fontSize = (22 * scale).sp) }
+                else -> { FavouriteStar(channel.favorite, 24.dp * scale, it); Spacer(Modifier.width(10.dp * scale))
+                    Text(favouriteActionLabel(channel.favorite), color = it, fontSize = (22 * scale).sp) }
+            }
         }
     }
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp * scale)
-    Box(Modifier.offset(1184.dp * scale, (-12).dp * scale).size(640.dp * scale, 360.dp * scale)
+    Box(Modifier.offset(1184.dp * scale, TvLivePreviewTop * scale).size(640.dp * scale, 360.dp * scale)
         .then(if (watchFocus == null) Modifier else Modifier.focusRequester(watchFocus))
         .focusProperties { if (down != null) this.down = down }.clip(shape)
         .background(Color(0xFF212124)).onFocusChanged { focused = it.isFocused }

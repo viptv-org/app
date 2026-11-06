@@ -42,7 +42,8 @@ internal fun PageState(icon: ImageVector, title: String, message: String, action
     modifier: Modifier = Modifier, layout: PageStateLayout = PageStateLayout.Phone, tile: Boolean = true,
     scale: Float = 1f, focus: FocusRequester? = null, enabled: Boolean = true) {
     val television = layout == PageStateLayout.Tv
-    if (television) TvRequestedFocus(focus, title, enabled)
+    // The block takes the remote on its primary action; a state with no action leaves the remote where it was.
+    if (television && actions.isNotEmpty()) TvRequestedFocus(focus, title, enabled)
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = when (layout) { PageStateLayout.Tv -> 980.dp * scale; PageStateLayout.Wide -> 620.dp; PageStateLayout.Phone -> 440.dp })
             .testTag(PAGE_STATE_TAG)
