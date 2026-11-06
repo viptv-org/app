@@ -4,24 +4,26 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import org.viptv.app.resources.Res
-import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 
 internal const val LiveEmptyWideArt = "files/live/live-empty-wide.webp"
 internal const val LiveEmptyTallArt = "files/live/live-empty-tall.webp"
 
+internal val LocalLiveEmptyArt = staticCompositionLocalOf<String?> { null }
+
 // The scrim draws in code over the photo: drop it and the light text loses contrast over bright art.
 @Composable
-internal fun LiveEmptyArtwork(wide: Boolean, modifier: Modifier = Modifier) {
+internal fun LiveEmptyArtwork(wide: Boolean, modifier: Modifier = Modifier, art: String? = null) {
     Box(modifier.fillMaxSize()) {
-        AsyncImage(Res.getUri(if (wide) LiveEmptyWideArt else LiveEmptyTallArt), null,
+        AsyncImage(art ?: LocalLiveEmptyArt.current ?: Res.getUri(if (wide) LiveEmptyWideArt else LiveEmptyTallArt), null,
             Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alignment = Alignment.Center)
-        Box(Modifier.fillMaxSize().background(if (wide) wideScrim else tallScrim))
+        Box(Modifier.fillMaxSize().background(if (wide) Scrim.liveEmptyWide else Scrim.liveEmptyTall))
     }
 }
 
@@ -31,22 +33,7 @@ internal fun LiveEmptyPhoneArt(modifier: Modifier = Modifier) {
     Box(modifier) {
         AsyncImage(Res.getUri(LiveEmptyTallArt), null, Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop, alignment = Alignment.BottomCenter)
-        Box(Modifier.fillMaxSize().background(phoneScrim))
+        Box(Modifier.fillMaxSize().background(Scrim.liveEmptyPhone))
     }
 }
 
-private val wideScrim = Brush.horizontalGradient(
-    0f to Palette.background.copy(alpha = 0.92f),
-    0.45f to Palette.background.copy(alpha = 0.6f),
-    1f to Palette.background.copy(alpha = 0.18f))
-
-private val tallScrim = Brush.verticalGradient(
-    0f to Palette.background.copy(alpha = 0.0f),
-    0.4f to Palette.background.copy(alpha = 0.35f),
-    1f to Palette.background.copy(alpha = 0.9f))
-
-private val phoneScrim = Brush.verticalGradient(
-    0f to Palette.background.copy(alpha = 0.0f),
-    0.45f to Palette.background.copy(alpha = 0.3f),
-    0.8f to Palette.background.copy(alpha = 0.86f),
-    1f to Palette.background)
