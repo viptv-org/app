@@ -134,13 +134,13 @@ internal fun PlaybackFitFill(fill: Boolean, toggle: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     Box(
         Modifier
-            .height(44.dp)
+            .heightIn(min = 44.dp)
             .widthIn(min = 44.dp)
             .clip(CircleShape)
             .background(if (fill) Palette.accent.copy(alpha = 0.16f) else Color.Transparent)
             .pressScale(interaction, Motion.control)
             .pointerToggleable(fill, interaction, null, shape = CircleShape, onValueChange = { toggle() })
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = if (fill) "Fit video" else "Fill video" },
         contentAlignment = Alignment.Center,
     ) {
