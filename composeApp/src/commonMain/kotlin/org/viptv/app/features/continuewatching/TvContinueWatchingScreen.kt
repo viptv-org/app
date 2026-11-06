@@ -26,7 +26,6 @@ import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.features.home.TvHomeSkeletonCard
-import org.viptv.app.state.ContinueUndo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -37,7 +36,7 @@ private const val CARD_WIDTH = (1728f - GAP * (COLUMNS - 1)) / COLUMNS
 @Composable
 internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit,
-    remove: ((Card) -> Unit)? = null, undo: ContinueUndo? = null, undoRemove: () -> Unit = {}) {
+    remove: ((Card) -> Unit)? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
@@ -50,7 +49,6 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
     var confirming by remember { mutableStateOf<Card?>(null) }
     val target = lastFocused?.takeIf { card -> cards.any { cardLookupKey(it) == cardLookupKey(card) } } ?: cards.firstOrNull()
     val removal = remember { FocusRequester() }
-    val undoFocus = remember { FocusRequester() }
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
@@ -112,7 +110,7 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                             ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
-                    if (remove != null) TvRemovalBar(scale, target, undo, undoFocus, removal, request = { confirming = it }, undoRemove = undoRemove)
+                    if (remove != null) TvRemovalBar(scale, target, removal, request = { confirming = it })
                 }
             }
         }
@@ -123,21 +121,11 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
 }
 
 @Composable
-private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoFocus: FocusRequester,
-    requester: FocusRequester, request: (Card) -> Unit, undoRemove: () -> Unit) {
+private fun TvRemovalBar(scale: Float, target: Card?, requester: FocusRequester, request: (Card) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        if (undo != null) {
-            Text("Removed “${undo.card.title}” from Continue Watching.", Modifier.weight(1f), color = Palette.secondary,
-                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            TvAction(Modifier.heightIn(min = 64.dp * scale).width(200.dp * scale), scale, requester = undoFocus,
-                activate = undoRemove, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                Text("Undo", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
-            }
-        } else {
-            Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
-                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
+        Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+            fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
             activate = { target?.let(request) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(REMOVE_CONTINUE_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)

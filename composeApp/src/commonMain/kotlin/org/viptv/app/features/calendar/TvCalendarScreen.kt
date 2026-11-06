@@ -101,7 +101,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                     Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
                     if (!available) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
-                        contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Manage integrations", color = it, fontSize = (24 * scale).sp) }
+                        contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text(CALENDAR_MANAGE, color = it, fontSize = (24 * scale).sp) }
                 }
             }
         }
@@ -117,11 +117,11 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
 @Composable
 private fun TvCalendarFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        Text("Couldn’t load the calendar", fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        Text(CALENDAR_FAILED_TITLE, fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(CALENDAR_RETRY, color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }
     }
 }
