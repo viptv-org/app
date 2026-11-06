@@ -50,6 +50,8 @@ fun ApplicationController.changeParentPin(current: String, next: String) {
 
 internal const val PARENT_PIN_TARGET = "Household PIN"
 
+internal const val householdPinOwnerOnly = "Only the account owner can change household settings."
+
 fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) {
     val before = mutable.value
     mutate(preferenceTarget(kidsPolicyTarget(profile)),
@@ -133,7 +135,9 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
             else mutable.value.parentSettings
         if (connection === remote && generation == owner) updateState { next -> next.copy(parentSettingsNotice = null,
             parentSettings = refreshed) }
-        if (failure.status == 403) throw LocalFailure(forbidden)
+        if (failure.status == 403) {
+            throw LocalFailure(if (failure.code == "owner_required") householdPinOwnerOnly else forbidden)
+        }
         if (failure.status == 409) throw LocalFailure("These settings changed. Check the current profile restrictions and try again.")
         throw failure
     }

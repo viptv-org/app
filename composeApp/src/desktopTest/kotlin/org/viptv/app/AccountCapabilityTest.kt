@@ -108,7 +108,7 @@ class AccountCapabilityTest {
             ui.render()
             ui.waitFor { ui.shows("Devices & sessions") }
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
-            assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
+            assertTrue(ui.shows("Household PIN"), "A member reads the household PIN status")
             assertTrue(ui.shows("Delete account"), "Any account session keeps the self-service delete row")
             ui.click("Devices & sessions")
             ui.render(24)
