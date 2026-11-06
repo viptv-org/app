@@ -65,6 +65,24 @@ class NativeSourceRankingTest {
         }
     }
 
+    @Test fun aStoredProviderAffinityRanksThatProvidersRowFirstInTheNativeEngine() = runBlocking<Unit> {
+        val streams: (String) -> String = { host ->
+            """{"streams":[{"title":"Film.2020.1080p.WEB-DL.mkv","quality_height":1080,"url":"https://media.example/$host.mp4"}]}"""
+        }
+        Fixture(streams).use { fixture ->
+            val candidates = fixture.local.fetchLocalSources("default", card).candidates
+            assertEquals(2, candidates.size)
+            val other = candidates.first()
+            val preferred = candidates.last()
+            assertNotEquals(other.provider_id, preferred.provider_id)
+            assertEquals(other.id, fixture.local.rankSources("default", candidates, RankingContext()).rows.first().id,
+                "Equal rows keep the order they were ranked in")
+            val affinity = RankingContext(providerAffinity = preferred.provider_id)
+            assertEquals(preferred.id, fixture.local.rankSources("default", candidates, affinity).rows.first().id,
+                "The profile's provider wins the tie in the vendored engine")
+        }
+    }
+
     @Test fun anUnsupportedCodecLeavesTheBestMatches() = runBlocking<Unit> {
         val streams: (String) -> String = { host ->
             when (host) {
