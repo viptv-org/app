@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,8 @@ internal class PageStateAction(val label: String, val primary: Boolean = false, 
 
 internal enum class PageStateLayout { Phone, Wide, Tv }
 
+internal const val PAGE_STATE_TAG = "page-state"
+
 internal fun pageStateLayout(television: Boolean, compact: Boolean): PageStateLayout =
     if (television) PageStateLayout.Tv else if (compact) PageStateLayout.Phone else PageStateLayout.Wide
 
@@ -39,10 +42,9 @@ internal fun PageState(icon: ImageVector, title: String, message: String, action
     scale: Float = 1f, focus: FocusRequester? = null, enabled: Boolean = true) {
     val television = layout == PageStateLayout.Tv
     if (television) TvRequestedFocus(focus, title, enabled)
-    Box(modifier.fillMaxSize(), contentAlignment = if (television) Alignment.Center else Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = if (television) 980.dp * scale else 440.dp)
-            .padding(top = when (layout) { PageStateLayout.Tv -> 0.dp; PageStateLayout.Wide -> 120.dp; PageStateLayout.Phone -> 90.dp },
-                start = 20.dp, end = 20.dp),
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(Modifier.widthIn(max = if (television) 980.dp * scale else 440.dp).testTag(PAGE_STATE_TAG)
+            .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(when (layout) { PageStateLayout.Tv -> 18.dp * scale; PageStateLayout.Wide -> 10.dp; PageStateLayout.Phone -> 12.dp })) {
             if (television) Box(Modifier.size(96.dp * scale).clip(CircleShape).background(Color.White.copy(alpha = .1f)),

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toComposeImageBitmap
@@ -25,7 +26,15 @@ import org.viptv.app.features.home.HOME_NO_CATALOGS_TITLE
 import org.viptv.app.features.home.HOME_NO_TITLES_MESSAGE
 import org.viptv.app.features.home.HOME_NO_TITLES_TITLE
 import org.viptv.app.features.home.HOME_RETRY_ACTION
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.PAGE_STATE_TAG
+import org.viptv.app.components.PendingMutationUi
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.state.MutationPhase
+import org.viptv.app.state.MutationTarget
+import org.viptv.app.state.PendingMutation
+import org.viptv.app.state.PendingMutations
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
@@ -67,6 +76,9 @@ class HomePageStatesUiTest {
 
     private val content = home(hero = card("hero"), rows = listOf(row()))
 
+    private val failedSave = PendingMutations(mapOf(
+        saveTarget(content.hero!!) to PendingMutation(MutationPhase.Failed, "The connection dropped.")))
+
     private enum class Case { NoCatalogs, NoTitles, FailedFirstLoad, FailedAction }
 
     private val cases = listOf(Case.NoCatalogs, Case.NoTitles, Case.FailedFirstLoad, Case.FailedAction)
@@ -80,8 +92,11 @@ class HomePageStatesUiTest {
                         layout.television, open = {}, retry = {}, busy = false)
                     Case.FailedFirstLoad -> HomeScreen(null, layout.television, open = {}, retry = {}, busy = false,
                         error = "The connection dropped.")
-                    Case.FailedAction -> HomeScreen(content, layout.television, open = {}, retry = {}, busy = false,
-                        error = "The connection dropped.")
+                    Case.FailedAction -> CompositionLocalProvider(
+                        LocalPendingMutation provides PendingMutationUi(failedSave, retry = {})) {
+                        HomeScreen(content, layout.television, open = {}, retry = {}, busy = false,
+                            error = "The connection dropped.")
+                    }
                 }
             }
         }
@@ -99,6 +114,7 @@ class HomePageStatesUiTest {
         fun node(text: String): SemanticsNode? = nodes().firstOrNull { node ->
             node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.contains(text) } == true
         }
+        fun block(): SemanticsNode? = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.TestTag) == PAGE_STATE_TAG }
         override fun close() = scene.close()
     }
 
@@ -123,15 +139,14 @@ class HomePageStatesUiTest {
                 if (!frame.shows(title)) failures += "$label: '$title' is not on the page"
                 if (!frame.shows(body)) failures += "$label: '$body' is not on the page"
                 if (!frame.shows(action)) failures += "$label: the '$action' action is not on the page"
-                val node = frame.node(title)
-                if (node == null) { failures += "$label: no title node"; continue }
-                val bounds = node.boundsInRoot
+                if (frame.node(title) == null) { failures += "$label: no title node"; continue }
+                val block = frame.block()
+                if (block == null) { failures += "$label: no page state block"; continue }
+                val bounds = block.boundsInRoot
                 val centre = bounds.left + bounds.width / 2
-                if (abs(centre - layout.width / 2f) > 2f) failures += "$label: the block is off-centre (centre $centre of ${layout.width})"
-                if (layout.television) {
-                    val middle = bounds.top + bounds.height / 2
-                    if (abs(middle - layout.height / 2f) > 90f) failures += "$label: the TV block is not centred in the page ($middle of ${layout.height})"
-                } else if (bounds.top < 60f) failures += "$label: the block sits at the page's top edge (${bounds.top})"
+                val middle = bounds.top + bounds.height / 2
+                if (abs(centre - layout.width / 2f) > 1f) failures += "$label: the block is off-centre at $centre of ${layout.width}"
+                if (abs(middle - layout.height / 2f) > 1f) failures += "$label: the block is not centred in the page at $middle of ${layout.height}"
                 if (frame.shows("Could not load Home") || frame.shows("No catalogs configured") || frame.shows("Retry Home") ||
                     frame.shows("Nothing to show yet")) failures += "$label: an old Home string is still drawn"
             } finally { frame.close() }
@@ -145,18 +160,24 @@ class HomePageStatesUiTest {
             val frame = Frame(layout.width, layout.height, page(Case.FailedFirstLoad, layout))
             try {
                 frame.settle()
-                val node = frame.node(HOME_FAILED_TITLE)
-                if (node == null) { failures += "${layout.name}: no title"; continue }
-                val bounds = node.boundsInRoot
+                val block = frame.block()
+                if (block == null) { failures += "${layout.name}: no block"; continue }
+                val bounds = block.boundsInRoot
                 val image = frame.scene.render(1_000_000_000L)
                 val pixels = image.toComposeImageBitmap().toPixelMap()
                 image.close()
-                val y = (bounds.top - 4).toInt()
-                for (dx in listOf(-100, -60, 60, 100)) {
-                    val x = (bounds.left + bounds.width / 2 + dx).toInt()
+                val middle = (bounds.top + bounds.height / 2).toInt()
+                val centre = (bounds.left + bounds.width / 2).toInt()
+                // Below the block a focused TV action casts its shadow, which is the button's, not a card's.
+                val around = listOf(centre to (bounds.top - 12).toInt(),
+                    (bounds.left - 12).toInt() to middle, (bounds.right + 12).toInt() to middle)
+                var sampled = 0
+                for ((x, y) in around) {
                     if (x < 0 || x >= pixels.width || y < 0 || y >= pixels.height) continue
-                    if (pixels[x, y] != Palette.background) failures += "${layout.name}: the block draws a surface at x $x ($dx from the title)"
+                    sampled++
+                    if (pixels[x, y] != Palette.background) failures += "${layout.name}: the block draws a surface at ($x, $y)"
                 }
+                if (sampled == 0) failures += "${layout.name}: no page ground beside the block to sample"
             } finally { frame.close() }
         }
         assertEquals(emptyList(), failures, "the page state block is on the page ground, not on a card")
@@ -170,6 +191,8 @@ class HomePageStatesUiTest {
                 frame.settle()
                 if (!frame.shows("Title hero")) failures += "${layout.name}: the hero left the page"
                 if (!frame.shows("Title row-1")) failures += "${layout.name}: the rows left the page"
+                if (!frame.shows("The connection dropped.")) failures += "${layout.name}: the failed save draws no inline error"
+                if (!frame.shows("Retry")) failures += "${layout.name}: the failed save offers no Retry"
                 if (frame.shows(HOME_FAILED_TITLE)) failures += "${layout.name}: the failed action became the page state"
             } finally { frame.close() }
         }

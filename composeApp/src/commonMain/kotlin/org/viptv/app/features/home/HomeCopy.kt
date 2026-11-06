@@ -7,7 +7,7 @@ import org.viptv.engine.wire.RowState
 
 // copy.md ## Empty states — Home, in the "Couldn’t load …" form the other list pages use.
 internal const val HOME_NO_CATALOGS_TITLE = "No catalogs are available."
-internal const val HOME_NO_CATALOGS_MESSAGE = "Add or enable a catalog addon in Settings."
+internal const val HOME_NO_CATALOGS_MESSAGE = "Add or enable a catalog add-on in Settings."
 internal const val HOME_NO_CATALOGS_ACTION = "Open settings"
 internal const val HOME_NO_TITLES_TITLE = "No titles yet"
 internal const val HOME_NO_TITLES_MESSAGE = "Your catalogs answered with nothing for this profile."

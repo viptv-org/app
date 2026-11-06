@@ -81,7 +81,7 @@ class HomePageStateTest {
 
     @Test fun theCopyIsTheDesignSystemsOwn() {
         assertEquals("No catalogs are available.", HOME_NO_CATALOGS_TITLE)
-        assertEquals("Add or enable a catalog addon in Settings.", HOME_NO_CATALOGS_MESSAGE)
+        assertEquals("Add or enable a catalog add-on in Settings.", HOME_NO_CATALOGS_MESSAGE)
         assertEquals("No titles yet", HOME_NO_TITLES_TITLE)
         assertEquals("Your catalogs answered with nothing for this profile.", HOME_NO_TITLES_MESSAGE)
         assertEquals("Couldn’t load Home", HOME_FAILED_TITLE)
