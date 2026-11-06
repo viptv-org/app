@@ -14,8 +14,14 @@ internal const val HOME_NO_TITLES_MESSAGE = "Your catalogs answered with nothing
 internal const val HOME_FAILED_TITLE = "Couldn’t load Home"
 internal const val HOME_RETRY_ACTION = "Try again"
 
-internal fun homePageState(home: HomeSnapshot?, busy: Boolean, error: String?): ListPageState =
-    listPageState(home?.shownCount() ?: 0, busy, error, answered = home?.complete == true)
+internal fun homePageState(home: HomeSnapshot?, busy: Boolean, error: String?): ListPageState {
+    // No page and no request open is a page that never arrived, not a skeleton forever.
+    if (home == null && !busy) return ListPageState.Failed
+    val listed = listPageState(home?.shownCount() ?: 0, busy, error, answered = home?.complete == true)
+    // A catalog that answered nothing on its first read is a failed load, not an empty Home.
+    return if (listed == ListPageState.Empty && home?.rows?.any { it.state == RowState.FAILED } == true) ListPageState.Failed
+        else listed
+}
 
 internal fun HomeSnapshot.shownCount(): Int = (if (hero != null) 1 else 0) + featured.size +
     rows.count { it.state == RowState.PENDING || (it.state == RowState.READY && it.cards.isNotEmpty()) }
