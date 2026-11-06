@@ -12,20 +12,27 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvTextField
+import org.viptv.app.connection.SERVER_ADDRESS_ERROR
+import org.viptv.app.connection.remoteOriginOrNull
+import org.viptv.app.features.settings.TvDialogAction
+import org.viptv.app.features.settings.TvDialogPanel
+import org.viptv.app.features.settings.rememberTvDialogStops
+import org.viptv.app.features.settings.tvDialogFocusWatch
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,
     connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
-    var server by remember { mutableStateOf(origin.ifBlank { "https://your-server.example" }) }
+    var server by remember(origin) { mutableStateOf(origin) }
+    var serverError by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
-    var serverDialog by remember { mutableStateOf(false) }
+    // Without a configured server the panel has nothing to sign in to, so the address asks first.
+    var serverDialog by remember { mutableStateOf(origin.isBlank()) }
     val passwordField = remember { FocusRequester() }
     val signIn: () -> Unit = {
-        if (!busy && email.isNotBlank() && password.isNotEmpty()) {
+        if (canSignInWithPassword(server, email, password, busy)) {
             connect(server, email, password)
             password = ""
         }
@@ -44,19 +51,49 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
                 imeAction = ImeAction.Done, submit = signIn, requester = passwordField)
         }
         Column(Modifier.offset(1290.dp * scale, 270.dp * scale).width(534.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-            TvPasswordAction("Sign in", Lucide.ArrowRight, scale, !busy && email.isNotBlank() && password.isNotEmpty(), signIn)
+            TvPasswordAction("Sign in", Lucide.ArrowRight, scale, canSignInWithPassword(server, email, password, busy), signIn)
             TvPasswordAction(if (visible) "Hide password" else "Show password", if (visible) Lucide.EyeOff else Lucide.Eye, scale, !busy) { visible = !visible }
             Text("Typing with a remote is slow. Scanning a code with your phone is quicker.", Modifier.padding(top = 14.dp * scale),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary)
-            TvPasswordAction("Use another server", Lucide.Server, scale) { serverDialog = true }
+            TvPasswordAction("Use another server", Lucide.Server, scale) { serverError = null; serverDialog = true }
             error?.let { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) }
             if (busy) Text("Signing in…", color = Palette.secondary, fontSize = (22 * scale).sp)
         }
     }
-    if (serverDialog) AlertDialog(onDismissRequest = { serverDialog = false }, title = { Text("Server address") },
-        text = { TvTextField(server, { server = it }, scale, Modifier.fillMaxWidth(), label = "HTTPS server address",
-            placeholder = "https://your-server.example", focusOnEnter = true, onEscape = { serverDialog = false }) },
-        confirmButton = { TextButton(onClick = { serverChanged(server); serverDialog = false }) { Text("Done") } })
+    if (serverDialog) TvServerAddressDialog(server, serverError, scale, dismiss = { serverDialog = false },
+        change = { server = it; serverError = null },
+        accept = {
+            val selected = remoteOriginOrNull(server)
+            if (selected == null) serverError = SERVER_ADDRESS_ERROR
+            else { server = selected; serverChanged(selected); serverError = null; serverDialog = false }
+        })
+}
+
+internal fun canSignInWithPassword(server: String, email: String, password: String, busy: Boolean) =
+    !busy && remoteOriginOrNull(server) != null && email.isNotBlank() && password.isNotEmpty()
+
+@Composable
+private fun TvServerAddressDialog(address: String, error: String?, scale: Float, dismiss: () -> Unit,
+    change: (String) -> Unit, accept: () -> Unit) {
+    val stops = rememberTvDialogStops(3)
+    val field = stops[0]
+    val done = stops[1]
+    val cancel = stops[2]
+    TvDialogPanel(scale, "Server address", stops, field, dismiss, actions = {
+        TvDialogAction(scale, "Done", done, enabled = address.isNotBlank(), activate = accept)
+        TvDialogAction(scale, "Cancel", cancel, activate = dismiss)
+    }) {
+        Text("Enter the address of your server, starting with https://.", color = Palette.secondary,
+            fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
+        Spacer(Modifier.height((24 * scale).dp))
+        TvTextField(address, change, scale, Modifier.tvDialogFocusWatch(field).fillMaxWidth(),
+            label = "HTTPS server address", invalid = error != null, requester = field.requester,
+            focusOnEnter = true, onEscape = dismiss)
+        error?.let {
+            Spacer(Modifier.height((12 * scale).dp))
+            Text(it, color = Palette.danger, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
+        }
+    }
 }
 
 @Composable

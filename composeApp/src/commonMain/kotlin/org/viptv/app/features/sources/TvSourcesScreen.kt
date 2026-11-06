@@ -53,7 +53,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
     checkedAddons: Int = 0, checkedProviders: Int = 0, checkAgain: () -> Unit = {}, manageAddons: () -> Unit = {},
     debridHelp: () -> Unit = {}, openingStage: String? = null, groups: SourceGroups = SourceGroups(),
     producers: List<SourceProducerOutcome> = emptyList(), banner: String? = null, failed: List<String> = emptyList(),
-    opening: Boolean = false, retry: () -> Unit = {}) {
+    opening: Boolean = false, retry: () -> Unit = {}, configureSource: (String) -> Unit = {}) {
     val motion = rememberTvDrawerMotion(back)
     Popup(onDismissRequest = motion.dismiss, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -68,13 +68,15 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val filterFocus = remember { FocusRequester() }
             var quality by remember { mutableStateOf<String?>(null) }
             var provider by remember { mutableStateOf<String?>(null) }
-            val visible = remember(sources, info, quality, provider) { sources.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
+            var hiddenAddons by remember { mutableStateOf(emptySet<String>()) }
+            val offered = remember(sources, hiddenAddons) { sources.filter { it.provider_id !in hiddenAddons } }
+            val visible = remember(offered, info, quality, provider) { offered.filter { (quality == null || info[it.id]?.quality == quality) && (provider == null || it.sourceFilterId() == provider) } }
             val producer = sourceProducerFor(producers, provider)
             val pending = loadingMore && !opening
             val notice = sourceProducerNotice(producer, discoveryPending = pending, hasRows = visible.isNotEmpty())
-            LaunchedEffect(sources, producers) {
+            LaunchedEffect(offered, producers) {
                 val id = provider ?: return@LaunchedEffect
-                if (sources.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
+                if (offered.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
             }
             val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
             val firstRowFocus = rows.firstOrNull()?.source?.id?.let { rowFocus.getOrPut(it) { FocusRequester() } }
@@ -119,7 +121,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 .padding(start = 64.dp * scale, end = 96.dp * scale, top = 72.dp * scale, bottom = 56.dp * scale)) {
                 Text("Choose a source", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp, letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp * scale))
-                val count = sourceSummary(sources)
+                val count = sourceSummary(offered)
                 val summary = when {
                     opening -> "opening stream"
                     loadingMore -> "Finding sources"
@@ -141,7 +143,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 } else {
                     Box(Modifier.focusGroup().focusRequester(filterFocus)) {
                         CompositionLocalProvider(LocalTvScale provides scale) {
-                            SourceFilters(sources, quality, provider,
+                            SourceFilters(offered, quality, provider,
                                 { quality = it; navigated = true }, { provider = it; navigated = true },
                                 Modifier.fillMaxWidth(), gutter = 0.dp, producers = producers, down = firstRowFocus)
                         }
@@ -167,13 +169,15 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         }
                     }
                     itemsIndexed(rows, key = { _, row -> row.source.id }) { index, row ->
-                        TvSourceRow(row.source, info[row.source.id], scale, rowFocus.getOrPut(row.source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
+                        val source = row.source
+                        TvSourceRow(source, info[source.id], scale, rowFocus.getOrPut(source.id) { FocusRequester() }, true, { if (!busy) choose(it) },
                             up = if (index == 0) filterFocus else null, focusedSource = { focusedSource = it },
                             header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
-                            details = { source ->
-                                detailsRow = rowFocus[source.id].takeIf { focusedSource == source.id }
-                                details = source
-                            })
+                            details = { shown ->
+                                detailsRow = rowFocus[shown.id].takeIf { focusedSource == shown.id }
+                                details = shown
+                            },
+                            menu = source.rowMenu(producers, configureSource) { provider = null; hiddenAddons = hiddenAddons + source.provider_id })
                     }
                     if (finding) items(3) {
                         Box(Modifier.fillMaxWidth().height(tvSourceRowHeight(scale)).clip(RoundedCornerShape(14.dp * scale)).then(shimmer)

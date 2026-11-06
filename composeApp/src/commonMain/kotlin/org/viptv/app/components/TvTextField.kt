@@ -61,6 +61,7 @@ internal fun TvTextField(
     label: String? = null,
     placeholder: String = "",
     enabled: Boolean = true,
+    invalid: Boolean = false,
     secret: Boolean = false,
     numeric: Boolean = false,
     imeAction: ImeAction = ImeAction.Done,
@@ -136,7 +137,8 @@ internal fun TvTextField(
                     .tvFocusOutline(focused, radius, scale)
                     .clip(shape)
                     .background(Color.White.copy(alpha = .07f), shape)
-                    .border((if (focused) 2 else 1).dp * scale, if (focused) Palette.text else Color.White.copy(alpha = .14f), shape)
+                    .border((if (focused || invalid) 2 else 1).dp * scale,
+                        when { invalid -> Palette.danger; focused -> Palette.text; else -> Color.White.copy(alpha = .14f) }, shape)
                     .padding(horizontal = (28 * scale).dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy((16 * scale).dp)) {
