@@ -54,6 +54,50 @@ class TvLiveFilterFocusTest {
         }
     }
 
+    @Test fun tvGuideUpReachesTheFavouriteActionThroughTheChips() {
+        Page {
+            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {}, favoriteChanged = {},
+                groupLabels = mapOf("news" to "News", "sport" to "Sport"), groupChanged = {}, favoritesFilter = {})
+        }.use { page ->
+            page.focusGuide()
+            page.press(Key.DirectionUp)
+            assertEquals("Group: All", page.focusedChip(), "Up from the guide reaches the chips")
+            page.press(Key.DirectionUp)
+            assertEquals("Favourite channel", page.focusedText(), "Up from the chips reaches the preview's favourite action")
+            page.press(Key.DirectionRight)
+            assertEquals("OK to watch", page.focusedText(), "Right from the favourite action reaches the watch tile")
+            page.press(Key.DirectionDown)
+            assertEquals("Group: All", page.focusedChip(), "Down from the preview returns to the chips")
+            page.press(Key.DirectionDown)
+            assertEquals("Morning news", page.focusedText(), "Down from the chips returns to the guide")
+        }
+    }
+
+    @Test fun tvGuideUpReachesTheFavouriteActionWithoutChips() {
+        Page {
+            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {}, favoriteChanged = {})
+        }.use { page ->
+            page.focusGuide()
+            page.press(Key.DirectionUp)
+            assertEquals("Favourite channel", page.focusedText(), "Up from the guide reaches the favourite action when no chip is drawn")
+            page.press(Key.DirectionDown)
+            assertEquals("Morning news", page.focusedText(), "Down returns to the guide")
+        }
+    }
+
+    @Test fun tvChannelRowsReachTheFavouriteAction() {
+        Page {
+            LiveScreen(listOf(channel()), television = true, start = null, now = 30, watch = {}, favoriteChanged = {}, favoritesFilter = {})
+        }.use { page ->
+            page.until("the rows") { page.nodes().any { page.text(it).startsWith("Fixture news") } }
+            page.until("the rows' focus") { page.focusedText()?.startsWith("Fixture news") == true }
+            page.press(Key.DirectionUp)
+            assertEquals("Favourites", page.focusedText(), "Up from the rows reaches the only chip")
+            page.press(Key.DirectionUp)
+            assertEquals("Favourite channel", page.focusedText(), "Up from the chips reaches the favourite action")
+        }
+    }
+
     private class Page(content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: FocusManager? = null
         private var frame = 0L
