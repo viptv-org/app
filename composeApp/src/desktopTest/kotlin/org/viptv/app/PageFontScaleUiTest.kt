@@ -197,10 +197,11 @@ class PageFontScaleUiTest {
     private fun label(node: SemanticsNode): String =
         node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
 
+    // A narrow phone is where the tools row runs out of room: 320 × 640, not just the 390 × 844 reference frame.
     @Test fun thePhonePlayerKeepsItsBandsAndItsWordsAtLargerFontScales() {
         val failures = mutableMapOf<String, List<String>>()
-        for (scale in scales) {
-            val scene = ImageComposeScene(390, 844, Density(1f, scale)) { ViptvTheme(false) {
+        for ((width, height) in listOf(390 to 844, 320 to 640)) for (scale in scales) {
+            val scene = ImageComposeScene(width, height, Density(1f, scale)) { ViptvTheme(false) {
                 Box(Modifier.fillMaxSize()) {
                     PlayerScreen(null, true, null, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
                         tvExtras = TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams"),
@@ -209,8 +210,8 @@ class PageFontScaleUiTest {
             } }
             try {
                 settle(scene)
-                val found = check(scene, 390, 844) + transportCoversTimeline(scene)
-                if (found.isNotEmpty()) failures["phone player @${scale}x"] = found
+                val found = check(scene, width, height) + transportClearOfTheChrome(scene, width)
+                if (found.isNotEmpty()) failures["phone player ${width}×${height} @${scale}x"] = found
             } finally { scene.close() }
         }
         assertTrue(failures.isEmpty(), failures.entries.joinToString("\n") { (where, found) ->
@@ -218,14 +219,22 @@ class PageFontScaleUiTest {
         })
     }
 
-    private fun transportCoversTimeline(scene: ImageComposeScene): List<String> {
-        val play = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }.firstOrNull { node ->
-            node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it == "Play" } == true && node.config.contains(SemanticsActions.OnClick)
-        } ?: return listOf("the phone transport was not drawn")
-        val labels = textNodes(scene).filter { text -> text.label.matches(Regex("-?(\\d+:)?\\d{1,2}:\\d{2}")) }
-        assertTrue(labels.size >= 2, "the timeline labels were not drawn: ${labels.map { it.label }}")
-        return labels.filter { overlap(play.boundsInRoot, it.node.boundsInRoot) > 0f }
-            .map { "the transport covers the time label '${it.label}' at ${it.node.boundsInRoot}" }
+    private fun transportClearOfTheChrome(scene: ImageComposeScene, width: Int): List<String> {
+        val all = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }
+        val transport = all.filter { node ->
+            node.config.getOrNull(SemanticsProperties.ContentDescription)
+                ?.any { it in listOf("Play", "Pause", "Back 10 seconds", "Forward 10 seconds") } == true
+        }
+        if (transport.size < 2) return listOf("the phone transport was not drawn")
+        val chrome = all.filter { node ->
+            (node.config.contains(SemanticsActions.OnClick) || node.config.contains(SemanticsActions.GetTextLayoutResult)) &&
+                node.boundsInRoot.width < width - 1f &&
+                transport.none { it.boundsInRoot.contains(node.boundsInRoot.center) }
+        }
+        return chrome.mapNotNull { node ->
+            val hit = transport.maxOf { overlap(it.boundsInRoot, node.boundsInRoot) }
+            if (hit <= 0f) null else "${label(node).ifBlank { node.config.toString() }} at ${node.boundsInRoot} meets the transport"
+        }
     }
 
     // The components #866 names, driven directly so a page that hides them below the fold or behind a modal still gets checked.

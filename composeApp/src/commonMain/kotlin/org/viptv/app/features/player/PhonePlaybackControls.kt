@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
@@ -14,6 +15,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Motion
+import org.viptv.app.components.PlayerTextScaleCap
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.DropdownMenuItem
@@ -37,6 +39,8 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
         }
     }
 }
+
+private val ToolRowWidthNeedingNoWrap = 342.dp
 
 @Composable
 internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, lock: () -> Unit, tracks: () -> Unit,
@@ -79,9 +83,16 @@ internal fun PhonePlaybackToolbar(speed: Double, setSpeed: (Double) -> Unit, loc
         }
     }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val labelled = maxWidth >= ToolRowWidthNeedingNoWrap * LocalDensity.current.fontScale.coerceAtMost(PlayerTextScaleCap)
         if (maxWidth < 600.dp) Column {
-            Row { episodeAction(); tracksAction() }
-            Row(Modifier.fillMaxWidth()) { speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction() }
+            if (labelled) Row { episodeAction(); tracksAction() }
+            else FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) { episodeAction(); tracksAction() }
+            if (labelled) Row(Modifier.fillMaxWidth()) { speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction() }
+            else FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction()
+            }
         } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             episodeAction(); tracksAction(); speedAction(); lockAction(); PlaybackFitFill(fill, toggleFill); Spacer(Modifier.weight(1f)); nextAction()
         }
