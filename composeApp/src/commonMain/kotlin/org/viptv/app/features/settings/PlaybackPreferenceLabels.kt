@@ -5,6 +5,9 @@ internal val hdrPreferenceChoices = listOf("any" to "No preference", "prefer" to
 internal fun hdrPreferenceLabel(value: String): String = hdrPreferenceChoices.firstOrNull { it.first == value }?.second ?: "No preference"
 internal fun hdrPreferenceValue(label: String): String = hdrPreferenceChoices.firstOrNull { it.second == label }?.first ?: "any"
 
+// The quality row shows "Auto (this device: 1080p)" while its list offers "Auto".
+internal fun tvQualityChoice(quality: String): String = if (quality == "Auto" || quality == "Best available") "Auto" else quality
+
 internal fun qualityLabel(height: Int?, deviceHeight: Int?): String =
     height?.let { if (it == 2160) "4K" else "${it}p" } ?: org.viptv.app.connection.autoQualityLabel(deviceHeight)
 

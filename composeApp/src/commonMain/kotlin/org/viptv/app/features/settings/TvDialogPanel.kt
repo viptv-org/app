@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -24,12 +26,16 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.TvAction
@@ -77,14 +83,21 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
             BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // The body scrolls; the title and the actions never leave the panel, however short the window.
                 val panelHeight = maxHeight * .92f
+                val scroll = rememberScrollState()
                 Column(Modifier.testTag(TvDialogPanelTag).width((860 * scale).dp).heightIn(max = panelHeight).clip(RoundedCornerShape((24 * scale).dp))
                     .background(Palette.raised)) {
-                    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
-                        .padding(start = (48 * scale).dp, top = (48 * scale).dp, end = (48 * scale).dp)) {
-                        Text(title, fontSize = (44 * scale).sp, lineHeight = (50 * scale).sp, letterSpacing = (-.88f * scale).sp,
-                            fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height((24 * scale).dp))
-                        body()
+                    Text(title, Modifier.padding(start = (48 * scale).dp, top = (48 * scale).dp, end = (48 * scale).dp,
+                        bottom = (16 * scale).dp),
+                        fontSize = (44 * scale).sp, lineHeight = (50 * scale).sp, letterSpacing = (-.88f * scale).sp,
+                        fontWeight = FontWeight.Bold)
+                    Box(Modifier.weight(1f, fill = false)) {
+                        Column(Modifier.fillMaxWidth().verticalScroll(scroll)
+                            .padding(start = (48 * scale).dp, top = (8 * scale).dp, end = (48 * scale).dp)) {
+                            body()
+                        }
+                        // A scrolled row fades under the title instead of peeking out as a clipped sliver.
+                        if (scroll.value > 0) Box(Modifier.fillMaxWidth().height((20 * scale).dp)
+                            .background(Brush.verticalGradient(listOf(Palette.raised, Palette.raised.copy(alpha = 0f)))))
                     }
                     FlowRow(Modifier.fillMaxWidth().padding(start = (48 * scale).dp, end = (48 * scale).dp, top = (36 * scale).dp,
                         bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp, Alignment.Start),
@@ -152,6 +165,20 @@ internal fun TvConfirmDialog(scale: Float, title: String, body: String, confirm:
         TvDialogAction(scale, dismissLabel, stop = cancel, enabled = !busy) { if (!busy) onDismiss() }
         TvDialogAction(scale, confirm, stop = accept, enabled = !busy, danger = danger) { if (!busy) onConfirm() }
     }) { Text(body, color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp) }
+}
+
+/** One row of a TV choice list: the panel's full width, the current value checked, the remote's ring on the row it stands on. */
+@Composable
+internal fun TvDialogChoiceRow(label: String, selected: Boolean, scale: Float, stop: TvDialogStop, activate: () -> Unit) {
+    TvAction(Modifier.tvDialogStop(stop).fillMaxWidth().heightIn(min = (72 * scale).dp).semantics { if (selected) this.selected = true },
+        scale, requester = stop.requester, ring = false, contentPadding = PaddingValues(horizontal = (28 * scale).dp),
+        arrangement = Arrangement.Start, activate = activate) { ink ->
+        Text(label, color = ink, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+        if (selected) {
+            Spacer(Modifier.weight(1f))
+            Icon(Lucide.Check, null, Modifier.size((26 * scale).dp), ink)
+        }
+    }
 }
 
 /** A TV panel that only tells the viewer something: one action, focused, and Back closes it. */
