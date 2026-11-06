@@ -40,7 +40,7 @@ internal fun WideProfiles(
         val side = maxOf(0.dp, (maxWidth - row) / 2)
         Column(Modifier.fillMaxSize().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center) {
-            Text(if (managing) "Manage profiles" else "Who’s watching?", fontSize = 44.sp, lineHeight = 51.sp,
+            Text(if (managing) "Manage profiles" else "Who's watching?", fontSize = 44.sp, lineHeight = 51.sp,
                 letterSpacing = (-0.88).sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(40.dp))
             LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = side),
@@ -82,10 +82,10 @@ private fun AddProfileTile(canAdd: Boolean, add: () -> Unit) {
         shape = RoundedCornerShape(TileRadius), onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(TileSize).clip(RoundedCornerShape(TileRadius)).dashedOutline(outline, 2.dp, TileRadius),
             contentAlignment = Alignment.Center) {
-            Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = if (canAdd) Palette.secondary else Palette.tertiary)
+            Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp), tint = if (canAdd) Palette.secondary else Palette.tertiary)
         }
         Spacer(Modifier.height(12.dp))
-        Text("Add profile", color = if (canAdd) Palette.secondary else Palette.tertiary, fontSize = 17.sp, lineHeight = 22.sp,
+        Text("Add a profile", color = if (canAdd) Palette.secondary else Palette.tertiary, fontSize = 17.sp, lineHeight = 22.sp,
             fontWeight = FontWeight.Medium)
     }
 }

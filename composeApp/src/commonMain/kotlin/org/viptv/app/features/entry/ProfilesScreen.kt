@@ -1,15 +1,14 @@
 package org.viptv.app.features.entry
 
-import org.viptv.app.components.AppTextField
-
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import org.viptv.app.connection.Profile
+import org.viptv.app.components.AppTextField
 import org.viptv.app.components.TextButton
+import org.viptv.app.connection.Profile
 
 @Composable
 fun ProfilesScreen(
@@ -26,7 +25,7 @@ fun ProfilesScreen(
     if (adding) {
         val nameFocus = remember { FocusRequester() }
         LaunchedEffect(Unit) { withFrameNanos { }; runCatching { nameFocus.requestFocus() } }
-        AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add profile") },
+        AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add a profile") },
             text = { AppTextField(name, { name = it }, label = "Name", modifier = Modifier.focusRequester(nameFocus), onEscape = { adding = false }) },
             confirmButton = { TextButton(onClick = { create(name); adding = false; name = "" }, enabled = name.isNotBlank() && !busy) { Text("Add") } },
             dismissButton = { TextButton(onClick = { adding = false }) { Text("Cancel") } })

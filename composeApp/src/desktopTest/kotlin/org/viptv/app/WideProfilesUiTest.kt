@@ -32,14 +32,14 @@ class WideProfilesUiTest {
                 compact = false, desktop = false, select = {}, edit = {}, manage = {}, done = {}, create = {}) }
             try {
                 val nodes = nodes(scene)
-                assertTrue(nodes.any { text(it) == "Who’s watching?" }, "$width: the board heading")
+                assertTrue(nodes.any { text(it) == "Who's watching?" }, "$width: the board heading")
                 for (profile in household) {
                     val tile = nodes.single { it.config.contains(SemanticsActions.OnClick) && labels(it).contains(profile.name) }
                     assertEquals(150f, tile.size.width.toFloat(), "$width: ${profile.name} sits on a 150 dp tile")
                 }
                 val manage = nodes.single { it.config.contains(SemanticsActions.OnClick) && text(it) == "Manage profiles" }
                 assertEquals(44f, manage.size.height.toFloat(), "$width: Manage profiles is 44 tall")
-                assertTrue(nodes.any { it.config.contains(SemanticsActions.OnClick) && text(it) == "Add profile" }, "$width: the add tile")
+                assertTrue(nodes.any { it.config.contains(SemanticsActions.OnClick) && text(it) == "Add a profile" }, "$width: the add tile")
             } finally { scene.close() }
         }
     }
@@ -68,7 +68,7 @@ class WideProfilesUiTest {
         val scene = picker(2400) { ProfilesScreen(twelve, busy = false, error = null, local = true, managing = false,
             compact = false, desktop = false, select = {}, edit = {}, manage = {}, done = {}, create = {}) }
         try {
-            val add = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && labels(it).contains("Add profile") }
+            val add = nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && labels(it).contains("Add a profile") }
             assertTrue(add.config.contains(SemanticsProperties.Disabled), "the add tile is drawn and disabled at the profile limit")
         } finally { scene.close() }
     }
@@ -79,7 +79,7 @@ class WideProfilesUiTest {
         try {
             val nodes = nodes(scene)
             assertFalse(nodes.any { text(it) == "Manage profiles" })
-            assertFalse(nodes.any { text(it) == "Add profile" })
+            assertFalse(nodes.any { text(it) == "Add a profile" })
         } finally { scene.close() }
     }
 
