@@ -62,12 +62,17 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     watchOnTvSettings: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     addonsManageable: Boolean = true,
     addonTarget: String? = null,
+    configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
+    configureAddonFailure: Pair<String, String>? = null, retryConfigureAddon: () -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissAddonConfigure: () -> Unit = {},
     addonLogos: Map<String, String> = emptyMap()) {
     if (television) {
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches,
             addonLogos = addonLogos,
-            addonsManageable = addonsManageable, addonTarget = addonTarget)
+            addonsManageable = addonsManageable, addonTarget = addonTarget,
+            configurableAddons = configurableAddons, configureAddon = configureAddon,
+            addonConfigure = addonConfigure, dismissAddonConfigure = dismissAddonConfigure)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -130,7 +135,11 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         managementAvailable = addonsManageable,
                         logos = addonLogos,
                         installWithCompletion = installWithCompletion,
-                        initialAddonId = addonTarget)
+                        initialAddonId = addonTarget,
+                        configurableAddons = configurableAddons,
+                        configure = configureAddon,
+                        configureFailure = configureAddonFailure,
+                        retryConfigure = retryConfigureAddon)
                     section == "Profile" && profileTitles != null -> SettingsDetailContent(compact, profileTitlesBack ?: back) { profileTitles(compact) }
                     section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back, title = "Profile") { profilePage(layout) }
                     section == "Linked services" && linkedServices != null -> SettingsDetailContent(compact, back, title = "Linked services") { linkedServices(compact) }
