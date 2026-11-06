@@ -36,7 +36,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     val choose = calendarOpener(open, openEntry)
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
-        ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
+        ?: days.firstOrNull { it.label == CALENDAR_TODAY }?.id ?: days.firstOrNull()?.id
     val byDay = remember(entries) { entries.groupBy { it.day } }
     val visible = byDay[activeDay].orEmpty()
     val byId = remember(visible) { visible.associateBy { it.id } }
