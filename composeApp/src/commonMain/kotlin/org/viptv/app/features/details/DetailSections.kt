@@ -12,8 +12,10 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.Tab
 
+internal const val RELATED_HEADING = "More like this"
+
 internal enum class DetailSection(val label: String) {
-    Episodes("Episodes"), Related("More like this"), Information("Details")
+    Episodes("Episodes"), Related(RELATED_HEADING), Information("Details")
 }
 
 internal fun detailSections(episodes: Boolean, related: Boolean, information: Boolean): List<DetailSection> =
