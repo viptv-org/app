@@ -17,6 +17,10 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.crash.CrashReport
 
+// One Reconfigure request: the link while it is being fetched, the QR/address once the server answered, or the failure.
+data class AddonConfigureRequest(val addon: String, val name: String, val link: String? = null,
+    val expiresInSeconds: Long = 300L, val failure: String? = null)
+
 enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
     ContinueWatching }
 data class ApplicationState(
@@ -28,6 +32,8 @@ data class ApplicationState(
     val navForward: List<BackEntry> = emptyList(),
     val settingsEntrySection: String? = null,
     val settingsAddonTarget: String? = null,
+    val configurableAddons: Set<String> = emptySet(),
+    val addonConfigure: AddonConfigureRequest? = null,
     val settingsPage: SettingsPage? = null,
     val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
@@ -185,6 +191,7 @@ data class ApplicationState(
 internal fun ApplicationState.keepShell(): ApplicationState = ApplicationState(
     navBack = navBack, navForward = navForward,
     settingsEntrySection = settingsEntrySection, settingsAddonTarget = settingsAddonTarget, settingsPage = settingsPage, settingsReturnsToPlayer = settingsReturnsToPlayer,
+    configurableAddons = configurableAddons, addonConfigure = addonConfigure,
     mutations = mutations,
     accountIdentity = accountIdentity, accountDevices = accountDevices, devicesRetryable = devicesRetryable,
     passwordChangeNotice = passwordChangeNotice, sessionNotice = sessionNotice,

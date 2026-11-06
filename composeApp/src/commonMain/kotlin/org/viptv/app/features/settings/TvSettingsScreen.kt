@@ -45,6 +45,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     addonsManageable: Boolean = true,
     addonTarget: String? = null,
+    configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissAddonConfigure: () -> Unit = {},
     addonLogos: Map<String, String> = emptyMap()) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
@@ -110,7 +112,8 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
                     { installing = true }, placeholderQr, manage = addonsManageable, logos = addonLogos,
-                    initialAddonId = addonTarget)
+                    initialAddonId = addonTarget, configurableAddons = configurableAddons, configure = configureAddon,
+                    addonConfigure = addonConfigure, dismissConfigure = dismissAddonConfigure)
             }
             else if (section == TvSettingsSection.Parental && parental != null && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 parental(first, sidebar, scale)

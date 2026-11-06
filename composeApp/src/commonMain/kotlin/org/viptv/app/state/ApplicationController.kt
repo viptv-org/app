@@ -39,6 +39,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
             value?.onClientUpdateRequired = { updateState { it.copy(updateRequired = true) } }
             value?.onBackendReachability = ::backendOutcome
         }
+    internal var browserOpen: (String) -> Unit = ::openAccountAuthorization
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null

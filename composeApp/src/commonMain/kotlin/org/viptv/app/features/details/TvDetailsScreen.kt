@@ -58,7 +58,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         val scale = maxWidth / 1920.dp
         val card = detail?.item
         val resume = remember(detail, continuing) { detailResume(detail, continuing) }
-        val scroll = key(card?.identity) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
+        val scroll = rememberDetailListState(card)
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
         val shelfFocus = remember(card?.identity) { ShelfFocusHandle() }
@@ -157,7 +157,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                                 pageError = pageError, retryPage = retryPage)
                         }
                         if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
-                            TvRecommendationShelf(extras.recommendations, scale, open,
+                            TvRecommendationShelf(detail.item, extras.recommendations, scale, open,
                                 focused = { focusRow(TvDetailRow.Recommendations) }, up = { focusEpisodes() })
                         }
                     }
