@@ -22,6 +22,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
 import org.viptv.app.components.kindLabel
@@ -113,6 +114,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     val partway = resuming(resumeCard)
     val remaining = if (partway) remainingMinutes(resumeCard ?: card) else null
     val pending = (resumeCard ?: card).isPlayPending()
+    val mutations = LocalPendingMutation.current
+    val mutationTarget = saveTarget(card)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
@@ -141,9 +144,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
             }
             IconButton(onClick = { save(card) }, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(22.dp))
                 .background(Color.White.copy(alpha = 0.12f)).saveActionName(saved)) {
-                val target = saveTarget(card)
-                val mutations = LocalPendingMutation.current
-                if (mutations.isPending(target)) MutationSpinner(22.dp, scale = 1f)
+                if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp, scale = 1f)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
             }
             if (partway && playFromStart != null) {
@@ -152,6 +153,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 }
             }
         }
+        MutationFailure(mutationTarget)
         Row(Modifier.heightIn(min = 36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
             .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(resumeCard ?: card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

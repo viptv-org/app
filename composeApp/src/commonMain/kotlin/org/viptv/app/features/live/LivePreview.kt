@@ -23,7 +23,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.Button
-import org.viptv.app.components.InlineMutationError
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.format.providerText
@@ -86,7 +86,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     Icon(Lucide.LayoutGrid, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Full guide")
                 }
             }
-            mutations.failure(favoriteTarget)?.let { InlineMutationError(it, retry = { mutations.retry(favoriteTarget) }) }
+            MutationFailure(favoriteTarget)
         }
         if (television && art != null) AsyncImage(art, channel.card.title, Modifier.width(640.dp * scale).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
