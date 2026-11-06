@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -20,7 +21,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.viptv.app.state.AppNotice
 import org.viptv.app.state.NoticeAction
 import org.viptv.app.theme.Palette
@@ -42,8 +42,15 @@ internal class TvNoticeFocus {
 internal fun NoticeToast(notice: AppNotice, television: Boolean, phone: Boolean, aboveNav: Boolean,
     undo: () -> Unit, dismiss: () -> Unit, focus: TvNoticeFocus? = null,
     durationMillis: Long = noticeMillis(notice)) {
+    // Counts scene time, not dispatcher time: the toast's test drives frames and never waits out its clock.
     LaunchedEffect(notice.serial) {
-        delay(durationMillis)
+        var remaining = durationMillis * 1_000_000L
+        var last = withFrameNanos { it }
+        while (remaining > 0) {
+            val now = withFrameNanos { it }
+            remaining -= now - last
+            last = now
+        }
         dismiss()
     }
     if (television) TvNotice(notice, undo, dismiss, focus) else NoticeCard(notice, phone, aboveNav, undo)

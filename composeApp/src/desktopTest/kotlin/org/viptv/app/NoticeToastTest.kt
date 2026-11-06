@@ -42,7 +42,10 @@ class NoticeToastTest {
     private fun tap(scene: ImageComposeScene, text: String) =
         assertTrue(requireNotNull(clickable(scene, text)) { "$text is not on screen" }
             .config[SemanticsActions.OnClick].action?.invoke() == true)
-    private fun frames(scene: ImageComposeScene, count: Int = 10) = repeat(count) { scene.render(it * 16_666_667L).close() }
+    private fun frames(scene: ImageComposeScene, count: Int = 10, from: Long = 0L): Long {
+        repeat(count) { scene.render((from + it) * 16_666_667L).close() }
+        return from + count
+    }
 
     private fun notice(action: NoticeAction? = null) = AppNotice(
         if (action == null) "Added to My List" else "Removed from My List", action, serial = 1L)
@@ -85,8 +88,9 @@ class NoticeToastTest {
                 undo = {}, dismiss = { dismissed++ }, durationMillis = 400)
         }
         try {
+            val frame = frames(shown, 20)
             assertEquals(0, dismissed, "it stays while the viewer can still reach it")
-            repeat(600) { if (dismissed == 0) frames(shown, 1) }
+            shown.renderUntil(from = frame, what = "the notice's own clock to run out") { dismissed == 1 }
             assertEquals(1, dismissed, "the toast dismisses itself once its clock is up")
         } finally { shown.close() }
     }
