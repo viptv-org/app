@@ -59,6 +59,60 @@ class StreamedSearchTest {
         } finally { remote.close() }
     }
 
+    @Test fun aNewTermKeepsTheShownResultsUntilItsOwnRowsAnswer() = runBlocking {
+        var term = ""
+        val release = CompletableDeferred<Unit>()
+        val remote = StreamedRemote(store) { _, emit ->
+            if (term == "first") {
+                emit("plan", Json.encodeToString(SearchStreamPlan(listOf(loading("addon:1", "Fast catalog")))))
+                emit("row", Json.encodeToString(fast))
+                emit("done", """{"complete":true}""")
+            } else {
+                emit("plan", Json.encodeToString(SearchStreamPlan(listOf(loading("addon:2", "Slow catalog")))))
+                release.await()
+                emit("row", Json.encodeToString(slow))
+                emit("done", """{"complete":true}""")
+            }
+        }
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "profile")
+        try {
+            term = "first"
+            controller.search("first"); controller.job!!.join()
+            assertEquals(listOf("addon:1"), controller.state.value.results.map { it.provider_id })
+            term = "second"
+            controller.search("second")
+            until("the new query's plan") { controller.state.value.searchTerm == "second" && controller.state.value.searchRows.any { it.id == "addon:2" } }
+            assertTrue(controller.state.value.busy, "the new query is still open")
+            assertEquals(listOf("addon:1"), controller.state.value.results.map { it.provider_id },
+                "the results already shown stay until the new query answers")
+            release.complete(Unit)
+            controller.job!!.join()
+            assertEquals(listOf("addon:2"), controller.state.value.results.map { it.provider_id })
+        } finally { remote.close() }
+    }
+
+    @Test fun clearingTheFieldDropsTheShownResultsWithoutWaitingForTheNextAnswer() = runBlocking {
+        val remote = StreamedRemote(store) { _, emit ->
+            emit("plan", Json.encodeToString(SearchStreamPlan(listOf(loading("addon:1", "Fast catalog")))))
+            emit("row", Json.encodeToString(fast))
+            emit("done", """{"complete":true}""")
+        }
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Search, selectedProfile = "profile")
+        try {
+            controller.search("dune"); controller.job!!.join()
+            assertEquals(listOf("addon:1"), controller.state.value.results.map { it.provider_id })
+            controller.search("")
+            assertTrue(controller.state.value.results.isEmpty(), "a blank query shows the idle page at once")
+            assertTrue(controller.state.value.searchRows.isEmpty())
+            controller.job?.join()
+            Unit
+        } finally { remote.close() }
+    }
+
     @Test fun aSupersededQueryNeverShowsTheOlderStreamsRows() = runBlocking {
         var term = ""
         val firstShown = CompletableDeferred<Unit>()

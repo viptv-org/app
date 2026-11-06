@@ -155,8 +155,11 @@ fun ApplicationController.loadTrendingSearches() {
 fun ApplicationController.search(term: String, retry: Boolean = false) {
     if (!retry && term == lastSearchedTerm) return
     val unchanged = term == mutable.value.searchTerm
-    if (!unchanged) updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
-    if (!(retry && unchanged)) updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
+    if (!unchanged) updateState { state ->
+        val keepShown = term.isNotBlank()
+        state.copy(searchFocusResults = false, pendingDetailSeason = null, searchTerm = term,
+            results = if (keepShown) state.results else emptyList(), searchRows = if (keepShown) state.searchRows else emptyList())
+    }
     rememberNavigation()
     run {
         val operation = generation
@@ -187,7 +190,7 @@ private suspend fun ApplicationController.searchRemote(remote: RemoteConnection,
         remote.searchStreamResults(term) { event ->
             if (!session()) return@searchStreamResults
             when (event) {
-                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows, results = emptyList()) }
+                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows) }
                 is SearchStreamEvent.Row -> updateState { state ->
                     val rows = state.searchRows.map { if (it.id == event.row.id) event.row else it }
                     state.copy(searchRows = rows, results = rows.flatMap { it.cards })
