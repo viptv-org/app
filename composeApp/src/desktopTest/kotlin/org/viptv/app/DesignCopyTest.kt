@@ -22,9 +22,11 @@ import org.viptv.app.features.calendar.CALENDAR_FAILED_TITLE
 import org.viptv.app.features.calendar.CALENDAR_MANAGE
 import org.viptv.app.features.calendar.CALENDAR_UNAVAILABLE
 import org.viptv.app.features.calendar.CalendarDay
+import org.viptv.app.features.calendar.CalendarEntry
+import org.viptv.app.features.calendar.CalendarFilter
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.calendar.calendarEmptyDay
-import org.viptv.app.features.calendar.CalendarFilter
+import org.viptv.app.features.calendar.CalendarSource
 import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.features.library.MY_LIST_ARRIVING_BODY
@@ -108,18 +110,22 @@ class DesignCopyTest {
     }
 
     @Test fun everyCalendarLayoutDrawsItsEmptyLine() {
-        for ((width, name) in listOf(390 to "phone", 1280 to "desktop")) {
-            val scene = render(width, 1080) { CalendarScreen(days, emptyList(), false, open = {}, manage = {}) }
+        for ((width, television, name) in listOf(Triple(390, false, "phone"), Triple(1280, false, "desktop"), Triple(1920, true, "TV"))) {
+            val scene = render(width, 1080, television) { CalendarScreen(days, emptyList(), television, open = {}, manage = {}) }
             try {
                 assertTrue(shows(scene, CALENDAR_EMPTY_WEEK), "$name: the empty week follows copy.md")
                 assertTrue(shows(scene, CALENDAR_MANAGE), "$name: the way out is the Manage integrations action")
             } finally { scene.close() }
         }
-        // TV always shows one day, so its empty answer is the day's own line.
-        val tv = render(1920, 1080, television = true) { CalendarScreen(days, emptyList(), true, open = {}, manage = {}) }
+        val release = CalendarEntry("e1", "d2", "9:00 PM", Card(MediaIdentity("simkl:tv:1", "series", emptyList()),
+            provider_id = "simkl", title = "Scheduled series", badges = emptyList(), metadata_origin = MetadataOrigin("simkl")),
+            subtitle = "S2 E3 · Chapter 3", season = 2, episode = 3, source = CalendarSource.Library)
+        val dayEmpty = render(1920, 1080, television = true) { CalendarScreen(days, listOf(release), true, open = {}, manage = {}) }
         try {
-            assertTrue(shows(tv, CALENDAR_EMPTY_DAY_ALL), "TV: the empty day follows copy.md")
-        } finally { tv.close() }
+            assertTrue(shows(dayEmpty, CALENDAR_EMPTY_DAY_ALL), "TV: an empty day follows copy.md")
+            assertFalse(shows(dayEmpty, CALENDAR_EMPTY_WEEK), "TV: the week is not empty")
+            assertFalse(shows(dayEmpty, CALENDAR_MANAGE), "TV: the day line carries no action")
+        } finally { dayEmpty.close() }
         val noSource = render(1920, 1080, television = true) {
             CalendarScreen(days, emptyList(), true, open = {}, manage = {}, available = false)
         }
