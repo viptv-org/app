@@ -41,7 +41,7 @@ import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
-import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.dismissScrim
 
 @androidx.compose.runtime.Immutable
 internal data class TvSourceInfo(val quality: String? = null, val format: String? = null, val addon: String? = null)
@@ -109,7 +109,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                 stateFocus.requestFocus()
             }
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.progress.value }.background(Color.Black.copy(alpha = 0.55f))
-                .focusProperties { canFocus = false }.pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = motion.dismiss))
+                .focusProperties { canFocus = false }.dismissScrim(remember { MutableInteractionSource() }, motion.dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(960.dp * scale).fillMaxHeight()
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key in DIRECTION_KEYS) navigated = true

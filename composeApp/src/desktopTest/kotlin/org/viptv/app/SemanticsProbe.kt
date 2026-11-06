@@ -35,4 +35,16 @@ internal fun List<SemanticsNode>.tapTargetViolations(sceneWidth: Int, sceneHeigh
         else "${node.semanticsLabel()} is ${node.size.width}x${node.size.height} at ${bounds.left.toInt()},${bounds.top.toInt()}"
     }
 
+internal fun List<SemanticsNode>.unnamedClickables(sceneWidth: Int, sceneHeight: Int): List<String> =
+    filter { it.config.contains(SemanticsActions.OnClick) }.mapNotNull { node ->
+        val bounds = node.boundsInRoot
+        val visible = node.size.width > 0 && node.size.height > 0 && bounds.right > 0f && bounds.bottom > 0f &&
+            bounds.left < sceneWidth && bounds.top < sceneHeight
+        val named = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().isNotEmpty() ||
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().isNotEmpty() ||
+            !node.config.getOrNull(SemanticsActions.OnClick)?.label.isNullOrEmpty()
+        if (!visible || named) null
+        else "${node.size.width}x${node.size.height} at ${bounds.left.toInt()},${bounds.top.toInt()}"
+    }
+
 private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

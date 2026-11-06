@@ -42,20 +42,20 @@ internal fun calendarEmptyDay(filter: CalendarFilter?) =
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
-    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
+    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, filter: CalendarFilter = CALENDAR_DEFAULT_FILTER,
+    filterChanged: (CalendarFilter) -> Unit = {}, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false,
     retry: () -> Unit = {}) {
-    var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
     val offered = calendarFilterOffered(entries, sources)
-    val filter = chosen.takeIf { offered }
-    val fallback = entries.fallsBackToAll(filter)
-    val shown = if (fallback) entries else entries.shown(chosen, offered)
+    val active = filter.takeIf { offered }
+    val fallback = entries.fallsBackToAll(active)
+    val shown = if (fallback) entries else entries.shown(filter, offered)
     val notice = if (fallback) CALENDAR_FALLBACK else null
-    val emptyFilter = filter.takeUnless { fallback }
+    val emptyFilter = active.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
     if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
+        filter = active, filterChanged = filterChanged, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
     val choose = calendarOpener(open, openEntry)
     val entrance = rememberListEntrance(shown.isNotEmpty())
     var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
@@ -77,7 +77,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-                filter = filter, filterChanged = { chosen = it }, gutter = gutter, phone = phone)
+                filter = active, filterChanged = filterChanged, gutter = gutter, phone = phone)
             if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
                 selected = day; focused = shown.firstOrNull { it.day == day }
                 if (phone) scope.launch {

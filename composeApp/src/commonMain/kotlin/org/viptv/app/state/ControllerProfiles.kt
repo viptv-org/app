@@ -99,7 +99,7 @@ fun ApplicationController.deleteProfile(pin: String) = profileMutation(PROFILE_D
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     if (mutable.value.selectedProfile == id) {
         progressJob?.cancel(); subtitleDiscovery?.cancel(); liveGuideJob?.cancel()
-        liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
+        cancelLiveFavoriteMutations()
         releaseRemotePlayback()?.join()
         accept(next, screen = Screen.Profiles)
         updateState { next -> next.copy(managingProfiles = true) }

@@ -23,35 +23,38 @@ fun ApplicationController.refreshLiveFavorites() = run { loadLiveFavorites() }
 
 fun ApplicationController.toggleLiveFavorite(channel: String) {
     val before = mutable.value
-    if (before.screen != Screen.Live || !before.liveFavoritesAvailable || channel in before.liveFavoritePending || before.livePage?.channels?.none { it.id == channel } != false) return
+    if (before.screen != Screen.Live || !before.liveFavoritesAvailable || before.livePage?.channels?.none { it.id == channel } != false) return
     val context = liveContext()
-    val saved = channel !in before.liveFavorites
-    updateState { before -> before.copy(liveFavoritePending = before.liveFavoritePending + channel, liveFavoriteError = null) }
-    val task = scope.launch(start = CoroutineStart.LAZY) {
-        try {
-            val result = context.device?.setLiveFavorite(context.profile, channel, saved) ?: requireNotNull(context.remote).setLiveFavorite(context.profile, channel, saved)
-            if (ownsLive(context, false)) {
-                liveFavoriteVersion++
-                updateState { next -> next.copy(liveFavorites = if (channel in result) next.liveFavorites + channel else next.liveFavorites - channel, liveFavoriteError = null) }
-                if (ownsLive(context) && mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.isNotEmpty() &&
-                    mutable.value.livePage?.channels?.none { it.id in mutable.value.liveFavorites } == true && mutable.value.livePage?.next_cursor != null)
-                    moreLive()
-            }
-        } catch (error: CancellationException) { throw error }
-        catch (error: Exception) {
-            if (ownsLive(context, false)) {
-                if (error is RemoteFailure && error.status == 401) run { throw error }
-                else updateState { next -> next.copy(liveFavoriteError = "Could not save the channel favourite. Try again.", liveFavoritesCanRetry = true) }
-            }
-        } finally {
-            val current = currentCoroutineContext()[Job]
-            if (liveFavoriteJobs[channel] === current) {
-                if (mutable.value.selectedProfile == context.profile && connection === context.remote && local === context.device)
-                    updateState { next -> next.copy(liveFavoritePending = next.liveFavoritePending - channel) }
-                liveFavoriteJobs.remove(channel)
-            }
+    val saved = !before.isLiveFavorite(channel)
+    mutate(liveFavoriteTarget(channel),
+        optimistic = { it.withLiveFavorite(channel, saved) },
+        revert = { it.withLiveFavorite(channel, !saved) }) {
+        val result = context.device?.setLiveFavorite(context.profile, channel, saved) ?: requireNotNull(context.remote).setLiveFavorite(context.profile, channel, saved)
+        if (ownsLive(context, false)) {
+            liveFavoriteVersion++
+            updateState { next -> next.copy(
+                liveFavorites = next.liveFavorites.withLiveFavorite(channel, channel in result),
+                liveFavoriteError = null) }
+            if (ownsLive(context) && mutable.value.liveFavoritesOnly && mutable.value.liveFavorites.isNotEmpty() &&
+                mutable.value.livePage?.channels?.none { it.id in mutable.value.liveFavorites } == true && mutable.value.livePage?.next_cursor != null)
+                moreLive()
         }
     }
-    liveFavoriteJobs[channel] = task
-    task.start()
+}
+
+internal fun liveFavoriteTarget(channel: String) = MutationTarget(MutationKind.LiveFavorite, channel)
+
+internal fun ApplicationState.isLiveFavorite(channel: String): Boolean = channel in liveFavorites
+
+internal fun ApplicationState.withLiveFavorite(channel: String, favorite: Boolean): ApplicationState =
+    copy(liveFavorites = liveFavorites.withLiveFavorite(channel, favorite))
+
+private fun Set<String>.withLiveFavorite(channel: String, favorite: Boolean): Set<String> = if (favorite) this + channel else this - channel
+
+// A profile or source change drops the writes it can no longer show.
+internal fun ApplicationController.cancelLiveFavoriteMutations() {
+    val targets = mutationJobs.keys.filter { it.kind == MutationKind.LiveFavorite }
+    if (targets.isEmpty()) return
+    targets.forEach { mutationJobs.remove(it)?.cancel() }
+    updateState { state -> state.copy(mutations = PendingMutations(state.mutations.entries - targets.toSet())) }
 }
