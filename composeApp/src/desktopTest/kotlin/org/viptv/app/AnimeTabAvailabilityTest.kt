@@ -79,7 +79,7 @@ class AnimeTabAvailabilityTest {
     }
 
     @Test fun selectingAProfileLoadsItsBrowsingProvider() = runBlocking<Unit> {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             paths += request.url.encodedPath
             when (request.url.encodedPath) {

@@ -6,10 +6,9 @@ import io.ktor.http.*
 import kotlinx.serialization.json.Json
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
-import java.util.concurrent.CopyOnWriteArrayList
 
 internal class ContinueWatchingHost(@Volatile var count: Int) : AutoCloseable {
-    val reads = CopyOnWriteArrayList<String>()
+    val reads = EngineRequests<String>()
     private val store = object : RemoteSessionStore {
         override suspend fun read(): SavedRemoteSession? = null
         override suspend fun save(session: SavedRemoteSession) = Unit

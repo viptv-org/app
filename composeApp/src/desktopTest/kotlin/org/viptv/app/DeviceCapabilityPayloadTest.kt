@@ -83,7 +83,7 @@ class DeviceCapabilityPayloadTest {
     }
 
     @Test fun remoteRequestCarriesTheContextAndKeepsTheOlderKeys() = runBlocking {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond("""{"streams":[{"id":"b"},{"id":"a"}]}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))

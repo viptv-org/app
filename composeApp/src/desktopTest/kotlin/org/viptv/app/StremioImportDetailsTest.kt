@@ -36,7 +36,7 @@ class StremioImportDetailsTest {
         transport.details = { readBeforeApply = readBeforeApply || transport.calls.none { it.startsWith("apply") }; statuses() }
         val changes = java.util.concurrent.atomic.AtomicInteger()
         val session = session(transport, changed = { changes.incrementAndGet() })
-        val seen: MutableList<StremioTitleDetails?> = java.util.concurrent.CopyOnWriteArrayList()
+        val seen = EngineRequests<StremioTitleDetails?>()
         val watcher = scope.launch { session.state.collect { seen += it.details } }
         session.importNow()
         assertEquals(StremioImportStage.Complete, session.state.value.stage)
@@ -107,7 +107,7 @@ class StremioImportDetailsTest {
 
     @Test fun remoteDetailsReadsTheProfilesFillAndToleratesOlderServers() = runBlocking<Unit> {
         var answer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to """{"running":true,"done":40,"total":162}"""
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             paths += "${request.method.value} ${request.url.encodedPath}"
             respond(answer.second, answer.first, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -141,7 +141,7 @@ class StremioImportDetailsTest {
             HomeRow(id = "library", title = "My List", provider_id = "library", state = RowState.READY, cards = listOf(
                 Card(identity = MediaIdentity("tt0000001", "movie", emptyList(), null), provider_id = "stremio", title = "Imported",
                     badges = emptyList(), description = if (revision > 6) "Full description" else null)))), complete = true)
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath; paths += path
             val body = when (path) {

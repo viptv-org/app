@@ -42,7 +42,7 @@ class BackendOutageTest {
     }.toString()
 
     private inner class Server(val handle: suspend MockRequestHandleScope.(String) -> HttpResponseData) {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request -> paths += request.url.encodedPath; handle(request.url.encodedPath) })
             { configureTransport() }
         fun attempts() = paths.count { it == "/api/bootstrap" }

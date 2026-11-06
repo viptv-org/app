@@ -25,9 +25,9 @@ class LocalSubtitlesTest {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val origin = "http://127.0.0.1:${server.address.port}"
         val bytes = "1\n00:00:00,000 --> 00:00:03,000\nCafé fixture\n".toByteArray(Charset.forName("windows-1252"))
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         server.createContext("/") { request ->
-            synchronized(requests) { requests += request.requestURI.toString() }
+            requests += request.requestURI.toString()
             val body = when {
                 request.requestURI.path == "/manifest.json" -> """{"id":"qa","name":"Subtitle QA","version":"1","resources":["stream","subtitles"],"types":["movie"]}""".toByteArray()
                 request.requestURI.path.startsWith("/stream/") -> """{"streams":[{"url":"$origin/movie.mp4","name":"Clip"}]}""".toByteArray()
@@ -51,9 +51,9 @@ class LocalSubtitlesTest {
             assertTrue(requests.contains("/subtitles/movie/tt123.json"))
             assertContentEquals(bytes, connection.subtitleContent(candidate.id, input))
             connection.setAddonEnabled("default", addon.id, false)
-            val before = synchronized(requests) { requests.size }
+            val before = requests.size
             assertFails { connection.subtitleContent(candidate.id, input) }
-            assertEquals(before, synchronized(requests) { requests.size }, "Revoked choices must fail before egress")
+            assertEquals(before, requests.size, "Revoked choices must fail before egress")
         } finally {
             connection.close(); server.stop(0); directory.toFile().deleteRecursively()
         }

@@ -52,6 +52,35 @@ internal const val PARENT_PIN_TARGET = "Household PIN"
 
 internal const val householdPinOwnerOnly = "Only the account owner can change household settings."
 
+internal fun ApplicationController.householdWritesGated(): Boolean {
+    val parent = mutable.value.profileManagement?.parent ?: return false
+    return connection != null && parent.restricted && parent.pin_configured && !parent.unlocked
+}
+
+internal fun ApplicationController.askHouseholdPin(title: String, write: suspend () -> Unit) {
+    householdPinAction = write
+    updateState { it.copy(householdPinTitle = title, error = null, errorCode = null) }
+}
+
+fun ApplicationController.submitHouseholdPin(pin: String) {
+    val write = householdPinAction ?: return
+    if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
+    run {
+        val remote = connection ?: throw LocalFailure("Connect to your account to change this profile.")
+        remote.unlockParent(pin)
+        val management = remote.profileManagement()
+        householdPinAction = null
+        updateState { it.copy(householdPinTitle = null, profileManagement = management,
+            parentSettings = management, profiles = management.cards()) }
+        write()
+    }
+}
+
+fun ApplicationController.cancelHouseholdPin() {
+    householdPinAction = null
+    updateState { it.copy(householdPinTitle = null, error = null, errorCode = null) }
+}
+
 fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) {
     val before = mutable.value
     mutate(preferenceTarget(kidsPolicyTarget(profile)),

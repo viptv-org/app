@@ -10,7 +10,7 @@ import kotlin.test.*
 
 class BrowserSettingsBudgetTest {
     @Test fun browserAccountEntryDoesNotLoadUnrelatedAddonOrPreferenceData(): Unit = runBlocking {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null

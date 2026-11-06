@@ -70,7 +70,6 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
             searchFocusResults = restored.searchFocusResults && screen == Screen.Search,
             pendingDetailSeason = restored.pendingDetailSeason.takeIf { screen == Screen.Search },
             leavePinFrom = restored.leavePinFrom.takeIf { screen == Screen.ProfilePin },
-            householdPinFor = restored.householdPinFor.takeIf { screen == Screen.Profiles },
             pendingAction = null,
             settingsEntrySection = if (screen == Screen.Settings) restored.settingsEntrySection else null,
             liveSetupReturnFocus = restored.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),

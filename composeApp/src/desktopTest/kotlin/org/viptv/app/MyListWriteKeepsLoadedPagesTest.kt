@@ -8,7 +8,6 @@ import kotlinx.serialization.json.Json
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.*
 
 class MyListWriteKeepsLoadedPagesTest {
@@ -16,8 +15,8 @@ class MyListWriteKeepsLoadedPagesTest {
         provider_id = "library", title = "Movie %02d".format(number), badges = emptyList())
 
     private class Host(var cards: List<Card>, private val opaqueCursor: Boolean = false) : AutoCloseable {
-        val reads = CopyOnWriteArrayList<String>()
-        val deletes = CopyOnWriteArrayList<String>()
+        val reads = EngineRequests<String>()
+        val deletes = EngineRequests<String>()
         private val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
             override suspend fun save(session: SavedRemoteSession) = Unit

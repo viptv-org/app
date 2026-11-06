@@ -17,7 +17,7 @@ class AccountIdentityTest {
     private val response = """{"account":{"id":"1","username":"viewer","name":"Viewer Name","role":"member"},"csrf_token":"current"}"""
 
     @Test fun nativeAccountScreenReadsIdentityOnceWithoutBrowserManagementOrSimklCalls() = runBlocking {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
             requests += request.url.encodedPath
@@ -35,7 +35,7 @@ class AccountIdentityTest {
     }
 
     @Test fun failedNativeIdentityLoadCanRetryWithoutExtraManagementCalls() = runBlocking<Unit> {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             paths += request.url.encodedPath
             if (paths.size == 1) respond("private upstream diagnostic", HttpStatusCode.ServiceUnavailable)
