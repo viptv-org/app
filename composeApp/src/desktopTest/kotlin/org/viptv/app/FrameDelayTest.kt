@@ -11,6 +11,7 @@ import kotlin.test.*
 
 class FrameDelayTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private class Timer(millis: Long) : AutoCloseable {
         var fired = false
