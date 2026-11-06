@@ -40,9 +40,10 @@ internal class TvNoticeFocus {
 // components.md §9: P above the nav, D bottom-centre 24 from the edge, T top-centre; surface-3, radius 20.
 @Composable
 internal fun NoticeToast(notice: AppNotice, television: Boolean, phone: Boolean, aboveNav: Boolean,
-    undo: () -> Unit, dismiss: () -> Unit, focus: TvNoticeFocus? = null) {
+    undo: () -> Unit, dismiss: () -> Unit, focus: TvNoticeFocus? = null,
+    durationMillis: Long = noticeMillis(notice)) {
     LaunchedEffect(notice.serial) {
-        delay(noticeMillis(notice))
+        delay(durationMillis)
         dismiss()
     }
     if (television) TvNotice(notice, undo, dismiss, focus) else NoticeCard(notice, phone, aboveNav, undo)

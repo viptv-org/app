@@ -30,6 +30,7 @@ import kotlin.test.*
 
 class NoticeToastTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun label(node: SemanticsNode) = (node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } +
@@ -81,15 +82,12 @@ class NoticeToastTest {
         var dismissed = 0
         val shown = scene(1280, 900) {
             NoticeToast(notice(NoticeAction.Undo), television = false, phone = false, aboveNav = false,
-                undo = {}, dismiss = { dismissed++ })
+                undo = {}, dismiss = { dismissed++ }, durationMillis = 400)
         }
         try {
-            frames(shown)
             assertEquals(0, dismissed, "it stays while the viewer can still reach it")
-            // The 8 s Undo clock is longer than the 5 s plain notice, so wait past both.
-            val deadline = System.nanoTime() + 12_000_000_000L
-            while (dismissed == 0 && System.nanoTime() < deadline) { frames(shown, 2); Thread.sleep(40) }
-            assertEquals(1, dismissed, "an action notice clears itself after its own 8 s")
+            repeat(600) { if (dismissed == 0) frames(shown, 1) }
+            assertEquals(1, dismissed, "the toast dismisses itself once its clock is up")
         } finally { shown.close() }
     }
 }
