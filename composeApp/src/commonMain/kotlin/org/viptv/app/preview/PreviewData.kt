@@ -36,7 +36,11 @@ internal object PreviewData {
             listOf(Choice("all", "All"), Choice("movie", "Movies"), Choice("series", "Series"), Choice("anime", "Anime"))),
             QueryControl("genre", "Genre", ControlKind.SINGLECHOICE, false, genres.map { Choice(it.label, it.label) })),
         availability = Availability.AVAILABLE)
-    val playerTitle = watching.first().copy(subtitle = "S1 E2 · Please Don’t Go")
+    val playerTitle = watching.first().copy(identity = watching.first().identity.copy(episode = EpisodeCoordinates("aired", 1, 2)),
+        subtitle = "S1 E2 · Please Don’t Go")
+    val playerNextEpisode = playerTitle.copy(identity = playerTitle.identity.copy(id = "player-next", episode = EpisodeCoordinates("aired", 1, 3)),
+        title = "The Long Way Home", subtitle = "S1 E3 · The Long Way Home")
+    val playerEpisodes = listOf(playerTitle, playerNextEpisode)
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
     val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),
         SourceCandidate("source-2", "preview", "Provider 2", "BluRay · HEVC · 5.1 · 22.1 GB"))
