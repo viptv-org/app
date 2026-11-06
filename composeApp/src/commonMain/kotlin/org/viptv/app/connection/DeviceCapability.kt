@@ -36,7 +36,8 @@ data class DeviceCapability(
 data class SeriesMemory(val providerId: String, val bingeGroup: String)
 
 @Immutable
-data class RankingContext(val device: DeviceCapability = DeviceCapability(), val seriesMemory: SeriesMemory? = null)
+data class RankingContext(val device: DeviceCapability = DeviceCapability(), val seriesMemory: SeriesMemory? = null,
+    val providerAffinity: String? = null)
 
 internal expect suspend fun platformDeviceCapability(): DeviceCapability
 
@@ -52,13 +53,16 @@ internal suspend fun deviceCapability(): DeviceCapability = probed ?: probeGate.
         .also { probed = it }
 }
 
-internal suspend fun rankingContext(seriesMemory: SeriesMemory?, capability: suspend () -> DeviceCapability): RankingContext =
-    RankingContext(capability().copy(maxHeight = deviceMaxVideoHeight()), seriesMemory)
+internal suspend fun rankingContext(seriesMemory: SeriesMemory?, providerAffinity: String?, capability: suspend () -> DeviceCapability): RankingContext =
+    RankingContext(capability().copy(maxHeight = deviceMaxVideoHeight()), seriesMemory, affinityText(providerAffinity))
 
 internal fun rankingContextJson(context: RankingContext): JsonObject = buildJsonObject {
     deviceCapabilityJson(context.device)?.let { put("device", it) }
     context.seriesMemory?.let(::seriesMemoryJson)?.let { put("series_memory", it) }
+    affinityText(context.providerAffinity)?.let { put("provider_affinity", it) }
 }
+
+internal fun affinityText(value: String?): String? = value?.takeIf(::memoryText)
 
 internal fun deviceCapabilityJson(device: DeviceCapability): JsonObject? {
     val video = device.videoCodecs.filter { capabilityName(it.codec) && it.support != DecodeSupport.UNKNOWN }
@@ -100,5 +104,5 @@ internal fun wireHeight(value: Int?): Int? = value?.takeIf { it in 144..4320 }
 private fun capabilityName(value: String): Boolean =
     value.length in 1..16 && value.all { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '_' || it == '-' }
 
-private fun memoryText(value: String): Boolean =
+internal fun memoryText(value: String): Boolean =
     value.isNotBlank() && value.length <= MAX_MEMORY_LENGTH && value.none { it.isISOControl() }
