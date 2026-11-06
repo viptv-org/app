@@ -78,8 +78,8 @@ class BrowserSourceDrawerTest {
             "release_type":"web_dl","delivery":"direct"}"""
     }
 
-    private val requests = mutableListOf<String>()
-    private fun requested() = synchronized(requests) { requests.toList() }
+    private val requests = EngineRequests<String>()
+    private fun requested() = requests.snapshot()
 
     @Volatile private var detailsHeld = false
     private val releaseDetails = CompletableDeferred<Unit>()
@@ -89,11 +89,11 @@ class BrowserSourceDrawerTest {
         "/api/bootstrap" -> json(bootstrap)
         "/api/meta/series/$show" -> {
             val offset = request.url.parameters["offset"]?.toInt() ?: 0
-            synchronized(requests) { requests += "meta@$offset" }
+            requests += "meta@$offset"
             if (detailsHeld) releaseDetails.await()
             json(metaPage(offset, request.url.parameters["limit"]?.toInt() ?: 24))
         }
-        "/api/streams" -> { synchronized(requests) { requests += "streams" }; json("""{"id":"job-1"}""") }
+        "/api/streams" -> { requests += "streams"; json("""{"id":"job-1"}""") }
         "/api/streams/job-1" -> json("""{"done":true,"events":[{"source":"addon:torrentio","streams":[$streams]}]}""")
         else -> if (path.endsWith("/source-ranking")) json("""{"streams":[$streams],"best_match_id":"s1"}""")
             else respond("{\"error\":\"not in this fixture\"}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))

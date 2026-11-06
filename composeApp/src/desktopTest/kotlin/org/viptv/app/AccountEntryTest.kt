@@ -20,7 +20,7 @@ class AccountEntryTest {
     private val bootstrap = """{"identity":{"profiles":[],"profile_id":null},"home":null}"""
 
     @Test fun registrationShowsOneTimeCodeBeforeAnyBootstrapAndRetryNeverRegistersAgain() = runBlocking {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         var reads = 0
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             paths += request.url.encodedPath

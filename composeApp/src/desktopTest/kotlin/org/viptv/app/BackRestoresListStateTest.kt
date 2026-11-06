@@ -27,7 +27,7 @@ class BackRestoresListStateTest {
 
     private fun cards() = (1..3).joinToString(",") { card("browse-$it", "Browse $it") }
 
-    private fun client(requests: MutableList<String>) = HttpClient(MockEngine { request ->
+    private fun client(requests: EngineRequests<String>) = HttpClient(MockEngine { request ->
         val path = request.url.encodedPath
         requests += path
         val body = when {
@@ -78,7 +78,7 @@ class BackRestoresListStateTest {
 
     @Test fun everyFilterScreenRestoresItsFiltersAndDoesNotReload() = runBlocking<Unit> {
         for (case in cases) {
-            val requests = mutableListOf<String>()
+            val requests = EngineRequests<String>()
             val store = MemoryStore()
             val controller = ApplicationController(this, store, remoteFactory = { origin, storage ->
                 RemoteConnection(origin, storage, client(requests), browserMode = false)

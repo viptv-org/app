@@ -21,7 +21,7 @@ class RemoteHistoryTest {
     @Test fun opaqueEpisodeAndParentRemainStructuredAndLeaseIsNotMediaIdentity() = runBlocking {
         val parent = MediaIdentity("opaque-parent", "series", emptyList())
         val episode = MediaIdentity("provider:opaque:episode", "series", emptyList(), EpisodeCoordinates("aired", 2, 4))
-        val payloads = mutableListOf<JsonObject>()
+        val payloads = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals(HttpMethod.Put, request.method)
             assertEquals("/api/profiles/12/progress", request.url.encodedPath)

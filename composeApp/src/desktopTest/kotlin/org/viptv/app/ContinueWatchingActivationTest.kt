@@ -116,9 +116,9 @@ class ContinueWatchingActivationTest {
 
     @Test fun playingTheResumeCardOpensSourcesForThatEpisodeNotTheFirstOne() = runBlocking<Unit> {
         val detail = DetailSnapshot(series, episodes = (1L..5L).map(::episode), next_cursor = null)
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
-            synchronized(paths) { paths += request.url.encodedPath }
+            paths += request.url.encodedPath
             val expected = request.url.parameters["card"]?.let { Json.decodeFromString<Card>(it) }
             if (request.url.encodedPath == "/api/meta/series/tt38262097" && expected?.identity != series.identity)
                 respond("{\"error\":\"Metadata expectation does not match lookup\"}", HttpStatusCode.BadRequest, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -137,7 +137,7 @@ class ContinueWatchingActivationTest {
             assertEquals(series.identity, state.sourceTitle?.parent_identity)
             assertEquals(Screen.Details, state.sourceReturnScreen, "Back from sources lands on the title's Details")
             assertEquals(Screen.Home, state.detailReturnScreen, "and Back again returns Home")
-            assertTrue("/api/meta/series/tt38262097" in synchronized(paths) { paths.toList() })
+            assertTrue("/api/meta/series/tt38262097" in paths.snapshot())
         } finally { controller.job?.cancel(); remote.close() }
     }
 }

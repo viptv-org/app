@@ -10,7 +10,6 @@ import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import kotlin.test.*
-import java.util.concurrent.CopyOnWriteArrayList
 
 internal const val xtreamConnectionsFixture = """{"items":[
 {"id":1,"name":"Living room","enabled":true,"enable_live":true,"enable_movies":true,"enable_series":true,"credentials_encrypted":true,"refresh":{"state":"succeeded","error":null}},
@@ -30,7 +29,7 @@ class XtreamConnectionsTest {
 
     private data class Sent(val path: String, val method: HttpMethod, val body: JsonObject?)
 
-    private fun client(log: CopyOnWriteArrayList<Sent>, handle: MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
+    private fun client(log: EngineRequests<Sent>, handle: MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
         HttpClient(MockEngine { request ->
             val body = (request.body as? TextContent)?.text?.takeIf { it.isNotBlank() }?.let { Json.parseToJsonElement(it).jsonObject }
             log.add(Sent(request.url.encodedPath, request.method, body))
@@ -41,7 +40,7 @@ class XtreamConnectionsTest {
         respond(value, headers = headersOf(HttpHeaders.ContentType, "application/json"))
 
     @Test fun thePageListsTheAccountsConnectionsAndSendsEachWriteOnce() = runBlocking {
-        val log = CopyOnWriteArrayList<Sent>()
+        val log = EngineRequests<Sent>()
         val remote = RemoteConnection("https://watch.example", store, client(log) { request ->
             when (request.url.encodedPath) {
                 "/api/iptv/connections" -> when (request.method) {
