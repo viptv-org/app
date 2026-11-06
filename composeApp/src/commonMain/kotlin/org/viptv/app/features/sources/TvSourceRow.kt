@@ -112,7 +112,7 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
                 }
             }
         }
-        if (menu != null) SourceRowMenu(menu, menuOpen, scale = scale, onDismiss = { menuOpen = false },
+        if (menu != null) SourceRowMenu(menu, menuOpen, scale = scale, television = true, onDismiss = { menuOpen = false },
             onPlay = { choose(source) }, onDetails = details?.let { { it(source) } })
     }
 }

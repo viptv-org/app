@@ -61,6 +61,18 @@ class SourceRowMenuTest {
         assertNotNull(torrentio.rowMenu(emptyList(), {}, {}).configure)
     }
 
+    @Test fun aClosingMenuStillDrawsItsExit() = runBlocking {
+        Picker(sources, pointer = false).use { picker ->
+            picker.hold("Stream a1")
+            assertFalse(picker.menuItems().isEmpty())
+            picker.clickable("Cancel").config[SemanticsActions.OnClick].action!!.invoke()
+            picker.frames(2)
+            assertFalse(picker.menuItems().isEmpty(), "the menu keeps drawing its 200 ms exit")
+            picker.frames(25)
+            assertTrue(picker.menuItems().isEmpty(), "and is gone once it ends")
+        }
+    }
+
     @Test fun configureNamesTheAddOnAndFallsBackToIt(): Unit = runBlocking {
         assertEquals("Configure Torrentio", sourceConfigureLabel(torrentio))
         assertEquals("Torrentio", torrentio.addonLabel())
@@ -269,11 +281,12 @@ class SourceRowMenuTest {
         }
 
         fun press(name: String) {
-            val node = nodes().firstOrNull { label(it) == name && it.config.contains(SemanticsActions.OnClick) }
-            assertNotNull(node, "no clickable $name")
-            assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
+            assertTrue(clickable(name).config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
         }
+
+        fun clickable(name: String) = nodes().firstOrNull { label(it) == name && it.config.contains(SemanticsActions.OnClick) }
+            ?: fail("no clickable $name")
 
         fun open(name: String) {
             val trigger = nodes().first { text(it).startsWith(name) && it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.DropdownList }
