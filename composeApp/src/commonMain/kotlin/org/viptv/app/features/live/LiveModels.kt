@@ -87,6 +87,8 @@ internal fun liveFraming(program: LiveProgram, now: Int?): LiveFraming = when {
 
 internal fun liveLength(program: LiveProgram) = "${program.end - program.start} min"
 
+internal fun favouriteActionLabel(saved: Boolean) = if (saved) "Remove favourite channel" else "Favourite channel"
+
 private fun liveRemaining(program: LiveProgram, now: Int) = "${(program.end - now).coerceAtLeast(0)} min left"
 
 @androidx.compose.runtime.Composable

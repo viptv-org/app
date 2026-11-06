@@ -124,6 +124,31 @@ class LiveFavoriteFeedbackUiTest {
         } finally { failed.close() }
     }
 
+    @Test fun everyLayoutNamesTheFavouriteControlTheSameWay() {
+        assertEquals("Favourite channel", favouriteActionLabel(false), "copy.md §Live")
+        assertEquals("Remove favourite channel", favouriteActionLabel(true), "copy.md §Live")
+        for (saved in listOf(false, true)) {
+            val label = favouriteActionLabel(saved)
+            val program = LiveProgram("p1", "Evening News", 0, 30)
+            val row = scene(390, 200, feedback()) { LiveChannelRow(channel(saved), 15, {}, {}) }
+            try {
+                frames(row)
+                assertTrue(nodes(row).any { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true },
+                    "phone row: the star is named $label")
+            } finally { row.close() }
+            val preview = scene(1280, 420, feedback()) { LivePreview(channel(saved), program, 15, phone = false, television = false, scale = 1f, watch = {}, favourite = {}, guide = {}) }
+            try {
+                frames(preview)
+                assertTrue(nodes(preview).map(::text).contains(label), "the preview button reads $label")
+            } finally { preview.close() }
+            val tv = scene(1920, 1080, feedback(), television = true) { TvLivePreview(channel(saved), program, 15, 1f, favorite = {}, watch = {}) }
+            try {
+                frames(tv)
+                assertTrue(nodes(tv).map(::text).contains(label), "the TV action reads $label")
+            } finally { tv.close() }
+        }
+    }
+
     private fun pixels(width: Int, height: Int, ui: PendingMutationUi, content: @Composable () -> Unit): ByteArray {
         val scene = scene(width, height, ui, content = content)
         return try { frames(scene); scene.render(1_000_000_000L).use { image -> image.encodeToData()!!.use { it.bytes } } }

@@ -51,8 +51,7 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { ClampedText("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            favourite?.let { save -> AccessibleIconButton(favouriteStarPainter(channel.favorite),
-                if (channel.favorite) "Remove favourite channel" else "Favourite channel", save,
+            favourite?.let { save -> AccessibleIconButton(favouriteStarPainter(channel.favorite), favouriteActionLabel(channel.favorite), save,
                 enabled = !pending, iconSize = 18.dp, tint = if (channel.favorite) Palette.accent else Palette.secondary, wash = null, pending = pending) }
         }
         MutationFailure(target, Modifier.padding(start = 76.dp, bottom = 8.dp))
