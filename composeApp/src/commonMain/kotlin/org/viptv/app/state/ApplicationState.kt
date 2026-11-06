@@ -164,6 +164,7 @@ data class ApplicationState(
     val fallbackNotice: BestMatchFallback? = null,
     val audioNotice: String? = null,
     val openingStage: String? = null,
+    val startup: StartupProgress? = null,
     val playback: PlaybackInput? = null,
     val playbackFailure: PlaybackFailure? = null,
     val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
