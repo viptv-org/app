@@ -29,7 +29,7 @@ internal fun TvLeaveConfirmation(local: Boolean, scale: Float, confirm: () -> Un
                 Text(if (local) changeConnectionTitle else "Sign out of this TV?", fontSize = (44 * scale).sp, lineHeight = (53 * scale).sp,
                     letterSpacing = (-0.88f * scale).sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(16.dp * scale))
-                Text(if (local) changeConnectionBody(television = true) else "Your profiles, My List and progress stay on your account.",
+                Text(if (local) changeConnectionBody(television = true) else "Your profiles and progress stay on your account.",
                     fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp, color = Palette.secondary)
                 Spacer(Modifier.height(36.dp * scale))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {

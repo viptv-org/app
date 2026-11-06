@@ -65,7 +65,7 @@ fun ProfileEditScreen(
         }
     }
     if (confirmingDelete) AlertDialog(onDismissRequest = { confirmingDelete = false },
-        title = { Text("Delete ${profile?.name}?") }, text = { Text("This removes this profile’s history and add-on choices.") },
+        title = { Text("Delete ${profile?.name}?") }, text = { Text("This permanently removes this profile’s watch history, favorites and preferences.") },
         confirmButton = { TextButton(onClick = { delete(oldPin); confirmingDelete = false }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } })
     if (pickingAvatar) AvatarPicker(profile, busy, AvatarPickerLayout.Desktop, { pickingAvatar = false }, { pick, pin ->
