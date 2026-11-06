@@ -71,7 +71,7 @@ Filters and sort choices change preview state only; no saved-list database or
 server operations run.
 
 TV `Profiles` renders the supplied unlocked profile-picker board. `Locked`
-retains the locked-profile marker and `Empty` checks initial focus on Add profile.
+retains the locked-profile marker and `Empty` checks initial focus on Add a profile.
 Manage/Done update only preview mode. Management opens the selected profile's
 TV editor; creation remains disconnected in this isolated preview.
 

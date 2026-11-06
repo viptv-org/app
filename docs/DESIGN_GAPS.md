@@ -9,7 +9,7 @@
 | GAP-005 | Administrative dashboard | Current boards cover accounts/devices, not every admin operation | Browser device management implemented from W3Account; broader administration remains pending |
 | GAP-006 | Local add-on removal | No matching confirmation board in the current set | Provisional confirmation in `features/settings/SettingsScreen.kt` |
 | GAP-007 | Local History clear confirmation | Current History boards show Clear without its confirmation state | Provisional confirmation in `features/history/HistoryScreen.kt` |
-| GAP-008 | Local profile creation dialog | Current profile picker shows Add profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt` |
+| GAP-008 | Local profile creation dialog | Current profile picker shows Add a profile, but no local creation form | Provisional dialog in `features/entry/ProfilesScreen.kt` |
 | GAP-009 | Confirming a 5–8 digit local PIN | The supplied phone PIN keypad has four indicators and no confirmation key | Provisional OK key in `features/entry/MobilePinScreen.kt` |
 | GAP-010 | Local forgotten-PIN explanation | The supplied PIN board has Forgot PIN? without a local recovery state | Provisional explanation in `features/entry/MobilePinScreen.kt`; no credential recovery or reset flow |
 | GAP-011 | Avatar picker | The current edit board has Change avatar but no selection sheet | Resolved (app#8): `features/entry/AvatarPicker.kt` follows design ADM-004 with the bundled 624-avatar catalog (`AvatarCatalog.kt`, design pin in `AVATAR_CATALOG_REF`): world chips, 15 per page on phones and 18 on TV/desktop, wrapping Previous/Next, check badge on the saved pick. |
@@ -81,7 +81,7 @@ or empty/unavailable boards. These provisional surfaces need supplied designs.
 
 ### GAP-026 — TV add-profile input dialog
 
-The existing shared name-entry dialog is used by Add profile. The TV ZIP supplies
+The existing shared name-entry dialog is used by Add a profile. The TV ZIP supplies
 the Add tile and a separate Edit profile board, but no add-profile name-entry
 dialog. The shared dialog is provisional and requires a dedicated TV treatment
 or supplied design. The supplied Edit profile board's dedicated layout is in

@@ -40,6 +40,7 @@ import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvTextField
 import org.viptv.app.components.requestFocusWhenPlaced
+import org.viptv.app.components.tvHold
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.LocalPendingMutation
@@ -54,10 +55,12 @@ import org.viptv.engine.wire.IntegrationConnection
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
     install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
-    initialAddonId: String? = null) {
+    initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissConfigure: () -> Unit = {}) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
+    var managing by remember { mutableStateOf<IntegrationConnection?>(null) }
     var wasSearching by remember { mutableStateOf(false) }
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = AddonFilter(query, provides).filtered(addons)
@@ -86,7 +89,9 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
                         val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
                         val target = addon.id == initialAddonId
+                        val configurable = addon.id in configurableAddons
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
+                            .tvHold(enabled = manage && !busy) { managing = addon }
                             .focusProperties { left = sidebar }
                             .then(if (target) targetFocus.requestFocusWhenPlaced().targetRing(scale)
                                 else if (index == 0) Modifier.focusRequester(initial) else Modifier)
@@ -142,6 +147,15 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
+    }
+    managing?.let { addon ->
+        TvAddonManageDialog(addon, addon.id in enabled, addon.id in configurableAddons, busy, scale,
+            toggle = { on -> toggle(addon.id, on) },
+            reconfigure = { managing = null; configure(addon.id) },
+            dismiss = { managing = null })
+    }
+    addonConfigure?.let { request ->
+        TvAddonConfigureDialog(request, scale, dismiss = dismissConfigure, newCode = { configure(request.addon) })
     }
 }
 

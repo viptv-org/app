@@ -62,10 +62,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     val heroEpisode = remember(resume, detail) { detail?.let(resume::heroEpisode) }
     val seasonChoice = rememberSeasonChoice(detail, focus)
     val facts = remember(detail) { detail?.detailFacts().orEmpty() }
-    var section by remember(detail?.item?.identity, detail?.episodes?.isNotEmpty() == true, detail?.recommendations?.isNotEmpty() == true, facts.isNotEmpty()) { mutableStateOf(
-        when { detail?.episodes?.isNotEmpty() == true -> DetailSection.Episodes
-            detail?.recommendations?.isNotEmpty() == true -> DetailSection.Related
-            else -> DetailSection.Information }) }
+    val sectionState = rememberDetailSection(detail?.item, detail?.episodes?.isNotEmpty() == true,
+        detail?.recommendations?.isNotEmpty() == true, facts.isNotEmpty())
+    val section by sectionState
     val selected = seasonChoice.selected(seasons, resume)
     val entrance = rememberListEntrance(detail?.episodes?.isNotEmpty() == true)
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging && section == DetailSection.Episodes,
@@ -73,7 +72,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val gutter = if (phone) 16.dp else 40.dp
-        val listState = rememberLazyListState()
+        val listState = rememberDetailListState(detail?.item)
         val desktop = !phone && !tablet
         val previewCard = detail?.let { heroEpisode ?: it.item }
         if (phone && previewCard != null) DisposableEffect(previewCard.identity, previewCard.provider_id) {
@@ -89,7 +88,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                 (if (desktop) 0 else 1) + 1 + episode }
         LandOnResume(seasonChoice, listState, resumeIndex, selected, clearance = if (phone) 56.dp else 0.dp)
         val reveal = rememberContentReveal(!busy)
-        val scrolled by remember(phone) { derivedStateOf {
+        val scrolled by remember(phone, listState) { derivedStateOf {
             listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 240 } }
         LazyColumn(Modifier.fillMaxSize(), state = listState,
             contentPadding = PaddingValues(top = if (phone) 0.dp else 16.dp, bottom = 96.dp),
@@ -117,7 +116,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     else -> {
                         if (!desktop && detailSections(seasons.isNotEmpty(), value.recommendations.isNotEmpty(), facts.isNotEmpty()).isNotEmpty()) item(key = "sections") {
                             DetailSections(section, seasons.isNotEmpty(), value.recommendations.isNotEmpty(), facts.isNotEmpty(),
-                                { section = it }, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })
+                                { sectionState.value = it }, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })
                         }
                         if (!desktop && section == DetailSection.Information && facts.isNotEmpty()) item(key = "information") {
                             DetailFacts(facts, Modifier.padding(horizontal = gutter).graphicsLayer { alpha = reveal.value })

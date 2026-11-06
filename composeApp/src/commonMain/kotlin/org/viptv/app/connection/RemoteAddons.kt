@@ -5,7 +5,8 @@ import kotlinx.serialization.json.*
 import org.viptv.engine.wire.*
 
 private val addonCodec = Json { ignoreUnknownKeys = true }
-data class RemoteAddons(val addons: List<IntegrationConnection>, val enabled: Set<String>, val browsing: BrowsingConfiguration? = null, val logos: Map<String, String> = emptyMap())
+data class RemoteAddons(val addons: List<IntegrationConnection>, val enabled: Set<String>, val browsing: BrowsingConfiguration? = null,
+    val logos: Map<String, String> = emptyMap(), val configurable: Set<String> = emptySet())
 private data class RemoteConfiguration(val profile: ProfileConfiguration, val connections: List<IntegrationConnection>)
 
 private suspend fun RemoteConnection.addonConfiguration(profile: String): RemoteConfiguration {
@@ -23,6 +24,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
     val config = addonConfiguration(profile)
     val inventory = mutableListOf<IntegrationConnection>()
     val logos = mutableMapOf<String, String>()
+    val configurable = mutableSetOf<String>()
     var cursor: String? = null
     val visited = mutableSetOf<String>()
     do {
@@ -32,6 +34,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
             val numeric = row.getValue("id").jsonPrimitive.content
             val id = "addon:$numeric"
             (row["logo"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.startsWith("/api/addons/$numeric/logo") }?.let { logos[id] = it }
+            if (row["configurable"]?.jsonPrimitive?.booleanOrNull == true) configurable += id
             inventory += config.connections.find { it.id == id } ?: IntegrationConnection(id, "stremio",
                 config.profile.scope.account_id, null, row.getValue("name").jsonPrimitive.content,
                 row.getValue("enabled").jsonPrimitive.boolean, config.profile.scope.revision, emptyList())
@@ -40,7 +43,7 @@ suspend fun RemoteConnection.addons(profile: String): RemoteAddons {
         if (cursor != null && !visited.add(cursor)) throw RemoteFailure(502, "The server repeated an add-on page.")
     } while (cursor != null)
     val enabled = config.profile.assignments.filter { it.enabled.isNotEmpty() }.map { it.connection_id }.toSet()
-    return RemoteAddons(inventory.distinctBy { it.id }, enabled, BrowsingConfiguration(config.profile, config.connections), logos)
+    return RemoteAddons(inventory.distinctBy { it.id }, enabled, BrowsingConfiguration(config.profile, config.connections), logos, configurable)
 }
 
 suspend fun RemoteConnection.installAddon(profile: String, address: String) {
@@ -66,7 +69,7 @@ suspend fun RemoteConnection.removeAddon(id: String) {
     call("/api/addons/${addonNumericId(id)}", HttpMethod.Delete)
 }
 
-private fun addonNumericId(id: String): Long = id.removePrefix("addon:").toLongOrNull()
+internal fun addonNumericId(id: String): Long = id.removePrefix("addon:").toLongOrNull()
     ?.takeIf { id.startsWith("addon:") && it > 0 } ?: throw RemoteFailure(400, "Invalid add-on identifier.")
 
 suspend fun RemoteConnection.addonLogo(path: String): ByteArray {
