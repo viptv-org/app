@@ -57,6 +57,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact && accountSession) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
+        addonTarget = state.settingsAddonTarget,
         desktop = desktop, browser = browser,
         profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
         profileTitles = if (state.parentTitles != null) ({ compact ->

@@ -55,20 +55,21 @@ internal fun SourceCandidate.rowMenu(producers: List<SourceProducerOutcome>, con
         hide)
 
 @Composable
-internal fun SourceRowMenu(menu: SourceRowMenuActions, expanded: Boolean, scale: Float = 1f, onDismiss: () -> Unit,
-    onPlay: () -> Unit, onDetails: (() -> Unit)?) {
+internal fun SourceRowMenu(menu: SourceRowMenuActions, expanded: Boolean, scale: Float = 1f, television: Boolean = false,
+    onDismiss: () -> Unit, onPlay: () -> Unit, onDetails: (() -> Unit)?) {
     val first = remember { FocusRequester() }
-    PopoverMenu(expanded, onDismiss, paneTitle = SOURCE_MENU_PANE, scale = scale, width = SOURCE_MENU_WIDTH) {
-        PopoverMenuItem(SOURCE_PLAY_LABEL, Lucide.Play, scale = scale, requester = first, onClick = { onDismiss(); onPlay() })
-        PopoverMenuDivider(scale)
+    PopoverMenu(expanded, onDismiss, paneTitle = SOURCE_MENU_PANE, scale = scale, television = television,
+        width = if (television) null else SOURCE_MENU_WIDTH) {
+        PopoverMenuItem(SOURCE_PLAY_LABEL, Lucide.Play, requester = first, onClick = { onDismiss(); onPlay() })
+        PopoverMenuDivider()
         onDetails?.let { details ->
-            PopoverMenuItem(SOURCE_DETAILS_LABEL, Lucide.Info, scale = scale, onClick = { onDismiss(); details() })
+            PopoverMenuItem(SOURCE_DETAILS_LABEL, Lucide.Info, onClick = { onDismiss(); details() })
         }
         menu.configure?.let { configure ->
-            PopoverMenuItem(SOURCE_CONFIGURE_PREFIX + menu.addon, Lucide.Settings, scale = scale, onClick = { onDismiss(); configure() })
+            PopoverMenuItem(SOURCE_CONFIGURE_PREFIX + menu.addon, Lucide.Settings, onClick = { onDismiss(); configure() })
         }
-        PopoverMenuItem(SOURCE_HIDE_LABEL, Lucide.EyeOff, scale = scale, onClick = { onDismiss(); menu.hide() })
-        PopoverMenuDivider(scale)
-        PopoverMenuItem(SOURCE_CANCEL_LABEL, Lucide.X, scale = scale, onClick = onDismiss)
+        PopoverMenuItem(SOURCE_HIDE_LABEL, Lucide.EyeOff, onClick = { onDismiss(); menu.hide() })
+        PopoverMenuDivider()
+        PopoverMenuItem(SOURCE_CANCEL_LABEL, Lucide.X, onClick = onDismiss)
     }
 }

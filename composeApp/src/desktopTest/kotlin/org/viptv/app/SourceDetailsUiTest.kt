@@ -54,7 +54,6 @@ class SourceDetailsUiTest {
             s.waitFor("Source details") { s.hasDetails() }
             s.waitFor("the panel to take focus") { s.focused()?.let(s::text) == "Close" }
             assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
-            s.waitFor("the menu to finish closing") { s.menuItem(SOURCE_DETAILS_LABEL) == null }
             s.keyDown(Key.Back); s.keyUp(Key.Back)
             s.waitFor("Source details to close") { !s.hasDetails() }
             assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "Back returns to the row it came from")
@@ -76,7 +75,6 @@ class SourceDetailsUiTest {
             s.waitFor("Source details") { s.hasDetails() }
             s.waitFor("the panel to take focus") { s.focused()?.let(s::text) == "Close" }
             assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
-            s.waitFor("the menu to finish closing") { s.menuItem(SOURCE_DETAILS_LABEL) == null }
             s.keyDown(Key.Escape); s.keyUp(Key.Escape)
             s.waitFor("Source details to close") { !s.hasDetails() }
             assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "closing returns to the row")

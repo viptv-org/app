@@ -20,6 +20,11 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,6 +39,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvTextField
+import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.components.LocalPendingMutation
@@ -47,13 +53,18 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap()) {
+    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
+    initialAddonId: String? = null) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
     var wasSearching by remember { mutableStateOf(false) }
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = AddonFilter(query, provides).filtered(addons)
+    val listState = rememberLazyListState()
+    val targetRow = remember(shown, initialAddonId) { shown.indexOfFirst { it.id == initialAddonId } }
+    val targetFocus = remember(initialAddonId) { FocusRequester() }
+    LaunchedEffect(targetRow) { if (targetRow >= 0) listState.scrollToItem(targetRow) }
     val searchChip = remember { FocusRequester() }
     val clear = { query = ""; provides = null }
     // Leaving the keyboard returns the D-pad to the chip that opened it.
@@ -69,13 +80,16 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
             // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
             CompositionLocalProvider(LocalTvColumnFocus provides null) {
                 LazyColumn(Modifier.width(760.dp * scale).fillMaxHeight().tvRingRoom(tvRingReach(scale), horizontal = false),
+                    state = listState,
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
                         val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
+                        val target = addon.id == initialAddonId
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                             .focusProperties { left = sidebar }
-                            .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
+                            .then(if (target) targetFocus.requestFocusWhenPlaced().targetRing(scale)
+                                else if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
@@ -128,6 +142,19 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
+    }
+}
+
+// The row's own fill covers a border modifier, so the arrival ring is drawn over the fill instead.
+@Composable
+private fun Modifier.targetRing(scale: Float): Modifier {
+    val accent = Palette.accent
+    return drawWithContent {
+        drawContent()
+        val stroke = 2.dp.toPx() * scale
+        drawRoundRect(accent, topLeft = Offset(stroke / 2, stroke / 2),
+            size = Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),
+            cornerRadius = CornerRadius((18.dp.toPx() - stroke / 2) * scale), style = Stroke(stroke))
     }
 }
 
