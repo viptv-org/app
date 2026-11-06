@@ -51,17 +51,15 @@ fun ApplicationController.saveProfileKids(policy: KidsPolicy, pin: String) = run
         remote.unlockParent(pin)
     }
     val owner = generation
-    val page = mutable.value.settingsPage
-    val saved = mutable.value.profilePageSaved
     if (mutable.value.selectedProfile == id) invalidatePolicyContent()
     val written = remote.saveKidsPolicy(id, policy)
     val approvals = if (policy.enabled) remote.approvalCount(id) else null
     val snapshot = remote.bootstrap()
     if (connection === remote && generation == owner) {
-        accept(snapshot, screen = Screen.Settings)
-        updateState { next -> next.copy(settingsPage = page, selectedProfile = id, profileApprovals = approvals,
+        refreshSnapshot(snapshot)
+        updateState { next -> next.copy(profileApprovals = approvals,
             parentControls = next.parentControls + (id to (next.parentControls[id] ?: ParentProfileControls()).copy(policy = written)),
-            profilePageSaved = saved + 1) }
+            profilePageSaved = next.profilePageSaved + 1) }
     }
 }
 

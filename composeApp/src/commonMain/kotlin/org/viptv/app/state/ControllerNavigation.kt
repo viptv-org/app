@@ -83,9 +83,11 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
 
 // Back to a list screen restores its captured entry and skips the load that would reset filters, data and scroll.
 private fun ApplicationController.recoverBackEntryLoads(screen: Screen, browse: BrowseQuery?, navigation: Long, restore: BackEntry?) {
-    val skip = restore != null && screen in restoredListScreens
+    // Restrictions dropped the catalog, so a restored screen reads it again instead of drawing its old entry.
+    val skip = restore != null && screen in restoredListScreens && !mutable.value.catalogDropped
     if (!skip && screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
-        loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
+        loadBrowse(browse ?: mutable.value.browseQuery.takeIf { restore != null }
+            ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
     else if (screen == Screen.Home) freshen()
