@@ -142,8 +142,6 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
                     if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
                         Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp)
                     }
-                } else {
-                    section?.page?.let { page -> page.error?.takeIf { page.loaded }?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) } }
                 }
                 if (!saved && (pageState == ListPageState.Failed || pageState == ListPageState.Empty)) {
                     ContinueWatchingState(pageState, section?.page?.error, { section?.retry?.invoke() },

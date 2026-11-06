@@ -21,7 +21,7 @@ import org.junit.Rule
 import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.WATCHED_BADGE
-import org.viptv.app.features.library.REMOVE_CONTINUE_LABEL
+import org.viptv.app.features.continuewatching.REMOVE_CONTINUE_LABEL
 import org.viptv.app.features.home.CANCEL_LABEL
 import org.viptv.app.features.home.CHOOSE_SOURCE_LABEL
 import org.viptv.app.features.home.CardActions

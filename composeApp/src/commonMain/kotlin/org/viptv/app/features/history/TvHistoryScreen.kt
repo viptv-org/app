@@ -30,6 +30,7 @@ import coil3.compose.AsyncImage
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.listPageState
+import org.viptv.app.features.settings.TvConfirmDialog
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -141,15 +142,13 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                 }
             }
         }
-    }
-    if (confirm) androidx.compose.material3.AlertDialog(onDismissRequest = { confirm = false },
-        title = { Text("Clear history?") },
-        text = { Text("This removes viewing history for this profile.") },
-        confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
-        dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+    if (confirm) TvConfirmDialog(scale, "Clear history?", "This removes viewing history for this profile.", confirm = "Clear",
+        danger = true, onConfirm = { clear(); confirm = false }, onDismiss = { confirm = false })
     resuming?.let { display ->
         ResumePositionDialog(display.position.toLong(), display.duration, onDismiss = { resuming = null },
-            onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) })
+            onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) },
+            television = true, scale = scale)
+    }
     }
 }
 

@@ -16,6 +16,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
+import org.viptv.app.features.settings.TvConfirmDialog
 
 private data class TitleChoice(val kind: String, val id: String, val title: String, val action: String,
     val row: String? = null, val saved: ApprovedTitle? = null, val blocked: BlockedTitle? = null,
@@ -27,7 +28,7 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
     search: (String) -> Unit, refresh: (Boolean) -> Unit, approve: (String, org.viptv.engine.wire.Card) -> Unit,
     revoke: (ApprovedTitle) -> Unit, block: ((org.viptv.engine.wire.Card) -> Unit)? = null,
     unblock: ((BlockedTitle) -> Unit)? = null, refreshBlocked: ((Boolean) -> Unit)? = null,
-    first: FocusRequester? = null, backLabel: String = "Back to parental controls") {
+    first: FocusRequester? = null, backLabel: String = "Back to parental controls", television: Boolean = false, scale: Float = 1f) {
     val blocks = block != null && unblock != null && refreshBlocked != null
     var query by remember(state.profile) { mutableStateOf(state.query) }
     var choice by remember(state.profile) { mutableStateOf<TitleChoice?>(null) }
@@ -111,35 +112,41 @@ internal fun ParentTitlesSettings(state: ParentTitlesState, busy: Boolean, error
     }
     }
     choice?.let { selected ->
-        AlertDialog(onDismissRequest = { if (!busy) choice = null },
-            title = { Text(when (selected.action) {
-                "approve" -> "Approve this title?"
-                "block" -> "Block this title?"
-                "unblock" -> "Unblock this title?"
-                else -> "Remove this approval?"
-            }) },
-            text = { Text(when (selected.action) {
-                "approve" -> "Allow ${selected.title} for ${state.profileName}? The server checks the title before saving."
-                "block" -> "Hide ${selected.title} from ${state.profileName}? A block outranks an approval."
-                "unblock" -> "Show ${selected.title} to ${state.profileName} again? This profile’s age restrictions still apply."
-                else -> "Remove ${selected.title} from ${state.profileName}’s approved titles? The profile’s age restrictions will apply again."
-            }) },
-            confirmButton = { TextButton({
-                if (!busy) {
-                    when (selected.action) {
-                        "approve" -> approve(requireNotNull(selected.row), requireNotNull(selected.candidate))
-                        "block" -> requireNotNull(block).invoke(requireNotNull(selected.candidate))
-                        "unblock" -> requireNotNull(unblock).invoke(requireNotNull(selected.blocked))
-                        else -> revoke(requireNotNull(selected.saved))
-                    }
-                    choice = null
+        val title = when (selected.action) {
+            "approve" -> "Approve this title?"
+            "block" -> "Block this title?"
+            "unblock" -> "Unblock this title?"
+            else -> "Remove this approval?"
+        }
+        val body = when (selected.action) {
+            "approve" -> "Allow ${selected.title} for ${state.profileName}? The server checks the title before saving."
+            "block" -> "Hide ${selected.title} from ${state.profileName}? A block outranks an approval."
+            "unblock" -> "Show ${selected.title} to ${state.profileName} again? This profile’s age restrictions still apply."
+            else -> "Remove ${selected.title} from ${state.profileName}’s approved titles? The profile’s age restrictions will apply again."
+        }
+        val action = when (selected.action) {
+            "approve" -> "Approve"
+            "block" -> "Block"
+            "unblock" -> "Unblock"
+            else -> "Remove approval"
+        }
+        val run = {
+            if (!busy) {
+                when (selected.action) {
+                    "approve" -> approve(requireNotNull(selected.row), requireNotNull(selected.candidate))
+                    "block" -> requireNotNull(block).invoke(requireNotNull(selected.candidate))
+                    "unblock" -> requireNotNull(unblock).invoke(requireNotNull(selected.blocked))
+                    else -> revoke(requireNotNull(selected.saved))
                 }
-            }, enabled = !busy) { Text(when (selected.action) {
-                "approve" -> "Approve"
-                "block" -> "Block"
-                "unblock" -> "Unblock"
-                else -> "Remove approval"
-            }) } },
+                choice = null
+            }
+        }
+        if (television) TvConfirmDialog(scale, title, body, confirm = action, danger = selected.action != "approve",
+            busy = busy, onConfirm = run, onDismiss = { choice = null })
+        else AlertDialog(onDismissRequest = { if (!busy) choice = null },
+            title = { Text(title) },
+            text = { Text(body) },
+            confirmButton = { TextButton(run, enabled = !busy) { Text(action) } },
             dismissButton = { TextButton({ choice = null }, enabled = !busy) { Text("Cancel") } })
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import org.viptv.app.features.settings.TvConfirmDialog
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -15,7 +16,13 @@ internal val LocalListRemoval = compositionLocalOf<ListRemoval?> { null }
 internal const val KEEP_HISTORY_COPY = "Watched history is preserved."
 
 @Composable
-internal fun ListRemovalConfirmation(card: Card, label: String, confirm: () -> Unit, dismiss: () -> Unit) {
+internal fun ListRemovalConfirmation(card: Card, label: String, confirm: () -> Unit, dismiss: () -> Unit,
+    television: Boolean = false, scale: Float = 1f) {
+    if (television) {
+        TvConfirmDialog(scale, "$label?", "“${card.title}” leaves this list. $KEEP_HISTORY_COPY", confirm = "Remove",
+            danger = true, onConfirm = confirm, onDismiss = dismiss)
+        return
+    }
     AlertDialog(onDismissRequest = dismiss, title = { Text("$label?") },
         text = { Text("“${card.title}” leaves this list. $KEEP_HISTORY_COPY") },
         confirmButton = { TextButton(onClick = confirm) { Text("Remove", color = Palette.danger) } },

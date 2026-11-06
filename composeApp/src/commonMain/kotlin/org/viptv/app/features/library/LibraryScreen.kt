@@ -147,9 +147,6 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                                         if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                                         else LibraryControls(filter, { filter = it }, sort, { sort = it })
                                         if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
-                                    } else {
-                                        val continuePage = section?.page
-                                        if (continuePage != null && continuePage.loaded) continuePage.error?.let { Text(it, color = Palette.danger) }
                                     }
                                 }
                                 if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
