@@ -2,6 +2,11 @@ package org.viptv.app.player
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
+import android.view.SurfaceView
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -43,6 +48,12 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private val subtitles = Media3ProviderSubtitles(player, input, scope, tracks, captionStyle, ::titlePositionMillis) { error, chosen ->
         input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) ::emit else null)
     }
+    // The picture the TV is showing, scaled into a 32x18 frame: one GPU capture per sample, off the main thread.
+    private val slateDetector = ErrorSlateDetector()
+    private val slateBitmap = Bitmap.createBitmap(SlateSampleWidth, SlateSampleHeight, Bitmap.Config.ARGB_8888)
+    private val slatePixels = IntArray(SlateSampleBytes)
+    private var slateSampling = false
+    private var slateFailures = 0
     private var audioDecoder = "pending"
     private var videoDecoder = "pending"
     private var presented = false
@@ -132,6 +143,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     }
     fun progress() {
         if (closed || player.playbackState == Player.STATE_IDLE) return
+        sampleSlate()
         emit(input.mediaProgress(player.currentPosition,
             player.duration.takeIf { it != C.TIME_UNSET && it > 0 }, windowOffsetMillis()))
         // Media3 reports one buffered end: the media it holds from the playhead forward.
@@ -146,6 +158,31 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         val fraction = (ahead.toFloat() / MEDIA3_START_BUFFER_MS).coerceIn(0f, 1f)
         if (fraction != lastStartup) { lastStartup = fraction; emit(PlayerFact.Startup(fraction)) }
     }
+    private fun sampleSlate() {
+        if (slateFailures >= SLATE_SAMPLE_FAILURE_LIMIT || slateSampling || !player.playWhenReady || player.playbackState != Player.STATE_READY) return
+        val position = titlePositionMillis()
+        if (!slateDetector.due(position)) return
+        val surfaceView = view?.videoSurfaceView as? SurfaceView ?: return
+        slateSampling = true
+        try {
+            PixelCopy.request(surfaceView, slateBitmap, { result ->
+                slateSampling = false
+                if (closed) return@request
+                if (result != PixelCopy.SUCCESS) { slateFailures++; return@request }
+                slateBitmap.getPixels(slatePixels, 0, SlateSampleWidth, 0, 0, SlateSampleWidth, SlateSampleHeight)
+                val format = player.videoFormat
+                if (slateDetector.take(position, graySample(slatePixels),
+                        slateLowBitrate(format?.bitrate?.toLong(), format?.width ?: 0, format?.height ?: 0))) {
+                    input.diagnostics?.invoke("error_slate=probable position_ms=$position bitrate=${format?.bitrate} size=${format?.width}x${format?.height}")
+                    emit(PlayerFact.ProbableErrorSlate)
+                }
+            }, Handler(Looper.getMainLooper()))
+        } catch (error: Exception) {
+            slateSampling = false
+            slateFailures = SLATE_SAMPLE_FAILURE_LIMIT
+        }
+    }
+
     private fun windowOffsetMillis(): Long = if (input.live || player.currentTimeline.isEmpty) 0 else
         player.currentTimeline.getWindow(player.currentMediaItemIndex, window).positionInFirstPeriodMs.coerceAtLeast(0)
     private fun titlePositionMillis(): Long = input.mediaProgress(player.currentPosition, null, windowOffsetMillis()).positionMillis
@@ -159,8 +196,11 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), captionStyle.scale))
     suspend fun command(command: PlayerCommand) {
         try { when (command) {
-            is PlayerCommand.Seek -> if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
+            is PlayerCommand.Seek -> {
+                slateDetector.reset()
+                if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
                 else player.seekTo(input.mediaSeekPosition(command.positionMillis, windowOffsetMillis()))
+            }
             is PlayerCommand.Volume -> player.volume = command.value.coerceIn(0f, 1f)
             is PlayerCommand.Speed -> player.setPlaybackSpeed(command.value.toFloat().coerceIn(.25f, 2f))
             is PlayerCommand.SubtitleSize -> {
@@ -195,6 +235,8 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         mediaSession.close(); player.release(); view = null
     }
 }
+
+private const val SLATE_SAMPLE_FAILURE_LIMIT = 3
 
 private val media3DecodeFailureCodes = setOf(
     PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,

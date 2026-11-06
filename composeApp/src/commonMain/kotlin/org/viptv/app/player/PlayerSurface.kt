@@ -56,6 +56,8 @@ sealed interface PlayerFact {
     data class ControlFailed(val control: PlaybackControl) : PlayerFact
     // The clock advances with no presented frame: a stream this device cannot decode.
     data object Undecodable : PlayerFact
+    // Every sample of the presented picture was identical: the source is probably an error slate, not the title.
+    data object ProbableErrorSlate : PlayerFact
 }
 
 // Milliseconds on the title clock; ranges stay separate so a seek that leaves a gap keeps it.

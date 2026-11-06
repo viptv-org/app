@@ -72,43 +72,47 @@ private fun tvQualityColumnWidth(scale: Float): Dp {
 internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Float, requester: FocusRequester?,
     enabled: Boolean, choose: (SourceCandidate) -> Unit, up: FocusRequester? = null, focusedSource: (String) -> Unit = {},
     header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, headerMeasured: (Int) -> Unit = {},
-    details: ((SourceCandidate) -> Unit)? = null) {
+    details: ((SourceCandidate) -> Unit)? = null, menu: SourceRowMenuActions? = null) {
     var focused by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     val inverted = focused
     val color = if (inverted) Palette.background else Palette.text
     val interaction = remember { MutableInteractionSource() }
-    Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
-        .focusProperties { if (up != null) this.up = up }
-        .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
-        .tvHold(enabled = details != null) { details?.invoke(source) }
-        .pointerClickable(interaction, indication = null, enabled = enabled, longClickLabel = details?.let { SOURCE_DETAILS_LABEL },
-            onLongClick = details?.let { { it(source) } }, onClick = { choose(source) })) {
-    header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
-    Row(Modifier.fillMaxWidth().heightIn(min = tvSourceRowHeight(scale)).clip(RoundedCornerShape(12.dp * scale))
-        .background(if (inverted) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
-        .padding(horizontal = 28.dp * scale, vertical = 14.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(26.dp * scale)) {
-        Column(Modifier.width(tvQualityColumnWidth(scale))) {
-            Text(info?.quality ?: "—", color = color, fontSize = (TvQualitySize.value * scale).sp, lineHeight = (TvQualityLine.value * scale).sp,
-                fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
-            source.releaseTypeLabel()?.let { Text(it, maxLines = 1, softWrap = false, color = color.copy(alpha = 0.55f), fontSize = (TvSublineSize.value * scale).sp, fontWeight = FontWeight.SemiBold) }
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-                Text(source.releaseGroupLabel(), fontSize = (TvNameSize.value * scale).sp, lineHeight = (TvNameLine.value * scale).sp,
-                    fontWeight = FontWeight.SemiBold, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                source.cacheStatus()?.let { SourceCacheChip(it, (16 * scale).sp, (14 * scale).dp, (9 * scale).dp, (4 * scale).dp, (6 * scale).dp, (5 * scale).dp) }
-                if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else color.copy(alpha = 0.16f), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                    color = if (inverted) Palette.text else Palette.accent, fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-                if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger,
-                    fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+    Box(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
+            .focusProperties { if (up != null) this.up = up }
+            .onFocusChanged { if (focused != it.isFocused) focused = it.isFocused; if (it.isFocused) focusedSource(source.id) }
+            .tvHold(enabled = menu != null && enabled) { menuOpen = true }
+            .pointerClickable(interaction, indication = null, enabled = enabled, onClick = { choose(source) })) {
+            header?.let { SourceGroupHeader(it, (22 * scale).sp, Modifier.padding(start = 4.dp * scale, top = 14.dp * scale, bottom = 12.dp * scale), measured = headerMeasured) }
+            Row(Modifier.fillMaxWidth().heightIn(min = tvSourceRowHeight(scale)).clip(RoundedCornerShape(12.dp * scale))
+                .background(if (inverted) Palette.text else androidx.compose.ui.graphics.Color(0xFF222222))
+                .padding(horizontal = 28.dp * scale, vertical = 14.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(26.dp * scale)) {
+                Column(Modifier.width(tvQualityColumnWidth(scale))) {
+                    Text(info?.quality ?: "—", color = color, fontSize = (TvQualitySize.value * scale).sp, lineHeight = (TvQualityLine.value * scale).sp,
+                        fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
+                    source.releaseTypeLabel()?.let { Text(it, maxLines = 1, softWrap = false, color = color.copy(alpha = 0.55f), fontSize = (TvSublineSize.value * scale).sp, fontWeight = FontWeight.SemiBold) }
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
+                        Text(source.releaseGroupLabel(), fontSize = (TvNameSize.value * scale).sp, lineHeight = (TvNameLine.value * scale).sp,
+                            fontWeight = FontWeight.SemiBold, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        source.cacheStatus()?.let { SourceCacheChip(it, (16 * scale).sp, (14 * scale).dp, (9 * scale).dp, (4 * scale).dp, (6 * scale).dp, (5 * scale).dp) }
+                        if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else color.copy(alpha = 0.16f), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
+                            color = if (inverted) Palette.text else Palette.accent, fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                        if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger,
+                            fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                    }
+                    SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (28 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
+                    SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp)
+                }
+                if (source.isPlayPending()) PendingActionSpinner(Modifier.size(28.dp * scale), size = 28.dp * scale, strokeWidth = 3.dp * scale, color = color)
+                else if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
+                    Icon(Lucide.Check, "Selected source", Modifier.size(18.dp * scale), tint = Palette.text)
+                }
             }
-            SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (28 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
-            SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp)
         }
-        if (source.isPlayPending()) PendingActionSpinner(Modifier.size(28.dp * scale), size = 28.dp * scale, strokeWidth = 3.dp * scale, color = color)
-        else if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
-            Icon(Lucide.Check, "Selected source", Modifier.size(18.dp * scale), tint = Palette.text)
-        }
-    }
+        if (menu != null) SourceRowMenu(menu, menuOpen, scale = scale, onDismiss = { menuOpen = false },
+            onPlay = { choose(source) }, onDetails = details?.let { { it(source) } })
     }
 }
