@@ -66,6 +66,7 @@ class ServerAddressUiTest {
                 "the address field opens empty, not on a placeholder host: ${dialog.config.getOrNull(SemanticsProperties.EditableText)}")
             assertFalse(nodes(scene).any { text(it).contains("your-server.example") }, "no placeholder host is drawn")
             type(dialog, "http://watch.example")
+            frames(scene)
             click(scene, "Done")
             frames(scene)
             assertTrue(nodes(scene).any { text(it).contains(SERVER_ADDRESS_ERROR) }, "an invalid address reports the one error inline")
