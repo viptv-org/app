@@ -84,12 +84,16 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)
                         }
                         Box(Modifier.weight(1f).heightIn(min = rowHeight).clipToBounds()) {
-                            slots.forEach { slot ->
+                            slots.forEachIndexed { position, slot ->
                                 key(slot.program.id) {
                                     LiveProgramCell(slot.program, now, start, television, scale,
                                         Modifier.offset(x = unit * (slot.begin - start)).width((unit * (slot.end - slot.begin) - programGap).coerceAtLeast(1.dp)).fillMaxHeight()
                                             .then(if (first != null && channel == firstChannel && slot.program == initialProgram) Modifier.focusRequester(first) else Modifier)
-                                            .focusProperties { if (up != null && channel == firstChannel) this.up = up }
+                                            .focusProperties {
+                                                if (up != null && channel == firstChannel) this.up = up
+                                                // A row ends at its last programme: Compose's 2D search would otherwise leave the row diagonally.
+                                                if (position == slots.lastIndex) this.right = FocusRequester.Cancel
+                                            }
                                             .pageAnchor(restore, key, index, row && slot.program == initial?.program),
                                         { restore.mark(key, index); select(channel, slot.program) },
                                         { restore.mark(key, index); if (television) watch(channel) else select(channel, slot.program) })
