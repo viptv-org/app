@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.viptv.app.features.calendar.CALENDAR_MANAGE
 import org.viptv.app.features.calendar.CalendarFilter
 import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.preview.PreviewTvCalendar
@@ -75,6 +76,24 @@ class TvCalendarChipDownTest {
                 press(scene, Key.DirectionDown)
                 assertEquals("Today", focusedText(scene), "Down from '$chip' must land on the active day, focused '${focusedText(scene)}'")
             }
+        } finally { scene.close() }
+    }
+
+    @Test fun aWeekWithNothingScheduledOffersTheWayOut() = onEdt {
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+            ViptvTheme(true) {
+                focusManager = LocalFocusManager.current
+                Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    TvCalendarScreen(PreviewTvCalendar.days, emptyList(), {}, {}, controls = true)
+                }
+            }
+        }
+        try {
+            settle(scene)
+            focusChip(scene, "This week")
+            press(scene, Key.DirectionDown)
+            press(scene, Key.DirectionDown)
+            assertEquals(CALENDAR_MANAGE, focusedText(scene), "Down from the day rail must reach the empty week's action, focused '${focusedText(scene)}'")
         } finally { scene.close() }
     }
 }

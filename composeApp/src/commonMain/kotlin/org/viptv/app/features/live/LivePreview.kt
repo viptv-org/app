@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +19,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.Button
@@ -39,7 +39,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
     if (phone) {
         Box(Modifier.fillMaxWidth().heightIn(min = 196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
             if (art != null) AsyncImage(art, channel.card.title, Modifier.matchParentSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
-            Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
+            Box(Modifier.matchParentSize().background(Scrim.phoneLivePreview))
             Column(Modifier.fillMaxWidth().heightIn(min = 196.dp)
                 .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
             if (program == null || liveFraming(program, now) == LiveFraming.OnAir) LiveBadge(Modifier) else Spacer(Modifier.height(19.dp))

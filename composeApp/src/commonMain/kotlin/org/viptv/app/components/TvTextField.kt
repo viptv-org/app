@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -68,6 +69,8 @@ internal fun TvTextField(
     submit: (() -> Unit)? = null,
     keepFocus: Boolean = false,
     requester: FocusRequester? = null,
+    // Pins Down, e.g. to the first row of the page body under the field.
+    down: FocusRequester? = null,
     focusOnEnter: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
     onEscape: (() -> Unit)? = null,
@@ -93,6 +96,7 @@ internal fun TvTextField(
         }
         AppBasicTextField(value, { if (enabled) onValueChange(it) },
             Modifier.fillMaxWidth().heightIn(min = (80 * scale).dp).focusRequester(target)
+                .focusProperties { down?.let { this.down = it } }
                 // The D-pad leaves the field: the device IME owns editing keys while it is open, and a closed one must not trap the remote.
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
