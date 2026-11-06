@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.listItemEntrance
@@ -89,7 +91,8 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val list = rememberLazyListState()
-        val heading = 1 + (if (busy) 1 else 0) + (if (error != null) 1 else 0) + (if (localMode) 1 else 0) + (if (!busy && history.isEmpty() && error == null) 1 else 0)
+        val pageState = listPageState(history.size, busy, error)
+        val heading = 1 + (if (busy) 1 else 0) + (if (pageState == ListPageState.Failed) 1 else 0) + (if (localMode) 1 else 0) + (if (pageState == ListPageState.Empty) 1 else 0)
         val anchored = remember(lines, restore.lastKey) {
             lines.indexOfFirst { it is HistoryLine.Entry && cardLookupKey(it.display.entry.card) == restore.lastKey }
         }
@@ -119,9 +122,9 @@ fun HistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error: String?, 
                 }
             }
             if (busy) item(key = "busy") { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            if (error != null && history.isEmpty()) item(key = "error") { HistoryFailure(error, retry) }
+            if (pageState == ListPageState.Failed) item(key = "error") { HistoryFailure(error.orEmpty(), retry) }
             if (localMode) item(key = "server") { Text("Progress corrections need a server.", color = Palette.secondary) }
-            if (!busy && history.isEmpty() && error == null) item(key = "empty") { Text("Nothing watched yet.", color = Palette.secondary) }
+            if (pageState == ListPageState.Empty) item(key = "empty") { Text("Nothing watched yet.", color = Palette.secondary) }
             itemsIndexed(lines, key = { _, line -> line.key() }) { index, line ->
                 when (line) {
                     is HistoryLine.Day -> Text(line.label, Modifier.padding(top = 12.dp, bottom = 4.dp), fontSize = 12.sp,

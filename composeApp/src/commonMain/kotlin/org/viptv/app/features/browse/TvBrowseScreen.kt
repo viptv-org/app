@@ -20,6 +20,8 @@ import com.composables.icons.lucide.SearchX
 import com.composables.icons.lucide.TriangleAlert
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.AddonFailureNotice
+import org.viptv.app.components.ListPageState
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.TvRequestedFocus
 import org.viptv.app.features.home.TvCatalogCard
@@ -44,6 +46,7 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     failures: List<AddonFailure> = emptyList(), manageAddons: () -> Unit = {}) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
+    val pageState = listPageState(selected.size, busy, error)
     val restore = rememberPageRestore("browse")
     val anchored = restore.landing(selected.size) { cardLookupKey(selected[it]) }
     val chromeFocus = remember { FocusRequester() }
@@ -65,15 +68,15 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                     }
                 }
                 Spacer(Modifier.height(40.dp * scale))
-                if (error != null && selected.isEmpty()) {
-                    TvBrowseStatus(scale, Lucide.TriangleAlert, "Couldn’t load this catalog", error,
+                if (pageState == ListPageState.Failed) {
+                    TvBrowseStatus(scale, Lucide.TriangleAlert, "Couldn’t load this catalog", error.orEmpty(),
                         retry?.let { "Try again" to it }, chromeFocus)
-                } else if (!busy && selected.isEmpty()) {
+                } else if (pageState == ListPageState.Empty) {
                     TvBrowseStatus(scale, Lucide.SearchX, "Nothing matches these filters",
                         "Clear a filter or choose another catalog to see more titles.",
                         "Clear all filters" to { applyQuery(clearedFilters(query)) }, chromeFocus)
                 } else {
-                    if (busy && selected.isEmpty()) {
+                    if (pageState == ListPageState.Loading) {
                         TvBrowseLoading(scale)
                     } else {
                         if (error != null) Text(error, color = Palette.danger, fontSize = (22 * scale).sp,

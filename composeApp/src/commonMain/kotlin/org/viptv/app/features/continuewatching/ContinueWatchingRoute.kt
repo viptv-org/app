@@ -1,6 +1,7 @@
 package org.viptv.app.features.continuewatching
 
 import androidx.compose.runtime.Composable
+import org.viptv.app.components.listPageState
 import org.viptv.app.state.*
 
 @Composable
@@ -20,6 +21,5 @@ internal fun ContinueWatchingRoute(state: ApplicationState, controller: Applicat
 
 internal data class ContinueWatchingPage(val cards: List<org.viptv.engine.wire.Card>, val loaded: Boolean,
     val busy: Boolean = false, val error: String? = null, val pageError: String? = null) {
-    val loading get() = !loaded && error == null
-    val empty get() = loaded && cards.isEmpty() && error == null
+    val state get() = listPageState(cards.size, busy, error, answered = loaded)
 }
