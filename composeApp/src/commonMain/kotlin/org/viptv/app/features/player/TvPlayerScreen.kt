@@ -39,6 +39,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    slateProvider: String? = null, configureSource: (() -> Unit)? = null,
     failure: PlaybackFailure? = null, failedSource: String? = null, startup: StartupProgress? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     val activationKeys = LocalActivationKeys.current
@@ -61,7 +62,17 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     DisposableEffect(state) { backChanged(back); onDispose { backChanged(null) } }
     // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); if (state.checkFirstFrame()) observe(PlayerFact.Undecodable) } }
-    LaunchedEffect(externalFacts, state) { externalFacts.collect(state::observe) }
+    var slateNotice by remember(playbackKey) { mutableStateOf(false) }
+    var slateFocused by remember { mutableStateOf(false) }
+    val slateConfigure = remember { FocusRequester() }
+    val slateChoose = remember { FocusRequester() }
+    fun noteSlate(fact: PlayerFact) { if (fact is PlayerFact.ProbableErrorSlate) slateNotice = true }
+    LaunchedEffect(slateNotice) {
+        if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false }
+        // Only take focus back when the notice had it; the viewer may be anywhere else.
+        if (slateFocused) { slateFocused = false; withFrameNanos { }; root.requestFocus() }
+    }
+    LaunchedEffect(externalFacts, state) { externalFacts.collect { noteSlate(it); state.observe(it) } }
     LaunchedEffect(state.controlError) { state.controlError?.let { frameDelay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = activeSkip != null && !state.visible
@@ -105,7 +116,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             } else false
             Key.DirectionDown -> if (state.timelineFocused) { state.scrub = null; state.visible = false; root.requestFocus(); true }
                 else if (!state.visible && !state.failed && !state.buffering && !state.showNext) { state.reveal(); true } else false
-            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused || !state.visible)) {
+            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && slateNotice) {
+                (if (configureSource != null) slateConfigure else slateChoose).requestFocus(); true
+            } else if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.scrub = null; state.reveal(audio = true); true
             } else false
             else -> if (event.key != Key.Back && !state.visible && !state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes) {
@@ -118,7 +131,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (rendering != null) PlayerSurface(rendering, paused || input == null, LocalFitToScreen.current, Modifier.fillMaxSize(), {
-                if (input === rendering) { state.observe(it); observe(it) }
+                if (input === rendering) { noteSlate(it); state.observe(it); observe(it) }
             }, state.commands)
         }
         if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
@@ -169,7 +182,9 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             pendingSubtitle = state.pendingSubtitle, subtitleError = state.subtitleError,
             pendingAudio = state.pendingAudio, audioError = state.audioError)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
-        audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
+        if (slateNotice && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes)
+            TvSlateNotice(slateProvider, scale, configureSource, chooseSources, slateConfigure, slateChoose) { slateFocused = it }
+        else audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }
 }
 
