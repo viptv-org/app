@@ -4,17 +4,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.*
 
 internal class ListRemovalHost : AutoCloseable {
-    val deletes = CopyOnWriteArrayList<String>()
-    val saves = CopyOnWriteArrayList<JsonObject>()
+    val deletes = EngineRequests<String>()
+    val saves = EngineRequests<JsonObject>()
     // The host lists saved titles by the order they were added, so a re-save returns to its old place.
     private val removedAt = java.util.concurrent.ConcurrentHashMap<String, Int>()
-    val visibility = CopyOnWriteArrayList<JsonObject>()
+    val visibility = EngineRequests<JsonObject>()
     var libraryCards = (1..3).map(::libraryCard)
     var continueCards = (1..4).map(::continueCard)
     var refuseVisibility = false

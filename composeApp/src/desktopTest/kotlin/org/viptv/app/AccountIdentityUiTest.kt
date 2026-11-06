@@ -27,7 +27,7 @@ class AccountIdentityUiTest {
     private val response = """{"account":{"id":"1","username":"viewer","name":"Viewer Name","role":"owner"},"csrf_token":"current"}"""
 
     @Test fun identityPageShowsTheHostsNameUsernameAndRoleWithNoEmailRow() = runBlocking {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
             paths += request.url.encodedPath

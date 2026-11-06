@@ -14,7 +14,7 @@ class RemoteGatewaysTest {
 
     @Test fun gatewayOperationsAreEachSentOnceWithTheExpectedBody() = runBlocking {
         val fakeKey = "pgk_" + "a".repeat(64)
-        val calls = mutableListOf<Call>()
+        val calls = EngineRequests<Call>()
         val client = HttpClient(MockEngine { request ->
             val text = (request.body as? TextContent)?.text
             calls += Call(request.method, request.url.encodedPath, text)

@@ -69,14 +69,14 @@ class DetailsResumeSeasonTest {
             "rows":[{"browse":{"query":[],"target":"Continue"},"cards":[${continueCard(resume.first, resume.second, caughtUp)}],"id":"continue",
                 "message":null,"next_cursor":null,"provider_id":"library","state":"Ready","title":"Continue Watching"}]}}"""
 
-    private val metaOffsets = mutableListOf<Int>()
+    private val metaOffsets = EngineRequests<Int>()
 
     private fun MockRequestHandleScope.json(text: String) = respond(text, headers = headersOf(HttpHeaders.ContentType, "application/json"))
     private fun MockRequestHandleScope.host(request: HttpRequestData, bootstrapJson: String) = when (request.url.encodedPath) {
         "/api/bootstrap" -> json(bootstrapJson)
         "/api/meta/series/$show" -> {
             val offset = request.url.parameters["offset"]?.toInt() ?: 0
-            synchronized(metaOffsets) { metaOffsets += offset }
+            metaOffsets += offset
             json(metaPage(offset, request.url.parameters["limit"]?.toInt() ?: 24))
         }
         "/api/streams" -> json("""{"id":"job-1"}""")
@@ -160,7 +160,7 @@ class DetailsResumeSeasonTest {
             assertTrue(app.nodes().none { text(it).startsWith("Episode 1-") || text(it).contains(". Episode 1-") },
                 "no season 1 episode is on screen: the list shows season 2")
             app.assertEpisodeAtTop("8. Episode 2-8")
-            assertTrue(synchronized(metaOffsets) { metaOffsets.toList() }.contains(27),
+            assertTrue(metaOffsets.contains(27),
                 "season 2 (offset 27: 4 specials + 23 episodes) came through Details paging: $metaOffsets")
             app.save("phone-details-resume-season")
         }

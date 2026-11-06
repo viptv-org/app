@@ -35,8 +35,8 @@ class UnresolvedTitleSearchTest {
 
     private inner class Host(private val metaStatus: HttpStatusCode = HttpStatusCode.NotFound,
         private val metaBody: String = needsSearch, private val answerResolved: Boolean = false) {
-        val metaRequests = mutableListOf<String>()
-        val searchRequests = mutableListOf<String>()
+        val metaRequests = EngineRequests<String>()
+        val searchRequests = EngineRequests<String>()
 
         private fun MockRequestHandleScope.json(text: String, status: HttpStatusCode = HttpStatusCode.OK) =
             respond(text, status, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -45,12 +45,12 @@ class UnresolvedTitleSearchTest {
             val path = request.url.encodedPath
             when {
                 path == "/api/search" -> {
-                    synchronized(searchRequests) { searchRequests += request.url.parameters["query"].orEmpty() }
+                    searchRequests += request.url.parameters["query"].orEmpty()
                     json(Json.encodeToString(SearchSnapshot(listOf(
                         SearchResultRow("addon:4", "Cinemeta", "stremio", addon_id = 4, cards = listOf(resolved))))))
                 }
                 path.startsWith("/api/meta/") -> {
-                    synchronized(metaRequests) { metaRequests += path }
+                    metaRequests += path
                     when {
                         answerResolved && path.contains(resolved.identity.id) -> json(Json.encodeToString(found))
                         metaStatus == HttpStatusCode.OK -> json(metaBody)
@@ -71,8 +71,8 @@ class UnresolvedTitleSearchTest {
             return controller
         }
 
-        fun metas() = synchronized(metaRequests) { metaRequests.toList() }
-        fun searches() = synchronized(searchRequests) { searchRequests.toList() }
+        fun metas() = metaRequests.snapshot()
+        fun searches() = searchRequests.snapshot()
 
         fun close(controller: ApplicationController) {
             controller.job?.cancel(); controller.cancelSourceDetail(); controller.releaseRemotePlayback()

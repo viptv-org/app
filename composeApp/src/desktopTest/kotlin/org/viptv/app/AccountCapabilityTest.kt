@@ -31,7 +31,7 @@ class AccountCapabilityTest {
     private class Server(private val capabilities: String?, private val accountRole: String,
         private val sessionRole: String, browser: Boolean,
         private val devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         private val json = headersOf(HttpHeaders.ContentType, "application/json")
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath

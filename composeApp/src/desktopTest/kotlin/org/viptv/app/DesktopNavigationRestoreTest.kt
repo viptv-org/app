@@ -34,7 +34,7 @@ class DesktopNavigationRestoreTest {
         discovery = FeatureAvailability("Available"), search = FeatureAvailability("Available"),
         filters = FeatureAvailability("Available"), calendar = FeatureAvailability("Unsupported"))
 
-    private fun client(requests: MutableList<String> = mutableListOf()) = HttpClient(MockEngine { request ->
+    private fun client(requests: EngineRequests<String> = EngineRequests()) = HttpClient(MockEngine { request ->
         val path = request.url.encodedPath
         requests += path
         val (body, status) = when {
@@ -85,7 +85,7 @@ class DesktopNavigationRestoreTest {
         val store = MemoryStore(SavedConnection.Remote(SavedRemoteSession("https://fixture.example", "r1")))
         val card = Card(MediaIdentity("gone", "movie", emptyList()), provider_id = "fixture", title = "Gone", badges = emptyList())
         store.records["p1"] = SavedNavigation("Details", BrowseQuery("movie"), detail = card, detailReturn = "Home")
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val controller = ApplicationController(this, store, remoteFactory = { origin, storage ->
             RemoteConnection(origin, storage, client(requests), browserMode = false)
         })

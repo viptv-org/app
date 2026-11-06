@@ -26,7 +26,7 @@ class PreferenceWritePendingTest {
             override suspend fun save(session: SavedRemoteSession) = Unit
             override suspend fun clear() = Unit
         }
-        val writes = mutableListOf<ProfilePreferences>()
+        val writes = EngineRequests<ProfilePreferences>()
         val client = HttpClient(MockEngine) {
             engine { dispatcher = StandardTestDispatcher(scheduler); addHandler(reply) }
             configureTransport()
@@ -42,7 +42,7 @@ class PreferenceWritePendingTest {
 
     @Test fun aToggledRowFlipsInTheFrameDropsTheRepeatAndKeepsTheHostsAnswer() = runTest {
         val release = CompletableDeferred<Unit>()
-        val writes = mutableListOf<ProfilePreferences>()
+        val writes = EngineRequests<ProfilePreferences>()
         val f = Fixture(this, testScheduler) { request ->
             writes += Json.decodeFromString<ProfilePreferences>(
                 Json.parseToJsonElement((request.body as io.ktor.http.content.TextContent).text).jsonObject.getValue("preferences").toString())

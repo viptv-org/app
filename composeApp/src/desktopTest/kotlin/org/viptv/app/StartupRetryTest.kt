@@ -18,7 +18,7 @@ class StartupRetryTest {
     private val saved = SavedRemoteSession("https://fixture.example", "r1")
 
     private class Fixture(scope: CoroutineScope, private val session: SavedRemoteSession, delays: List<Long> = emptyList()) {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         var failWith: (Int) -> Unit = {}
         var gate: CompletableDeferred<Unit>? = null
         var malformed: (Int) -> Boolean = { false }
@@ -42,7 +42,7 @@ class StartupRetryTest {
 
         private var attempts = 0
         private suspend fun io.ktor.client.engine.mock.MockRequestHandleScope.answer(path: String): io.ktor.client.request.HttpResponseData {
-            synchronized(requests) { requests += path }
+            requests += path
             return when (path) {
                 "/api/auth/device/refresh" -> {
                     attempts++
@@ -58,10 +58,10 @@ class StartupRetryTest {
             }
         }
 
-        fun count(path: String) = synchronized(requests) { requests.count { it == path } }
+        fun count(path: String) = requests.count { it == path }
         fun refreshes() = count("/api/auth/device/refresh")
         fun bootstraps() = count("/api/bootstrap")
-        fun logins() = synchronized(requests) { requests.count { it.contains("login") } }
+        fun logins() = requests.count { it.contains("login") }
     }
 
     private object NoOwner : LifecycleOwner {
