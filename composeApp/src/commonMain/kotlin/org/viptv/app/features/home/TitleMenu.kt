@@ -47,6 +47,7 @@ import com.composables.icons.lucide.Server
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.X
 import org.viptv.app.components.ListRemoval
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.motionSpec
@@ -127,6 +128,9 @@ internal fun CardMenu(card: Card, saved: Boolean, removal: ListRemoval?, actions
                 val pending = LocalPendingMutation.current.isPending(saveTarget(card))
                 MenuItem(if (pending) "Saving…" else if (saved) "In My List" else "Add to My List",
                     if (saved) Lucide.Check else Lucide.Plus, onDismiss, toggleSave, scale = scale, pending = pending, metrics = metrics)
+                MutationFailure(saveTarget(card), Modifier.padding(start = if (television) metrics.rowPaddingH else 10.dp * scale,
+                    end = if (television) metrics.rowPaddingH else 10.dp * scale, top = 2.dp * scale, bottom = 6.dp * scale),
+                    scale = if (television) scale * 1.7f else scale)
             }
             if (removal != null) MenuItem(removal.label, Lucide.Trash2, onDismiss, action = { removal.request(card) }, danger = true, scale = scale, metrics = metrics)
         }
