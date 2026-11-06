@@ -22,6 +22,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class TimelineSeekPreviewUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val position = 842_000L
     private val duration = 3_132_000L
     private var frame = 0L
