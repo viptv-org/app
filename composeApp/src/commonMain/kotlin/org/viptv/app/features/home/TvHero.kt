@@ -23,6 +23,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
@@ -64,6 +65,7 @@ internal fun TvHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, firs
             }
             TvAction(Modifier.size(72.dp * scale).focusProperties { if (down != null) this.down = down }, scale, round = true, ring = false, activate = { open(presented) }) { Icon(Lucide.Info, "More info", Modifier.size(30.dp * scale), it) }
         }
+        MutationFailure(saveTarget(presented), Modifier.padding(top = 12.dp * scale), scale = 2f * scale)
         Spacer(Modifier.height(40.dp * scale))
         progress?.let { HeroIndicators(indicators, selected, it, Modifier, scale, animated = false) }
         }

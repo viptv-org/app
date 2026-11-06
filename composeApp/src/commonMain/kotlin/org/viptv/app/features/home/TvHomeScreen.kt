@@ -32,6 +32,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.frameDelay
 import org.viptv.app.connection.Profile
@@ -187,14 +188,10 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         val original = settled ?: carousel.card
         val card = original
         val arrival = rememberTvContentArrival(home != null)
-        val empty = home?.complete == true && visibleRows.isEmpty() && featured.isEmpty()
-        val catalogsFailed = home?.complete == true && featured.isEmpty() &&
-            home.rows.any { it.state == RowState.FAILED } &&
-            home.rows.all { it.cards.isEmpty() && it.state != RowState.PENDING }
-        if (home == null || empty || catalogsFailed) {
-            if (home == null && busy && error == null) TvHomeLoading(scale)
-            else HomeStatus(home, error ?: "Your catalogs could not load. Try refreshing Home.".takeIf { catalogsFailed }, busy, retry, navigate,
-                Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 300.dp * scale), television = true, scale = scale)
+        val pageState = homePageState(home, busy, error)
+        if (pageState != ListPageState.Content) {
+            if (pageState == ListPageState.Loading) TvHomeLoading(scale)
+            else HomeStatus(home, error, busy, retry, navigate, Modifier, television = true, scale = scale)
         } else {
             Box(Modifier.fillMaxSize().then(arrival).onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown && event.key.isDirectional()) {
@@ -244,10 +241,6 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                 }
 
             }
-        }
-        if (error != null && home != null && !empty && !catalogsFailed) {
-            HomeStatus(home, error, busy, retry, navigate,
-                Modifier.padding(start = 96.dp * scale, end = 96.dp * scale, top = 168.dp * scale), television = true, scale = scale, inline = true)
         }
         if (busy && home != null) androidx.compose.material3.LinearProgressIndicator(
             Modifier.fillMaxWidth().padding(horizontal = 96.dp * scale).padding(top = 146.dp * scale), color = org.viptv.app.theme.Palette.accent)
