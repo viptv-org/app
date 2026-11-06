@@ -22,7 +22,7 @@ internal fun TvRecommendationShelf(parent: Card, cards: List<Card>, scale: Float
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
     Column(Modifier.padding(top = 20.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-        Text("More Like This", Modifier.padding(start = 96.dp * scale), fontSize = (30 * scale).sp,
+        Text(RELATED_HEADING, Modifier.padding(start = 96.dp * scale), fontSize = (30 * scale).sp,
             lineHeight = (36 * scale).sp, letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
 
         LazyRow(state = rows, modifier = Modifier.focusRestorer().focusGroup().onPreviewKeyEvent {
