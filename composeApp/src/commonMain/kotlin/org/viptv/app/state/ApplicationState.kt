@@ -61,10 +61,12 @@ data class ApplicationState(
     val profilePageSaved: Long = 0,
     val linkedServicesProfile: String? = null,
     val policyRefreshNeeded: Boolean = false,
+    val catalogDropped: Boolean = false,
     val managingProfiles: Boolean = false,
     val profilesFromHome: Boolean = false,
     val selectedProfile: String? = null,
     val leavePinFrom: String? = null,
+    val householdPinFor: String? = null,
     val home: HomeSnapshot? = null,
     val summaryCards: Map<String, Card> = emptyMap(),
     val homeRowBusy: Set<String> = emptySet(),
@@ -174,6 +176,27 @@ data class ApplicationState(
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
     val pendingCrashReport: CrashReport? = null,
+)
+
+// A page that drops the catalog it cached keeps what belongs to the session: where Back goes, the settings page,
+// the account reads, the add-ons, the preferences and the writes in flight.
+internal fun ApplicationState.keepShell(): ApplicationState = ApplicationState(
+    navBack = navBack, navForward = navForward,
+    settingsEntrySection = settingsEntrySection, settingsPage = settingsPage, settingsReturnsToPlayer = settingsReturnsToPlayer,
+    mutations = mutations,
+    accountIdentity = accountIdentity, accountDevices = accountDevices, devicesRetryable = devicesRetryable,
+    passwordChangeNotice = passwordChangeNotice, sessionNotice = sessionNotice,
+    localMode = localMode,
+    manageAccount = manageAccount, accountOwner = accountOwner, accountRole = accountRole, accountAccess = accountAccess,
+    simkl = simkl, linkedServicesProfile = linkedServicesProfile,
+    addons = addons, addonLogos = addonLogos, enabledAddonIds = enabledAddonIds, plugins = plugins,
+    preferences = preferences, preferencesError = preferencesError, browsingConfiguration = browsingConfiguration,
+    sourceIntegrations = sourceIntegrations, sourceIntegrationError = sourceIntegrationError,
+    xtreamConnections = xtreamConnections, xtreamDefaultLive = xtreamDefaultLive, xtreamNotice = xtreamNotice,
+    gateways = gateways, gatewaysError = gatewaysError, gatewayChecks = gatewayChecks, gatewayGrants = gatewayGrants,
+    updateRequired = updateRequired, backendUnreachableSince = backendUnreachableSince,
+    backendRetrySeconds = backendRetrySeconds, backendBannerDismissed = backendBannerDismissed,
+    pendingCrashReport = pendingCrashReport,
 )
 
 internal val ApplicationState.animeAvailable: Boolean

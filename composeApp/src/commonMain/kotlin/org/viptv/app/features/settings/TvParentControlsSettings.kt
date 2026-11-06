@@ -78,19 +78,19 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, controls: Ma
     }
     val mutations = LocalPendingMutation.current
     val pinTarget = preferenceTarget(PARENT_PIN_TARGET)
-    pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, mutations.failure(pinTarget) ?: error,
+    pinMode?.let { mode -> TvParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, mutations.failure(pinTarget) ?: error,
         dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) },
-        pending = mutations.isPending(pinTarget)) }
+        pending = mutations.isPending(pinTarget), scale = scale) }
     editing?.let { profile -> controls[profile.id]?.policy?.let { known ->
         val target = preferenceTarget(kidsPolicyTarget(profile.id))
-        KidsPolicyDialog(profile, known,
+        TvKidsPolicyDialog(profile, known,
             snapshot?.parent?.pin_configured == true, busy, mutations.failure(target) ?: error,
-            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }, pending = mutations.isPending(target))
+            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }, pending = mutations.isPending(target), scale = scale)
     } }
     leavePinFor?.let { profile ->
         val target = preferenceTarget(leavePinTarget(profile.id))
-        LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
+        TvLeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
             dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) },
-            pending = mutations.isPending(target))
+            pending = mutations.isPending(target), scale = scale)
     }
 }
