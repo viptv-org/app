@@ -34,7 +34,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
-    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {}) {
+    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {},
+    nowMillis: Long = rememberCalendarClock().millis) {
     val choose = calendarOpener(open, openEntry)
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
@@ -87,7 +88,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
                     if (index == 0) date else null, preview, { focusedId = entry.id }, { restore.mark(entry.id, index); choose(entry) },
-                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
+                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index), nowMillis = nowMillis)
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message ->
