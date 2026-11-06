@@ -152,8 +152,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
             else ParentControlsNative({ controller.navigate(Screen.Profiles) }, compact = compact)
         },
-        tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
-            if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
+        tvParental = ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
+            if (state.localMode) TvParentalLocalSettings(scale, first, sidebar) { controller.navigate(Screen.Profiles) }
+            else if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
                 controller::closeParentTitles, controller::searchParentTitles, controller::refreshApprovedTitles,
                 controller::approveParentTitle, controller::revokeParentTitle, controller::blockParentTitle,
                 controller::unblockParentTitle, controller::refreshBlockedTitles, first)
@@ -162,10 +163,6 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 controller::unlockParentControls, controller::changeParentPin, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles, first, sidebar, scale)
         }),
-        tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
-            if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
-        },
-        tvParentalPinAvailable = state.localMode,
         tvDevices = if (!state.localMode && accountSession) ({ first, sidebar, scale, back ->
             TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back,
                 retryable = state.devicesRetryable)
