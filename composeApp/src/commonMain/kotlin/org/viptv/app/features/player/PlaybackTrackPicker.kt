@@ -65,7 +65,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
             .onPreviewKeyEvent { it.type == KeyEventType.KeyDown && it.key == Key.Escape && run { close(); true } }) {
             Box(Modifier.fillMaxSize().dismissScrim(close))
             val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.82f)
-                else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = bottomInset).widthIn(max = 680.dp).fillMaxWidth().heightIn(max = 460.dp)
+                else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = bottomInset).widthIn(max = 680.dp).fillMaxWidth().heightIn(max = 520.dp)
             Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
                 .semantics { paneTitle = "Audio and subtitles" }
                 .border(1.dp, Palette.raised, RoundedCornerShape(if (phone) 0.dp else 12.dp))
@@ -79,12 +79,14 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         AudioColumn(tracks.audio, select, scrollable = false, pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
                         SubtitlesColumn(tracks.subtitles, select, scrollable = false, pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
-                        SubtitleSettingsColumn(draft, apply, setSize, setBackground) { dialog = it }
+                        SubtitleSettings(draft, apply, setSize, setBackground, row = false) { dialog = it }
                     }
-                } else Row(Modifier.weight(1f, fill = false).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    AudioColumn(tracks.audio, select, if (tracks.audio.size <= 1) Modifier else Modifier.weight(1f), pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
-                    SubtitlesColumn(tracks.subtitles, select, Modifier.weight(1.4f), pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
-                    SubtitleSettingsColumn(draft, apply, setSize, setBackground, Modifier.weight(1.2f)) { dialog = it }
+                } else Column(Modifier.weight(1f, fill = false).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(Modifier.weight(1f, fill = false).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        AudioColumn(tracks.audio, select, if (tracks.audio.size <= 1) Modifier else Modifier.weight(1f), pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
+                        SubtitlesColumn(tracks.subtitles, select, Modifier.weight(1.4f), pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
+                    }
+                    SubtitleSettings(draft, apply, setSize, setBackground, row = true) { dialog = it }
                 }
                 if (openSettings != null) PlaybackSettingsLink(openSettings)
             }
@@ -192,47 +194,54 @@ private fun groupRow(group: SubtitleGroup, select: (PlayerCommand.SelectTrack) -
 }
 
 @Composable
-private fun SubtitleSettingsColumn(preferences: ProfilePreferences, update: (ProfilePreferences) -> Unit,
-    setSize: (Float) -> Unit, setBackground: (String?) -> Unit, modifier: Modifier = Modifier,
+private fun SubtitleSettings(preferences: ProfilePreferences, update: (ProfilePreferences) -> Unit,
+    setSize: (Float) -> Unit, setBackground: (String?) -> Unit, row: Boolean,
     openChoice: (PhonePreferenceField) -> Unit) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        SettingSection("Show subtitles") {
-            SettingsSelectRow(subtitleModeLabel(preferences.subtitleMode, preferences.preferred_audio_language)) { openChoice(PhonePreferenceField.SubtitleMode) }
-        }
-        SettingSection("Language") {
-            SettingsSelectRow(phonePreferenceLanguage(preferences.preferred_subtitle_language, false)) { openChoice(PhonePreferenceField.SubtitleLanguage) }
-        }
-        SettingSection("Size") {
+    val sections: List<Pair<String, @Composable (Modifier) -> Unit>> = listOf(
+        "Show subtitles" to { modifier ->
+            SettingsSelectRow(subtitleModeLabel(preferences.subtitleMode, preferences.preferred_audio_language), modifier) { openChoice(PhonePreferenceField.SubtitleMode) }
+        },
+        "Language" to { modifier ->
+            SettingsSelectRow(phonePreferenceLanguage(preferences.preferred_subtitle_language, false), modifier) { openChoice(PhonePreferenceField.SubtitleLanguage) }
+        },
+        "Size" to { modifier ->
             PhonePreferenceSegments(listOf("0.75" to "Small", "1.0" to "Medium", "1.25" to "Large"),
-                preferences.subtitle_font_scale.toString(), true) { value ->
+                preferences.subtitle_font_scale.toString(), true, modifier) { value ->
                 val scale = value.toFloatOrNull() ?: return@PhonePreferenceSegments
                 setSize(scale)
                 update(preferences.copy(subtitle_font_scale = scale.toDouble()))
             }
-        }
-        SettingSection("Background") {
+        },
+        "Background" to { modifier ->
             PhonePreferenceSegments(listOf("none" to "None", "box" to "Box"),
-                if (preferences.subtitle_background_color.equals("#00000000", true)) "none" else "box", true) { selected ->
+                if (preferences.subtitle_background_color.equals("#00000000", true)) "none" else "box", true, modifier) { selected ->
                 val background = if (selected == "none") "#00000000" else
                     preferences.subtitle_background_color.takeUnless { it.equals("#00000000", true) } ?: "#B3000000"
                 setBackground(if (selected == "none") null else background)
                 update(preferences.copy(subtitle_background_color = background))
             }
+        })
+    val weights = listOf(1.3f, 1f, 1.5f, 1f)
+    if (row) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        sections.forEachIndexed { index, (label, content) ->
+            SettingSection(label, Modifier.weight(weights[index]), content)
         }
+    } else Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        sections.forEach { (label, content) -> SettingSection(label, Modifier, content) }
     }
 }
 
 @Composable
-private fun SettingSection(label: String, content: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+private fun SettingSection(label: String, modifier: Modifier = Modifier, content: @Composable (Modifier) -> Unit) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         SectionLabel(label)
-        content()
+        content(Modifier.fillMaxWidth())
     }
 }
 
 @Composable
-private fun SettingsSelectRow(value: String, choose: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(20.dp)).background(Color(0xFF272727))
+private fun SettingsSelectRow(value: String, modifier: Modifier = Modifier, choose: () -> Unit) {
+    Row(modifier.height(40.dp).clip(RoundedCornerShape(20.dp)).background(Color(0xFF272727))
         .pointerClickable(role = Role.Button, shape = RoundedCornerShape(20.dp), onClick = choose)
         .padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(value, Modifier.weight(1f), fontSize = 14.sp, lineHeight = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = Palette.text)
