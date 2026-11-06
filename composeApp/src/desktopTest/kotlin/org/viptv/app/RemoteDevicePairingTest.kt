@@ -72,7 +72,7 @@ class RemoteDevicePairingTest {
             }
             val expired = assertFailsWith<DevicePairingEnded> { pairing.poll(code) }
             assertEquals(DevicePairingEnded.Reason.Expired, expired.reason)
-            assertEquals("This sign-in code expired. Request a new code.", expired.message)
+            assertEquals("This code expired.", expired.message)
         } finally { remote.close() }
     }
 
