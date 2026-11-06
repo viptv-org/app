@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import org.viptv.app.components.Brand
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvRequestedFocus
-import org.viptv.app.components.TvStartupProgress
+import org.viptv.app.components.StartupProgress
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -31,7 +31,7 @@ internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
         Box(Modifier.align(Alignment.TopCenter).padding(top = 440.dp * scale).heightIn(min = 104.dp * scale).graphicsLayer { alpha = opacity.value }) {
             Brand(88.dp * scale, (104 * scale).sp, 22.dp * scale, (-4.16f * scale).sp, (104 * scale).sp)
         }
-        TvStartupProgress(scale, Modifier.align(Alignment.TopCenter).padding(top = 600.dp * scale))
+        StartupProgress(scale, Modifier.align(Alignment.TopCenter).padding(top = 600.dp * scale))
         if (changeConnection != null) {
             val first = remember { FocusRequester() }
             var placed by remember { mutableStateOf(false) }

@@ -180,8 +180,8 @@ fun App(
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
                     TvSplash(controller::disconnect)
                 } else {
-                    // Restore-in-progress placeholder: never flash the login screen while the browser session is validated.
-                    Box(Modifier.fillMaxSize().background(Palette.background))
+                    DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
+                    StartupScreen(controller::disconnect)
                 }
                 return@BoxWithConstraints
             }
