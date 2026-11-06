@@ -17,6 +17,7 @@ import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.responseSpec
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
@@ -41,29 +42,32 @@ internal fun DesktopHeroActions(card: Card, play: () -> Unit, info: () -> Unit, 
     val saveHovered = saveInteractions.pointerHovered()
     val saveFocused by saveInteractions.collectIsFocusedAsState()
     val saveFill by animateColorAsState(if (saveHovered) HoverFill.surface4 else Palette.raised, responseSpec(), label = "Save fill")
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Button(play, Modifier.width(140.dp).heightIn(min = 44.dp)
-            .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
-            interactionSource = playInteractions, shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-            if (pending) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
-            else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Play", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(play, Modifier.width(140.dp).heightIn(min = 44.dp)
+                .tvFocusOutline(playFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
+                interactionSource = playInteractions, shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                if (pending) PendingActionSpinner(Modifier.size(16.dp), size = 16.dp, strokeWidth = 2.dp, color = Palette.background)
+                else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Play", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Button(info, Modifier.heightIn(min = 44.dp)
+                .tvFocusOutline(infoFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
+                interactionSource = infoInteractions, shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                Icon(Lucide.Info, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
+                Text("More info", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            }
+            FilledIconButton(onClick = save, modifier = Modifier.size(44.dp)
+                .tvFocusOutline(saveFocused, 22.dp, darkGap = 2.dp, width = 2.dp).saveActionName(saved),
+                interactionSource = saveInteractions,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = saveFill, contentColor = Palette.text)) {
+                if (mutations.isPending(target)) MutationSpinner(22.dp)
+                else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp))
+            }
         }
-        Button(info, Modifier.heightIn(min = 44.dp)
-            .tvFocusOutline(infoFocused, 12.dp, darkGap = 2.dp, width = 2.dp),
-            interactionSource = infoInteractions, shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-            Icon(Lucide.Info, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
-            Text("More info", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        }
-        FilledIconButton(onClick = save, modifier = Modifier.size(44.dp)
-            .tvFocusOutline(saveFocused, 22.dp, darkGap = 2.dp, width = 2.dp).saveActionName(saved),
-            interactionSource = saveInteractions,
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = saveFill, contentColor = Palette.text)) {
-            if (mutations.isPending(target)) MutationSpinner(22.dp)
-            else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp))
-        }
+        MutationFailure(target)
     }
 }
