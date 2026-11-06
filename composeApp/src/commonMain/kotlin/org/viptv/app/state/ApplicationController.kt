@@ -211,7 +211,7 @@ internal fun ApplicationController.failureMessage(error: Exception): String? = w
     is RemoteFailure -> error.message
     is LocalFailure -> error.message
     is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
-    is IllegalArgumentException -> "Enter a valid HTTPS server address."
+    is IllegalArgumentException -> SERVER_ADDRESS_ERROR
     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
 }
 

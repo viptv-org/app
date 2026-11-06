@@ -13,16 +13,19 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
+import org.viptv.app.connection.SERVER_ADDRESS_ERROR
+import org.viptv.app.connection.remoteOriginOrNull
 
 @Composable
 internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scale: Float,
     connect: (String, String, String) -> Unit, serverChanged: (String) -> Unit = {}) {
-    var server by remember { mutableStateOf(origin.ifBlank { "https://your-server.example" }) }
+    var server by remember(origin) { mutableStateOf(origin) }
+    var serverError by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var editingPassword by remember { mutableStateOf(false) }
     var visible by remember { mutableStateOf(false) }
-    var serverDialog by remember { mutableStateOf(false) }
+    var serverDialog by remember { mutableStateOf(origin.isBlank()) }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.offset(96.dp * scale, 96.dp * scale), verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             Text("Use a password", fontSize = (24 * scale).sp, lineHeight = (34.8f * scale).sp, color = androidx.compose.ui.graphics.Color(0xFF8F8D89), fontWeight = FontWeight.SemiBold)
@@ -38,22 +41,31 @@ internal fun TvPasswordPanel(origin: String, busy: Boolean, error: String?, scal
             }
         }
         Column(Modifier.offset(1290.dp * scale, 270.dp * scale).width(534.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-            TvPasswordAction("Sign in", Lucide.ArrowRight, scale, !busy && email.isNotBlank() && password.isNotEmpty()) {
+            TvPasswordAction("Sign in", Lucide.ArrowRight, scale, canSignInWithPassword(server, email, password, busy)) {
                 connect(server, email, password); password = ""
             }
             TvPasswordAction(if (visible) "Hide password" else "Show password", if (visible) Lucide.EyeOff else Lucide.Eye, scale) { visible = !visible }
             Text("Typing with a remote is slow. Scanning a code with your phone is quicker.", Modifier.padding(top = 14.dp * scale),
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary)
             TvPasswordAction("Delete character", Lucide.Delete, scale) { if (editingPassword) password = password.dropLast(1) else email = email.dropLast(1) }
-            TvPasswordAction("Use another server", Lucide.Server, scale) { serverDialog = true }
+            TvPasswordAction("Use another server", Lucide.Server, scale) { serverError = null; serverDialog = true }
             error?.let { Text(it, color = Palette.danger, fontSize = (22 * scale).sp) }
             if (busy) Text("Signing in…", color = Palette.secondary, fontSize = (22 * scale).sp)
         }
     }
     if (serverDialog) AlertDialog(onDismissRequest = { serverDialog = false }, title = { Text("Server address") },
-        text = { AppTextField(server, { server = it }, label = "HTTPS server address", onEscape = { serverDialog = false }) },
-        confirmButton = { TextButton(onClick = { serverChanged(server); serverDialog = false }) { Text("Done") } })
+        text = { AppTextField(server, { server = it; serverError = null }, label = "HTTPS server address",
+            isError = serverError != null, supportingText = { serverError?.let { Text(it) } },
+            onEscape = { serverDialog = false }) },
+        confirmButton = { TextButton(onClick = {
+            val selected = remoteOriginOrNull(server)
+            if (selected == null) serverError = SERVER_ADDRESS_ERROR
+            else { server = selected; serverChanged(selected); serverDialog = false }
+        }, enabled = server.isNotBlank()) { Text("Done") } })
 }
+
+internal fun canSignInWithPassword(server: String, email: String, password: String, busy: Boolean) =
+    !busy && remoteOriginOrNull(server) != null && email.isNotBlank() && password.isNotEmpty()
 
 @Composable
 private fun TvPasswordAction(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, scale: Float, enabled: Boolean = true, activate: () -> Unit) {
