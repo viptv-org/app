@@ -63,7 +63,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         val pageHeight = maxHeight
         val density = androidx.compose.ui.platform.LocalDensity.current
         // The preview grows with the system font scale, so the chips and the guide start below it instead of over it.
-        val chipsTop = maxOf(380.dp * scale, with(density) { previewHeight.toDp() } + 12.dp * scale)
+        val chipsTop = maxOf(380.dp * scale, TvLivePreviewTop * scale + with(density) { previewHeight.toDp() } + 12.dp * scale)
         val guideTop = maxOf(460.dp * scale, chipsTop + 80.dp * scale)
         if (chipsOnly) {
             Box(Modifier.fillMaxSize().focusProperties { onEnter = { when {
