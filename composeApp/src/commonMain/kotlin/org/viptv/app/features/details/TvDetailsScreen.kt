@@ -21,6 +21,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.TextButton
+import org.viptv.app.features.settings.TvNoticeDialog
 
 internal enum class TvDetailRow { Hero, Episodes, Recommendations }
 
@@ -164,9 +165,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             }
         }
 
-        notice?.let { message -> AlertDialog(onDismissRequest = { notice = null },
-            title = { Text("Title options") }, text = { Text(message) },
-            confirmButton = { TextButton(onClick = { notice = null }) { Text("OK") } }) }
+        notice?.let { message -> TvNoticeDialog(scale, "Title options", message, onDismiss = { notice = null }) }
     }
 }
 

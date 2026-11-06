@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -33,6 +34,31 @@ internal fun AccessibleIconButton(
     wash: Color? = Color.White.copy(alpha = .14f),
     pending: Boolean = false,
 ) {
+    AccessibleIconButtonFrame(label, onClick, modifier, enabled, iconSize, tint, wash, pending) {
+        Icon(icon, null, Modifier.size(iconSize), tint = tint)
+    }
+}
+
+@Composable
+internal fun AccessibleIconButton(
+    icon: Painter,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    iconSize: Dp = 16.dp,
+    tint: Color = Palette.text,
+    wash: Color? = Color.White.copy(alpha = .14f),
+    pending: Boolean = false,
+) {
+    AccessibleIconButtonFrame(label, onClick, modifier, enabled, iconSize, tint, wash, pending) {
+        Icon(icon, null, Modifier.size(iconSize), tint = tint)
+    }
+}
+
+@Composable
+private fun AccessibleIconButtonFrame(label: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean,
+    iconSize: Dp, tint: Color, wash: Color?, pending: Boolean, icon: @Composable () -> Unit) {
     Box(
         modifier.sizeIn(minWidth = IconButtonTouchTarget, minHeight = IconButtonTouchTarget)
             .then(if (wash == null) Modifier else Modifier.clip(CircleShape).background(wash, CircleShape))
@@ -40,6 +66,6 @@ internal fun AccessibleIconButton(
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        if (pending) MutationSpinner(iconSize, color = tint) else Icon(icon, null, Modifier.size(iconSize), tint = tint)
+        if (pending) MutationSpinner(iconSize, color = tint) else icon()
     }
 }

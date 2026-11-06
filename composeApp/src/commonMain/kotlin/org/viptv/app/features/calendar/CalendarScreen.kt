@@ -58,7 +58,8 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     val emptyFilter = active.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
     if (television) { TvCalendarScreen(days, rows, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = active, filterChanged = filterChanged, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
+        filter = active, filterChanged = filterChanged, openEntry = openEntry, notice = notice, restore = restore, retry = retry,
+        nowMillis = now.millis); return }
     val choose = calendarOpener(open, openEntry)
     val entrance = rememberListEntrance(rows.isNotEmpty())
     var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == CALENDAR_TODAY }?.id ?: days.firstOrNull()?.id) }
@@ -110,11 +111,11 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                             }
                             is CalendarLine.Empty -> Text(calendarEmptyDay(emptyFilter), color = Palette.secondary, fontSize = 13.sp)
                             is CalendarLine.Entry -> CalendarReleaseRow(line.entry, true, scale, watch, { focused = line.entry },
-                                { restore.mark(line.entry.id, index); choose(line.entry) }, Modifier.listItemEntrance(index, entrance.animate))
+                                { restore.mark(line.entry.id, index); choose(line.entry) }, Modifier.listItemEntrance(index, entrance.animate), now.millis)
                         }
                     } else itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                         CalendarReleaseRow(entry, false, scale, watch, { focused = entry }, { restore.mark(entry.id, index); choose(entry) },
-                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index).listItemEntrance(index, entrance.animate))
+                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index).listItemEntrance(index, entrance.animate), now.millis)
                     }
                     if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }
@@ -141,8 +142,9 @@ internal fun rememberCalendarClock(): CalendarClock {
 }
 
 @Composable
-private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit, modifier: Modifier = Modifier) {
-    CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch)
+private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit,
+    modifier: Modifier = Modifier, nowMillis: Long) {
+    CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch, nowMillis = nowMillis)
 }
 
 @Composable

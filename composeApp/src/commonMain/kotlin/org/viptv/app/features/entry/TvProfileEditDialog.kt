@@ -21,7 +21,7 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
     rename: (String, String) -> Unit, setPin: (String, String) -> Unit, delete: (String) -> Unit, pinAvailable: Boolean = true,
     editingCurrent: Boolean = true, openSettings: ((String) -> Unit)? = null, scale: Float = 1f) {
     if(action==TvProfileEditAction.Language||action==TvProfileEditAction.Maturity){
-        ProfilePreferenceGuidance(action==TvProfileEditAction.Language,pinAvailable,editingCurrent,profile?.name,dismiss,openSettings)
+        ProfilePreferenceGuidance(action==TvProfileEditAction.Language,pinAvailable,editingCurrent,profile?.name,dismiss,openSettings, television = true, scale = scale)
         return
     }
     if (action == TvProfileEditAction.Pin) { TvProfileLockDialog(profile, busy, scale, dismiss, setPin, pinAvailable); return }

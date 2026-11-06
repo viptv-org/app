@@ -86,5 +86,5 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
         card.description.providerText()?.let { Text(it, Modifier.padding(top = 8.dp * scale), fontSize = (20 * scale).sp, lineHeight = (28 * scale).sp,
             color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis) }
     }
-    if (showUpcoming) EpisodeUpcomingDialog(card) { showUpcoming = false }
+    if (showUpcoming) EpisodeUpcomingDialog(card, { showUpcoming = false }, television = true, scale = scale)
 }

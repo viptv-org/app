@@ -175,7 +175,7 @@ internal fun TvEpisodeShelf(parent: Card, episodes: List<Card>, scale: Float, pl
                 }
 
         }
-        if (jumpOpen && visible.isNotEmpty()) EpisodeJumpDialog(
+        if (jumpOpen && visible.isNotEmpty()) EpisodeJumpDialog(scale,
             dismiss = { jumpOpen = false; chipRestore++ }, submit = ::jump)
     }
 }
