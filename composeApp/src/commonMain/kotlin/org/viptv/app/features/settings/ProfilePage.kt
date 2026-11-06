@@ -252,7 +252,7 @@ internal fun ProfileRow(label: String, note: String? = null, value: String? = nu
             note?.let { Text(it, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = Palette.secondary) }
         }
         if (checked != null) Switch(checked, null)
-        if (value != null) Text(value, color = Palette.secondary, fontSize = 14.sp)
+        if (value != null) SettingsRowValue(value)
         if (!danger && checked == null) Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
     }
 }
