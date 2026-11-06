@@ -267,7 +267,8 @@ fun App(
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
                                 seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) },
-                                moreRow = controller::homeRowPage, rowBusy = state.homeRowBusy, rowErrors = state.homeRowErrors) }
+                                moreRow = controller::homeRowPage, rowBusy = state.homeRowBusy, rowErrors = state.homeRowErrors,
+                                removeContinueWatching = if (state.localMode) null else controller::removeFromContinueWatching) }
                                 // Kept per profile on every layout, so Back finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }

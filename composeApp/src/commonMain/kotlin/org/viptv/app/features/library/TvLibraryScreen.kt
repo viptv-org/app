@@ -20,10 +20,13 @@ import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageStateLayout
 import org.viptv.app.components.SegmentedControl
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.ServerMessages
+import org.viptv.app.features.continuewatching.ContinueWatchingRemoval
+import org.viptv.app.features.continuewatching.ContinueWatchingState
 import org.viptv.app.features.continuewatching.continueWatchingActivation
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.features.home.TvHomeSkeletonCard
@@ -95,12 +98,13 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
         answered = snapshot != null && (!busy || snapshot.query.sameList(query))) else section?.page?.state ?: ListPageState.Empty
     val moreAction = if (saved) more else section?.more
     val barBusy = if (saved) busy else section?.page?.busy ?: false
-    val removeLabel = if (saved) REMOVE_LIBRARY_LABEL else REMOVE_CONTINUE_LABEL
     val removeAction = if (saved) remove else section?.remove
     // The design's My List options: a 700 ms hold on a card offers the title's removal, so no bar takes the grid's room.
-    val removal = remember(removeAction, removeLabel, saved) {
-        removeAction?.let { ListRemoval(removeLabel, continueWatching = !saved) { card -> confirming = card } }
+    val removal = remember(remove, saved) {
+        remove?.let { ListRemoval(REMOVE_LIBRARY_LABEL, replacesSave = true) { card -> confirming = card } }
     }
+    // The second segment shares Home's Continue Watching removal: one entry, one confirmation, one request.
+    val continueRemoval = remember(section?.remove) { ContinueWatchingRemoval(section?.remove) }
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
@@ -122,7 +126,7 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     AutomaticPage(shown.size, barBusy, moreAction) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        CompositionLocalProvider(LocalTvScale provides scale, LocalListRemoval provides removal) {
+        CompositionLocalProvider(LocalTvScale provides scale, LocalListRemoval provides if (saved) removal else continueRemoval.offer) {
             Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 SegmentedControl(MyListSegmentLabels, segmentIndex(segment), { index -> selectSegment(MyListSegment.entries[index]) },
@@ -141,17 +145,20 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
                 } else {
                     section?.page?.let { page -> page.error?.takeIf { page.loaded }?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) } }
                 }
-                if (pageState == ListPageState.Failed) {
-                    if (saved) TvLibraryFailure(error ?: "", retry, scale)
-                    else TvPageMessage(scale, CONTINUE_FAILED_TITLE, section?.page?.error.orEmpty(), "Try again", { section?.retry?.invoke() }, action)
+                if (!saved && (pageState == ListPageState.Failed || pageState == ListPageState.Empty)) {
+                    ContinueWatchingState(pageState, section?.page?.error, { section?.retry?.invoke() },
+                        { section?.home?.invoke() ?: home() }, Modifier.weight(1f), layout = PageStateLayout.Tv,
+                        scale = scale, focus = action)
+                } else if (pageState == ListPageState.Failed) {
+                    TvLibraryFailure(error ?: "", retry, scale)
                 } else if (pageState == ListPageState.Empty) {
-                    if (saved) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                    Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                         Text(empty.title, fontSize = (32 * scale).sp)
                         Text(empty.message, fontSize = (24 * scale).sp, color = Palette.secondary)
                         TvAction(Modifier.heightIn(min = 64.dp * scale), scale, primary = true,
                             activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                             contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
-                    } else TvPageMessage(scale, CONTINUE_EMPTY_TITLE, CONTINUE_EMPTY_BODY, "Browse Home", { section?.home?.invoke() ?: home() }, action)
+                    }
                 } else {
                     LazyVerticalGrid(GridCells.Fixed(columns), (if (saved) Modifier.width(1720.dp * scale) else Modifier.fillMaxWidth())
                         .weight(1f).focusGroup(),
@@ -194,21 +201,10 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
                     }
                 }
             }
-        }
-    }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, removeLabel, confirm = { confirming = null; removeAction?.invoke(card) }, dismiss = { confirming = null })
-    }
-}
-
-@Composable
-private fun TvPageMessage(scale: Float, title: String, message: String, action: String, activate: () -> Unit, requester: FocusRequester) {
-    Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
-        Text(title, fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
-        Text(message, color = Palette.secondary, fontSize = (24 * scale).sp)
-        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
-            activate = activate, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-            Text(action, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
+            if (saved) confirming?.let { card ->
+                ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) },
+                    dismiss = { confirming = null }, television = true, scale = scale)
+            } else continueRemoval.confirmation(television = true, scale = scale)
         }
     }
 }

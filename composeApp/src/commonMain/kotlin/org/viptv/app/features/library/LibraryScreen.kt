@@ -18,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
+import org.viptv.app.features.continuewatching.ContinueWatchingRemoval
+import org.viptv.app.features.continuewatching.ContinueWatchingState
+import org.viptv.app.features.continuewatching.REMOVE_CONTINUE_LABEL
 import org.viptv.app.features.continuewatching.continueWatchingActivation
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.components.AutomaticPage
@@ -41,6 +44,7 @@ import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.PosterSkeleton
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.ListSkeletonTile
 import org.viptv.app.components.listPageState
 import org.viptv.app.components.listItemEntrance
@@ -52,7 +56,6 @@ private const val LIBRARY_HISTORY_KEY = "library:history"
 private const val LIBRARY_CARD_TYPE = "library:card"
 private const val CONTINUE_CARD_TYPE = "continue:card"
 internal const val REMOVE_LIBRARY_LABEL = "Remove from My List"
-internal const val REMOVE_CONTINUE_LABEL = "Remove from Continue Watching"
 private val CONTINUE_MIN_CARD = 260.dp
 private const val CONTINUE_CARDS_AFTER = 1
 
@@ -80,11 +83,9 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
             var filter by remember { mutableStateOf("All") }
             var sort by remember { mutableStateOf("Date added") }
             var confirming by remember { mutableStateOf<Card?>(null) }
-            var continueConfirming by remember { mutableStateOf<Card?>(null) }
             val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_LIBRARY_LABEL, replacesSave = true) { card -> confirming = card } } }
-            val continueRemoval = remember(section?.remove) {
-                section?.remove?.let { ListRemoval(REMOVE_CONTINUE_LABEL, continueWatching = true) { card -> continueConfirming = card } }
-            }
+            // The Continue Watching removal is the one Home's shelf offers: one entry, one confirmation, one request.
+            val continueRemoval = remember(section?.remove) { ContinueWatchingRemoval(section?.remove) }
             val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
             val visible = when {
                 !saved -> emptyList()
@@ -125,7 +126,7 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                 layout.visibleItemsInfo.filter { it.contentType == if (saved) LIBRARY_CARD_TYPE else CONTINUE_CARD_TYPE }
                     .maxOfOrNull { it.index }?.minus(layout.totalItemsCount - shown.size) ?: -1
             }
-            CompositionLocalProvider(LocalListRemoval provides if (saved) removal else continueRemoval) {
+            CompositionLocalProvider(LocalListRemoval provides if (saved) removal else continueRemoval.offer) {
                 Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = if (phone) 8.dp else 24.dp)) {
                     LazyVerticalGrid(cells, state = grid,
                         modifier = if (shown.isEmpty()) Modifier.fillMaxWidth() else Modifier.weight(1f),
@@ -199,11 +200,11 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                     if (pageState == ListPageState.Loading) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp)) {
                         if (saved) PosterSkeleton(phone, gap = if (phone) 10.dp else 12.dp)
                         else ContinueWatchingSkeleton(continueColumns, continueGap)
-                    } else if (pageState == ListPageState.Failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
-                        if (saved) LibraryFailure(error ?: "", retry)
-                        else ContinueWatchingMessage(CONTINUE_FAILED_TITLE, CONTINUE_FAILED_BODY, "Try again", { section?.retry?.invoke() })
-                    } else if (pageState == ListPageState.Empty) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
-                        if (saved) Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    } else if (pageState == ListPageState.Failed || pageState == ListPageState.Empty) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+                        if (!saved) ContinueWatchingState(pageState, section?.page?.error, { section?.retry?.invoke() },
+                            { section?.home?.invoke() ?: home() }, layout = pageStateLayout(television = false, compact = phone))
+                        else if (pageState == ListPageState.Failed) LibraryFailure(error ?: "", retry)
+                        else Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                                 Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
                             }
@@ -211,23 +212,16 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                             Text(empty.message, fontSize = 14.sp, color = Palette.secondary)
                             Button(onClick = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() }, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home") }
-                        } else ContinueWatchingMessage(CONTINUE_EMPTY_TITLE, CONTINUE_EMPTY_BODY, "Browse Home", { section?.home?.invoke() ?: home() })
+                        }
                     }
                 }
             }
             if (saved) confirming?.let { card ->
                 ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
-            } else continueConfirming?.let { card ->
-                ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { continueConfirming = null; continueWatching?.remove?.invoke(card) }, dismiss = { continueConfirming = null })
-            }
+            } else continueRemoval.confirmation()
         }
     }
 }
-
-internal const val CONTINUE_FAILED_TITLE = "Continue Watching didn’t load"
-private const val CONTINUE_FAILED_BODY = "Check the connection and try again."
-internal const val CONTINUE_EMPTY_TITLE = "Nothing in progress"
-internal const val CONTINUE_EMPTY_BODY = "Titles you start watching appear here."
 
 @Composable
 private fun ContinueWatchingSkeleton(columns: Int, gap: androidx.compose.ui.unit.Dp) {
@@ -237,20 +231,6 @@ private fun ContinueWatchingSkeleton(columns: Int, gap: androidx.compose.ui.unit
                 repeat(columns) { ListSkeletonTile(Modifier.weight(1f).aspectRatio(16f / 9)) }
             }
         }
-    }
-}
-
-@Composable
-private fun ContinueWatchingMessage(title: String, message: String, action: String, activate: () -> Unit) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
-            Icon(Lucide.Play, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
-        }
-        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(message, fontSize = 14.sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        Button(onClick = activate, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(action) }
     }
 }
 

@@ -31,8 +31,9 @@ internal fun LibraryRoute(state: ApplicationState, controller: ApplicationContro
         if (segment == MyListSegment.Continue) controller.ensureContinueWatching() else controller.ensureLibraryPage()
     }
     val list = state.continueWatching?.takeIf { it.profile == state.selectedProfile }
+    // The segment reads its own load failure; an action's error never becomes its page state.
     val continuePage = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy,
-        error = state.error, pageError = state.continueWatchingPageError)
+        error = state.continueWatchingError, pageError = state.continueWatchingPageError)
     LibraryScreen(page?.cards ?: state.library, true, television, controller::open, { controller.navigate(Screen.History) },
         { controller.navigate(Screen.Home) }, page, state.libraryQuery, controller::libraryQuery,
         if (page?.next_cursor != null) controller::libraryMore else null, state.busy, state.error,
