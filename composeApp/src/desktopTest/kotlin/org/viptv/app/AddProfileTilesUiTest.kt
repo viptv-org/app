@@ -56,7 +56,7 @@ class AddProfileTilesUiTest {
         for (picker in Pickers) {
             val scene = picker.render(three, local = false)
             try {
-                assertTrue(picker.nodes(scene).none { picker.labels(it).contains("Add profile") }, "${picker.name}: nothing to add")
+                assertTrue(picker.nodes(scene).none { picker.labels(it).contains("Add a profile") }, "${picker.name}: nothing to add")
             } finally { scene.close() }
         }
     }
@@ -80,7 +80,7 @@ class AddProfileTilesUiTest {
         }
 
         fun addTile(scene: ImageComposeScene): SemanticsNode =
-            nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && labels(it).contains("Add profile") }
+            nodes(scene).single { it.config.contains(SemanticsActions.OnClick) && labels(it).contains("Add a profile") }
 
         fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

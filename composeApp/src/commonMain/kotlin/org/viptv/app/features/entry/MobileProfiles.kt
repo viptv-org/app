@@ -40,11 +40,11 @@ internal fun MobileProfiles(
         Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp)) {
             back?.let { goBack -> BackControl(goBack, Modifier.align(Alignment.CenterStart)) }
             if (local) TextButton(onClick = if (managing) done else manage, modifier = Modifier.align(Alignment.CenterEnd), enabled = !busy) {
-                Text(if (managing) "Done" else "Edit", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(if (managing) "Done" else "Manage profiles", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(Modifier.height(40.dp))
-        Text(if (managing) "Manage profiles" else "Who’s watching?", Modifier.fillMaxWidth(),
+        Text(if (managing) "Manage profiles" else "Who's watching?", Modifier.fillMaxWidth(),
             fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         error?.let { Text(it, Modifier.fillMaxWidth().padding(top = 8.dp, start = 24.dp, end = 24.dp),
             color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center) }
@@ -84,10 +84,10 @@ private fun AddProfileTile(busy: Boolean, canAdd: Boolean, add: () -> Unit) {
     Column(Modifier.fillMaxWidth().pointerClickable(enabled = enabled, onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(120.dp).clip(RoundedCornerShape(22.dp)).dashedOutline(Color.White.copy(alpha = if (enabled) .22f else .10f), 2.dp, 22.dp),
             contentAlignment = Alignment.Center) {
-            androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = if (enabled) Palette.secondary else Palette.tertiary)
+            androidx.compose.material3.Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp), tint = if (enabled) Palette.secondary else Palette.tertiary)
         }
         Spacer(Modifier.height(10.dp))
-        Text("Add profile", color = if (enabled) Palette.secondary else Palette.tertiary, fontSize = 15.sp, lineHeight = 20.sp,
+        Text("Add a profile", color = if (enabled) Palette.secondary else Palette.tertiary, fontSize = 15.sp, lineHeight = 20.sp,
             fontWeight = FontWeight.SemiBold)
     }
 }

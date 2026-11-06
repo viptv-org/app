@@ -42,7 +42,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
         val scale = maxWidth / 1920.dp
         val cardSize = 200.dp * scale
         val count = profiles.size + if (local) 1 else 0
-        Text(if (managing) "Manage profiles" else "Who’s watching?",
+        Text(if (managing) "Manage profiles" else "Who's watching?",
             Modifier.align(Alignment.TopCenter).padding(top = 220.dp * scale),
             fontSize = (56 * scale).sp, letterSpacing = (-1.12f * scale).sp, lineHeight = (64.4f * scale).sp, fontWeight = FontWeight.Bold)
         LazyRow(Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale)
@@ -64,7 +64,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
                 val canAdd = !busy && profiles.size < ProfileLimit
                 val tile = remember { FocusRequester() }
                 DisposableEffect(tile) { onDispose { if (leftTile === tile) leftTile = null } }
-                TvProfileItem("Add profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
+                TvProfileItem("Add a profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
                     .focusRequester(tile).focusProperties { down = manageFocus }
                     .onFocusChanged { if (it.isFocused) leftTile = tile }
                     .then(tvProfileArrival("add", profiles.size, scale, arrivals)), canAdd, add) {
