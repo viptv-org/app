@@ -63,7 +63,7 @@ class AddDeviceScreenTest {
     }
 
     @Test fun aCodeEnteredOnThePhoneLandsOnTheApprovalStep() {
-        val asked = mutableListOf<String>()
+        val asked = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             asked += request.url.encodedPath
             respond(pending, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))

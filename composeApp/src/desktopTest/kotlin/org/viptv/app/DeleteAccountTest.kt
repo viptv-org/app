@@ -29,7 +29,7 @@ class DeleteAccountTest {
 
     @Test fun theTypedCredentialsReachTheHostAndTheSessionEndsLocallyOnNoContent() = runBlocking<Unit> {
         val store = Store()
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/auth/account", request.url.encodedPath)
             assertEquals(HttpMethod.Delete, request.method)

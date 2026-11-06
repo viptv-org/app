@@ -27,12 +27,14 @@ class HomeGenresAppUiTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     @Test fun genresChipOpensFilteredBrowseInThePhoneApp() = runBlocking {
-        val discover = mutableListOf<Url>()
+        val discover = EngineRequests<Url>()
         val client = HttpClient(MockEngine { request ->
             val body = when (request.url.encodedPath) {
                 "/api/discovery-controls" -> CONTROLS
-                "/api/discover" -> { synchronized(discover) { discover += request.url }
-                    Json.encodeToString(CatalogPage.serializer(), CatalogPage(PreviewData.posters.take(6), complete = true)) }
+                "/api/discover" -> {
+                    discover += request.url
+                    Json.encodeToString(CatalogPage.serializer(), CatalogPage(PreviewData.posters.take(6), complete = true))
+                }
                 else -> return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
             }
             respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -86,7 +88,7 @@ class HomeGenresAppUiTest {
             until("filtered Browse") { controller.state.value.let { it.screen == Screen.Discover && !it.busy && it.browseCards.isNotEmpty() } }
             val state = controller.state.value
             assertEquals(BrowseQuery("movie", "top", "addon:1", genre = "Comedy"), state.browseQuery)
-            assertTrue(synchronized(discover) { discover.isNotEmpty() && discover.all { it.parameters["genre"] == "Comedy" } })
+            assertTrue(discover.isNotEmpty() && discover.all { it.parameters["genre"] == "Comedy" })
             until("the Browse grid") { nodes().any { text(it).contains(PreviewData.posters.first().title) || description(it).any { d -> d.contains(PreviewData.posters.first().title) } } }
             save("browse-comedy")
             controller.navigateBack()

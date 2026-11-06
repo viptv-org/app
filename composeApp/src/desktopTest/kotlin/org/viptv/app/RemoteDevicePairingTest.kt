@@ -77,7 +77,7 @@ class RemoteDevicePairingTest {
     }
 
     @Test fun aNewCodeSendsThePreviousDeviceCodeAndTheFirstCodeSendsNone() = runBlocking {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond(challenge, headers = headersOf(HttpHeaders.ContentType, "application/json"))

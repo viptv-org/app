@@ -53,7 +53,7 @@ class QuietRefreshTest {
     }.toString()
 
     private inner class Server(val handle: suspend MockRequestHandleScope.(String) -> HttpResponseData) {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request -> paths += request.url.encodedPath; handle(request.url.encodedPath) }) { configureTransport() }
     }
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
@@ -427,7 +427,7 @@ class QuietRefreshTest {
     @Test fun anAddOnOperationOnThisDeviceFinishesBeforeTheAddOnListReloads() = runBlocking<Unit> {
         var installed = intArrayOf(1, 2, 3)
         var revisions = base + ("addons" to "a2")
-        val events = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val events = EngineRequests<String>()
         val removing = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         val server = Server { path ->
             when (path) {

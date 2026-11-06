@@ -23,6 +23,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val freshness: Freshness = Freshness(),
     internal val backend: BackendHealth = BackendHealth(freshness.time),
     internal val bestMatchNoticeMillis: Long = 2_000L,
+    internal val bestMatchGraceMillis: Long = BEST_MATCH_GRACE_MILLIS,
+    internal val bestMatchCapMillis: Long = BEST_MATCH_CAP_MILLIS,
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
@@ -129,6 +131,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var addonOperation: Job? = null
     internal val mutationJobs = mutableMapOf<MutationTarget, Job>()
     internal val mutationRetries = mutableMapOf<MutationTarget, MutationRetry>()
+    internal var householdPinAction: (suspend () -> Unit)? = null
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()

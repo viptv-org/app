@@ -77,7 +77,7 @@ class MetadataOriginTransportTest {
         val origin = MetadataOrigin("stremio", "addon:7", "a".repeat(32))
         val selected = episode.copy(metadata_origin = origin, identity = episode.identity.copy(ids = listOf(ExternalId("imdb", "tt123"))),
             poster = "https://images.example/private-presentation", description = "Presentation is omitted from selectors")
-        val operations = mutableSetOf<String>()
+        val operations = EngineRequests<String>()
         fun assertSelector(value: JsonElement?) {
             val selector = Json.decodeFromJsonElement<Card>(requireNotNull(value))
             assertEquals(origin, selector.metadata_origin)
@@ -121,7 +121,7 @@ class MetadataOriginTransportTest {
         try {
             remote.detail(selected); remote.subtitles(selected); remote.sources(selected)
             remote.nextEpisode("owner", selected); remote.removeFavorite("owner", selected)
-            assertEquals(setOf("detail", "subtitles", "sources", "next", "remove"), operations)
+            assertEquals(setOf("detail", "subtitles", "sources", "next", "remove"), operations.snapshot().toSet())
         } finally { remote.close() }
     }
 
