@@ -73,6 +73,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 }
                                 MediaMetadata(card, kindFirst = true)
                                 card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                HeroStarring(card, 14.sp, 20.sp)
                                 Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))

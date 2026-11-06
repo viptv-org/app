@@ -101,6 +101,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                     item(key = "information") { Column(Modifier.padding(horizontal = gutter, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                         MediaMetadata(card)
                                         card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                        HeroStarring(card, 14.sp, 20.sp)
                                     } }
                                     if (failures.isNotEmpty()) item(key = "addon-failure") {
                                         AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter))

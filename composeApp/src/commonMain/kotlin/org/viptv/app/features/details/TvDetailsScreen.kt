@@ -30,7 +30,6 @@ private class TvDetailVisit(val firstEntry: Boolean, seen: Boolean) {
 }
 
 internal data class TvDetailExtras(
-    val cast: String? = null,
     val resume: Card? = null,
     val resumeLabel: String? = null,
     val remaining: String? = null,

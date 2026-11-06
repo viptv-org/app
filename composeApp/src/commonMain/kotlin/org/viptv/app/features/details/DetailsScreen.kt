@@ -181,7 +181,7 @@ internal fun remainingMinutesLabel(card: Card): String? {
 internal fun detailExtras(detail: DetailSnapshot?, continuing: List<Card>): TvDetailExtras {
     if (detail == null) return TvDetailExtras()
     val resume = detailResume(detail, continuing).heroEpisode(detail) ?: detail.item.takeIf(::resuming)
-    return TvDetailExtras(cast = detail.item.metadata?.cast?.takeIf { it.isNotEmpty() }?.joinToString(", "), resume = resume, resumeLabel = resume?.let(::heroPlayLabel),
+    return TvDetailExtras(resume = resume, resumeLabel = resume?.let(::heroPlayLabel),
         remaining = resume?.takeIf(::resuming)?.let(::remainingMinutesLabel), recommendations = detail.recommendations)
 }
 

@@ -57,6 +57,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
                 DesktopMetaLine(card)
                 card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = (15 * 1.45).sp, color = Palette.body,
                     maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                HeroStarring(card, 14.sp, 20.sp)
                 DesktopHeroActions(card, resumeEpisode, play, save, saved, playFromStart, chooseSource, sourceLabel)
             }
             art?.let { url ->

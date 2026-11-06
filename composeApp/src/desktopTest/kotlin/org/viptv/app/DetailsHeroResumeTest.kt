@@ -14,6 +14,7 @@ import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.detailExtras
 import org.viptv.app.features.details.detailResume
 import org.viptv.app.features.details.heroEpisode
+import org.viptv.app.features.details.heroStarring
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
@@ -78,10 +79,10 @@ class DetailsHeroResumeTest {
         assertEquals("Resume S1 E3", detailExtras(firstPage, emptyList()).resumeLabel)
     }
 
-    @Test fun tvHeroExtrasProjectTheBoundedStarringLine() {
-        val cast = firstPage.copy(item = series.copy(metadata = CardMetadata(cast = starring)))
-        assertEquals("Subaru Natsuki, Emilia, Rem", detailExtras(cast, emptyList()).cast)
-        assertNull(detailExtras(firstPage, emptyList()).cast)
+    @Test fun theHeroStarringLineIsBoundedToTheTopThree() {
+        val cast = series.copy(metadata = CardMetadata(cast = starring))
+        assertEquals("Subaru Natsuki, Emilia, Rem", cast.heroStarring())
+        assertNull(series.heroStarring())
     }
 
     @Test fun phoneHeroRendersStarringOnlyWhenTheDetailCarriesCast() = onEdt {
