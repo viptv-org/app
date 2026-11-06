@@ -1,9 +1,13 @@
 package org.viptv.app.features.details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.progressSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -77,7 +81,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 .focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel },
                 scale = scale, primary = true, ring = false, requester = first, activate = play,
                 contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
-                Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale)) {
                     Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
                         if (pending) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = tint)
                         else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), tint)
@@ -85,9 +89,15 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         Text(extras.resumeLabel ?: "Play", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                         extras.remaining?.let { Spacer(Modifier.width(54.dp * scale)); Text(it, color = tint.copy(alpha = 0.7f), fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold) }
                     }
-                    extras.resume?.progress?.takeIf { resuming(extras.resume) }?.let { progress -> LinearProgressIndicator(progress = { progress.toFloat() },
-                        modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 12.dp * scale).fillMaxWidth().height(4.dp * scale),
-                        color = tint, trackColor = tint.copy(alpha = 0.2f)) }
+                    extras.resume?.progress?.takeIf { resuming(extras.resume) }?.let { progress ->
+                        // Drawn, not a Material indicator: that one inflates its box to 24 and draws through the label.
+                        Box(Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp * scale).fillMaxWidth().height(4.dp * scale)
+                            .clip(RoundedCornerShape(2.dp * scale)).background(tint.copy(alpha = 0.2f))
+                            .progressSemantics(progress.toFloat().coerceIn(0f, 1f))) {
+                            Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight()
+                                .clip(RoundedCornerShape(2.dp * scale)).background(tint))
+                        }
+                    }
                 }
             }
             if (failure != null) TvAction(Modifier.heightIn(min = 72.dp * scale), scale, ring = false,
