@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,6 +21,8 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.theme.Scrim
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
+import org.viptv.app.components.FavouriteStar
+import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.Button
 import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.LocalPendingMutation
@@ -42,7 +43,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
             Box(Modifier.matchParentSize().background(Scrim.phoneLivePreview))
             Column(Modifier.fillMaxWidth().heightIn(min = 196.dp)
                 .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            if (program == null || liveFraming(program, now) == LiveFraming.OnAir) LiveBadge(Modifier) else Spacer(Modifier.height(19.dp))
+            if (program == null || liveFraming(program, now) == LiveFraming.OnAir) LiveBadge() else Spacer(Modifier.height(19.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = 12.sp, color = Palette.secondary)
                 (program?.title ?: channel.card.subtitle)?.let {
@@ -78,7 +79,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                 }
                 favourite?.let { save -> Button(save, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     if (favoritePending) MutationSpinner(16.dp, color = Palette.text)
-                    else Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text)
+                    else FavouriteStar(channel.favorite, 16.dp, Palette.text)
                     Spacer(Modifier.width(8.dp)); Text(if (favoritePending) "Saving…" else if (channel.favorite) "Favourited" else "Favourite")
                 } }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
@@ -94,9 +95,3 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
     }
 }
 
-@Composable
-private fun LiveBadge(modifier: Modifier) {
-    Surface(modifier, shape = RoundedCornerShape(4.dp), color = Color(0xFFE8434F)) {
-        Text("LIVE", Modifier.padding(horizontal = 6.dp, vertical = 3.dp), fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
-    }
-}

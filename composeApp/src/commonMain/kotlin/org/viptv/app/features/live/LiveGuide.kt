@@ -1,5 +1,6 @@
 package org.viptv.app.features.live
 
+import org.viptv.app.components.LiveRed
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,7 +17,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +118,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
             val markerTop = if (television) headerHeight - 10.dp * scale else headerHeight
             val markerHeight = minOf(bodyHeight + if (television) 12.dp * scale else 0.dp,
                 (maxHeight - markerTop).coerceAtLeast(0.dp))
-            val color = if (television) Color(0xFFE5484D) else Palette.danger
+            val color = if (television) LiveRed else Palette.danger
             Box(Modifier.offset(x = x, y = markerTop).width(2.dp * scale).height(markerHeight).background(color))
             if (television) Box(Modifier.offset(x = x - 5.dp * scale, y = headerHeight - 16.dp * scale)
                 .size(12.dp * scale).background(color, CircleShape))

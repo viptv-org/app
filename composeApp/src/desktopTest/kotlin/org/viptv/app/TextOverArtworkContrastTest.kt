@@ -53,7 +53,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.CardMetadata
 import org.viptv.engine.wire.MediaIdentity
 
-// Every line drawn over artwork keeps 4.5:1 against the brightest frame, so the fixture behind the copy is flat white.
+// Every line drawn over artwork or over a component's own fill keeps 4.5:1, so the fixture behind the copy is flat white.
 class TextOverArtworkContrastTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
@@ -111,11 +111,11 @@ class TextOverArtworkContrastTest {
             copy = listOf("The End of Oak Street", "Add to My List", starring), hero = listOf("The End of Oak Street")),
         Surface("phone Live", 393, 852, television = false,
             content = { LivePreview(channel, program, now = 15, phone = true, television = false, scale = 1f, watch = {}, favourite = {}) },
-            copy = listOf("101 · BBC One HD", "Evening News", "15 min left"),
-            hero = listOf("101 · BBC One HD", "Evening News")),
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left"),
+            hero = listOf("LIVE", "101 · BBC One HD", "Evening News")),
         Surface("TV Live", 1920, 1080, television = true,
             content = { TvLivePreview(channel, program, now = 15, scale = 1f, favorite = null, watch = {}) },
-            copy = listOf("101 · BBC One HD", "Evening News", "15 min left", "OK to watch"),
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left", "OK to watch"),
             hero = listOf("OK to watch")),
     )
 
@@ -165,7 +165,7 @@ class TextOverArtworkContrastTest {
 
         fun copyOverArtwork(): List<Measurement> {
             val pixels = render()
-            val overArtwork = textNodes().mapNotNull { measure(it, pixels) }.filter { isArtwork(it.background) && !isComponentFill(it.background) }
+            val overArtwork = textNodes().mapNotNull { measure(it, pixels) }.filter { isArtwork(it.background) }
             if (System.getenv("VIPTV_CONTRAST_TRACE") == "1") overArtwork.sortedBy { it.text }.forEach { line ->
                 println("  ${surface.name} \"${line.text.take(48)}\" ${"%.2f".format(line.contrast)}:1 " +
                     "ink=${"#%06X".format(line.ink and 0xFFFFFF)} bg=${"#%06X".format(line.background and 0xFFFFFF)}")
@@ -228,17 +228,10 @@ class TextOverArtworkContrastTest {
 
     private fun isArtwork(colour: Int) = luminance(colour) > GroundLuminance + 0.005
 
-    // The fixture behind the copy is flat white, so a coloured ground is a component's own opaque fill, not the artwork.
-    private fun isComponentFill(colour: Int): Boolean {
-        val channels = intArrayOf((colour shr 16) and 0xFF, (colour shr 8) and 0xFF, colour and 0xFF)
-        return channels.max() - channels.min() > FillChroma
-    }
-
     private companion object {
         const val White = 0xFFFFFFFF.toInt()
         const val WhiteArtwork = "https://artwork.test/white.jpg"
         const val RingPixels = 3
-        const val FillChroma = 16
         const val SettleFrames = 30
         val GroundLuminance = luminance(Palette.background.toArgb())
         val Inks = listOf(Palette.text, Palette.body, Palette.secondary, Palette.tertiary, Palette.background, Palette.danger)
