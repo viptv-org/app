@@ -35,14 +35,20 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.HomeGenrePicker
 import org.viptv.app.components.LocalHomeGenres
+import org.viptv.app.connection.AccountAccess
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.live.LiveChannel
 import org.viptv.app.features.live.LiveClock
+import org.viptv.app.features.live.LiveEyebrow
+import org.viptv.app.features.live.LiveNoSourceBody
+import org.viptv.app.features.live.LiveNoSourceHeadline
+import org.viptv.app.features.live.LiveNoSourcePage
 import org.viptv.app.features.live.LivePreview
 import org.viptv.app.features.live.LiveProgram
 import org.viptv.app.features.live.LocalLiveClock
+import org.viptv.app.features.live.LocalLiveEmptyArt
 import org.viptv.app.features.live.TvLivePreview
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.PreviewTvDetails
@@ -70,6 +76,9 @@ class TextOverArtworkContrastTest {
     private val starring = "Starring Lena Ortiz, Marcus Reid, Piper Chan"
     private val desktopMetadata = listOf("Movie", "2026", "1h 40m", "Action / Adventure", "★ 7.7")
     private val description = "The Platt family bands together"
+    private val owner = AccountAccess("owner", manageAccount = true)
+    private val emptyLiveCopy = listOf(LiveEyebrow, LiveNoSourceHeadline, LiveNoSourceBody, "Set up live TV", "Add-ons")
+    private val emptyLiveOverArt = emptyLiveCopy - "Set up live TV"
     private val program = LiveProgram("p1", "Evening News", 0, 30, description = "The evening bulletin", artwork = WhiteArtwork)
     private val channel = LiveChannel(Card(MediaIdentity("live-white", "channel", emptyList()), provider_id = "preview", title = "BBC One HD",
         landscape = WhiteArtwork, poster = null, badges = listOf("1080p")), number = "101", category = "News", programs = listOf(program))
@@ -117,6 +126,15 @@ class TextOverArtworkContrastTest {
             content = { TvLivePreview(channel, program, now = 15, scale = 1f, favorite = null, watch = {}) },
             copy = listOf("101 · BBC One HD", "Evening News", "15 min left", "OK to watch"),
             hero = listOf("OK to watch")),
+        Surface("phone Live empty", 393, 852, television = false,
+            content = { LiveNoSourcePage(false, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyList()),
+        Surface("desktop Live empty", 1280, 800, television = false,
+            content = { LiveNoSourcePage(false, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyLiveOverArt),
+        Surface("TV Live empty", 1920, 1080, television = true,
+            content = { LiveNoSourcePage(true, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyLiveOverArt),
     )
 
     @Test fun textOverArtworkKeepsFourAndAHalfToOne() = ui {
@@ -137,7 +155,8 @@ class TextOverArtworkContrastTest {
                         low += "${surface.name} draws \"${line.text}\" at ${"%.2f".format(line.contrast)}:1 " +
                             "(${"#%06X".format(line.ink and 0xFFFFFF)} on ${"#%06X".format(line.background and 0xFFFFFF)})"
                     }
-                    println("CONTRAST ${surface.name}: ${overArtwork.size} lines over artwork, worst ${"%.2f".format(overArtwork.minOf { it.contrast })}:1")
+                    val worst = overArtwork.minOfOrNull { it.contrast }
+                    println("CONTRAST ${surface.name}: ${overArtwork.size} lines over artwork, worst ${worst?.let { "%.2f".format(it) } ?: "none"}:1")
                 }
             }
             assertTrue(missing.isEmpty(), missing.joinToString("\n"))
@@ -153,7 +172,7 @@ class TextOverArtworkContrastTest {
         private val scene = ImageComposeScene(surface.width, surface.height, Density(1f)) {
             ViptvTheme(surface.television, pointer = !surface.television) {
                 CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {}),
-                    LocalLiveClock provides LiveClock(originMillis = 0, nowMillis = 0)) {
+                    LocalLiveClock provides LiveClock(originMillis = 0, nowMillis = 0), LocalLiveEmptyArt provides WhiteArtwork) {
                     Box(Modifier.fillMaxSize().background(Palette.background)) { surface.content() }
                 }
             }
