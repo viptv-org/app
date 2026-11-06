@@ -20,8 +20,15 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
     val time = value["hour"]?.jsonPrimitive?.intOrNull
         ?.let { hour -> formatTimeOfDay(hour, value.getValue("minute").jsonPrimitive.int, is24HourTime()) }
         ?: value.getValue("time").jsonPrimitive.content
-    return CalendarLabel(value.getValue("day").jsonPrimitive.content, time, value.getValue("aired").jsonPrimitive.boolean)
+    return CalendarLabel(value.getValue("day").jsonPrimitive.content, time, value.getValue("aired").jsonPrimitive.boolean,
+        value["airMillis"]?.jsonPrimitive?.longOrNull)
 }
+internal actual fun calendarClock(): CalendarClock {
+    val value = Json.parseToJsonElement(calendarClockJson()).jsonObject
+    return CalendarClock(value.getValue("day").jsonPrimitive.content, value.getValue("millis").jsonPrimitive.long)
+}
+@JsFun("""() => { const d = new Date(); return JSON.stringify({day: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'), millis: d.getTime()}); }""")
+private external fun calendarClockJson(): String
 @JsFun("""(offsetDays, locale) => {
  const now = new Date(), id = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const shifted = n => new Date(now.getFullYear(),now.getMonth(),now.getDate()+offsetDays+n);
@@ -36,10 +43,10 @@ private external fun calendarWindowJson(offsetDays: Int, locale: String): String
   const parts = value.split('-').map(Number), d = new Date(parts[0], parts[1]-1, parts[2]);
   const id = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
   const now = new Date();
-  return JSON.stringify({day:id(d), time:'All day', aired:id(d)<=id(now)});
+  return JSON.stringify({day:id(d), time:'All day', aired:id(d)<=id(now), airMillis:d.getTime()});
  }
  const d=new Date(value); if(!Number.isFinite(d.getTime())) return 'null';
  const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
- return JSON.stringify({day, hour:d.getHours(), minute:d.getMinutes(), aired:d.getTime()<Date.now()});
+ return JSON.stringify({day, hour:d.getHours(), minute:d.getMinutes(), aired:d.getTime()<Date.now(), airMillis:d.getTime()});
 }""")
 private external fun calendarLabelJson(value: String): String

@@ -60,7 +60,8 @@ internal actual fun calendarWindow(offsetDays: Int): CalendarWindow {
 
 internal actual fun calendarLabel(date: String): CalendarLabel? {
     if (isDateOnly(date)) {
-        return CalendarLabel(date, "All day", date <= dayString(NSDate()))
+        val day = dateFromDayString(date) ?: return null
+        return CalendarLabel(date, "All day", date <= dayString(NSDate()), (day.timeIntervalSince1970 * 1000.0).toLong())
     }
     val d = dateFromDayString(date) ?: return null
     val components = NSCalendar.currentCalendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, fromDate = d)
@@ -68,5 +69,11 @@ internal actual fun calendarLabel(date: String): CalendarLabel? {
         day = dayString(d),
         time = formatTimeOfDay(components.hour.toInt(), components.minute.toInt(), is24HourTime()),
         aired = d.timeIntervalSince1970 < NSDate().timeIntervalSince1970,
+        airMillis = (d.timeIntervalSince1970 * 1000.0).toLong(),
     )
+}
+
+internal actual fun calendarClock(): CalendarClock {
+    val now = NSDate()
+    return CalendarClock(dayString(now), (now.timeIntervalSince1970 * 1000.0).toLong())
 }

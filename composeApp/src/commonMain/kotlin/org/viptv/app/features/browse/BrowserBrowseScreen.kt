@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.ListPageState
+import org.viptv.app.components.PosterSkeleton
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.PageRestore
@@ -94,15 +96,16 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val label = catalog?.catalogTitle(peers)
     val source = catalog?.catalogSource(peers)
     val chooseCatalog = { catalogOpen.value = true }
+    val pageState = listPageState(cards.size, busy, error)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val gutter = pageGutter(television = false, tablet = false, browser = true, maxWidth)
         Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
             if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
             if (cards.isNotEmpty() && failures.isNotEmpty()) AddonFailureNotice(failures, manageAddons)
-            if (busy && cards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            else if (error != null) BrowserBrowseFailure(error, label, catalog?.connection_name, chooseCatalog, retry)
-            else if (cards.isEmpty()) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
+            if (pageState == ListPageState.Loading) PosterSkeleton(phone = false, gap = 14.dp, tile = 172.dp)
+            else if (pageState == ListPageState.Failed) BrowserBrowseFailure(error.orEmpty(), label, catalog?.connection_name, chooseCatalog, retry)
+            else if (pageState == ListPageState.Empty) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
             LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
                 horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)) {

@@ -36,7 +36,10 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.Surface
 import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
+import org.viptv.app.components.PosterSkeleton
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
 
@@ -66,7 +69,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
     val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
-    val failed = error != null && visible.isEmpty() && !busy
+    val pageState = listPageState(visible.size, busy, error,
+        answered = snapshot != null && (!busy || snapshot.query.sameList(query)))
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
@@ -95,8 +99,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
                                 if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                                 else LibraryControls(filter, { filter = it }, sort, { sort = it })
-                                if (busy && gridCards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                                if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+                                if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                             }
                             if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                         }
@@ -130,9 +133,11 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     }
                 }
             }
-            if (failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+            if (pageState == ListPageState.Loading) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp)) {
+                PosterSkeleton(phone, gap = if (phone) 10.dp else 12.dp)
+            } else if (pageState == ListPageState.Failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 LibraryFailure(error ?: "", retry)
-            } else if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+            } else if (pageState == ListPageState.Empty) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                         Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.PageRestore
@@ -54,8 +55,8 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(cards.size) { cardLookupKey(cards[it]) } })
-    LaunchedEffect(cards.isEmpty(), page.loaded, page.error != null) {
-        if (cards.isEmpty() && !page.loading) claim(action)
+    LaunchedEffect(cards.isEmpty(), page.state) {
+        if (cards.isEmpty() && page.state != ListPageState.Loading) claim(action)
     }
     LaunchedEffect(cards) {
         val lost = focusedKey ?: return@LaunchedEffect
@@ -75,15 +76,15 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
             Spacer(Modifier.height(32.dp * scale))
             page.error?.takeIf { page.loaded }?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
             when {
-                page.loading -> Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                page.state == ListPageState.Loading -> Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     repeat(2) {
                         Row(horizontalArrangement = Arrangement.spacedBy(GAP.dp * scale)) {
                             repeat(COLUMNS) { Box(Modifier.width(CARD_WIDTH.dp * scale)) { TvHomeSkeletonCard(scale, portrait = false) } }
                         }
                     }
                 }
-                !page.loaded && page.error != null -> TvPageMessage(scale, "Continue Watching didn’t load", page.error, "Try again", retry, action)
-                page.empty -> TvPageMessage(scale, "Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, action)
+                page.state == ListPageState.Failed -> TvPageMessage(scale, "Continue Watching didn’t load", page.error.orEmpty(), "Try again", retry, action)
+                page.state == ListPageState.Empty -> TvPageMessage(scale, "Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, action)
                 else -> {
                     LazyVerticalGrid(GridCells.Fixed(COLUMNS), Modifier.fillMaxWidth().weight(1f).focusGroup()
                         .onFocusChanged {
