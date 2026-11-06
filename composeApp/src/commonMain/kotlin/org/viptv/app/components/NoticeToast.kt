@@ -20,7 +20,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.viptv.app.state.AppNotice
 import org.viptv.app.state.NoticeAction
 import org.viptv.app.theme.Palette
@@ -43,7 +42,7 @@ internal fun NoticeToast(notice: AppNotice, television: Boolean, phone: Boolean,
     undo: () -> Unit, dismiss: () -> Unit, focus: TvNoticeFocus? = null,
     durationMillis: Long = noticeMillis(notice)) {
     LaunchedEffect(notice.serial) {
-        delay(durationMillis)
+        frameDelay(durationMillis)
         dismiss()
     }
     if (television) TvNotice(notice, undo, dismiss, focus) else NoticeCard(notice, phone, aboveNav, undo)

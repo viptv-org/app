@@ -4,6 +4,7 @@ enum class PlaybackControl { PlayPause, Seek, Volume, Speed, SubtitleSize, Subti
 
 internal const val playbackControlErrorCopy = "Could not apply this playback control."
 internal const val playbackControlErrorVisibleMillis = 5_000L
+internal const val controlsAutoHideMillis = 5_000L
 
 internal val PlayerCommand.control: PlaybackControl get() = when (this) {
     is PlayerCommand.Seek -> PlaybackControl.Seek

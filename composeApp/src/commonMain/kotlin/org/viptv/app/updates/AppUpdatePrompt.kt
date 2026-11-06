@@ -16,11 +16,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import kotlinx.coroutines.delay
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusColumn
+import org.viptv.app.components.frameDelay
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
@@ -144,7 +144,7 @@ private fun TvUpdateNotice(title: String, body: String, primary: String?, second
                 }
             }
             // The prompt can appear while OK is pressed: give its buttons a moment so that press cannot start the install.
-            LaunchedEffect(primary) { delay(700); first.requestFocus() }
+            LaunchedEffect(primary) { frameDelay(700); first.requestFocus() }
         }
     }
 }
