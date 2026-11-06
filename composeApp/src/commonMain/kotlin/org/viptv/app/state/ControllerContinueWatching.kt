@@ -77,6 +77,10 @@ internal fun ContinueWatchingList?.refreshedBy(profile: String, page: Continuati
     return fresh.copy(cards = (fresh.cards + cards.drop(limit)).distinctBy(::cardLookupKey), next = next)
 }
 
+internal fun ApplicationController.ensureContinueWatching() {
+    if (mutable.value.continueWatching?.profile != mutable.value.selectedProfile) loadContinueWatching()
+}
+
 internal fun ApplicationController.loadContinueWatching(navigation: Long = navigationGeneration) {
     val profile = mutable.value.selectedProfile ?: return
     if (mutable.value.continueWatching?.profile == profile) return

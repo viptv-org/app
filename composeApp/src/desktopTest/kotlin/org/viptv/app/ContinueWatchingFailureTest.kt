@@ -25,8 +25,6 @@ import org.viptv.app.features.continuewatching.CONTINUE_FAILED_FALLBACK
 import org.viptv.app.features.continuewatching.CONTINUE_FAILED_TITLE
 import org.viptv.app.features.continuewatching.CONTINUE_RETRY_ACTION
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
-import org.viptv.app.features.continuewatching.TvContinueWatchingScreen
 import org.viptv.app.features.continuewatching.continueWatchingFailureMessage
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -56,8 +54,7 @@ class ContinueWatchingFailureTest {
     private fun page(state: ContinueWatchingPage, layout: Layout): @Composable () -> Unit = {
         ViptvTheme(layout.television) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                if (layout.television) TvContinueWatchingScreen(state, play = {}, open = {}, more = null, retry = {}, home = {})
-                else ContinueWatchingScreen(state, play = {}, open = {}, more = null, retry = {}, back = {}, home = {})
+                ContinueWatchingSegment(state, television = layout.television, play = {}, open = {}, more = null, retry = {}, home = {})
             }
         }
     }

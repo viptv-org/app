@@ -8,6 +8,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -77,6 +80,13 @@ class TvConfirmDialogUiTest {
             it.config.contains(SemanticsActions.OnClick) && label(it) == text
         }
         fun focused(): String? = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::label)
+
+        suspend fun hold() {
+            scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyDown))
+            repeat(45) { delay(20); tick() }
+            scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyUp))
+            tick()
+        }
 
         fun capture() = scene.render(clock++ * 16_666_667L).use { image ->
             image.encodeToData()!!.use { File(captures, "$name.png").writeBytes(it.bytes) }
@@ -152,7 +162,7 @@ class TvConfirmDialogUiTest {
         }
     }
 
-    @Test fun theMyListRemovalOnTvDrawsThePanelOverThePage() = onEdt {
+    @Test fun theMyListRemovalOnTvDrawsThePanelOverThePage(): Unit = runBlocking {
         val posters = PreviewData.posters
         val library = LibrarySnapshot(Scope("t", "t", "t", 1), 1, defaultLibraryQuery(), posters, complete = true,
             availability = Availability.AVAILABLE)
@@ -161,7 +171,10 @@ class TvConfirmDialogUiTest {
             TvLibraryScreen(posters, available = true, open = {}, home = {}, snapshot = library, remove = { removed = it })
         }.use { page ->
             page.settle()
-            val remove = assertNotNull(page.action(REMOVE_LIBRARY_LABEL), "the page offers its removal: ${page.labels()}")
+            // tv-my-list-posters.md: a 700 ms hold on a card opens the My List options.
+            page.hold()
+            page.settle(30)
+            val remove = assertNotNull(page.action(REMOVE_LIBRARY_LABEL), "the card's hold menu offers its removal: ${page.labels()}")
             assertTrue(remove.config[SemanticsActions.OnClick].action!!.invoke(), "the removal opens its confirmation")
             page.settle(30)
             assertNotNull(page.panel(), "the confirmation is the TV panel: ${page.labels()}")

@@ -20,8 +20,6 @@ import org.junit.Rule
 import org.viptv.app.components.PageBackTag
 import org.viptv.app.components.PageBackGlyphTag
 import org.viptv.app.connection.Profile
-import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.entry.ProfileEditScreen
 import org.viptv.app.features.entry.ProfilePinScreen
@@ -90,8 +88,6 @@ class PageBackControlTest {
             rename = { _, _ -> }, setPin = { _, _ -> }, setAvatar = { _, _, _ -> }, delete = { _ -> }) },
         "Profile PIN" to { ProfilePinScreen(profile, compact = true, busy = false, error = null, submit = { _ -> }, back = {}) },
         "History" to { HistoryScreen(emptyList(), false, null, { _ -> }, {}, back = {}) },
-        "Continue watching" to { ContinueWatchingScreen(ContinueWatchingPage(emptyList(), loaded = true), play = { _ -> }, open = { _ -> },
-            more = null, retry = {}, back = {}, home = {}) },
         "Details" to { DetailsScreen(DetailSnapshot(card, episodes = emptyList()), busy = false, error = null, back = {}, sources = { _ -> }) },
         "Player failure" to { PlayerFailurePage(PhoneFailureStyle, "This source stopped working", description = "The source stopped.",
             back = {}, insets = WindowInsets(0)) },

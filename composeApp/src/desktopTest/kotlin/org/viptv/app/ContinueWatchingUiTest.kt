@@ -27,7 +27,6 @@ import org.viptv.app.ContinueWatchingHost.Companion.home
 import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.home.TvHomeShelf
 import org.viptv.app.state.*
@@ -117,8 +116,8 @@ class ContinueWatchingUiTest {
             val page = ContinueWatchingPage((1..24).map(::card), loaded = true)
             val scene = ImageComposeScene(width, 900, Density(1f)) { ViptvTheme {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
-                    ContinueWatchingScreen(page, play = { played += it }, open = { opened += it }, more = { more++ },
-                        retry = {}, back = {}, home = {})
+                    ContinueWatchingSegment(page, play = { played += it }, open = { opened += it }, more = { more++ },
+                        retry = {}, home = {})
                 }
             } }
             try {
@@ -140,7 +139,7 @@ class ContinueWatchingUiTest {
             ContinueWatchingPage(emptyList(), loaded = false, error = "Could not reach your server.") to "Try again")) {
             var home = 0; var retry = 0
             val scene = ImageComposeScene(390, 900, Density(1f)) { ViptvTheme {
-                ContinueWatchingScreen(page, play = {}, open = {}, more = null, retry = { retry++ }, back = {}, home = { home++ })
+                ContinueWatchingSegment(page, play = {}, open = {}, more = null, retry = { retry++ }, home = { home++ })
             } }
             try {
                 frames(scene)
@@ -214,7 +213,9 @@ class ContinueWatchingUiTest {
                 app.press(Key.DirectionDown); app.focusOn("Show 05", "Down")
                 app.press(Key.DirectionRight); app.focusOn("Show 06", "Right")
                 app.press(Key.DirectionUp); app.focusOn("Show 02", "Up")
-                app.press(Key.DirectionUp); app.focusOn("Show 02", "Up from the first row stays in the grid")
+                app.press(Key.DirectionUp); app.focusOn("Continue Watching", "Up from the first row reaches the segments")
+                app.press(Key.DirectionDown); app.focusOn("Show 01", "Down from the segments re-enters the grid")
+                app.press(Key.DirectionRight); app.focusOn("Show 02", "Right")
                 app.press(Key.DirectionDown, 5)
                 app.until("the second page") { app.state.continueWatching?.cards?.size == 40 }
                 assertTrue("24+24" in host.reads, "${host.reads}")

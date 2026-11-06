@@ -19,7 +19,6 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.ART_ATTEMPTS
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.theme.Palette
@@ -56,8 +55,8 @@ class LibraryContinueArtworkTest {
                 art.card("Poster only", poster = art.url("poster-only"), landscape = null),
             )
             val shot = render {
-                ContinueWatchingScreen(ContinueWatchingPage(cards, loaded = true), play = {}, open = {},
-                    more = null, retry = {}, back = {}, home = {})
+                ContinueWatchingSegment(ContinueWatchingPage(cards, loaded = true), play = {}, open = {},
+                    more = null, retry = {}, home = {})
             }
             assertTrue(art.paths.containsKey("/still.png"), "a card with a still asks for it: ${art.paths.keys}")
             assertTrue(art.paths.containsKey("/poster-only.png"), "a card with only a poster asks for that: ${art.paths.keys}")
@@ -90,8 +89,8 @@ class LibraryContinueArtworkTest {
         withFakeArtwork(failFirst = 99, failStatus = 404) { art ->
             val cards = listOf(art.card("Missing still", poster = null, landscape = art.url("still-missing")))
             val shot = render(frames = 200) {
-                ContinueWatchingScreen(ContinueWatchingPage(cards, loaded = true), play = {}, open = {},
-                    more = null, retry = {}, back = {}, home = {})
+                ContinueWatchingSegment(ContinueWatchingPage(cards, loaded = true), play = {}, open = {},
+                    more = null, retry = {}, home = {})
             }
             assertEquals(1, art.paths["/still-missing.png"] ?: 0, "a 404 is not retried: ${art.paths}")
             assertEquals(0, shot.count(StillInk), "a missing still leaves the no-art tile")

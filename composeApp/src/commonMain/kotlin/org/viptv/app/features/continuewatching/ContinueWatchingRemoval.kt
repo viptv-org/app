@@ -9,6 +9,8 @@ import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.engine.wire.Card
 
+internal const val REMOVE_CONTINUE_LABEL = "Remove from Continue Watching"
+
 /**
  * The Continue Watching removal a page offers its cards: one menu entry, one confirmation, one request.
  * A page that shows Continue Watching cards outside its own shelf provides [offer] to those cards and draws [confirmation].
@@ -28,9 +30,10 @@ internal class ContinueWatchingRemoval(private val remove: ((Card) -> Unit)?) {
     fun dismiss() { confirming = null }
 
     @Composable
-    fun confirmation() {
+    fun confirmation(television: Boolean = false, scale: Float = 1f) {
         confirming?.let { card ->
-            ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = ::confirm, dismiss = ::dismiss)
+            ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = ::confirm, dismiss = ::dismiss,
+                television = television, scale = scale)
         }
     }
 }
