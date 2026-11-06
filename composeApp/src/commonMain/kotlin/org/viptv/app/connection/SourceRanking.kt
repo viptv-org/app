@@ -53,4 +53,5 @@ internal fun sourceRankingRequest(candidates: List<SourceCandidate>, context: Ra
     wireHeight(context.device.maxHeight)?.let { put("device_max_height", it) }
     deviceCapabilityJson(context.device)?.let { put("device", it) }
     context.seriesMemory?.let(::seriesMemoryJson)?.let { put("series_memory", it) }
+    affinityText(context.providerAffinity)?.let { put("provider_affinity", it) }
 }
