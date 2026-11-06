@@ -159,7 +159,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
 private fun LibraryFailure(reason: String, retry: () -> Unit) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Couldn’t load My List", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(MY_LIST_FAILED_TITLE, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }

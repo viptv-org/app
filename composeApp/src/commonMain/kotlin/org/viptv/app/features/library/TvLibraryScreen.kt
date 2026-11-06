@@ -127,7 +127,7 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
 @Composable
 private fun TvLibraryFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        Text("Couldn’t load My List", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(MY_LIST_FAILED_TITLE, fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
