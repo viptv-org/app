@@ -60,7 +60,7 @@ class PageFontScaleUiTest {
 
     private data class Page(val name: String, val screen: Screen, val variant: String,
         val width: Int, val height: Int, val television: Boolean = false, val desktop: Boolean = false,
-        val bottomBar: Boolean = false, val midWord: Boolean = false)
+        val bottomBar: Boolean = false)
 
     private val scales = listOf(1f, 1.3f, 2f)
 
@@ -93,7 +93,7 @@ class PageFontScaleUiTest {
             val found = LinkedHashSet<String>()
             var scrolled = -1f
             repeat(SCROLL_STEPS) {
-                found += check(scene, page.width, page.height, midWord = page.midWord)
+                found += check(scene, page.width, page.height)
                 val at = scrollOffset(scene)
                 if (at <= scrolled) return@repeat
                 scrolled = at
@@ -104,7 +104,7 @@ class PageFontScaleUiTest {
         } finally { scene.close() }
     }
 
-    private fun check(scene: ImageComposeScene, width: Int, height: Int, midWord: Boolean = false): List<String> {
+    private fun check(scene: ImageComposeScene, width: Int, height: Int): List<String> {
         val texts = textNodes(scene)
         val where = "${width}x${height}"
         val clipped = texts.mapNotNull { text ->
@@ -114,9 +114,8 @@ class PageFontScaleUiTest {
             if (!tooTall) null
             else "$where: '${text.label}' needs ${paragraph.height.toInt()}px and gets ${layout.size.height.toInt()}px"
         }
-        // A line break inside a word means the column is narrower than its text at this scale. The tablet pages ask for it;
-        // the same rule on every page needs adaptive two-column rows, tracked in app#913.
-        val broken = if (!midWord) emptyList() else texts.mapNotNull { text ->
+        // A line break inside a word means the column is narrower than its text at this scale.
+        val broken = texts.mapNotNull { text ->
             val layout = layout(text.node) ?: return@mapNotNull null
             val content = layout.layoutInput.text.text
             (1 until layout.lineCount).firstOrNull { line ->
@@ -359,7 +358,7 @@ class PageFontScaleUiTest {
         Triple("profiles", Screen.Profiles, "Profiles"),
     ).flatMap { (name, screen, variant) ->
         listOf(1024 to 768, 1280 to 800).map { (width, height) ->
-            Page("tablet-$name-${width}w", screen, variant, width, height, midWord = true)
+            Page("tablet-$name-${width}w", screen, variant, width, height)
         }
     }
 
