@@ -13,13 +13,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.ProfileAvatar
+import org.viptv.app.components.textChromeWidth
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
 @Composable
 internal fun SettingsSidebar(selected: String, profile: Profile?, layout: SettingsLayout, sections: List<SettingsSection>,
     local: Boolean, profiles: () -> Unit, select: (String) -> Unit, signOut: () -> Unit) {
-    LazyColumn(Modifier.width(240.dp).fillMaxHeight().background(Palette.surface), contentPadding = PaddingValues(20.dp),
+    LazyColumn(Modifier.width(textChromeWidth(240.dp)).fillMaxHeight().background(Palette.surface), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("Settings", Modifier.padding(vertical = 12.dp), fontSize = 24.sp, fontWeight = FontWeight.Bold) }
         item {

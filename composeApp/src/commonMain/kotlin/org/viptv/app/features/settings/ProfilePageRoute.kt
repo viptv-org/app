@@ -3,8 +3,6 @@ package org.viptv.app.features.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.FocusRequester
-import org.viptv.app.connection.KidsPolicy
-import org.viptv.app.connection.KidsRatings
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.state.*
 
@@ -41,9 +39,7 @@ internal fun profilePageValues(state: ApplicationState): ProfilePageValues? {
     val policy = state.parentControls[id]?.policy
     val preferences: ProfilePreferences? = state.preferences?.preferences
     return ProfilePageValues(profile = profile, local = state.localMode, kids = server?.kids == true,
-        maxAge = policy?.max_age ?: server?.max_age,
-        movieRating = policy?.movie_rating, seriesRating = policy?.series_rating,
-        allowUnrated = policy?.allow_unrated == true, ratings = policy?.ratings ?: KidsRatings(),
+        maxAge = policy?.max_age ?: server?.max_age, policy = policy,
         approvedTitles = state.profileApprovals, householdPinConfigured = parent?.pin_configured == true,
         householdUnlocked = parent?.unlocked == true, audioLanguage = preferences?.preferred_audio_language,
         subtitleLanguage = preferences?.preferred_subtitle_language, canDelete = profile.canDelete && state.profiles.size > 1)
@@ -53,9 +49,9 @@ internal fun profilePageActions(controller: ApplicationController, values: Profi
     parentalControls: () -> Unit, language: () -> Unit) = ProfilePageActions(
     rename = controller::saveProfileName,
     avatar = { pick, pin -> controller.setSelectedProfileAvatar(pick.style, pick.choice, pin) },
-    kids = { enabled, pin -> controller.saveProfileKids((values?.kidsPolicy() ?: KidsPolicy()).copy(enabled = enabled), pin) },
-    maturity = { movie, series, unrated, pin -> controller.saveProfileKids(
-        (values?.kidsPolicy() ?: KidsPolicy()).copy(enabled = true, movie_rating = movie, series_rating = series, allow_unrated = unrated), pin) },
+    kids = { enabled, pin -> values?.kidsPolicy()?.let { controller.saveProfileKids(it.copy(enabled = enabled), pin) } },
+    maturity = { movie, series, unrated, pin -> values?.kidsPolicy()?.let { known -> controller.saveProfileKids(
+        known.copy(enabled = true, movie_rating = movie, series_rating = series, allow_unrated = unrated), pin) } },
     approvedTitles = { values?.profile?.id?.let(controller::openParentTitles) },
     lock = controller::setSelectedProfilePin,
     parentalControls = parentalControls,
