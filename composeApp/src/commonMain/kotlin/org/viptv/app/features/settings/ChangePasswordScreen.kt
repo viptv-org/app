@@ -56,8 +56,8 @@ internal fun ChangePasswordScreen(remote: RemoteConnection, back: () -> Unit, ch
             finally { busy = false }
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        if (!compact) Text("Change password", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        if (!compact) SettingsPaneTitle("Change password")
         CredentialForm(
             fields = CredentialFields.changePassword(current, currentError, next, confirmation, if (mismatch) passwordMismatchMessage else null),
             submitLabel = "Change password",
