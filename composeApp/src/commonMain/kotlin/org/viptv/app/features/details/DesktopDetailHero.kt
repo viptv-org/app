@@ -33,7 +33,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 import org.viptv.app.state.saveTarget
-import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.TitleLogo
 import org.viptv.app.features.home.BufferedArtwork
@@ -147,11 +146,7 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp, scale = 1f)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
             }
-            if (partway && playFromStart != null) {
-                TextButton(onClick = { playFromStart(resumeCard ?: card) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                    Text("Play from the beginning", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
+            HeroRestart(card, resumeEpisode, playFromStart)
         }
         MutationFailure(mutationTarget)
         Row(Modifier.heightIn(min = 36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))

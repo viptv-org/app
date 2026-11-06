@@ -50,7 +50,7 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList()) {
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), playFromStart: ((Card) -> Unit)? = null) {
     var dismissing by remember(detail?.item?.let { it.provider_id to it.identity }) { mutableStateOf(false) }
     val requestDismiss = { if (!dismissing) dismissing = true }
     InitialBrowserEscape(requestDismiss)
@@ -93,7 +93,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                     LazyColumn(state = list, contentPadding = PaddingValues(bottom = 30.dp), topEdgeFade = false) {
                         if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
                         detail?.item?.let { card ->
-                            item(key = "hero") { BrowserDetailHero(card, gutter, play, save, saved, heroEpisode) }
+                            item(key = "hero") { BrowserDetailHero(card, gutter, play, save, saved, heroEpisode, playFromStart) }
                             when {
                                 !busy && error != null -> item(key = "failure") { DetailInlineFailure(error, null, Modifier.padding(gutter)) }
                                 busy -> item(key = "skeleton") { Box(Modifier.padding(gutter)) { DetailBelowSkeleton(compact, !compact) } }
@@ -137,7 +137,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
 
 @Composable
 private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
-    resumeEpisode: Card?) {
+    resumeEpisode: Card?, playFromStart: ((Card) -> Unit)?) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(maxOf(260.dp, maxWidth * (8.2f / 16f)))) {
             AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -151,6 +151,7 @@ private fun BrowserDetailHero(card: Card, gutter: androidx.compose.ui.unit.Dp, p
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(15.dp))
                     Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(resumeEpisode), fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
+                HeroRestart(card, resumeEpisode, playFromStart, fontSize = 15.sp)
                 FavoriteAction(card, saved, save)
             }
         }

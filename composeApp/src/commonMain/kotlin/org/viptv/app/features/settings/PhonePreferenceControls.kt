@@ -61,8 +61,9 @@ internal fun PhoneSwitch(checked: Boolean, enabled: Boolean, change: ((Boolean) 
 }
 
 @Composable
-internal fun PhonePreferenceSegments(values: List<Pair<String, String>>, selected: String, enabled: Boolean, choose: (String) -> Unit) {
-    Row(Modifier.fillMaxWidth().height(40.dp).background(Color(0xFF272727), RoundedCornerShape(20.dp)).selectableGroup().padding(4.dp)) {
+internal fun PhonePreferenceSegments(values: List<Pair<String, String>>, selected: String, enabled: Boolean,
+    modifier: Modifier = Modifier, choose: (String) -> Unit) {
+    Row(modifier.fillMaxWidth().height(40.dp).background(Color(0xFF272727), RoundedCornerShape(20.dp)).selectableGroup().padding(4.dp)) {
         values.forEach { (value, label) ->
             Box(Modifier.weight(1f).fillMaxHeight().background(if (selected == value) Palette.background else Color.Transparent, RoundedCornerShape(16.dp))
                 .pointerSelectable(selected == value, enabled = enabled, role = Role.RadioButton, onClick = { choose(value) }, shape = RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {

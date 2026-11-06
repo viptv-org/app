@@ -40,7 +40,7 @@ import org.viptv.engine.wire.Card
 @Composable
 @Suppress("UNUSED_PARAMETER")
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
-    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
+    save: () -> Unit, trailer: () -> Unit, restart: (() -> Unit)?, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
     saved: Boolean = false, downAction: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
     val pending = (extras.resume ?: card).isPlayPending()
@@ -111,7 +111,9 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 if (mutations.isPending(mutationTarget)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
-            if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+            if (restartTarget(card, extras.resume) != null && restart != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) {
+                Icon(Lucide.RotateCcw, RESTART_LABEL, Modifier.size(30.dp * scale), it)
+            }
         }
         failure?.let {
             Spacer(Modifier.height(14.dp * scale))

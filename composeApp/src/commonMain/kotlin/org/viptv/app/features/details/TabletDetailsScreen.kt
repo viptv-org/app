@@ -38,7 +38,7 @@ import org.viptv.app.format.providerText
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList()) {
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), playFromStart: ((Card) -> Unit)? = null) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -49,7 +49,8 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
             DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage,
-                continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage)
+                continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage,
+                playFromStart = playFromStart)
             return@BoxWithConstraints
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
@@ -63,7 +64,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                 detail?.item?.let { card ->
                     AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     Box(Modifier.fillMaxSize().background(Scrim.tabletDetailPane))
-                    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom,
+                    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Bottom),
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp)) {
                         item {
                             Column(Modifier.padding(horizontal = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -77,6 +78,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                                     Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(heroEpisode), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
+                                HeroRestart(card, heroEpisode, playFromStart, fontSize = 15.sp)
                                 FavoriteAction(card, saved, save)
                             }
                         }

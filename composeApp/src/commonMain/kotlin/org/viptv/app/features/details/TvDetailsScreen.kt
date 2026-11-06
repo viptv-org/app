@@ -132,7 +132,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                             play = { sources(extras.resume ?: detail.item) },
                             save = { save(detail.item) }, saved = saved,
                             trailer = { notice = "No trailer is available for this title." },
-                            restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
+                            restart = playFromStart?.let { start -> { start(extras.resume ?: detail.item) } }, first = playFocus,
                             down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
                             downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
                             hold = { chooseSource(extras.resume ?: detail.item) })

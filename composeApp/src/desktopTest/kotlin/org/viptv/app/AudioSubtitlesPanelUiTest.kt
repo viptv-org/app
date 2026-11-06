@@ -69,6 +69,26 @@ class AudioSubtitlesPanelUiTest {
         }
     }
 
+    @Test fun everyInlineSettingIsFullyDrawnBelowTheTwoTrackColumns() {
+        val audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en"), PlaybackTrack(2, "Japanese · Stereo", false, "ja"))
+        for ((width, height) in listOf(1280 to 800, 1440 to 900)) {
+            val scene = scene(width, height, phone = false, audio = audio, subs = subtitles(3, 4, 5))
+            try {
+                frames(scene); click(scene, "Audio and subtitles"); frames(scene, 20)
+                val off = assertNotNull(clickable(scene, "Off"), "No subtitle rows at $width").boundsInRoot
+                val settings = listOf("Always", "Default", "Medium", "Box")
+                val bounds = settings.associateWith { label -> assertNotNull(clickable(scene, label), "The $label setting is missing at $width").boundsInRoot }
+                bounds.forEach { (label, box) ->
+                    assertTrue(box.top >= off.bottom, "$width: the $label setting must sit below the track columns: $box vs $off")
+                    assertTrue(box.bottom <= height && box.right <= width, "$width: the $label setting leaves the player: $box")
+                }
+                val link = assertNotNull(clickable(scene, PLAYER_SETTINGS_LINK), "No footer at $width").boundsInRoot
+                val lowest = bounds.values.maxBy { it.bottom }
+                assertTrue(lowest.bottom <= link.top, "$width: the lowest inline setting ($lowest) is cut by the footer ($link)")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun oneOrNoAudioTrackCollapsesToDefaultAudio() {
         for (audio in listOf(listOf(PlaybackTrack(1, "English · 5.1", true, "en")), emptyList())) {
             val scene = scene(1280, 900, phone = false, audio = audio, subs = subtitles(3))
