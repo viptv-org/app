@@ -79,6 +79,8 @@ data class ApplicationState(
     val homeRowBusy: Set<String> = emptySet(),
     val homeRowErrors: Map<String, String> = emptyMap(),
     val continueWatching: ContinueWatchingList? = null,
+    // The page's own first load; an unrelated action's failure stays in `error` and never becomes this page state.
+    val continueWatchingError: String? = null,
     val continueWatchingPageError: String? = null,
     val continueUndo: ContinueUndo? = null,
     val myListUndo: MyListUndo? = null,

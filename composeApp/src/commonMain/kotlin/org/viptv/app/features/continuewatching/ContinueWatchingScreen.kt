@@ -24,6 +24,7 @@ import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.ListSkeletonTile
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.TextButton
@@ -61,6 +62,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
         val available = maxWidth - gutter * 2
         val columns = if (phone) 2 else ((available + gap) / (MIN_CARD + gap)).toInt().coerceAtLeast(2)
         val cardWidth = ((available - gap * (columns - 1)) / columns).value.toInt()
+        val pageStateHeight = (maxHeight - (if (phone) 0.dp else 24.dp) - 56.dp - 18.dp - 24.dp).coerceAtLeast(200.dp)
         AutomaticPage(cards.size, page.busy, more) {
             val layout = grid.layoutInfo
             layout.visibleItemsInfo.filter { it.contentType == CARD_TYPE }.maxOfOrNull { it.index }
@@ -81,18 +83,17 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                                 letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Start)
                         }
-                        page.error?.let { Text(it, color = Palette.danger) }
                     }
                 }
                 when {
                     page.state == ListPageState.Loading -> items(columns * 3, contentType = { "continue:skeleton" }) {
                         ListSkeletonTile(Modifier.fillMaxWidth().aspectRatio(16f / 9))
                     }
-                    page.state == ListPageState.Failed -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        PageMessage("Continue Watching didn’t load", "Check the connection and try again.", "Try again", retry, phone)
-                    }
-                    page.state == ListPageState.Empty -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        PageMessage("Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, phone)
+                    page.state == ListPageState.Failed || page.state == ListPageState.Empty -> item(span = { GridItemSpan(maxLineSpan) }, key = "state") {
+                        Box(Modifier.fillMaxWidth().height(pageStateHeight)) {
+                            ContinueWatchingState(page.state, page.error, retry, home,
+                                layout = pageStateLayout(television = false, compact = phone))
+                        }
                     }
                     else -> {
                         itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }, contentType = { _, _ -> CARD_TYPE }) { index, card ->
@@ -119,16 +120,3 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
     removal.confirmation()
 }
 
-@Composable
-private fun PageMessage(title: String, message: String, action: String, activate: () -> Unit, phone: Boolean) {
-    Column(Modifier.fillMaxWidth().padding(top = if (phone) 64.dp else 96.dp), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
-            Icon(Lucide.Play, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
-        }
-        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(message, fontSize = 14.sp, color = Palette.secondary, textAlign = TextAlign.Center)
-        Button(onClick = activate, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(action) }
-    }
-}
