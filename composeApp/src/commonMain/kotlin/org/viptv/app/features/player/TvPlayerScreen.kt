@@ -35,7 +35,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     externalFacts: Flow<PlayerFact> = emptyFlow(), previewCommand: ((PlayerCommand) -> Unit)? = null, trackFocus: Int? = null,
     playbackKey: Any? = input, trackChosen: (PlaybackTrackKind, String?) -> Unit = { _, _ -> },
     canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false,
-    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null) {
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    failure: PlaybackFailure? = null, failedSource: String? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     val activationKeys = LocalActivationKeys.current
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
@@ -123,8 +124,10 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             state.failed || state.undecodable || error != null ->
                 if (fallback != null) PlayerFallbackPage(fallback, stopFallback, failureStyle)
                 else PlayerFailurePage(failureStyle, "This source stopped working",
-                    extras.failureDescription ?: (if (state.undecodable) "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else error),
-                    state.position,
+                    failure = if (state.undecodable) PlaybackFailure.Undecodable else failure,
+                    source = failedSource, positionMillis = state.position,
+                    description = extras.failureDescription ?: (if (state.undecodable || failure == PlaybackFailure.Undecodable)
+                        "This TV can’t decode this stream. Choose another source — the 4K Dolby Vision releases are not supported by this device’s decoder." else null),
                     primary = retry?.let { retryAction(extras.fallbackLabel, it) },
                     choose = chooseSources?.let(::chooseSourceAction),
                     back = close)

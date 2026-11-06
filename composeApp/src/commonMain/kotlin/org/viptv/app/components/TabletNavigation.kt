@@ -58,7 +58,7 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
             } else Column(Modifier.padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 RailSettings(navigate)
-                RailProfile(profile, navigate, 36.dp, 36.dp, 9.dp)
+                RailProfile(profile, navigate, 44.dp, 36.dp, 9.dp)
             }
         }
     }

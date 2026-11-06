@@ -31,6 +31,7 @@ internal fun AccessibleIconButton(
     iconSize: Dp = 16.dp,
     tint: Color = Palette.text,
     wash: Color? = Color.White.copy(alpha = .14f),
+    pending: Boolean = false,
 ) {
     Box(
         modifier.sizeIn(minWidth = IconButtonTouchTarget, minHeight = IconButtonTouchTarget)
@@ -39,6 +40,6 @@ internal fun AccessibleIconButton(
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, Modifier.size(iconSize), tint = tint)
+        if (pending) MutationSpinner(iconSize, color = tint) else Icon(icon, null, Modifier.size(iconSize), tint = tint)
     }
 }

@@ -24,7 +24,7 @@ fun ApplicationController.toggleFavorite(card: Card) {
         else local?.saveFavorite(profile, favorite) ?: requireNotNull(connection).saveFavorite(profile, favorite)
         loadLibrary()
         if (!wasSaved) adoptFavoriteAssertions(favorite)
-        if (mutable.value.screen == Screen.Library) loadLibraryPage()
+        reloadMyListAfterWrite(unsaved = if (wasSaved) card else null)
         updateState { it.withSavedOverride(card, null) }
     }
 }
@@ -63,7 +63,7 @@ fun ApplicationController.removeFromMyList(card: Card) {
         val favorite = card.parent_identity?.let { card.copy(identity = it, parent_identity = null) } ?: card
         local?.removeFavorite(profile, favorite) ?: requireNotNull(connection).removeFavorite(profile, favorite)
         loadLibrary()
-        if (mutable.value.screen == Screen.Library) loadLibraryPage()
+        reloadMyListAfterWrite(unsaved = card)
         updateState { it.withSavedOverride(card, null) }
     }
 }

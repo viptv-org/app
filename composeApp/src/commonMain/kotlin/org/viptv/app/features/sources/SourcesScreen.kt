@@ -43,8 +43,8 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.engine.wire.SourceCandidate
-import org.viptv.app.components.pointerClickable
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.dismissScrim
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.Motion
@@ -100,7 +100,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
         val drag = rememberSheetDrag(enabled = touch && phone, threshold = sheetHeight / 3f, dismiss = back,
             dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
         LaunchedEffect(motion.presented) { if (!motion.presented) onClosed() }
-        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.dismissScrim(back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)
@@ -126,7 +126,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("Choose a source", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
+                    AccessibleIconButton(Lucide.X, "Close", back, iconSize = 18.dp, wash = null)
                 }
                 SourceSummary(summaryLine, pending, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), 13.sp)
                 banner?.let { SourceFallbackBanner(it, 13.sp, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) }
@@ -135,7 +135,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("Choose a source", Modifier.weight(1f), fontSize = if (television) 36.sp else 18.sp,
                         fontWeight = FontWeight.Bold)
-                    IconButton(onClick = back, modifier = Modifier.size(32.dp)) { Icon(Lucide.X, "Close", Modifier.size(18.dp)) }
+                    AccessibleIconButton(Lucide.X, "Close", back, iconSize = 18.dp, wash = null)
                 }
                 SourceSummary(summaryLine, pending, fontSize = if (television) 20.sp else 13.sp)
                 banner?.let { SourceFallbackBanner(it, if (television) 20.sp else 13.sp, Modifier.fillMaxWidth()) }

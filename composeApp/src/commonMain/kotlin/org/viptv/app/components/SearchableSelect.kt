@@ -167,11 +167,12 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
     val chipDown = LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
-    Row(modifier.chipFrame(on, focused, metrics, shape)
+    Row(modifier
         .then(if (chipFocus == null) Modifier else Modifier.focusRequester(chipFocus))
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
+        .chipFrame(on, focused, metrics, shape)
         .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         if (on) Icon(Lucide.Check, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.text)
@@ -186,10 +187,11 @@ internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, 
     val chipDown = down ?: LocalFilterChipDown.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
-    Row(modifier.chipFrame(false, focused, metrics, shape, bordered = false)
+    Row(modifier
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
         .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
+        .chipFrame(false, focused, metrics, shape, bordered = false)
         .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         icon?.let { Icon(it, null, Modifier.size(metrics.icon), tint = if (focused) Palette.background else Palette.secondary) }
@@ -264,8 +266,8 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
             .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
             .onFocusChanged { focused = it.isFocused }
             .tvFocusOutline(focused, metrics.corner, metrics.scale))
-        .chipFrame(highlighted, focused, metrics, shape)
         .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick)
+        .chipFrame(highlighted, focused, metrics, shape)
         .padding(start = metrics.startInset, end = metrics.endInset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.gap)) {
         // Not `fill`: inside the scrolling bar the chip is as wide as its text, up to the cap.
@@ -294,7 +296,7 @@ private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, co
             val drag = rememberSheetDrag(enabled = touch, threshold = sheetHeight / 3f, dismiss = dismiss,
                 dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
             Box(Modifier.matchParentSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = .62f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = height)
                 .graphicsLayer { translationY = size.height * (1f - motion.container) + drag.offset }
                 .onSizeChanged { sheetHeight = it.height.toFloat() }
@@ -323,7 +325,7 @@ private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Compo
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
             Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .6f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(760.dp * scale).fillMaxHeight()
                 // Back and Escape close only the panel; the chip row behind it stays as it was.
                 .onPreviewKeyEvent { event ->

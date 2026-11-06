@@ -21,7 +21,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Ellipsis
 import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.DropdownMenuItem
-import org.viptv.app.components.IconButton
+import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.connection.HistoryCorrection
@@ -56,9 +56,7 @@ internal fun HistoryRow(display: HistoryDisplay, phone: Boolean, open: (Card) ->
             }
         }
         Box {
-            IconButton(onClick = { menu = true }, modifier = Modifier.size(32.dp)) {
-                Icon(Lucide.Ellipsis, "History actions", Modifier.size(18.dp))
-            }
+            AccessibleIconButton(Lucide.Ellipsis, "History actions", { menu = true }, iconSize = 18.dp, wash = null)
             DropdownMenu(menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text("View details") }, onClick = { menu = false; open(card) })
                 if (available) {

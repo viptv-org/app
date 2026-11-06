@@ -72,7 +72,6 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         scopeKey = detail?.item?.let { it.provider_id to it.identity })
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
-        val compact = maxWidth < 900.dp
         val gutter = if (phone) 16.dp else 40.dp
         val listState = rememberLazyListState()
         val desktop = !phone && !tablet
@@ -100,10 +99,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             detail?.let { value ->
                 item(key = "hero") {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode, sourcePreview = sourcePreview, chooseSource = chooseSource)
-                    else if (desktop) Box(Modifier.padding(bottom = 20.dp)) {
+                    else Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
-                    } else Box(Modifier.padding(horizontal = gutter)) { DetailHero(value.item, compact, sources, save, saved, playFromStart) }
+                    }
                 }
                 if (failures.isNotEmpty() && !busy && error == null) item(key = "addon-failure") {
                     AddonFailureNotice(failures, manageAddons, Modifier.padding(horizontal = gutter, vertical = 4.dp))

@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import org.viptv.app.components.NextEpisodes
 import org.viptv.app.connection.*
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.engine.wire.AddonFailure
 import org.viptv.engine.wire.Card
@@ -97,11 +98,11 @@ data class ApplicationState(
     val liveFavoritesAvailable: Boolean = false,
     val liveFavoritesCanRetry: Boolean = false,
     val liveFavoriteError: String? = null,
-    val liveFavoritePending: Set<String> = emptySet(),
     val liveFavoritesOnly: Boolean = false,
     val liveSetupReturnFocus: Boolean = false,
     val calendarType: String = org.viptv.app.features.calendar.CALENDAR_DEFAULT_TYPE,
     val calendarWeek: Int = 0,
+    val calendarFilter: org.viptv.app.features.calendar.CalendarFilter = org.viptv.app.features.calendar.CALENDAR_DEFAULT_FILTER,
     val calendarAvailable: Boolean = true,
     val calendarDays: List<org.viptv.app.features.calendar.CalendarDay> = emptyList(),
     val calendarEntries: List<org.viptv.app.features.calendar.CalendarEntry> = emptyList(),
@@ -160,6 +161,7 @@ data class ApplicationState(
     val audioNotice: String? = null,
     val openingStage: String? = null,
     val playback: PlaybackInput? = null,
+    val playbackFailure: PlaybackFailure? = null,
     val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,
