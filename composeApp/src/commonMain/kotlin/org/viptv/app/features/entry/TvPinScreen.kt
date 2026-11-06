@@ -18,9 +18,9 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvTextField
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.connection.Profile
+import org.viptv.app.features.settings.TvNoticeDialog
 import org.viptv.app.theme.Palette
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material3.AlertDialog
 
 @Composable
 internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: String?,
@@ -79,8 +79,7 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
             error?.let { Text(it, Modifier.padding(top = 30.dp * scale), color = Palette.danger,
                 fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
         }
+    if (forgot) TvNoticeDialog(scale, "Profile PIN", "PIN recovery is not available for this profile.",
+        onDismiss = { restore = true; forgot = false })
     }
-    if (forgot) AlertDialog(onDismissRequest = { restore = true; forgot = false }, title = { Text("Profile PIN") },
-        text = { Text("PIN recovery is not available for this profile.") },
-        confirmButton = { TextButton(onClick = { restore = true; forgot = false }) { Text("OK") } })
 }

@@ -115,9 +115,10 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                 }
             }
         }
-    }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+        confirming?.let { card ->
+            ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) },
+                dismiss = { confirming = null }, television = true, scale = scale)
+        }
     }
 }
 

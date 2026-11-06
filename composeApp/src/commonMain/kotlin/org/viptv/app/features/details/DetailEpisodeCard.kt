@@ -53,7 +53,7 @@ internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Un
             Text(it, color = Palette.secondary, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
-    if (showUpcoming) EpisodeUpcomingDialog(episode) { showUpcoming = false }
+    if (showUpcoming) EpisodeUpcomingDialog(episode, { showUpcoming = false })
 }
 
 @Composable

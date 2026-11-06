@@ -18,7 +18,7 @@ internal fun TvRemotePairing(server: String, display: DevicePairingDisplay?, bus
         TvPairingSession(it.qrUri, it.verificationUri.removePrefix("https://"), it.userCode,
             "${it.remainingSeconds / 60}:${(it.remainingSeconds % 60).toString().padStart(2, '0')}")
     }
-    DevicePairingRequest(server, serverChanged, start, cancel, back) { refresh, changeServer ->
+    DevicePairingRequest(server, serverChanged, start, cancel, back, television = true, scale = scale) { refresh, changeServer ->
       Box(Modifier.fillMaxSize()) {
         TvPairingSignIn(scale, session, refresh = refresh, busy = busy, error = error)
         TvAction(Modifier.offset(1404.dp * scale, 96.dp * scale).size(420.dp * scale, 72.dp * scale), scale,

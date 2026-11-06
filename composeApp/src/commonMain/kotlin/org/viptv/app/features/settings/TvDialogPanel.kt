@@ -142,6 +142,31 @@ internal fun TvDialogField(label: String, value: String, scale: Float, enabled: 
 
 internal fun pinDigits(text: String) = text.filter(Char::isDigit).take(8)
 
+/** The one TV confirmation: title, the line that says what happens, Cancel focused first, and the action itself in the danger style when it destroys. */
+@Composable
+internal fun TvConfirmDialog(scale: Float, title: String, body: String, confirm: String, dismissLabel: String = "Cancel",
+    danger: Boolean = false, busy: Boolean = false, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val cancel = rememberTvDialogStop()
+    val accept = rememberTvDialogStop()
+    TvDialogPanel(scale, title, stops = listOf(cancel, accept), focus = cancel, dismiss = { if (!busy) onDismiss() }, actions = {
+        TvDialogAction(scale, dismissLabel, stop = cancel, enabled = !busy) { if (!busy) onDismiss() }
+        TvDialogAction(scale, confirm, stop = accept, enabled = !busy, danger = danger) { if (!busy) onConfirm() }
+    }) { Text(body, color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp) }
+}
+
+/** A TV panel that only tells the viewer something: one action, focused, and Back closes it. */
+@Composable
+internal fun TvNoticeDialog(scale: Float, title: String, body: String, action: String = "OK", onDismiss: () -> Unit,
+    extra: @Composable ColumnScope.() -> Unit = {}) {
+    val close = rememberTvDialogStop()
+    TvDialogPanel(scale, title, stops = listOf(close), focus = close, dismiss = onDismiss, actions = {
+        TvDialogAction(scale, action, stop = close, activate = onDismiss)
+    }) {
+        Text(body, color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp)
+        extra()
+    }
+}
+
 @Composable
 internal fun TvDialogChip(label: String, selected: Boolean, scale: Float, stop: TvDialogStop?, enabled: Boolean = true,
     activate: () -> Unit) {
