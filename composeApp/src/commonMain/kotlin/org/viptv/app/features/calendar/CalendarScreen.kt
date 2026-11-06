@@ -38,11 +38,6 @@ import org.viptv.app.components.listPageState
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.format.providerText
 
-internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
-
-internal fun calendarEmptyDay(filter: CalendarFilter?) =
-    if (filter == CalendarFilter.YourShows) "None of your shows air this day." else "No releases for this day."
-
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
@@ -102,8 +97,8 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             if (pageState == ListPageState.Loading) ReleaseRowSkeleton(phone, Modifier.weight(1f))
             else if (pageState == ListPageState.Empty) {
-                Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
-                TextButton(manage) { Text("Manage integrations") }
+                Text(if (available) CALENDAR_EMPTY_WEEK else CALENDAR_UNAVAILABLE, color = Palette.secondary)
+                TextButton(manage) { Text(CALENDAR_MANAGE) }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 PageRestore(list, restore, target = { (if (phone) markedLine else markedEntry).takeIf { it >= 0 } })
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 24.dp),
@@ -155,9 +150,9 @@ private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Floa
 private fun CalendarFailure(reason: String, retry: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 64.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Couldn’t load the calendar", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(CALENDAR_FAILED_TITLE, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(CALENDAR_RETRY) }
     }
 }
