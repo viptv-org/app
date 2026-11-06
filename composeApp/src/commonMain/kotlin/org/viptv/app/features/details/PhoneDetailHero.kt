@@ -50,7 +50,8 @@ private val PhoneHeroMetaLine = 19.dp
 
 @Composable
 internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
-    resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play) {
+    resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play,
+    playFromStart: ((Card) -> Unit)? = null) {
     val art = card.landscape ?: card.poster
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
@@ -98,6 +99,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                     }
                 }
             }
+            HeroRestart(card, resumeEpisode, playFromStart, fontSize = 14.sp)
             DetailSourceSummary(sourcePreview, open = { chooseSource(resume ?: card) })
             val mutations = LocalPendingMutation.current
             val mutationTarget = saveTarget(card)
