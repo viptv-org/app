@@ -32,9 +32,10 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
     Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
         verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
-            Text("LIVE", Modifier.background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                color = Color.White, fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp,
-                letterSpacing = (1.08f * scale).sp, fontWeight = FontWeight.ExtraBold)
+            if (program == null || liveFraming(program, now) == LiveFraming.OnAir)
+                Text("LIVE", Modifier.background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
+                    color = Color.White, fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp,
+                    letterSpacing = (1.08f * scale).sp, fontWeight = FontWeight.ExtraBold)
             Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (22 * scale).sp,
                 lineHeight = (26 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
         }
@@ -43,9 +44,8 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
                 letterSpacing = (-1.04f * scale).sp, fontWeight = FontWeight.Bold, maxLines = 2)
         }
         program?.let {
-            val remaining = if (now != null && now in it.start until it.end) " · ${it.end - now} min left" else ""
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
-                Text("${liveTime(it.start)} – ${liveTime(it.end, true)}$remaining", fontSize = (24 * scale).sp,
+                Text("${liveTime(it.start)} – ${liveTime(it.end, true)}${liveRangeStatus(it, now)}", fontSize = (24 * scale).sp,
                     lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
                 channel.card.badges.forEach { TvMediaBadge(it, scale) }
             }
