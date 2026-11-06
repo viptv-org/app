@@ -142,7 +142,7 @@ class FilterBarPagesTest {
             BrowseScreen(Screen.Movies, null, false, {}, emptyList(), controls, browse.query, filterChanged = browse.changed,
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
-            assertTrue(it.has("Nothing matches"), "a filtered empty grid blames the filters")
+            assertTrue(it.has("Nothing matches these filters"), "a filtered empty grid blames the filters")
             assertTrue(it.has("Movies from Cinemeta has no movies matching “Comedy”."))
             assertTrue(it.has("Remove “Comedy”"), "the one filter is the primary action")
             assertFalse(it.has("Clear all filters"), "a single filter needs no redundant clear")
@@ -160,7 +160,7 @@ class FilterBarPagesTest {
             BrowseScreen(Screen.Movies, null, false, {}, emptyList(), controls, browse.query, filterChanged = browse.changed,
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
-            assertTrue(it.has("Nothing matches"))
+            assertTrue(it.has("Nothing matches these filters"))
             assertTrue(it.has("Movies from Cinemeta has no movies with all 2 filters. Removing the newest one usually helps."))
             assertTrue(it.has("Remove “English”"), "the newest filter is the primary action")
             assertTrue(it.has("Clear all filters"), "clear demoted to a secondary action")
@@ -176,7 +176,7 @@ class FilterBarPagesTest {
                 multipleChanged = browse.multiple, applyQuery = browse.apply)
         }.use {
             assertTrue(it.has("No titles yet"), "an unfiltered empty grid says there are no titles")
-            assertFalse(it.has("Nothing matches"))
+            assertFalse(it.has("Nothing matches these filters"))
             assertFalse(it.has("Clear all filters"))
             assertFalse(it.has("Remove “Comedy”"))
         }

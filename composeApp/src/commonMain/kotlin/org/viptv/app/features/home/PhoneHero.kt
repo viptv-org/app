@@ -54,6 +54,9 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                     if (shown.logo != null) AsyncImage(org.viptv.app.images.rememberLogoRequest(shown.logo), shown.title, Modifier.width(180.dp).heightIn(min = 100.dp), contentScale = ContentScale.Fit, alignment = Alignment.BottomCenter)
                     else Text(shown.title, fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
                     MediaMetadata(shown, fontSize = 13f, lineHeight = 19f)
+                    val mutations = LocalPendingMutation.current
+                    val target = saveTarget(shown)
+                    val pending = mutations.isPending(target)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { play(shown) }, modifier = Modifier.weight(1f).heightIn(min = 46.dp),
                             shape = RoundedCornerShape(12.dp),
@@ -63,9 +66,6 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                             Spacer(Modifier.width(8.dp))
                             Text("Play", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
-                        val mutations = LocalPendingMutation.current
-                        val target = saveTarget(shown)
-                        val pending = mutations.isPending(target)
                         Button(onClick = { save(shown) }, modifier = Modifier.weight(1f).heightIn(min = 46.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
