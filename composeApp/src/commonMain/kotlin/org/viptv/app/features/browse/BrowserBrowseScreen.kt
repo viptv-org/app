@@ -52,6 +52,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.QueryControl
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pageGutter
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.Motion
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pressScale
@@ -98,75 +99,49 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val chooseCatalog = { catalogOpen.value = true }
     val pageState = listPageState(cards.size, busy, error)
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val compact = maxWidth < 640.dp
         val gutter = pageGutter(television = false, tablet = false, browser = true, maxWidth)
         Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(screen.name, fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-.52).sp, fontWeight = FontWeight.Bold)
             if (controls != null) BrowseFilterBar(controls, query, screen == Screen.Discover, changed, multipleChanged, applyQuery, catalogOpen)
             if (cards.isNotEmpty() && failures.isNotEmpty()) AddonFailureNotice(failures, manageAddons)
-            if (pageState == ListPageState.Loading) PosterSkeleton(phone = false, gap = 14.dp, tile = 172.dp)
-            else if (pageState == ListPageState.Failed) BrowserBrowseFailure(error.orEmpty(), label, catalog?.connection_name, chooseCatalog, retry)
-            else if (pageState == ListPageState.Empty) BrowserBrowseEmpty(screen, source, applied.size, applied.lastOrNull(), query, clearAll, changed, multipleChanged, chooseCatalog)
-            LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
-                horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)) {
-                itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
-                    val key = cardLookupKey(card)
-                    MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
-                        open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
-                }
-                if (cards.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
-                    ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
-                } else if (cards.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
-                    ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
-                } else if (cards.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
-                    ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+            when (pageState) {
+                ListPageState.Loading -> PosterSkeleton(phone = false, gap = 14.dp, tile = 172.dp)
+                ListPageState.Failed, ListPageState.Empty -> CatalogPageState(
+                    if (pageState == ListPageState.Failed) catalogFailureState(label, error, chooseCatalogAvailable = true)
+                    else catalogEmptyState(label, source, browseNoun(screen), applied, otherCatalog = true),
+                    activate = { action ->
+                        when (action.kind) {
+                            CatalogActionKind.Retry -> retry()
+                            CatalogActionKind.ChooseCatalog -> chooseCatalog()
+                            CatalogActionKind.ClearAll -> clearAll()
+                            CatalogActionKind.Remove -> action.chip?.let { chip ->
+                                if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value)
+                                else changed(chip.id, "")
+                            }
+                        }
+                    }, Modifier.weight(1f), layout = pageStateLayout(television = false, compact = compact))
+                ListPageState.Content -> LazyVerticalGrid(GridCells.Adaptive(172.dp), state = grid,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)) {
+                    itemsIndexed(cards, key = { _, card -> cardLookupKey(card) }) { index, card ->
+                        val key = cardLookupKey(card)
+                        MediaCard(card, width = 172, portrait = true, showLabels = true, showFocusOutline = false,
+                            open = { restore.mark(key, index); open(it) },
+                            modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index))
+                    }
+                    if (cards.isNotEmpty() && !busy && pageError != null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(failed = true, retry = more ?: retry, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                    } else if (cards.isNotEmpty() && busy) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(loading = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                    } else if (cards.isNotEmpty() && !busy && pageError == null && more == null) item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                        ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = false, scale = 1f)
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-private fun BrowserBrowseEmpty(screen: Screen, source: String?, count: Int, newest: AppliedChip?,
-    query: BrowseQuery, clearAll: () -> Unit, changed: (String, String) -> Unit,
-    multipleChanged: (String, List<String>) -> Unit, openCatalog: () -> Unit) {
-    val noun = browseNoun(screen)
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Nothing matches these filters", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(source?.let { "$it has no $noun with all $count filters. Removing the newest one usually helps." }
-            ?: "No $noun are available for these filters.", fontSize = 14.sp, color = Palette.secondary)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (newest != null) BrowserStateAction(if (newest.label.length > 24) "Remove filter" else "Remove “${newest.label}”", primary = true) {
-                if (newest.multiple) multipleChanged(newest.id, query.selections(newest.id) - newest.value) else changed(newest.id, "")
-            }
-            BrowserStateAction("Clear all filters", primary = false, onClick = clearAll)
-            if (source != null) BrowserStateAction("Choose another catalog", primary = false, onClick = openCatalog)
-        }
-    }
-}
 
-@Composable
-private fun BrowserBrowseFailure(error: String, title: String?, source: String?, openCatalog: () -> Unit, retry: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(title?.let { "Couldn’t load $it" } ?: "Couldn’t load this page", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("${source?.takeIf(String::isNotBlank) ?: "The source"} didn’t answer. Your filters are kept.", fontSize = 14.sp, color = Palette.secondary)
-        Text(error, fontSize = 13.sp, color = Palette.danger)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BrowserStateAction("Try again", primary = true, onClick = retry)
-            if (title != null) BrowserStateAction("Choose another catalog", primary = false, onClick = openCatalog)
-        }
-    }
-}
 
-@Composable
-private fun BrowserStateAction(label: String, primary: Boolean, onClick: () -> Unit) {
-    val interaction = remember { MutableInteractionSource() }
-    val rest = if (primary) Palette.text else Color.Transparent
-    Row(Modifier.height(38.dp).pressScale(interaction, Motion.button).clip(RoundedCornerShape(12.dp))
-        .background(hoverFill(interaction, rest))
-        .then(if (primary) Modifier else Modifier.border(1.dp, Color.White.copy(alpha = .14f), RoundedCornerShape(12.dp)))
-        .pointerClickable(interactionSource = interaction, onClick = onClick, shape = RoundedCornerShape(12.dp), hover = null).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (primary) Palette.background else Palette.text)
-    }
-}

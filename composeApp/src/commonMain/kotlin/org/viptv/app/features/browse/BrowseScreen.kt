@@ -49,6 +49,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.HomeSnapshot
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.SearchableSelect
 import org.viptv.app.components.SelectOption
@@ -127,12 +128,21 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 val footerLoading = cards.isNotEmpty() && busy
                 val footerEnded = cards.isNotEmpty() && !busy && pageError == null && more == null
                 val footerFailed = cards.isNotEmpty() && !busy && pageError != null
-                if (pageState == ListPageState.Failed) BrowseErrorState(label, catalog?.connection_name, error.orEmpty(), Modifier.weight(1f), { applyQuery(query) }, chooseCatalog)
+                val catalogState = if (pageState == ListPageState.Failed) catalogFailureState(label, error, chooseCatalog != null)
+                    else catalogEmptyState(label, source, noun, applied, chooseCatalog != null)
+                if (pageState == ListPageState.Failed || pageState == ListPageState.Empty) CatalogPageState(catalogState, { action ->
+                    when (action.kind) {
+                        CatalogActionKind.Retry -> applyQuery(query)
+                        CatalogActionKind.ChooseCatalog -> chooseCatalog?.invoke()
+                        CatalogActionKind.ClearAll -> applyQuery(clearedFilters(query))
+                        CatalogActionKind.Remove -> action.chip?.let { chip ->
+                            if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value)
+                            else filterChanged(chip.id, "")
+                        }
+                    }
+                }, Modifier.weight(1f), layout = pageStateLayout(television = false, compact = compact))
                 else if (pageState == ListPageState.Loading) PosterSkeleton(phone = compact, modifier = Modifier.weight(1f),
                     columns = columns, gap = if (compact) 10.dp else 14.dp, rows = 3)
-                else if (pageState == ListPageState.Empty) BrowseEmptyState(source, applied, noun, Modifier.weight(1f),
-                    clearAll = { applyQuery(clearedFilters(query)) },
-                    remove = { chip -> if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value) else filterChanged(chip.id, "") })
                 else LazyVerticalGrid(GridCells.Fixed(columns),
                     state = grid, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
                     verticalArrangement = Arrangement.spacedBy(if (compact) 14.dp else 20.dp),
@@ -182,57 +192,5 @@ private fun BrowseHeaderSkeleton() {
     }
 }
 
-@Composable
-private fun BrowseEmptyState(source: String?, chips: List<AppliedChip>, noun: String, modifier: Modifier,
-    clearAll: () -> Unit, remove: (AppliedChip) -> Unit) {
-    val newest = chips.lastOrNull()
-    Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(Lucide.Search, null, Modifier.size(30.dp))
-        if (newest == null) {
-            Text("No titles yet", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
-                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        } else {
-            Text("Nothing matches", fontSize = 22.sp, lineHeight = 25.sp, letterSpacing = (-0.44).sp,
-                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            val single = chips.size == 1
-            Text(if (single) source?.let { "$it has no $noun matching “${newest.label}”." }
-                    ?: "No $noun match “${newest.label}”."
-                else source?.let { "$it has no $noun with all ${chips.size} filters. Removing the newest one usually helps." }
-                    ?: "No $noun are available for these filters.",
-                color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
-            BoardAction(if (newest.label.length > 24) "Remove filter" else "Remove “${newest.label}”", primary = true, run = { remove(newest) })
-            if (!single) BoardAction("Clear all filters", primary = false, run = clearAll)
-        }
-    }
-}
 
-@Composable
-private fun BrowseErrorState(title: String?, source: String?, error: String, modifier: Modifier,
-    retry: () -> Unit, chooseCatalog: (() -> Unit)?) {
-    Column(modifier.fillMaxWidth().padding(top = 90.dp, start = 20.dp, end = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(Lucide.CloudOff, null, Modifier.size(30.dp))
-        Text("Couldn’t load ${title ?: "this catalog"}", fontSize = 22.sp, lineHeight = 25.sp,
-            letterSpacing = (-0.44).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text("${source?.takeIf(String::isNotBlank) ?: "Your source"} didn’t answer in time. Your filters are kept.",
-            color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
-        BoardAction("Try again", primary = true, run = retry, icon = Lucide.RotateCw)
-        chooseCatalog?.let { BoardAction("Choose another catalog", primary = false, run = it) }
-        Text(error, color = Palette.tertiary, fontSize = 12.sp, lineHeight = 16.sp, textAlign = TextAlign.Center)
-    }
-}
 
-@Composable
-private fun BoardAction(label: String, primary: Boolean, run: () -> Unit, icon: ImageVector? = null) {
-    val interaction = remember { MutableInteractionSource() }
-    val rest = if (primary) Palette.text else Color.White.copy(alpha = .12f)
-    Row(Modifier.height(44.dp).pressScale(interaction, Motion.button).clip(RoundedCornerShape(12.dp))
-        .background(hoverFill(interaction, rest))
-        .pointerClickable(interactionSource = interaction, onClick = run, shape = RoundedCornerShape(12.dp), hover = null)
-        .padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        icon?.let { Icon(it, null, Modifier.size(18.dp), tint = if (primary) Palette.background else Palette.text) }
-        Text(label, color = if (primary) Palette.background else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    }
-}
