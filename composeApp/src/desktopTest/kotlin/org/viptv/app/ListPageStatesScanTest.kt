@@ -46,6 +46,18 @@ class ListPageStatesScanTest {
         assertTrue(source("features/calendar/CalendarScreen.kt").contains("ReleaseRowSkeleton("), "the calendar draws release rows")
     }
 
+    @Test fun continueWatchingReadsItsOwnLoadErrorAndDrawsTheSharedBlock() {
+        val route = source("features/continuewatching/ContinueWatchingRoute.kt")
+        assertTrue(route.contains("continueWatchingError"), "the page reads its own load failure")
+        assertFalse(route.contains("state.error"), "an action's failure never becomes the page state")
+        for (screen in listOf("features/continuewatching/ContinueWatchingScreen.kt",
+            "features/continuewatching/TvContinueWatchingScreen.kt")) {
+            val text = source(screen)
+            assertTrue(text.contains("ContinueWatchingState("), "$screen draws the shared page state block")
+            assertFalse(text.contains("page.error?.let"), "$screen prints the request's message once, as the block's body")
+        }
+    }
+
     @Test fun continueWatchingStatesComeFromTheSharedRule() {
         val page = source("features/continuewatching/ContinueWatchingRoute.kt")
         assertTrue(page.contains("val state get() = listPageState("), "the page state is the shared rule")

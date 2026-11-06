@@ -67,7 +67,7 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
     updateState { next -> next.copy(continueWatching = current.refreshedBy(profile, page, limit),
-        continueWatchingPageError = null,
+        continueWatchingError = null, continueWatchingPageError = null,
         continueNext = next.continueNext.announced(page.entries)) }
 }
 
@@ -80,12 +80,19 @@ internal fun ContinueWatchingList?.refreshedBy(profile: String, page: Continuati
 internal fun ApplicationController.loadContinueWatching(navigation: Long = navigationGeneration) {
     val profile = mutable.value.selectedProfile ?: return
     if (mutable.value.continueWatching?.profile == profile) return
+    updateState { it.copy(continueWatchingError = null) }
     runPage {
-        val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
-        val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
-        updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
-            continueWatchingPageError = null,
-            continueNext = next.continueNext.announced(page.entries)) }
+        try {
+            val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
+            val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
+            updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+                continueWatchingError = null, continueWatchingPageError = null,
+                continueNext = next.continueNext.announced(page.entries)) }
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            if (mutable.value.selectedProfile == profile) updateState { it.copy(continueWatchingError = failureMessage(error)) }
+            throw error
+        }
     }
 }
 

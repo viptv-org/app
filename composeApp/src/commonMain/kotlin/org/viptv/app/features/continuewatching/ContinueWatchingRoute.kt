@@ -8,7 +8,7 @@ import org.viptv.app.state.*
 internal fun ContinueWatchingRoute(state: ApplicationState, controller: ApplicationController, television: Boolean) {
     val list = state.continueWatching?.takeIf { it.profile == state.selectedProfile }
     val more = if (list?.next != null) controller::continueWatchingMore else null
-    val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.error,
+    val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.continueWatchingError,
         pageError = state.continueWatchingPageError)
     val remove = if (state.localMode) null else controller::removeFromContinueWatching
     if (television) TvContinueWatchingScreen(page, controller::playTitle, controller::open, more, retry = { controller.loadContinueWatching() },
