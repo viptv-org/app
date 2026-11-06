@@ -140,7 +140,6 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().heightIn(min = 76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
         }
-        // The title menu carries Retry: a button inside a grid cell never takes the D-pad.
         MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 10.dp * scale), scale = scale * 1.7f, retry = false)
         if (menu && menuOpen) {
             Popup(onDismissRequest = { menuOpen = false }, popupPositionProvider = remember { TvCardMenuPosition() }, properties = PopupProperties(focusable = true)) {

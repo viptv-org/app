@@ -53,7 +53,7 @@ private fun InlineMutationError(message: String, retry: (() -> Unit)?, modifier:
             Text("Retry", color = Palette.text, fontSize = (13 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
     }
-    // A card or a menu row narrower than this stacks the Retry under the message instead of squeezing both.
+    // Narrower than a menu row the message and Retry stop sharing a line, so the Retry drops under the message.
     BoxWithConstraints(modifier) {
         if (maxWidth < 220.dp * scale) Column(verticalArrangement = Arrangement.spacedBy(2.dp * scale)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp * scale)) {
