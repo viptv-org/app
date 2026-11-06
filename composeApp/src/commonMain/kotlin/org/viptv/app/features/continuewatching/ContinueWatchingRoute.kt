@@ -2,19 +2,14 @@ package org.viptv.app.features.continuewatching
 
 import androidx.compose.runtime.Composable
 import org.viptv.app.components.listPageState
+import org.viptv.app.features.library.LibraryRoute
+import org.viptv.app.features.library.MyListSegment
 import org.viptv.app.state.*
 
+// The Home shelf's See all and the title menu open My List on its second segment.
 @Composable
 internal fun ContinueWatchingRoute(state: ApplicationState, controller: ApplicationController, television: Boolean) {
-    val list = state.continueWatching?.takeIf { it.profile == state.selectedProfile }
-    val more = if (list?.next != null) controller::continueWatchingMore else null
-    val page = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy, error = state.error,
-        pageError = state.continueWatchingPageError)
-    val remove = if (state.localMode) null else controller::removeFromContinueWatching
-    if (television) TvContinueWatchingScreen(page, controller::playTitle, controller::open, more, retry = { controller.loadContinueWatching() },
-        home = { controller.navigate(Screen.Home) }, remove = remove)
-    else ContinueWatchingScreen(page, controller::playTitle, controller::open, more, retry = { controller.loadContinueWatching() },
-        back = controller::navigateBack, home = { controller.navigate(Screen.Home) }, remove = remove)
+    LibraryRoute(state, controller, television, MyListSegment.Continue)
 }
 
 internal data class ContinueWatchingPage(val cards: List<org.viptv.engine.wire.Card>, val loaded: Boolean,

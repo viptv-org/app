@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.Density
 import org.viptv.app.ListRemovalHost.Companion.continueCard
 import org.viptv.app.ListRemovalHost.Companion.libraryCard
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.TvContinueWatchingScreen
 import org.viptv.app.features.library.TvLibraryScreen
 import org.viptv.app.theme.Palette
 import org.junit.Rule
@@ -34,7 +33,7 @@ class TvListRemovalFocusTest {
     @Test fun tvContinueWatchingReachesTheRemoveActionAndConfirmsIt() {
         val removed = mutableListOf<Card>()
         Page {
-            TvContinueWatchingScreen(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true),
+            ContinueWatchingSegment(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true), television = true,
                 play = {}, open = {}, more = null, retry = {}, home = {}, remove = { removed += it })
         }.use { page ->
             page.until("the first card") { page.focusedText()?.startsWith("Show 01") == true }
@@ -67,7 +66,7 @@ class TvListRemovalFocusTest {
     @Test fun theRemoveActionActsOnTheCardTheViewerStoodOn() {
         val removed = mutableListOf<Card>()
         Page {
-            TvContinueWatchingScreen(ContinueWatchingPage((1..4).map { continueCard(it) }, loaded = true),
+            ContinueWatchingSegment(ContinueWatchingPage((1..4).map { continueCard(it) }, loaded = true), television = true,
                 play = {}, open = {}, more = null, retry = {}, home = {}, remove = { removed += it })
         }.use { page ->
             page.until("the first card") { page.focusedText()?.startsWith("Show 01") == true }

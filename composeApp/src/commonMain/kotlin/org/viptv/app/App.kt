@@ -208,7 +208,7 @@ fun App(
             // A full Continue Watching row reads the whole list once per Home revision to know whether it ends with "See all".
             val continueRowSize = state.home?.rows?.find { it.id == org.viptv.app.features.home.CONTINUE_ROW }?.cards?.size
             LaunchedEffect(state.selectedProfile, state.home?.scope, state.home?.revision, continueRowSize) { controller.checkContinueWatching() }
-            val navigationScreen = if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen
+            val navigationScreen = if (state.screen == Screen.ContinueWatching) Screen.Library else state.screen
             when (state.screen) {
                 Screen.Connect -> ConnectScreen(browser, browserOrigin() ?: defaultServer, state.busy, state.error, localDatabase?.let { { controller.useLocal(it) } }, controller::connect, desktopChrome, compact && !television && !browser && !desktopChrome, television, entryBackChanged,
                     pairing = state.devicePairing, startPairing = controller::startDevicePairing, cancelPairing = controller::cancelDevicePairing,
@@ -245,10 +245,10 @@ fun App(
                       LocalBottomClearance provides bottomClearance, LocalAnimeAvailable provides animeAvailable,
                       LocalHeaderRemote provides remote, LocalPhoneScroll provides phoneScroll, LocalHeaderPills provides phone,
                       LocalTvBannerFocus provides bannerFocus.takeIf { television && bannerSince != null }) { Column(Modifier.fillMaxSize()) {
-                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
-                    else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
-                        if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
-                        else if (tablet) TabletHeader(state.screen)
+                    if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
+                    else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings)) {
+                        if (phone) PhoneHeader(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
+                        else if (tablet) TabletHeader(navigationScreen)
                     }
 
                     Row(Modifier.weight(1f)) {
@@ -343,7 +343,7 @@ fun App(
                     }
                   } }
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
-                      PhoneBottomBar(if (state.screen == Screen.ContinueWatching) Screen.Home else state.screen, controller::navigate, hidden = phoneScroll.barHidden)
+                      PhoneBottomBar(navigationScreen, controller::navigate, hidden = phoneScroll.barHidden)
                   }
                   if (bannerSince != null) {
                       BackendBanner(television, phone, bottomBar, bannerSince, state.backendRetrySeconds,
@@ -397,9 +397,9 @@ private val BOTTOM_BAR_HIDDEN = setOf(Screen.Details, Screen.Sources, Screen.Set
 internal fun bottomBarShown(screen: Screen, compact: Boolean, browser: Boolean, desktopChrome: Boolean): Boolean =
     compact && !browser && !desktopChrome && screen !in BOTTOM_BAR_HIDDEN
 
-// Continue Watching has no nav entry, so the SideNavigation highlight resolves it to Home.
+// Continue Watching is My List's second segment, so the SideNavigation highlight resolves it to My List.
 private fun navHighlightPage(detailReturnScreen: Screen): Screen =
-    if (detailReturnScreen == Screen.ContinueWatching) Screen.Home else detailReturnScreen
+    if (detailReturnScreen == Screen.ContinueWatching) Screen.Library else detailReturnScreen
 
 private val DETAIL_BACKDROP_PAGES = setOf(
     Screen.Home, Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,

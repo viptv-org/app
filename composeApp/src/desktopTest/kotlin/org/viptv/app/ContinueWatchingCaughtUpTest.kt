@@ -20,7 +20,6 @@ import kotlinx.coroutines.*
 import org.viptv.app.components.caughtUpCaption
 import org.viptv.app.components.isCaughtUp
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.TvContinueWatchingScreen
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.home.MediaCard
 import org.viptv.app.features.home.TvHomeShelf
@@ -142,7 +141,7 @@ class ContinueWatchingCaughtUpTest {
     @Test fun tvContinueWatchingPageRoutesACaughtUpCardToDetails() = onEdt {
         val opened = mutableListOf<Card>(); val played = mutableListOf<Card>()
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
-            TvContinueWatchingScreen(ContinueWatchingPage(listOf(finale, resume), loaded = true),
+            ContinueWatchingSegment(ContinueWatchingPage(listOf(finale, resume), loaded = true), television = true,
                 play = { played += it }, open = { opened += it }, more = null, retry = {}, home = {})
         } }
         fun render() = repeat(10) { scene.render(it * 16_666_667L).close() }

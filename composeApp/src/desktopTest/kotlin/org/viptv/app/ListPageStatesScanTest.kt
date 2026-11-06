@@ -46,13 +46,14 @@ class ListPageStatesScanTest {
         assertTrue(source("features/calendar/CalendarScreen.kt").contains("ReleaseRowSkeleton("), "the calendar draws release rows")
     }
 
-    @Test fun continueWatchingStatesComeFromTheSharedRule() {
+    @Test fun theContinueWatchingSegmentComesFromTheSharedRule() {
         val page = source("features/continuewatching/ContinueWatchingRoute.kt")
         assertTrue(page.contains("val state get() = listPageState("), "the page state is the shared rule")
-        for (screen in listOf("features/continuewatching/ContinueWatchingScreen.kt",
-            "features/continuewatching/TvContinueWatchingScreen.kt")) {
+        for (screen in listOf("features/library/LibraryScreen.kt", "features/library/TvLibraryScreen.kt")) {
             val text = source(screen)
-            assertFalse(Regex("""\bpage\.(loading|empty)\b""").containsMatchIn(text), "$screen reads the shared state, not its own flags")
+            assertTrue(text.contains("section?.page?.state"), "$screen draws the segment from the shared state")
+            assertFalse(Regex("""\bsection\?\.page\?\.(loading|empty)\b""").containsMatchIn(text),
+                "$screen reads the shared state, not its own flags")
         }
     }
 }

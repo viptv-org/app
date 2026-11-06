@@ -20,7 +20,6 @@ import org.viptv.app.components.ListRemoval
 import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.continuewatching.ContinueWatchingRoute
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.home.CardMenu
 import org.viptv.app.features.library.LibraryScreen
 import org.viptv.app.state.*
@@ -103,8 +102,8 @@ class ListRemovalUiTest {
 
     @Test fun thePageLeavesTheRemovalNoticeToTheSharedToast() {
         withScene(1280, {
-            ContinueWatchingScreen(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true),
-                play = {}, open = {}, more = null, retry = {}, back = {}, home = {}, remove = {})
+            ContinueWatchingSegment(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true),
+                play = {}, open = {}, more = null, retry = {}, home = {}, remove = {})
         }) { scene ->
             frames(scene)
             assertNull(clickable(scene, "Undo"), "the notice lives in the shared host, not in the page's own row")
