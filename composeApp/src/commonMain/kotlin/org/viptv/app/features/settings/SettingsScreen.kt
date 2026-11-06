@@ -42,7 +42,6 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
     stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
     addDevice: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
@@ -64,7 +63,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     addonsManageable: Boolean = true,
     addonLogos: Map<String, String> = emptyMap()) {
     if (television) {
-        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches,
             addonLogos = addonLogos,
             addonsManageable = addonsManageable)

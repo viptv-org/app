@@ -37,7 +37,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     gatewaysRequested: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null,
+    devicePlayback: DevicePlaybackState? = null,
     profilePage: (@Composable (FocusRequester, FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
     profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     tvDevices: (@Composable (FocusRequester, FocusRequester, Float, () -> Unit) -> Unit)? = null,
@@ -151,8 +151,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
-                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else
-                        TvParentalSettings(profile, maturity, pinAvailable, scale, first, sidebar, profiles)
+                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else {
+                        Text("Parental controls", fontSize = (40 * scale).sp)
+                        Spacer(Modifier.height(24.dp * scale))
+                        Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
+                    }
                     TvSettingsSection.Account -> if (devicesPage && tvDevices != null) tvDevices(first, sidebar, scale) { devicesPage = false }
                         else TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, openAccount,
                             openDevices = if (tvDevices != null && !local) ({ devicesPage = true }) else null,
