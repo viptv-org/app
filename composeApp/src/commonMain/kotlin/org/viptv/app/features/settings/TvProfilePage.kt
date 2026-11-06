@@ -32,7 +32,7 @@ internal fun TvProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, er
     var restore by remember(values.profile.id) { mutableStateOf<FocusRequester?>(null) }
     fun openDialog(target: FocusRequester, dialog: () -> Unit) { restore = target; dialog() }
     val anyDialogOpen = dialogs.name || dialogs.avatar || dialogs.lock || dialogs.maturity || dialogs.delete ||
-        dialogs.kidsPin || dialogs.maturityPin != null
+        dialogs.householdPinTitle != null
     LaunchedEffect(anyDialogOpen) {
         if (anyDialogOpen) return@LaunchedEffect
         withFrameNanos { }
