@@ -44,6 +44,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
     val span = if (television) 120 else 150
     BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
         val channelWidth = if (television) 300.dp * scale else 192.dp
+        val numberWidth = liveGuideNumberWidth(channels, television, scale)
         val gap = (if (television) 28 else 8).dp * scale
         val unit = (maxWidth - channelWidth - gap + if (television) 4.dp * scale else 0.dp) / span
         val firstChannel = channels.firstOrNull()
@@ -70,7 +71,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                     val slots = liveGuideSlots(channel.programs, start, span, minimumMinutes)
                     val initial = slots.initial(now)
                     Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.listItemEntrance(index, entrance.animate)) {
-                        if (television) TvLiveChannelLabel(channel, scale,
+                        if (television) TvLiveChannelLabel(channel, scale, numberWidth,
                             if (channel == firstChannel && initialProgram == null) first else null,
                             if (channel == firstChannel) up else null,
                             Modifier.pageAnchor(restore, key, index, row && initial == null),
