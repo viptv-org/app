@@ -80,7 +80,7 @@ fun ApplicationController.deleteSelectedProfile(pin: String, householdPin: Strin
     updateState { current -> current.copy(managingProfiles = true) }
 }
 
-private suspend fun ApplicationController.unlockHousehold(remote: RemoteConnection?, pin: String) {
+internal suspend fun ApplicationController.unlockHousehold(remote: RemoteConnection?, pin: String) {
     if (remote == null || pin.isEmpty()) return
     if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
     remote.unlockParent(pin)

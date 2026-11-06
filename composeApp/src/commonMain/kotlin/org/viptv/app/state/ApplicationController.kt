@@ -129,6 +129,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var addonOperation: Job? = null
     internal val mutationJobs = mutableMapOf<MutationTarget, Job>()
     internal val mutationRetries = mutableMapOf<MutationTarget, MutationRetry>()
+    internal var householdPinAction: (suspend () -> Unit)? = null
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
