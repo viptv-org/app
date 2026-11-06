@@ -32,7 +32,7 @@ internal fun TvProfileItem(name: String, locked: Boolean, size: Dp, scale: Float
         Box(Modifier.tvProfileTileRing(focused, 28.dp, scale)) { artwork() }
         Row(Modifier.padding(top = 20.dp * scale), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-            if (locked) Icon(Lucide.Lock, "Locked profile", Modifier.size(24.dp * scale), tint = Palette.secondary)
+            if (locked) Icon(Lucide.Lock, "Locked", Modifier.size(24.dp * scale), tint = Palette.secondary)
             Text(name, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp, color = if (focused) Palette.text else Palette.secondary,
                 fontWeight = if (focused) FontWeight.Bold else FontWeight.Medium, maxLines = 1)
         }

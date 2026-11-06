@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.connection.DEVICE_PAIRING_EXPIRED_MESSAGE
 import org.viptv.app.theme.Palette
 
 internal data class TvPairingSession(val qrUrl: String, val browserAddress: String, val code: String, val expiryLabel: String)
@@ -31,7 +32,8 @@ internal fun TvPairingSignIn(scale: Float, session: TvPairingSession? = null, re
             .border(2.dp * scale, Color.White.copy(alpha = .12f), CircleShape), contentAlignment = Alignment.Center) {
             Text("or", fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, color = Palette.secondary)
         }
-        TvPairingBrowser(session, scale, first, busy, refresh)
+        TvPairingBrowser(session, scale, first, busy, refresh,
+            failed = session == null && error == DEVICE_PAIRING_EXPIRED_MESSAGE)
         Row(Modifier.offset(96.dp * scale, 900.dp * scale), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
             if (session != null) Box(Modifier.size(12.dp * scale).background(Palette.accent, CircleShape))
             Text(error ?: if (session == null) { if (busy) "Creating your sign-in code…" else "Request a sign-in code to continue." } else "Waiting for you to sign in…", fontSize = (24 * scale).sp,

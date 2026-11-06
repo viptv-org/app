@@ -60,7 +60,7 @@ internal fun TvWelcome(scale: Float, signIn: () -> Unit, local: (() -> Unit)?, e
                 Text("Try again", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        if (local != null) Text("Without an account, everything stays on this TV. No profiles or sync.", color = Palette.secondary, fontSize = (22 * scale).sp)
+        if (local != null) Text("Your addons and playback stay on this device. No account, profiles, or sync.", color = Palette.secondary, fontSize = (22 * scale).sp)
     }
 }
 
