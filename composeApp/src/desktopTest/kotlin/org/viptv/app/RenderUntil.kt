@@ -9,11 +9,11 @@ import kotlin.time.TimeSource
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun ImageComposeScene.renderUntil(timeout: Duration = 5.seconds, from: Long = 0L, what: String = "the expected state",
-    frameNanos: Long = 16_666_667L, condition: () -> Boolean): Long {
+    condition: () -> Boolean): Long {
     val deadline = TimeSource.Monotonic.markNow() + timeout
     var frame = from
     while (true) {
-        render(frame++ * frameNanos).close()
+        render(frame++ * 16_666_667L).close()
         if (condition()) return frame
         if (deadline.hasPassedNow()) fail("the scene did not reach $what within $timeout")
         Thread.yield()

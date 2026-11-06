@@ -92,8 +92,8 @@ class PlayerControlFailureTest {
             assertTrue(showsNotice(scene), "a failed viewer command is visible in the middle of the picture")
             render(17)
             assertTrue(showsNotice(scene), "at ${sceneMillis()} ms of scene time the notice is still inside its window")
-            frame = scene.renderUntil(from = frame, what = "the control error notice to clear", frameNanos = step) { !showsNotice(scene) }
-            assertTrue(sceneMillis() > playbackControlErrorVisibleMillis, "it clears once the scene has run out the window")
+            render(3)
+            assertTrue(sceneMillis() > playbackControlErrorVisibleMillis, "the window is counted in the frames the scene renders")
             assertFalse(showsNotice(scene), "the notice clears instead of staying over working playback")
         } finally { scene.close() }
     }
