@@ -99,7 +99,7 @@ class SettingsRowValueTest {
 
     @Test fun everyProfileRowKeepsItsLabelOnAPhone() {
         val scene = scene(390, 900) {
-            ProfileSettingsPage(values, false, null, 0L, ProfilePageActions(), SettingsLayout.Phone)
+            ProfileSettingsPage(values, false, null, 0L, null, ProfilePageActions(), SettingsLayout.Phone)
         }
         try {
             render(scene)
