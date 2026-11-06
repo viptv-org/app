@@ -18,18 +18,22 @@ fun ApplicationController.refreshProfilePage() = run {
     }
 }
 
-fun ApplicationController.saveProfileName(name: String, pin: String) = run {
+fun ApplicationController.saveProfileName(name: String, pin: String, householdPin: String = "") = run {
     val id = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
     val trimmed = name.trim()
     if (trimmed.isEmpty()) throw LocalFailure("Enter a name for this profile.")
-    if (local != null) requireNotNull(local).renameProfile(id, trimmed, pin) else requireNotNull(connection).renameProfile(id, trimmed)
+    val remote = connection
+    unlockHousehold(remote, householdPin)
+    if (local != null) requireNotNull(local).renameProfile(id, trimmed, pin) else requireNotNull(remote).renameProfile(id, trimmed)
     finishProfilePageSave()
 }
 
-fun ApplicationController.setSelectedProfileAvatar(style: String, choice: Int, pin: String) = run {
+fun ApplicationController.setSelectedProfileAvatar(style: String, choice: Int, pin: String, householdPin: String = "") = run {
     val id = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
+    val remote = connection
+    unlockHousehold(remote, householdPin)
     if (local != null) requireNotNull(local).setProfileAvatar(id, style, choice, pin)
-    else requireNotNull(connection).setProfileAvatar(id, style, choice)
+    else requireNotNull(remote).setProfileAvatar(id, style, choice)
     finishProfilePageSave()
 }
 
@@ -46,7 +50,7 @@ fun ApplicationController.saveProfileKids(policy: KidsPolicy, pin: String) = run
     if (policy.max_age !in 0..17) throw LocalFailure("Choose an age between 0 and 17.")
     val parent = (mutable.value.profileManagement ?: remote.profileManagement()).parent
     if (policy.enabled && !parent.pin_configured) throw LocalFailure("Set a household PIN before turning on Kids profile.")
-    if (policy.enabled && parent.pin_configured && !parent.unlocked) {
+    if (parent.pin_configured && !parent.unlocked && pin.isNotEmpty()) {
         if (!validParentPin(pin)) throw LocalFailure("Enter the household PIN to change this profile’s limits.")
         remote.unlockParent(pin)
     }
@@ -63,15 +67,23 @@ fun ApplicationController.saveProfileKids(policy: KidsPolicy, pin: String) = run
     }
 }
 
-fun ApplicationController.deleteSelectedProfile(pin: String) = run {
+fun ApplicationController.deleteSelectedProfile(pin: String, householdPin: String = "") = run {
     val id = mutable.value.selectedProfile ?: throw LocalFailure("Choose a profile first.")
-    if (local != null) requireNotNull(local).deleteProfile(id, pin) else requireNotNull(connection).deleteProfile(id)
+    val remote = connection
+    unlockHousehold(remote, householdPin)
+    if (local != null) requireNotNull(local).deleteProfile(id, pin) else requireNotNull(remote).deleteProfile(id)
     val next = local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     progressJob?.cancel(); subtitleDiscovery?.cancel(); liveGuideJob?.cancel()
     cancelLiveFavoriteMutations()
     releaseRemotePlayback()?.join()
     accept(next, screen = Screen.Profiles)
     updateState { current -> current.copy(managingProfiles = true) }
+}
+
+private suspend fun ApplicationController.unlockHousehold(remote: RemoteConnection?, pin: String) {
+    if (remote == null || pin.isEmpty()) return
+    if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
+    remote.unlockParent(pin)
 }
 
 private suspend fun ApplicationController.finishProfilePageSave() {

@@ -52,11 +52,11 @@ class TvProfileDialogsTest {
     private fun profile() = Profile("1", "Viewer", null, locked = false)
 
     private fun actions(saved: androidx.compose.runtime.MutableState<Long>) = ProfilePageActions(
-        rename = { name, pin -> calls += "rename:$name:$pin" },
+        rename = { name, pin, household -> calls += "rename:$name:$pin:$household" },
         kids = { enabled, pin -> calls += "kids:$enabled:$pin"; saved.value += 1 },
         maturity = { movie, series, unrated, pin -> calls += "maturity:$movie:$series:$unrated:$pin"; saved.value += 1 },
         lock = { old, next -> calls += "lock:$old:$next"; saved.value += 1 },
-        delete = { pin -> calls += "delete:$pin"; saved.value += 1 })
+        delete = { pin, household -> calls += "delete:$pin:$household"; saved.value += 1 })
 
     private fun values(householdLocked: Boolean = false) = ProfilePageValues(profile = profile(), local = false,
         kids = true, maxAge = 10, approvedTitles = 2, householdPinConfigured = householdLocked, householdUnlocked = false,
@@ -71,7 +71,7 @@ class TvProfileDialogsTest {
                         television = true, initialSection = "Profile",
                         tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
                         tvProfilePage = { first, sidebar, scale, _ ->
-                            TvProfileSettingsPage(page, false, null, saved.value, actions(saved), scale, first, sidebar) { }
+                            TvProfileSettingsPage(page, false, null, saved.value, null, actions(saved), scale, first, sidebar) { }
                         })
                 }
             }
@@ -166,7 +166,7 @@ class TvProfileDialogsTest {
             assertEquals(1, page.dialog().count { it.config.contains(SemanticsActions.SetText) })
             page.type("Renamed")
             page.click("Save")
-            assertEquals(listOf("rename:Renamed:"), calls)
+            assertEquals(listOf("rename:Renamed::"), calls)
             assertTrue(page.dialogOpen(), "a save that has not landed keeps the panel open")
             page.saved.value = 1
             page.settle(24)
@@ -215,7 +215,7 @@ class TvProfileDialogsTest {
             val delete = requireNotNull(page.action("Delete profile"))
             assertFalse(delete.config.contains(SemanticsProperties.Disabled), "no local PIN is set, so Delete is available")
             page.clickDialog("Delete profile")
-            assertEquals(listOf("delete:"), calls)
+            assertEquals(listOf("delete::"), calls)
         }
     }
 
