@@ -101,19 +101,13 @@ class ListRemovalUiTest {
         } finally { scene.close() }
     }
 
-    @Test fun theRemovedNoticeUndoesInPlace() {
-        var undone = 0
+    @Test fun thePageLeavesTheRemovalNoticeToTheSharedToast() {
         withScene(1280, {
             ContinueWatchingScreen(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true),
-                play = {}, open = {}, more = null, retry = {}, back = {}, home = {}, remove = {},
-                undo = ContinueUndo("1", continueCard(2), 1), undoRemove = { undone++ })
+                play = {}, open = {}, more = null, retry = {}, back = {}, home = {}, remove = {})
         }) { scene ->
             frames(scene)
-            assertTrue(nodes(scene).any { label(it).contains("Removed “Show 02” from Continue Watching.") },
-                "the notice names what left the list")
-            tap(scene, "Undo")
-            frames(scene)
-            assertEquals(1, undone)
+            assertNull(clickable(scene, "Undo"), "the notice lives in the shared host, not in the page's own row")
         }
     }
 

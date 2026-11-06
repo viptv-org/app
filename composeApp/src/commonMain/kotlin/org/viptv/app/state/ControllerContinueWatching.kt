@@ -138,14 +138,20 @@ internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo, clear
         home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
             if (row.id != CONTINUE_ROW || row.cards.size >= HOME_CONTINUE_ROW_CAP) row
             else row.copy(cards = row.cards.restored(), state = RowState.READY) }) },
-        continueUndo = if (clearOffer) null else continueUndo)
+        continueUndo = if (clearOffer) null else continueUndo,
+        notice = if (clearOffer) null else notice)
 }
 
 fun ApplicationController.removeFromContinueWatching(card: Card) {
     val profile = mutable.value.selectedProfile ?: return
     val remote = connection ?: return
     if (mutable.value.continueWatching?.profile != profile) return
-    updateState { it.withContinueCardRemoved(card) }
+    updateState { state ->
+        val removed = state.withContinueCardRemoved(card)
+        val offer = removed.continueUndo?.takeIf { cardLookupKey(it.card) == cardLookupKey(card) }
+            ?: return@updateState state
+        removed.withRemovalNotice(REMOVED_FROM_CONTINUE, ++noticeSerial, continueWatching = offer)
+    }
     val undo = mutable.value.continueUndo?.takeIf { it.profile == profile && cardLookupKey(it.card) == cardLookupKey(card) } ?: return
     continueVisibilityJob = scope.launch {
         try {

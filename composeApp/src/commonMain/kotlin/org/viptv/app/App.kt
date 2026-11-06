@@ -121,10 +121,13 @@ fun App(
             markWatched = if (localMode) null else controller::toggleWatched)
     }
     val bannerSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
+    val notice = state.notice?.takeIf { backendBannerScreen(state.screen) }
     val bannerFocus = remember { TvBannerFocus() }
+    val noticeFocus = remember { TvNoticeFocus() }
     val focusManager = LocalFocusManager.current
     var appHasFocus by remember { mutableStateOf(false) }
     var bannerHadFocus by remember { mutableStateOf(false) }
+    var noticeHadFocus by remember { mutableStateOf(false) }
     LaunchedEffect(bannerSince != null) {
         if (bannerSince != null) {
             snapshotFlow { bannerFocus.focused.value }.collect { if (it) bannerHadFocus = true }
@@ -133,6 +136,17 @@ fun App(
         if (!bannerHadFocus) return@LaunchedEffect
         bannerHadFocus = false
         // The banner's Dismiss leaves composition while it holds focus, so Compose clears focus with it: put the D-pad back on the page.
+        repeat(2) { withFrameNanos { } }
+        if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
+    }
+    // The notice's Undo leaves the same way when it is pressed or expires while the D-pad is on it.
+    LaunchedEffect(notice?.serial) {
+        if (notice != null) {
+            snapshotFlow { noticeFocus.focused.value }.collect { if (it) noticeHadFocus = true }
+            return@LaunchedEffect
+        }
+        if (!noticeHadFocus) return@LaunchedEffect
+        noticeHadFocus = false
         repeat(2) { withFrameNanos { } }
         if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
     }
@@ -146,11 +160,14 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
-            // The banner takes no focus: Up from a page's topmost control is how the D-pad reaches Dismiss, with or without a header rail.
+            // Neither the banner nor the notice takes focus: Up from a page's topmost control is how the D-pad
+            // reaches Dismiss and Undo, with or without a header rail.
             .onKeyEvent { event ->
-                if (!television || bannerSince == null || event.type != KeyEventType.KeyDown || event.key != Key.DirectionUp) false
+                if (!television || event.type != KeyEventType.KeyDown || event.key != Key.DirectionUp) false
+                else if (bannerSince == null && notice?.action == null) false
                 else if (focusManager.moveFocus(FocusDirection.Up)) true
-                else { bannerFocus.requester.requestFocus(); true }
+                else if (bannerSince != null) { bannerFocus.requester.requestFocus(); true }
+                else { noticeFocus.requester.requestFocus(); true }
             }
             .onFocusChanged { appHasFocus = it.hasFocus }
             .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
@@ -328,6 +345,10 @@ fun App(
                   if (bannerSince != null) {
                       BackendBanner(television, phone, bottomBar, bannerSince, state.backendRetrySeconds,
                           controller::dismissBackendBanner, bannerFocus)
+                  }
+                  notice?.let { shown ->
+                      NoticeToast(shown, television, phone, bottomBar, undo = controller::undoRemoval,
+                          dismiss = controller::dismissNotice, focus = noticeFocus.takeIf { television })
                   }
                 }
             }
