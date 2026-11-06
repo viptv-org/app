@@ -14,7 +14,8 @@ internal class ProgressiveSourceRanking(
     private val arrivals = Channel<List<SourceCandidate>>(Channel.CONFLATED)
     private var submitted: List<String> = emptyList()
     private var shown = RankedSources(emptyList())
-    private var failed = false
+    internal var failed = false
+        private set
 
     private val worker = scope.launch {
         for (rows in arrivals) {
