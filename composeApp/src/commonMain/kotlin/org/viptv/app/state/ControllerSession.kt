@@ -221,12 +221,7 @@ internal fun ApplicationController.expireSession(remote: RemoteConnection?, devi
 }
 
 internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = null, busy: Boolean = false) {
-    libraryHydration?.cancel()
-    calendarReread?.cancel(); calendarReread = null
-    resetLiveRequests()
-    freshness.reset()
-    if (local != null) freshness.unsupported()
-    if (value.home != null) freshness.homeBuilt(value.revisions)
+    startSnapshot(value)
     val switchesProfile = value.selected != null && value.selected != mutable.value.selectedProfile
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
@@ -235,6 +230,30 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         accountRole = connection?.accountRole ?: "member",
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
+    adoptSnapshot(value)
+}
+
+// A write that re-reads the profile already open republishes the content only: the Back stack, the settings page,
+// the account reads and the write in flight belong to the session, not to the snapshot.
+internal fun ApplicationController.refreshSnapshot(value: Bootstrap, busy: Boolean = false) {
+    startSnapshot(value)
+    updateState { next -> next.copy(busy = busy, profiles = value.profiles,
+        profileManagement = value.profileManagement ?: next.profileManagement,
+        selectedProfile = value.selected ?: next.selectedProfile, home = value.home,
+        preferences = value.preferences ?: next.preferences, policyRefreshNeeded = false) }
+    adoptSnapshot(value)
+}
+
+private fun ApplicationController.startSnapshot(value: Bootstrap) {
+    libraryHydration?.cancel()
+    calendarReread?.cancel(); calendarReread = null
+    resetLiveRequests()
+    freshness.reset()
+    if (local != null) freshness.unsupported()
+    if (value.home != null) freshness.homeBuilt(value.revisions)
+}
+
+private fun ApplicationController.adoptSnapshot(value: Bootstrap) {
     value.selected?.let { loadRecentSearches(it) }
     adoptContinuation(value.continuation)
     discardReplacedStremioImport()
