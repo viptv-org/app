@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import org.viptv.app.components.frameDelay
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 
@@ -54,6 +54,6 @@ internal fun TvSignedIn(identity: TvSignedInIdentity, complete: (() -> Unit)? = 
 private fun TvGreetingPart(modifier: Modifier, sessionId: String, delayMillis: Long, scale: Float, content: @Composable () -> Unit) {
     val progress = remember(sessionId) { Animatable(0f) }
     val offsetPixels = with(androidx.compose.ui.platform.LocalDensity.current) { (16.dp * scale).toPx() }
-    LaunchedEffect(sessionId) { delay(delayMillis); progress.animateTo(1f, tween(500, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))) }
+    LaunchedEffect(sessionId) { frameDelay(delayMillis); progress.animateTo(1f, tween(500, easing = CubicBezierEasing(.2f, 0f, 0f, 1f))) }
     Box(modifier.graphicsLayer { alpha = progress.value; translationY = offsetPixels * (1f - progress.value) }) { content() }
 }
