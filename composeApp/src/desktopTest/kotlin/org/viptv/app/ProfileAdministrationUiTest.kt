@@ -34,7 +34,7 @@ class ProfileAdministrationUiTest {
     @Test fun actualLocalPinRemainsRequiredAndRemotePolicyCannotBecomeLocalLock(){
         assertTrue(parentLocked.copy(lockKind=null).requiresLocalPin(true));assertFalse(parentLocked.requiresLocalPin(true));assertFalse(parentLocked.copy(lockKind=null).requiresLocalPin(false))
         val scene=ImageComposeScene(1920,1080,Density(1f)){ViptvTheme(true){TvProfileEditDialog(TvProfileEditAction.Delete,parentLocked.copy(lockKind=null),false,{}, {_,_->},{_,_->},{},pinAvailable=true)}}
-        try{frames(scene);assertTrue(nodes(scene).any{text(it)=="Current PIN"});assertTrue(clickable(scene,"Delete").config.contains(SemanticsProperties.Disabled))}finally{scene.close()}
+        try{frames(scene);assertTrue(nodes(scene).any{text(it)=="Current PIN"});assertTrue(clickable(scene,"Delete profile").config.contains(SemanticsProperties.Disabled))}finally{scene.close()}
     }
     @Test fun otherProfileLanguageGuidanceUsesSelectionAndNeverPromisesMenuLocalization(){
         var section:String?=null

@@ -1,10 +1,9 @@
 package org.viptv.app.features.entry
 
-import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,15 +11,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.TvAction
 import org.viptv.app.connection.Profile
+import org.viptv.app.features.settings.TvDeleteProfileDialog
+import org.viptv.app.features.settings.TvProfileNameDialog
 import org.viptv.app.theme.Palette
-import org.viptv.app.components.TextButton
 
 @Composable
 internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?, busy: Boolean, dismiss: () -> Unit,
@@ -31,38 +30,14 @@ internal fun TvProfileEditDialog(action: TvProfileEditAction, profile: Profile?,
         return
     }
     if (action == TvProfileEditAction.Pin) { TvProfileLockDialog(profile, busy, scale, dismiss, setPin, pinAvailable); return }
-    var name by remember { mutableStateOf(profile?.name.orEmpty()) }
-    var currentPin by remember { mutableStateOf("") }
-    val editable = action in listOf(TvProfileEditAction.Name, TvProfileEditAction.Delete)
-    val authorized = !profile.requiresLocalPin(pinAvailable) || currentPin.length in 4..8
-    val valid = when (action) {
-        TvProfileEditAction.Name -> name.isNotBlank() && name != profile?.name
-        else -> true
+    val pinRequired = profile.requiresLocalPin(pinAvailable)
+    if (action == TvProfileEditAction.Name) {
+        TvProfileNameDialog(profile?.name.orEmpty(), pinRequired, busy, null, dismiss,
+            save = { name, pin -> rename(name, pin); dismiss() }, scale = scale)
+        return
     }
-    AlertDialog(onDismissRequest = dismiss, title = { Text(when (action) {
-        TvProfileEditAction.Name -> "Name"; TvProfileEditAction.Pin -> "Profile lock"
-        TvProfileEditAction.Delete -> "Delete ${profile?.name}?"; TvProfileEditAction.Maturity -> "Maturity rating"
-        TvProfileEditAction.Language -> "Language"
-    }) }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (!editable) Text("This connection does not provide this profile preference yet.")
-            if (action == TvProfileEditAction.Name) AppTextField(name, { name = it }, label = "Name", onEscape = dismiss)
-            if (editable && profile.requiresLocalPin(pinAvailable)) AppTextField(currentPin,
-                { if (it.length <= 8 && it.all(Char::isDigit)) currentPin = it }, label = "Current PIN",
-                visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code", onEscape = dismiss)
-            if (action == TvProfileEditAction.Delete) Text("This removes this profile’s history and add-on choices.")
-        }
-    }, confirmButton = {
-        if (editable) TextButton(enabled = !busy && authorized && valid, onClick = {
-            when (action) {
-                TvProfileEditAction.Name -> rename(name, currentPin)
-                TvProfileEditAction.Delete -> delete(currentPin)
-                else -> Unit
-            }
-            dismiss()
-        }) { Text(if (action == TvProfileEditAction.Delete) "Delete" else "Save") }
-        else TextButton(onClick = dismiss) { Text("OK") }
-    }, dismissButton = { if (editable) TextButton(onClick = dismiss) { Text("Cancel") } })
+    TvDeleteProfileDialog(profile?.name.orEmpty(), pinRequired, busy, null, dismiss,
+        delete = { pin -> delete(pin); dismiss() }, scale = scale)
 }
 
 @Composable
