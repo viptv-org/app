@@ -58,7 +58,6 @@ import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
@@ -93,6 +92,7 @@ import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.frameDelay
 import org.viptv.app.features.search.searchMatchHighlight
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -145,10 +145,10 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val saved = actions?.isSaved?.invoke(card) == true
     val activate = select ?: actions?.play ?: open
     // The preview survives the 12 dp gap, so the pointer can reach its own buttons.
-    LaunchedEffect(desktop, hovered) { if (desktop && hovered) { delay(450); previewOpen = true } }
+    LaunchedEffect(desktop, hovered) { if (desktop && hovered) { frameDelay(450); previewOpen = true } }
     LaunchedEffect(desktop, hovered, previewHovered, menuAt) {
         if (desktop && previewOpen && menuAt == null && !hovered && !previewHovered) {
-            delay(180)
+            frameDelay(180)
             if (!hovered && !previewHovered) previewOpen = false
         }
     }

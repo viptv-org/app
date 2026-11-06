@@ -17,11 +17,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.viptv.app.components.BrandMark
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvFocusColumn
+import org.viptv.app.components.frameDelay
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 
@@ -132,7 +132,7 @@ private fun TvUpdating(title: String, body: String, detail: String, fraction: Fl
                         }
                     }
                     // The permission step follows a press on Install: let the buttons settle so that press cannot also open settings.
-                    LaunchedEffect(action) { delay(700); runCatching { first.requestFocus() } }
+                    LaunchedEffect(action) { frameDelay(700); runCatching { first.requestFocus() } }
                 }
             }
         }
