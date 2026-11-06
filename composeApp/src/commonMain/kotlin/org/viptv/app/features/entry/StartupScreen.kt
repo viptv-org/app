@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.Brand
 import org.viptv.app.components.OutlinedButton
-import org.viptv.app.components.StartupProgress
+import org.viptv.app.components.StartupProgressBar
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -32,7 +32,7 @@ internal fun StartupScreen(changeConnection: (() -> Unit)? = null) {
             horizontalAlignment = Alignment.CenterHorizontally) {
             Brand(icon, (icon.value * 1.18f).sp, icon * 0.26f, (-0.04f * icon.value).sp, (icon.value * 1.18f).sp)
             Spacer(Modifier.height(if (phone) 32.dp else 44.dp))
-            StartupProgress(if (phone) .5f else if (tablet) .7f else .85f)
+            StartupProgressBar(if (phone) .5f else if (tablet) .7f else .85f)
             Spacer(Modifier.height(if (phone) 22.dp else 28.dp))
             Text("Getting VIPTV ready…", color = Palette.secondary, fontSize = if (phone) 15.sp else if (tablet) 17.sp else 18.sp)
             if (changeConnection != null) {
