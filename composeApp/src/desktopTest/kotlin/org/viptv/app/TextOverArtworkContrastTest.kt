@@ -61,7 +61,7 @@ class TextOverArtworkContrastTest {
     private val series = PreviewTvDetails.series.copy(item = white.copy(identity = MediaIdentity("detail-series", "series", emptyList())))
     private val metadata = listOf("2026", "1h 40m", "Action / Adventure", "★ 7.7")
     private val starring = "Starring Lena Ortiz, Marcus Reid, Piper Chan"
-    private val desktopMetadata = listOf("Movie", "2026", "Action, Adventure", "IMDb 7.7")
+    private val desktopMetadata = listOf("Movie", "2026", "1h 40m", "Action / Adventure", "★ 7.7")
     private val description = "The Platt family bands together"
 
     private class Surface(val name: String, val width: Int, val height: Int, val television: Boolean,
