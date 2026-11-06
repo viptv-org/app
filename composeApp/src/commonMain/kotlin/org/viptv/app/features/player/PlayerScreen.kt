@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.ProfilePreferences
@@ -90,6 +91,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
     var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
+    var controlsFocused by remember { mutableStateOf(false) }
     var pendingSubtitle by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
     var subtitleError by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
     var pendingAudio by remember(playbackKey) { mutableStateOf<Int?>(null) }
@@ -246,7 +248,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         else close()
                         true
                     }
-                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.Spacebar -> if (activationKeys && !controlsFocused) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
                     Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
                     Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
@@ -262,7 +265,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null),
                     modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
                     exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
-                Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize().onFocusChanged { controlsFocused = it.hasFocus }) {
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
                         0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
                     Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
