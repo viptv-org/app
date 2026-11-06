@@ -60,7 +60,7 @@ class PageFontScaleUiTest {
 
     private data class Page(val name: String, val screen: Screen, val variant: String,
         val width: Int, val height: Int, val television: Boolean = false, val desktop: Boolean = false,
-        val bottomBar: Boolean = false)
+        val bottomBar: Boolean = false, val midWord: Boolean = false)
 
     private val scales = listOf(1f, 1.3f, 2f)
 
@@ -93,7 +93,7 @@ class PageFontScaleUiTest {
             val found = LinkedHashSet<String>()
             var scrolled = -1f
             repeat(SCROLL_STEPS) {
-                found += check(scene, page.width, page.height)
+                found += check(scene, page.width, page.height, midWord = page.midWord)
                 val at = scrollOffset(scene)
                 if (at <= scrolled) return@repeat
                 scrolled = at
@@ -104,7 +104,7 @@ class PageFontScaleUiTest {
         } finally { scene.close() }
     }
 
-    private fun check(scene: ImageComposeScene, width: Int, height: Int): List<String> {
+    private fun check(scene: ImageComposeScene, width: Int, height: Int, midWord: Boolean = false): List<String> {
         val texts = textNodes(scene)
         val where = "${width}x${height}"
         val clipped = texts.mapNotNull { text ->
@@ -114,6 +114,16 @@ class PageFontScaleUiTest {
             if (!tooTall) null
             else "$where: '${text.label}' needs ${paragraph.height.toInt()}px and gets ${layout.size.height.toInt()}px"
         }
+        // A line break inside a word means the column is narrower than its text at this scale. The tablet pages ask for it;
+        // the same rule on every page needs adaptive two-column rows, tracked in app#913.
+        val broken = if (!midWord) emptyList() else texts.mapNotNull { text ->
+            val layout = layout(text.node) ?: return@mapNotNull null
+            val content = layout.layoutInput.text.text
+            (1 until layout.lineCount).firstOrNull { line ->
+                val split = layout.getLineEnd(line - 1)
+                split in 1 until content.length && content[split - 1].isLetterOrDigit() && content[split].isLetterOrDigit()
+            }?.let { line -> "$where: '${text.label}' breaks mid-word at line $line" }
+        }
         val visible = texts.filter { visible(it.node) && !it.overlaid }
         val overlaps = visible.flatMapIndexed { index, text ->
             visible.drop(index + 1).mapNotNull { other ->
@@ -122,7 +132,7 @@ class PageFontScaleUiTest {
                 else "$where: '${text.label}' ${text.node.boundsInRoot} overlaps '${other.label}' ${other.node.boundsInRoot} by ${hit.toInt()}px²"
             }
         }
-        return clipped + overlaps
+        return clipped + broken + overlaps
     }
 
     private fun scroller(scene: ImageComposeScene): SemanticsNode? = scene.semanticsOwners
@@ -331,5 +341,27 @@ class PageFontScaleUiTest {
         Page("desktop-profiles", Screen.Profiles, "Profiles", 1280, 800, desktop = true),
     )
 
-    private fun pages(): List<Page> = tvPages() + phonePages() + desktopPages()
+    // A tablet is the touch layout that is neither phone nor desktop chrome: UiPreview draws it from the width alone.
+    private fun tabletPages(): List<Page> = listOf(
+        Triple("home", Screen.Home, "Home"),
+        Triple("movies", Screen.Movies, "Movies"),
+        Triple("search", Screen.Search, "Search"),
+        Triple("library", Screen.Library, "Library"),
+        Triple("library-long", Screen.Library, "Long"),
+        Triple("history", Screen.History, "History"),
+        Triple("calendar", Screen.Calendar, "Calendar"),
+        Triple("live", Screen.Live, "Live"),
+        Triple("title-movie", Screen.Details, "Movie"),
+        Triple("title-series", Screen.Details, "Series"),
+        Triple("sources", Screen.Sources, "Sources"),
+        Triple("settings", Screen.Settings, "Playback"),
+        Triple("settings-addons", Screen.Settings, "Addons"),
+        Triple("profiles", Screen.Profiles, "Profiles"),
+    ).flatMap { (name, screen, variant) ->
+        listOf(1024 to 768, 1280 to 800).map { (width, height) ->
+            Page("tablet-$name-${width}w", screen, variant, width, height, midWord = true)
+        }
+    }
+
+    private fun pages(): List<Page> = tvPages() + phonePages() + desktopPages() + tabletPages()
 }
