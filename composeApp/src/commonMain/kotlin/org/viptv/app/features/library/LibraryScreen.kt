@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +28,7 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.ScrollEdge
 import org.viptv.app.components.ScrollEdgeFade
 import org.viptv.app.components.ServerMessages
+import org.viptv.app.components.overlaysContent
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
@@ -88,7 +90,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                             fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
                     }
                     stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
-                        Column(Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().semantics { overlaysContent = Unit }) {
                             Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
                                 if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)

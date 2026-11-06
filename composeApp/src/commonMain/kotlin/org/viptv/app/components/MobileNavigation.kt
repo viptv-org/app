@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +25,7 @@ internal val BottomBarHeight = 80.dp
 
 @Composable
 fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
-    Row(Modifier.fillMaxWidth().height(BottomBarHeight).padding(horizontal = 16.dp, vertical = 8.dp),
+    Row(Modifier.fillMaxWidth().height(BottomBarHeight).semantics { overlaysContent = Unit }.padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(32.dp))
             .background(Color(0xFF292827).copy(alpha = .94f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(32.dp))
