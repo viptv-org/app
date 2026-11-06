@@ -72,6 +72,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
     var playerSizePx by remember { mutableStateOf(IntSize.Zero) }
     var timelineTopPx by remember { mutableStateOf(Float.NaN) }
+    var chromeTopPx by remember { mutableStateOf(Float.NaN) }
     var position by remember(playbackKey) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
     var buffered by remember(playbackKey) { mutableStateOf(emptyList<BufferedRange>()) }
@@ -233,6 +234,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
+    val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
+        with(LocalDensity.current) { (playerSizePx.height - chromeTopPx).toDp() } else 0.dp
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
@@ -277,10 +280,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                             title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
                         }
                     }
-                    if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
+                    if (phone) Box(Modifier.align(Alignment.TopCenter).fillMaxHeight().padding(bottom = chromeHeight).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)),
+                        contentAlignment = Alignment.Center) {
                         PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
                     }
-                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
+                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .onGloballyPositioned { chromeTopPx = it.positionInRoot().y }
+                        .windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
                         val gutter = if (!phone && maxWidth < CompactButtonsBelow) 12.dp else 24.dp
                         Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
                             Box(Modifier.onGloballyPositioned { timelineTopPx = it.positionInRoot().y }) {
