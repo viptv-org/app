@@ -74,6 +74,7 @@ import org.viptv.app.components.hoverFill
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberEnterLeaveMotion
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.components.LocalListRemoval
@@ -212,6 +213,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
+        // The card is the only thing left when a save from its preview or menu fails: the menu and preview close on the press.
+        MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 6.dp), scale = labelScale.coerceAtLeast(1f), retry = !television)
         if (menu) {
             val present: @Composable () -> Unit = {
                 CardMenu(card, saved, removal, actions,

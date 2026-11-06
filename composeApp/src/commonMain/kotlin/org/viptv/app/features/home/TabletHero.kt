@@ -28,6 +28,7 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.state.Screen
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
 import org.viptv.app.state.saveTarget
@@ -99,6 +100,7 @@ internal fun TabletHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, 
                                 Icon(Lucide.Info, "More info", Modifier.size(24.dp))
                             }
                         }
+                        MutationFailure(saveTarget(shown), Modifier.fillMaxWidth())
                     }
                 }
                 carousel?.let { HeroIndicators(it.count, it.index, it.progress) }
