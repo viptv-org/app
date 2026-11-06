@@ -47,6 +47,7 @@ import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.settings.HouseholdPinDialog
+import org.viptv.app.features.settings.TvHouseholdPinDialog
 import org.viptv.app.features.settings.LocalTvDisplayState
 import org.viptv.app.features.settings.rememberSystemReducedMotion
 import org.viptv.app.features.settings.rememberTvDisplayState
@@ -380,7 +381,11 @@ fun App(
                     controller::dismissUpdateRequired)
             }
             state.householdPinTitle?.let { title ->
-                HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin, controller::submitHouseholdPin)
+                if (television) BoxWithConstraints(Modifier.fillMaxSize()) {
+                    TvHouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                        controller::submitHouseholdPin, scale = maxWidth / 1920.dp)
+                } else HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                    controller::submitHouseholdPin)
             }
         }
     }

@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
@@ -16,6 +17,7 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -36,6 +38,7 @@ import org.viptv.app.connection.SavedRemoteSession
 import org.viptv.app.connection.configureTransport
 import org.viptv.app.features.entry.ProfileEditScreen
 import org.viptv.app.features.settings.HouseholdPinDialog
+import org.viptv.app.features.settings.TvHouseholdPinDialog
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -136,7 +139,11 @@ class ManageProfilesPinTest {
                         state.busy, state.error, compact, {}, controller::renameProfile, controller::setProfilePin,
                         controller::setProfileAvatar, controller::deleteProfile, television = television, pinAvailable = false)
                     state.householdPinTitle?.let { title ->
-                        HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin, controller::submitHouseholdPin)
+                        if (television) BoxWithConstraints(Modifier.fillMaxSize()) {
+                            TvHouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                                controller::submitHouseholdPin, scale = maxWidth / 1920.dp)
+                        } else HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                            controller::submitHouseholdPin)
                     }
                 }
             } }
