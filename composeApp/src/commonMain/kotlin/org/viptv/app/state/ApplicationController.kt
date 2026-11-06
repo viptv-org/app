@@ -54,7 +54,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveGuideRequest = 0L
     internal var liveDirectoryRequest = 0L
     internal val liveGuideFetchedAt = mutableMapOf<String, kotlin.time.TimeMark>()
-    internal val liveFavoriteJobs = mutableMapOf<String, Job>()
     internal var liveFavoriteVersion = 0L
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null

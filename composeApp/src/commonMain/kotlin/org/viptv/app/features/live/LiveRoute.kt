@@ -16,7 +16,7 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
     var clock by remember { mutableStateOf(liveClock()) }
     LaunchedEffect(Unit) { while (true) { delay(15_000); clock = liveClock() } }
     val channels = state.livePage?.channels.orEmpty().map { channel ->
-        LiveChannel(channel.card, category = channel.group_name, id = channel.id, connectionId = channel.connection_id, groupId = channel.group_id, favorite = channel.id in state.liveFavorites, favoritePending = channel.id in state.liveFavoritePending,
+        LiveChannel(channel.card, category = channel.group_name, id = channel.id, connectionId = channel.connection_id, groupId = channel.group_id, favorite = state.isLiveFavorite(channel.id),
             programs = state.liveGuides[channel.id]?.programs.orEmpty().map { program ->
                 LiveProgram(program.id, program.title, clock.minute(program.start_millis), clock.minute(program.end_millis), program.description)
             })

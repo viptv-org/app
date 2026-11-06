@@ -97,7 +97,6 @@ data class ApplicationState(
     val liveFavoritesAvailable: Boolean = false,
     val liveFavoritesCanRetry: Boolean = false,
     val liveFavoriteError: String? = null,
-    val liveFavoritePending: Set<String> = emptySet(),
     val liveFavoritesOnly: Boolean = false,
     val liveSetupReturnFocus: Boolean = false,
     val calendarType: String = org.viptv.app.features.calendar.CALENDAR_DEFAULT_TYPE,
