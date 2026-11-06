@@ -132,9 +132,10 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
     // The quiet lane and Back wait on the controller's operation job, so a write that must not be reloaded under
-    // hands claims it instead of leaving it pointing at nothing.
+    // hands claims it instead of leaving it pointing at nothing; the write then owns the busy its claim replaced.
     internal fun claimOperation(task: Job) {
-        synchronized(runGate) { generation++; job = task }
+        val current = synchronized(runGate) { job = task; ++generation }
+        task.invokeOnCompletion { settle(current) }
     }
 
     internal fun run(operation: suspend () -> Unit) {
