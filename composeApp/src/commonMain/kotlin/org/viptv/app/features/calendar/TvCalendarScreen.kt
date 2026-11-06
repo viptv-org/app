@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageStateLayout
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
@@ -81,7 +82,10 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                 }
             }
         }
-        LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
+        val pageFocus = remember { FocusRequester() }
+        if (pageState == ListPageState.Empty && entries.isEmpty())
+            CalendarStatus(available, manage, Modifier.fillMaxSize(), PageStateLayout.Tv, scale, pageFocus, enabled = !busy)
+        else LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
             .height((pageHeight - contentY - 48.dp * scale).coerceAtLeast(0.dp)).tvRingRoom(tvRingReach(scale), horizontal = false), state = rows,
             contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             notice?.let { message -> item(key = "notice") { Text(message, color = Palette.secondary, fontSize = (24 * scale).sp) } }
@@ -98,13 +102,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                 }
             }
             if (pageState == ListPageState.Empty) item(key = "empty") {
-                val weekEmpty = entries.isEmpty()
-                Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (!available) CALENDAR_UNAVAILABLE else if (weekEmpty) CALENDAR_EMPTY_WEEK else calendarEmptyDay(filter.takeIf { notice == null }),
-                        color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-                    if (!available || weekEmpty) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
-                        contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text(CALENDAR_MANAGE, color = it, fontSize = (24 * scale).sp) }
-                }
+                Text(calendarEmptyDay(filter.takeIf { notice == null }), color = Palette.secondary,
+                    fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
             }
         }
         focused?.let { entry ->
