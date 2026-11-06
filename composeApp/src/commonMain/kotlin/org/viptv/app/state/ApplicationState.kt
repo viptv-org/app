@@ -102,6 +102,7 @@ data class ApplicationState(
     val liveSetupReturnFocus: Boolean = false,
     val calendarType: String = org.viptv.app.features.calendar.CALENDAR_DEFAULT_TYPE,
     val calendarWeek: Int = 0,
+    val calendarFilter: org.viptv.app.features.calendar.CalendarFilter = org.viptv.app.features.calendar.CALENDAR_DEFAULT_FILTER,
     val calendarAvailable: Boolean = true,
     val calendarDays: List<org.viptv.app.features.calendar.CalendarDay> = emptyList(),
     val calendarEntries: List<org.viptv.app.features.calendar.CalendarEntry> = emptyList(),
