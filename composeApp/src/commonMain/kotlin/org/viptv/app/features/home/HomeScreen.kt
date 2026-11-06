@@ -1,6 +1,7 @@
 package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.components.pageGutter
 import org.viptv.app.connection.cardLookupKey
@@ -36,21 +37,23 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
     val removal = remember(removeContinueWatching) { ContinueWatchingRemoval(removeContinueWatching) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val entrance = rememberListEntrance(home != null)
+        val compact = maxWidth < 640.dp && !television
+        val pageState = homePageState(home, busy, error)
+        if (pageState == ListPageState.Failed || pageState == ListPageState.Empty) {
+            HomeStatus(home, error, busy, retry, navigate, Modifier, compact = compact)
+            return@BoxWithConstraints
+        }
         val continueRow = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }
         var hoveredContinue by remember(home?.scope?.owner()) { mutableStateOf<String?>(null) }
         val preview = hoveredContinue?.let { key -> continueRow?.cards?.firstOrNull { cardLookupKey(it) == key } }
         var heroFloor by remember(home?.scope?.owner()) { mutableIntStateOf(0) }
         val density = LocalDensity.current
         val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates && preview == null, home?.scope?.owner())
-        val compact = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else 1f
         val gutter = pageGutter(television, tablet, browser, maxWidth)
         val viewportHeight = maxHeight
         var focused by remember(home?.scope?.owner()) { mutableStateOf<Card?>(null) }
         LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-            if (error != null || (home == null && !busy)) item(key = "status") {
-                HomeStatus(home, error, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
-            }
             if (busy && home != null) item(key = "refreshing") {
                 LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
             }
@@ -69,15 +72,12 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     }
                 }
             }
-            if (home == null && busy) item(key = "skeleton") {
+            if (pageState == ListPageState.Loading) item(key = "skeleton") {
                 HomeSkeleton(compact, tablet, browser, gutter, viewportHeight)
             }
             if (home != null) {
                 val visibleRows = home.rows.filter {
                     it.state == RowState.PENDING || (it.state == RowState.READY && it.cards.isNotEmpty())
-                }
-                if (home.complete && visibleRows.isEmpty() && home.hero == null && home.featured.isEmpty() && error == null) item(key = "empty") {
-                    HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
                 items(visibleRows, key = { it.id }, contentType = { if (it.id == CONTINUE_ROW) "continue" else "catalog" }) { row ->
                     CompositionLocalProvider(LocalListRemoval provides if (row.id == CONTINUE_ROW) removal.offer else LocalListRemoval.current) {

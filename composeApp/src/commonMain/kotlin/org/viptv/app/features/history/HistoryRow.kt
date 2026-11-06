@@ -23,6 +23,10 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.DropdownMenuItem
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
+import org.viptv.app.features.settings.TvDialogAction
+import org.viptv.app.features.settings.TvDialogField
+import org.viptv.app.features.settings.TvDialogPanel
+import org.viptv.app.features.settings.rememberTvDialogStop
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.connection.HistoryDisplay
@@ -77,11 +81,26 @@ internal fun HistoryRow(display: HistoryDisplay, phone: Boolean, open: (Card) ->
 }
 
 @Composable
-internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDismiss: () -> Unit, onSave: (Long) -> Unit) {
+internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDismiss: () -> Unit, onSave: (Long) -> Unit,
+    television: Boolean = false, scale: Float = 1f) {
     var text by remember { mutableStateOf(initialSeconds.coerceAtLeast(0).toString()) }
     val maxSeconds = duration.toLong().coerceAtLeast(0)
     val value = text.toLongOrNull()
     val valid = value != null && value in 0..(if (maxSeconds > 0) maxSeconds else Long.MAX_VALUE)
+    if (television) {
+        val field = rememberTvDialogStop()
+        val save = rememberTvDialogStop()
+        TvDialogPanel(scale, "Resume at (seconds)", stops = listOf(field, save), focus = field, dismiss = onDismiss, actions = {
+            TvDialogAction(scale, "Cancel") { onDismiss() }
+            TvDialogAction(scale, "Save position", stop = save, enabled = valid) { value?.let(onSave) }
+        }) {
+            TvDialogField("Resume at (seconds)", text, scale, enabled = true, stop = field, invalid = !valid,
+                change = { next -> text = next.filter(Char::isDigit).take(9) })
+            if (maxSeconds > 0) Text("Up to $maxSeconds seconds.", Modifier.padding(top = (12 * scale).dp),
+                color = Palette.secondary, fontSize = (22 * scale).sp)
+        }
+        return
+    }
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Resume at (seconds)") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

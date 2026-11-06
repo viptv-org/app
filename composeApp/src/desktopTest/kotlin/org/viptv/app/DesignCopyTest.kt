@@ -20,12 +20,14 @@ import org.viptv.app.features.calendar.CALENDAR_EMPTY_DAY_YOUR_SHOWS
 import org.viptv.app.features.calendar.CALENDAR_EMPTY_WEEK
 import org.viptv.app.features.calendar.CALENDAR_FAILED_TITLE
 import org.viptv.app.features.calendar.CALENDAR_MANAGE
+import org.viptv.app.features.calendar.CALENDAR_OUT_NOW
 import org.viptv.app.features.calendar.CALENDAR_UNAVAILABLE
 import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.app.features.calendar.CalendarFilter
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.calendar.calendarEmptyDay
+import org.viptv.app.features.calendar.statusAt
 import org.viptv.app.features.calendar.CalendarSource
 import org.viptv.app.features.calendar.TvCalendarScreen
 import org.viptv.app.features.library.LibraryScreen
@@ -151,6 +153,23 @@ class DesignCopyTest {
             assertTrue(shows(scene, CALENDAR_FAILED_TITLE))
             assertTrue(shows(scene, "Request timed out."))
         } finally { scene.close() }
+    }
+
+    @Test fun theCalendarRowsStatusFollowsCopyMd() {
+        assertEquals("Out now", CALENDAR_OUT_NOW)
+        val air = 1_800_000_000_000L
+        val card = Card(MediaIdentity("simkl:tv:1", "series", emptyList()), provider_id = "simkl", title = "Scheduled series",
+            badges = emptyList(), metadata_origin = MetadataOrigin("simkl"))
+        val release = CalendarEntry("e1", "d1", "8:00 PM", card, airMillis = air)
+        assertEquals(CALENDAR_OUT_NOW, release.statusAt(air), "the moment it airs")
+        assertEquals(CALENDAR_OUT_NOW, release.statusAt(air + 86_400_000), "a day later")
+        assertEquals("in 1m", release.statusAt(air - 30_000), "under a minute")
+        assertEquals("in 45m", release.statusAt(air - 45 * 60_000), "under an hour")
+        assertEquals("in 6h 40m", release.statusAt(air - (6 * 60 + 40) * 60_000), "under a day")
+        assertEquals("in 1d", release.statusAt(air - 24 * 60 * 60_000), "a whole day")
+        assertEquals("in 3d 2h", release.statusAt(air - (3 * 24 + 2) * 60 * 60_000), "beyond a day, minutes dropped")
+        assertNull(release.copy(airMillis = null, aired = false).statusAt(air), "no air time and not aired says nothing")
+        assertEquals(CALENDAR_OUT_NOW, release.copy(airMillis = null, aired = true).statusAt(air), "aired with no air time")
     }
 
     @Test fun theOldMyListLineIsGoneFromEverySource() {

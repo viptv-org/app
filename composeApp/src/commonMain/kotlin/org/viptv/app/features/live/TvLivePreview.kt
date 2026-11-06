@@ -26,7 +26,10 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.Scrim
+import org.viptv.app.components.FavouriteStar
+import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.withoutLiveTag
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.LocalPendingMutation
@@ -55,9 +58,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
                 if (program == null || liveFraming(program, now) == LiveFraming.OnAir)
-                    Text("LIVE", Modifier.background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
-                        color = Color.White, fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp,
-                        letterSpacing = (1.08f * scale).sp, fontWeight = FontWeight.ExtraBold)
+                    LiveBadge(scale = scale, television = true)
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = (22 * scale).sp,
                     lineHeight = (26 * scale).sp, color = Palette.secondary, fontWeight = FontWeight.SemiBold)
             }
@@ -69,7 +70,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     Text("${liveTime(it.start)} – ${liveTime(it.end, true)}${liveRangeStatus(it, now)}", fontSize = (24 * scale).sp,
                         lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
-                    channel.card.badges.forEach { TvMediaBadge(it, scale) }
+                    channel.card.badges.withoutLiveTag().forEach { TvMediaBadge(it, scale) }
                 }
                 it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                     color = Palette.body, maxLines = 2, overflow = TextOverflow.Ellipsis) }
@@ -81,7 +82,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             when {
                 pending -> { MutationSpinner(24.dp * scale, scale = scale, color = it); Spacer(Modifier.width(10.dp * scale)); Text("Saving…", color = it, fontSize = (22 * scale).sp) }
                 failure != null -> { Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale)); Text("Retry", color = it, fontSize = (22 * scale).sp) }
-                else -> { Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
+                else -> { FavouriteStar(channel.favorite, 24.dp * scale, it); Spacer(Modifier.width(10.dp * scale))
                     Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp) }
             }
         }
