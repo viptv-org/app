@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.tvPagePadding
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
@@ -66,7 +67,7 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
     AutomaticPage(cards.size, page.busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = 72.dp * scale)) {
+        Column(Modifier.fillMaxSize().tvPagePadding(scale)) {
             Text("Continue Watching", fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp,
                 letterSpacing = (-.8f * scale).sp, fontWeight = FontWeight.Bold)
             Text("Everything you’re in the middle of, most recent first.", color = Palette.secondary,

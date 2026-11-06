@@ -26,6 +26,7 @@ import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvTextField
+import org.viptv.app.components.tvPagePadding
 import org.viptv.app.components.bleedHorizontally
 import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.features.home.MediaCard
@@ -89,7 +90,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
             keyboard?.hide()
         }
 
-        Column(Modifier.fillMaxSize().padding(start = gutter, end = gutter, top = 8.dp * scale)) {
+        Column(Modifier.fillMaxSize().tvPagePadding(scale)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                 TvTextField(term, { next -> editQuery { next } }, scale, Modifier.width(960.dp * scale),

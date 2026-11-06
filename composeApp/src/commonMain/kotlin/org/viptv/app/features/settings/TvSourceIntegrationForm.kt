@@ -40,6 +40,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvTextField
+import org.viptv.app.components.tvPagePadding
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
@@ -56,8 +57,7 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
     val cancelFocus = remember { FocusRequester() }
     LaunchedEffect(schema.plugin_id) { fieldFocus.requestFocus() }
 
-    Column(Modifier.fillMaxSize()
-        .padding(start = 96.dp * scale, end = 96.dp * scale, top = 72.dp * scale)) {
+    Column(Modifier.fillMaxSize().tvPagePadding(scale)) {
         Text("Source integrations", color = Palette.secondary, fontSize = (24 * scale).sp)
         Spacer(Modifier.height(8.dp * scale))
         Text(schema.name, fontSize = (56 * scale).sp, lineHeight = (64 * scale).sp,
