@@ -24,8 +24,9 @@ import org.viptv.app.theme.Palette
 internal fun HeroIndicators(count: Int, selected: Int, progress: HeroProgress, modifier: Modifier = Modifier, scale: Float = 1f,
     animated: Boolean = true) {
     if (count < 2) return
-    val dot = 16.dp * scale
-    val pill = 48.dp * scale
+    val dot = 6.dp * scale
+    val pill = 18.dp * scale
+    val height = 6.dp * scale
     val fillPixels = with(LocalDensity.current) { pill.roundToPx() }
     SideEffect { progress.steps = fillPixels }
     val active = remember(scale) { Animatable(pill.value) }
@@ -47,9 +48,9 @@ internal fun HeroIndicators(count: Int, selected: Int, progress: HeroProgress, m
                 grown == selected -> active.value.dp
                 else -> dot
             }
-            Canvas(Modifier.width(width).height(4.dp * scale)) {
-                val radius = CornerRadius(2.dp.toPx() * scale)
-                drawRoundRect(Palette.text.copy(alpha = .35f), cornerRadius = radius)
+            Canvas(Modifier.width(width).height(height)) {
+                val radius = CornerRadius(size.height / 2)
+                drawRoundRect(Palette.text.copy(alpha = .4f), cornerRadius = radius)
                 if (index == selected) drawRoundRect(Palette.text,
                     size = Size(size.width * progress.fraction.coerceIn(0f, 1f), size.height), cornerRadius = radius)
             }
