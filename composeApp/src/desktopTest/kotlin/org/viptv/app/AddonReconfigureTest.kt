@@ -158,7 +158,7 @@ class AddonReconfigureRenderTest {
                 configureFailure = "addon:2" to org.viptv.app.state.ADDON_CONFIGURE_FAILURE)
         }.use { it.capture(dir, "addons-phone-390") }
         Shot(1920, 1080, television = true) {
-            org.viptv.app.features.settings.TvAddonManageDialog(addons[1], true, true, false, 1f, {}, {}, {})
+            org.viptv.app.features.settings.TvAddonManageDialog(addons[1], true, true, false, 1f, {}, {}, {}, {})
         }.use { it.capture(dir, "manage-tv-1920") }
         Shot(1920, 1080, television = true) {
             org.viptv.app.features.settings.TvAddonConfigureDialog(

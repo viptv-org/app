@@ -55,11 +55,13 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
     install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
     initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
-    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissConfigure: () -> Unit = {}) {
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissConfigure: () -> Unit = {},
+    remove: (String) -> Unit = {}) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
     var managing by remember { mutableStateOf<IntegrationConnection?>(null) }
+    var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
     var wasSearching by remember { mutableStateOf(false) }
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = AddonFilter(query, provides).filtered(addons)
@@ -151,7 +153,14 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
         TvAddonManageDialog(addon, addon.id in enabled, addon.id in configurableAddons, busy, scale,
             toggle = { on -> toggle(addon.id, on) },
             reconfigure = { managing = null; configure(addon.id) },
+            remove = { managing = null; removing = addon },
             dismiss = { managing = null })
+    }
+    removing?.let { addon ->
+        val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
+        TvAddonRemoveDialog(addon, local, busy, pending, scale,
+            confirm = { remove(addon.id); removing = null },
+            dismiss = { if (!pending) removing = null })
     }
     addonConfigure?.let { request ->
         TvAddonConfigureDialog(request, scale, dismiss = dismissConfigure, newCode = { configure(request.addon) })

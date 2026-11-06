@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -39,6 +40,8 @@ import org.viptv.app.theme.Palette
 internal val TvDialogDangerInk = Color(0xFFB42318)
 
 // One focus stop of a TV panel: Up and Down walk the stops in the order the panel declares, so the remote never leaves the dialog.
+internal const val TvDialogPanelTag = "tv-dialog-panel"
+
 internal class TvDialogStop {
     val requester = FocusRequester()
     var focused by mutableStateOf(false)
@@ -59,7 +62,7 @@ internal fun Modifier.tvDialogFocusWatch(stop: TvDialogStop?) =
 // focus names the stop the remote lands on when the panel opens.
 @Composable
 internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop>, focus: TvDialogStop?, dismiss: () -> Unit,
-    actions: @Composable RowScope.() -> Unit, body: @Composable ColumnScope.() -> Unit) {
+    actions: @Composable FlowRowScope.() -> Unit, body: @Composable ColumnScope.() -> Unit) {
     Popup(onDismissRequest = dismiss, properties = PopupProperties(focusable = true)) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .6f)).imePadding().onPreviewKeyEvent { event ->
             if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -74,7 +77,7 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
             BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // The body scrolls; the title and the actions never leave the panel, however short the window.
                 val panelHeight = maxHeight * .92f
-                Column(Modifier.width((860 * scale).dp).heightIn(max = panelHeight).clip(RoundedCornerShape((24 * scale).dp))
+                Column(Modifier.testTag(TvDialogPanelTag).width((860 * scale).dp).heightIn(max = panelHeight).clip(RoundedCornerShape((24 * scale).dp))
                     .background(Palette.raised)) {
                     Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
                         .padding(start = (48 * scale).dp, top = (48 * scale).dp, end = (48 * scale).dp)) {
@@ -83,8 +86,9 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
                         Spacer(Modifier.height((24 * scale).dp))
                         body()
                     }
-                    Row(Modifier.padding(start = (48 * scale).dp, end = (48 * scale).dp, top = (36 * scale).dp,
-                        bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp), content = actions)
+                    FlowRow(Modifier.fillMaxWidth().padding(start = (48 * scale).dp, end = (48 * scale).dp, top = (36 * scale).dp,
+                        bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp, Alignment.Start),
+                        verticalArrangement = Arrangement.spacedBy((16 * scale).dp), content = actions)
                 }
             }
         }
