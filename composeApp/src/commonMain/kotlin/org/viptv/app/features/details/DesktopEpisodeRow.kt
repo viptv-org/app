@@ -77,7 +77,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             }, fontSize = 13.sp, color = Palette.secondary)
         }
     }
-    if (showUpcoming) EpisodeUpcomingDialog(episode) { showUpcoming = false }
+    if (showUpcoming) EpisodeUpcomingDialog(episode, { showUpcoming = false })
 }
 
 private fun formatMinutes(minutes: Long): String =

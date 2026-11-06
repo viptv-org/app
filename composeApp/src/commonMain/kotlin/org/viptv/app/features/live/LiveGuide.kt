@@ -1,5 +1,6 @@
 package org.viptv.app.features.live
 
+import org.viptv.app.components.LiveRed
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,7 +17,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +44,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
     val span = if (television) 120 else 150
     BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
         val channelWidth = if (television) 300.dp * scale else 192.dp
+        val numberWidth = liveGuideNumberWidth(channels, television, scale)
         val gap = (if (television) 28 else 8).dp * scale
         val unit = (maxWidth - channelWidth - gap + if (television) 4.dp * scale else 0.dp) / span
         val firstChannel = channels.firstOrNull()
@@ -70,7 +71,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                     val slots = liveGuideSlots(channel.programs, start, span, minimumMinutes)
                     val initial = slots.initial(now)
                     Row(horizontalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.listItemEntrance(index, entrance.animate)) {
-                        if (television) TvLiveChannelLabel(channel, scale,
+                        if (television) TvLiveChannelLabel(channel, scale, numberWidth,
                             if (channel == firstChannel && initialProgram == null) first else null,
                             if (channel == firstChannel) up else null,
                             Modifier.pageAnchor(restore, key, index, row && initial == null),
@@ -84,12 +85,16 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
                             Text(channel.card.title, fontSize = (if (television) 26 * scale else 14f).sp, fontWeight = FontWeight.Bold)
                         }
                         Box(Modifier.weight(1f).heightIn(min = rowHeight).clipToBounds()) {
-                            slots.forEach { slot ->
+                            slots.forEachIndexed { position, slot ->
                                 key(slot.program.id) {
                                     LiveProgramCell(slot.program, now, start, television, scale,
                                         Modifier.offset(x = unit * (slot.begin - start)).width((unit * (slot.end - slot.begin) - programGap).coerceAtLeast(1.dp)).fillMaxHeight()
                                             .then(if (first != null && channel == firstChannel && slot.program == initialProgram) Modifier.focusRequester(first) else Modifier)
-                                            .focusProperties { if (up != null && channel == firstChannel) this.up = up }
+                                            .focusProperties {
+                                                if (up != null && channel == firstChannel) this.up = up
+                                                // A row ends at its last programme: Compose's 2D search would otherwise leave the row diagonally.
+                                                if (position == slots.lastIndex) this.right = FocusRequester.Cancel
+                                            }
                                             .pageAnchor(restore, key, index, row && slot.program == initial?.program),
                                         { restore.mark(key, index); select(channel, slot.program) },
                                         { restore.mark(key, index); if (television) watch(channel) else select(channel, slot.program) })
@@ -113,7 +118,7 @@ internal fun LiveGuide(channels: List<LiveChannel>, start: Int, now: Int?, telev
             val markerTop = if (television) headerHeight - 10.dp * scale else headerHeight
             val markerHeight = minOf(bodyHeight + if (television) 12.dp * scale else 0.dp,
                 (maxHeight - markerTop).coerceAtLeast(0.dp))
-            val color = if (television) Color(0xFFE5484D) else Palette.danger
+            val color = if (television) LiveRed else Palette.danger
             Box(Modifier.offset(x = x, y = markerTop).width(2.dp * scale).height(markerHeight).background(color))
             if (television) Box(Modifier.offset(x = x - 5.dp * scale, y = headerHeight - 16.dp * scale)
                 .size(12.dp * scale).background(color, CircleShape))

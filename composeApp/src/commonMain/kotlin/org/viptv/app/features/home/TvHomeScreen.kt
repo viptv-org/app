@@ -3,6 +3,8 @@
 package org.viptv.app.features.home
 
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
+import org.viptv.app.components.LocalListRemoval
+import org.viptv.app.features.continuewatching.ContinueWatchingRemoval
 import org.viptv.app.state.owner
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -45,7 +47,9 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
     navigate: (Screen) -> Unit, profile: Profile?, summaryCards: Map<String, Card> = emptyMap(), slides: List<Card> = emptyList(), save: (Card) -> Unit = {}, saved: (Card) -> Boolean = { false }, backChanged: ((() -> Unit)?) -> Unit = {}, busy: Boolean = home == null, error: String? = null,
     moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
     enrichSummary: (Card) -> Unit = {},
-    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {}) {
+    seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
+    removeContinueWatching: ((Card) -> Unit)? = null) {
+    val removal = remember(removeContinueWatching) { ContinueWatchingRemoval(removeContinueWatching) }
     var browsing by rememberSaveable(home?.scope?.profile_id) { mutableStateOf(false) }
     val lastNavigation = remember { mutableStateOf<TimeMark?>(null) }
     val rapidNavigation = remember { mutableStateOf(false) }
@@ -227,15 +231,18 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
                             androidx.compose.animation.core.Animatable(if (browsing && index < activeRow) 0f else 1f)
                         }
                         Box(Modifier.fillMaxWidth().height(shelfSlot).onFocusChanged { if (it.hasFocus) enterRow(index) }.focusGroup(), contentAlignment = androidx.compose.ui.Alignment.BottomStart) {
-                            TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
-                                up = if (index == 0) ::returnHero else null,
-                                focus = { focused.value = it; enterRow(index) }, open, more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
-                                firstPlaced = { firstReadyAttached = true },
-                                resume = if (index == (if (browsing) activeRow else firstReadyRow)) resumeShelf else null,
-                                rowAlpha = alpha,
-                                onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
-                                play = play, state = shelfState,
-                                seeAllFor = seeAllFor, openSeeAll = openSeeAll)
+                            CompositionLocalProvider(LocalListRemoval provides
+                                if (row.id == CONTINUE_ROW) removal.offer else LocalListRemoval.current) {
+                                TvHomeShelf(row, scale, if (index == firstReadyRow) firstCard else null, showFocus = true,
+                                    up = if (index == 0) ::returnHero else null,
+                                    focus = { focused.value = it; enterRow(index) }, open, more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
+                                    firstPlaced = { firstReadyAttached = true },
+                                    resume = if (index == (if (browsing) activeRow else firstReadyRow)) resumeShelf else null,
+                                    rowAlpha = alpha,
+                                    onHeightChange = { if (it > measuredShelfHeight) measuredShelfHeight = it; if (index == 0) firstShelfHeight = it },
+                                    play = play, state = shelfState,
+                                    seeAllFor = seeAllFor, openSeeAll = openSeeAll)
+                            }
                         }
                     }
                 }
@@ -244,6 +251,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         }
         if (busy && home != null) androidx.compose.material3.LinearProgressIndicator(
             Modifier.fillMaxWidth().padding(horizontal = 96.dp * scale).padding(top = 146.dp * scale), color = org.viptv.app.theme.Palette.accent)
+        removal.confirmation()
         TvHomeVisibility(!browsing, scale, 0, 200) {
             DisposableEffect(Unit) { onDispose { navigationAttached = false } }
             Box(Modifier.focusRequester(navigationFocus).onGloballyPositioned { navigationAttached = true }) {

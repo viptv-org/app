@@ -118,9 +118,10 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 }
             }
         }
-    }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+        confirming?.let { card ->
+            ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) },
+                dismiss = { confirming = null }, television = true, scale = scale)
+        }
     }
 }
 

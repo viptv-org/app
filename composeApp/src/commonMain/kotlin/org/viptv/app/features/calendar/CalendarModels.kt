@@ -13,10 +13,31 @@ enum class CalendarSource(val wire: String) {
 }
 
 data class CalendarEntry(val id: String, val day: String, val time: String, val card: Card,
-    val subtitle: String? = null, val status: String? = null, val aired: Boolean = false, val description: String? = null,
+    val subtitle: String? = null, val aired: Boolean = false, val description: String? = null,
     val season: Long? = null, val episode: Long? = null, val releaseDate: String? = null,
     val source: CalendarSource = CalendarSource.Public, val episodeCard: Card? = null, val airMillis: Long? = null) {
     val library: Boolean get() = source == CalendarSource.Library
+}
+
+// copy.md §Calendar — the row's airing status.
+internal const val CALENDAR_OUT_NOW = "Out now"
+
+internal fun CalendarEntry.statusAt(nowMillis: Long): String? = when {
+    airMillis == null -> if (aired) CALENDAR_OUT_NOW else null
+    nowMillis >= airMillis -> CALENDAR_OUT_NOW
+    else -> calendarCountdown(airMillis - nowMillis)
+}
+
+internal fun calendarCountdown(untilMillis: Long): String {
+    val minutes = (untilMillis / 60_000).coerceAtLeast(1)
+    val days = minutes / 1_440
+    val hours = minutes % 1_440 / 60
+    val rest = minutes % 60
+    return when {
+        days > 0 -> "in ${days}d" + if (hours > 0) " ${hours}h" else ""
+        hours > 0 -> "in ${hours}h" + if (rest > 0) " ${rest}m" else ""
+        else -> "in ${minutes}m"
+    }
 }
 
 internal fun CalendarEntry.actionLabel(): String? {
