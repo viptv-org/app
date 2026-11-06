@@ -95,6 +95,102 @@ class TvSearchEdgeUiTest {
                 television = true, editQuery = editQuery, searchRows = rows)
         }
 
+    private fun idleScreen(recents: List<String> = listOf("the end of oak street", "monster", "dune"),
+        trending: List<String> = listOf("Project Hail Mary", "Mayday"), query: (String) -> Unit = {},
+        clearRecents: () -> Unit = {}) =
+        Fixture(screenWidth) {
+            SearchScreen("", emptyList(), emptyList(), false, null, false, query, {},
+                television = true, editQuery = {}, recentSearches = recents, trendingSearches = trending, clearRecents = clearRecents)
+        }
+
+    @Test fun anEmptyQueryDrawsRecentClearAndTrendingUnderTheField() = ui {
+        idleScreen().use { screen ->
+            screen.settle()
+            screen.capture("search-tv-idle")
+            val nodes = screen.nodes()
+            val recent = nodes.single { titles(it) == "Recent" }
+            val clear = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Clear" }
+            val first = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "the end of oak street" }
+            val last = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "dune" }
+            val trending = nodes.single { titles(it) == "Trending searches" }
+            val trendingFirst = nodes.single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Project Hail Mary" }
+            assertNear(columnStart, recent.boundsInRoot.left, "the Recent heading rests on the page gutter")
+            assertTrue(clear.boundsInRoot.left >= recent.boundsInRoot.right, "Clear ends the Recent heading row")
+            assertTrue(first.boundsInRoot.top >= recent.boundsInRoot.bottom, "the recent terms sit under their heading")
+            assertTrue(last.boundsInRoot.top > first.boundsInRoot.top, "the recent terms keep their order")
+            assertTrue(trending.boundsInRoot.top >= last.boundsInRoot.bottom, "Trending searches follows the recent terms")
+            assertTrue(trendingFirst.boundsInRoot.top >= trending.boundsInRoot.bottom, "the trending terms sit under their heading")
+        }
+    }
+
+    @Test fun dPadWalksTheIdleListAndLeftReturnsToTheField() = ui {
+        idleScreen().use { screen ->
+            screen.settle()
+            screen.press(Key.DirectionDown); screen.settle()
+            assertEquals("Clear", titles(screen.focused()), "down from the field reaches the Recent Clear action")
+            screen.press(Key.DirectionDown); screen.settle()
+            assertEquals("the end of oak street", titles(screen.focused()), "down walks into the recent terms")
+            screen.press(Key.DirectionDown); screen.settle()
+            assertEquals("monster", titles(screen.focused()))
+            screen.capture("search-tv-idle-focused")
+            screen.press(Key.DirectionUp); screen.settle()
+            assertEquals("the end of oak street", titles(screen.focused()), "up walks back")
+            repeat(3) { screen.press(Key.DirectionDown); screen.settle() }
+            assertEquals("Project Hail Mary", titles(screen.focused()), "the walk continues past the Trending heading")
+            screen.press(Key.DirectionDown); screen.settle()
+            assertEquals("Mayday", titles(screen.focused()))
+            screen.press(Key.DirectionLeft); screen.settle()
+            assertTrue(screen.focused().config.contains(SemanticsActions.SetText),
+                "left from a term returns to the field, was ${titles(screen.focused())}")
+            assertEquals("", screen.field().config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty(),
+                "the field keeps its empty query")
+        }
+    }
+
+    @Test fun selectOnAnIdleTermRunsIt() = ui {
+        val ran = mutableListOf<String>()
+        idleScreen(query = { ran += it }).use { screen ->
+            screen.settle()
+            val term = screen.nodes().single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Mayday" }
+            assertTrue(term.config[SemanticsActions.RequestFocus].action!!.invoke(), "the D-pad reaches the term")
+            screen.settle()
+            assertEquals("Mayday", titles(screen.focused()))
+            assertTrue(term.config[SemanticsActions.OnClick].action!!.invoke(), "Select runs the term")
+            assertEquals(listOf("Mayday"), ran)
+        }
+    }
+
+    @Test fun clearEmptiesTheRecentTermsOnly() = ui {
+        var recents by mutableStateOf(listOf("the end of oak street", "dune"))
+        var cleared = 0
+        Fixture(screenWidth) {
+            SearchScreen("", emptyList(), emptyList(), false, null, false, {}, {}, television = true, editQuery = {},
+                recentSearches = recents, trendingSearches = listOf("Project Hail Mary"),
+                clearRecents = { cleared++; recents = emptyList() })
+        }.use { screen ->
+            screen.settle()
+            val clear = screen.nodes().single { it.config.contains(SemanticsActions.OnClick) && titles(it) == "Clear" }
+            assertTrue(clear.config[SemanticsActions.OnClick].action!!.invoke())
+            screen.settle()
+            assertEquals(1, cleared)
+            val texts = screen.nodes().flatMap(::texts)
+            assertFalse(texts.any { it == "the end of oak street" || it == "Recent" || it == "Clear" }, "Clear drops the recent terms: $texts")
+            assertTrue(texts.any { it == "Trending searches" }, "Trending stays: $texts")
+            assertTrue(texts.any { it == "Project Hail Mary" })
+            assertTrue(screen.focused().config.contains(SemanticsActions.SetText),
+                "focus returns to the field, was ${titles(screen.focused())}")
+        }
+    }
+
+    @Test fun anEmptyRecentAndTrendingListLeavesThePagesOwnResultsArea() = ui {
+        idleScreen(recents = emptyList(), trending = emptyList()).use { screen ->
+            screen.settle()
+            val texts = screen.nodes().flatMap(::texts)
+            assertFalse(texts.any { it == "Recent" || it == "Trending searches" }, "no empty idle headings: $texts")
+            assertTrue(texts.any { it == SEARCH_PLACEHOLDER }, "the page keeps its own empty state")
+        }
+    }
+
     @Test fun searchEntryIsAnEditableFieldWithTheDesignPlaceholderAndAResultsAction() = ui {
         searchScreen(term = "").use { screen ->
             screen.settle()

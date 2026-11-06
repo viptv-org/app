@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -34,6 +35,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.IntegrationConnection
 import org.viptv.app.connection.SearchResultRow
+import kotlinx.coroutines.launch
 
 private const val SEARCH_FOCUS_RETRY_FRAMES = 32
 
@@ -41,7 +43,8 @@ private const val SEARCH_FOCUS_RETRY_FRAMES = 32
 internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<IntegrationConnection>, busy: Boolean,
     error: String?, query: (String) -> Unit, open: (Card) -> Unit, editQuery: ((String) -> String) -> Unit,
     suggestions: List<String> = emptyList(), searchRows: List<SearchResultRow> = emptyList(), focusResults: Boolean = false,
-    retry: (() -> Unit)? = null) {
+    retry: (() -> Unit)? = null, recentSearches: List<String> = emptyList(), trendingSearches: List<String> = emptyList(),
+    clearRecents: () -> Unit = {}) {
     BoxWithConstraints(Modifier.fillMaxSize().imePadding()) {
         val scale = maxWidth / 1920.dp
         val gutter = 96.dp * scale
@@ -51,6 +54,12 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
         val enterWithInput = remember { restoreId == null && !focusResults }
         val field = remember { FocusRequester() }
         val resultsAction = remember { FocusRequester() }
+        val idleTerms = recentSearches + trendingSearches
+        val idleRows = remember(idleTerms) { idleTerms.map { FocusRequester() } }
+        val recentClear = remember { FocusRequester() }
+        // Empty recent and trending lists leave the page's normal results area rather than a dead blank.
+        val idle = term.isBlank() && !busy && error == null && idleTerms.isNotEmpty()
+        val idleFirst = if (recentSearches.isNotEmpty()) recentClear else idleRows.firstOrNull()
         val firstResultFocus = remember { FocusRequester() }
         val keyboard = LocalSoftwareKeyboardController.current
         var resultsHaveFocus by remember { mutableStateOf(false) }
@@ -95,7 +104,7 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                 TvTextField(term, { next -> editQuery { next } }, scale, Modifier.width(960.dp * scale),
                     placeholder = SEARCH_PLACEHOLDER, imeAction = ImeAction.Search, submit = showResults,
-                    requester = field, focusOnEnter = enterWithInput,
+                    requester = field, focusOnEnter = enterWithInput, down = idleFirst.takeIf { idle },
                     onFocusChanged = { fieldFocused = it })
                 TvVoiceSearchAction(scale) { recognized -> editQuery { recognized } }
                 TvAction(Modifier.heightIn(min = 80.dp * scale).widthIn(min = 240.dp * scale), scale, primary = true,
@@ -120,7 +129,8 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 }
             }
             Spacer(Modifier.height(36.dp * scale))
-            LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter)
+            if (idle) TvSearchIdle(recentSearches, trendingSearches, idleRows, recentClear, scale, gutter, query, clearRecents, field)
+            else LazyColumn(Modifier.weight(1f).bleedHorizontally(left = 0.dp, right = gutter)
                 .onFocusChanged { resultsHaveFocus = it.hasFocus }, state = rows, sectionControlled = true,
                 verticalArrangement = Arrangement.spacedBy(36.dp * scale), contentPadding = PaddingValues(bottom = gutter)) {
                 if (busy && !hasResults && groups.none { it.message != null }) item { TvSearchLoading(scale) }
@@ -189,6 +199,60 @@ internal fun TvSearchScreen(term: String, results: List<Card>, addons: List<Inte
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ColumnScope.TvSearchIdle(recentSearches: List<String>, trendingSearches: List<String>,
+    rowFocus: List<FocusRequester>, clearFocus: FocusRequester, scale: Float, gutter: Dp, query: (String) -> Unit,
+    clearRecents: () -> Unit, field: FocusRequester) {
+    val scope = rememberCoroutineScope()
+    val trendingOffset = recentSearches.size
+    LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = gutter),
+        verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+        if (recentSearches.isNotEmpty()) {
+            item(key = "recent") {
+                Row(Modifier.fillMaxWidth().heightIn(min = 56.dp * scale), verticalAlignment = Alignment.CenterVertically) {
+                    TvSearchSectionHeading("Recent", Modifier.weight(1f), scale)
+                    TvAction(Modifier.heightIn(min = 56.dp * scale).widthIn(min = 200.dp * scale), scale, requester = clearFocus,
+                        left = field, contentPadding = PaddingValues(horizontal = 32.dp * scale), activate = {
+                            clearRecents()
+                            // The action leaves with the Recent section it sits in, so focus goes back to the field below no rows.
+                            scope.launch { withFrameNanos { }; runCatching { field.requestFocus() } }
+                        }) { tint -> Text("Clear", color = tint, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold) }
+                }
+            }
+            itemsIndexed(recentSearches, key = { _, next -> "recent:$next" }) { index, next ->
+                TvSearchTermRow(next, scale, rowFocus[index], field) { query(next) }
+            }
+        }
+        if (trendingSearches.isNotEmpty()) {
+            item(key = "trending") {
+                TvSearchSectionHeading("Trending searches",
+                    Modifier.padding(top = if (recentSearches.isEmpty()) 0.dp else 32.dp * scale), scale)
+            }
+            itemsIndexed(trendingSearches, key = { _, next -> "trending:$next" }) { index, next ->
+                TvSearchTermRow(next, scale, rowFocus[trendingOffset + index], field) { query(next) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvSearchSectionHeading(text: String, modifier: Modifier, scale: Float) {
+    Text(text, modifier.heightIn(min = 40.dp * scale), fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp,
+        letterSpacing = (-.3f * scale).sp, fontWeight = FontWeight.SemiBold)
+}
+
+@Composable
+private fun TvSearchTermRow(term: String, scale: Float, requester: FocusRequester, field: FocusRequester, run: () -> Unit) {
+    TvAction(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale), scale, requester = requester,
+        background = Color.White.copy(alpha = .06f), cornerRadius = 12.dp * scale, left = field, arrangement = Arrangement.Start,
+        contentPadding = PaddingValues(horizontal = 32.dp * scale), activate = run) { tint ->
+        Icon(Lucide.Search, null, Modifier.size(24.dp * scale), tint)
+        Spacer(Modifier.width(18.dp * scale))
+        Text(term, color = tint, fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
