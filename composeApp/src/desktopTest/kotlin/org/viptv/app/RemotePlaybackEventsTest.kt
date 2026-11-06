@@ -19,7 +19,7 @@ class RemotePlaybackEventsTest {
     }
 
     @Test fun attemptEventsKeepOpaqueIdentityAndAcceptServerCompletionPolicy() = runBlocking {
-        val requests = mutableListOf<JsonObject>()
+        val requests = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/12/playback-events", request.url.encodedPath)
             assertEquals(HttpMethod.Post, request.method)

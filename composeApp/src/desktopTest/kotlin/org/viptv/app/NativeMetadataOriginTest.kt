@@ -14,7 +14,7 @@ import kotlin.test.*
 
 class NativeMetadataOriginTest {
     @Test fun identicalProviderIdsKeepSeparateCachePagesAndDisabledOriginDoesNotFallThrough() = runBlocking<Unit> {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             requests += request.url.host
             val name = if (request.url.host == "first.example") "First" else "Second"

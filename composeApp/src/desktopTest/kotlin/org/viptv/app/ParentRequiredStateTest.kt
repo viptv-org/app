@@ -5,7 +5,6 @@ import io.ktor.client.engine.mock.*
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
@@ -33,8 +32,16 @@ class ParentRequiredStateTest {
 
     private fun locked() = parentFixture(kids = true, unlocked = false, restricted = true)
 
+    private suspend fun ApplicationController.settle() {
+        while (true) {
+            val running = job ?: return
+            running.join()
+            if (job === running) return
+        }
+    }
+
     @Test fun aGatedProfileWriteUnlocksTheHouseholdFirstAndThenWrites() = runBlocking<Unit> {
-        val writes = ConcurrentLinkedQueue<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val open = parentFixture(kids = true, unlocked = true, restricted = true)
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             if (request.url.encodedPath == "/api/parent/unlock")
@@ -94,7 +101,7 @@ class ParentRequiredStateTest {
     }
 
     @Test fun switchingOffARestrictedProfileAsksForTheHouseholdPinFirst() = runBlocking<Unit> {
-        val requests = ConcurrentLinkedQueue<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += "${request.method.value} ${request.url.encodedPath}"
             val body = when (request.url.encodedPath) {
@@ -110,18 +117,19 @@ class ParentRequiredStateTest {
             profiles = listOf(Profile("1", "Parent", null), Profile("2", "Child", null)), profileManagement = locked())
         try {
             controller.selectProfile("1"); controller.job?.join()
-            assertEquals("1", controller.state.value.householdPinFor, "the picker asks for the household PIN")
+            assertEquals("Switch profile", controller.state.value.householdPinTitle, "the picker asks for the household PIN")
             assertEquals(Screen.Profiles, controller.state.value.screen)
             assertTrue(requests.isEmpty(), "nothing is sent until the PIN arrives: ${requests.toList()}")
-            controller.submitHouseholdSwitch("4821"); controller.job!!.join()
-            assertEquals(listOf("POST /api/parent/unlock", "POST /api/auth/profile"), requests.toList().take(2))
-            assertNull(controller.state.value.householdPinFor)
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertEquals(listOf("POST /api/parent/unlock", "GET /api/profiles", "POST /api/auth/profile"),
+                requests.toList().take(3), "the PIN unlocks the household before the switch")
+            assertNull(controller.state.value.householdPinTitle)
             assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
 
     @Test fun aWrongHouseholdPinKeepsTheSwitchPromptOpenWithItsOwnCopy() = runBlocking<Unit> {
-        val requests = ConcurrentLinkedQueue<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += request.url.encodedPath
             respond("""{"error":"Incorrect parent PIN","error_code":"parent_pin_invalid"}""", HttpStatusCode.Forbidden, headers = json)
@@ -132,8 +140,8 @@ class ParentRequiredStateTest {
             profiles = listOf(Profile("1", "Parent", null), Profile("2", "Child", null)), profileManagement = locked())
         try {
             controller.selectProfile("1"); controller.job?.join()
-            controller.submitHouseholdSwitch("0000"); controller.job!!.join()
-            assertEquals("1", controller.state.value.householdPinFor, "the prompt stays open for another try")
+            controller.submitHouseholdPin("0000"); controller.settle()
+            assertEquals("Switch profile", controller.state.value.householdPinTitle, "the prompt stays open for another try")
             assertEquals("Incorrect PIN. Try again.", controller.state.value.error)
             assertEquals(Screen.Profiles, controller.state.value.screen)
             assertEquals(listOf("/api/parent/unlock"), requests.toList())
@@ -149,6 +157,7 @@ class ParentRequiredStateTest {
                 path == "/api/auth/profile" && !unlocked ->
                     respond("""{"error":"Parent PIN required","error_code":"parent_required"}""", HttpStatusCode.Forbidden, headers = json)
                 path == "/api/bootstrap" -> respond(bootstrap(parentFixture(kids = false, unlocked = true), "1"), headers = json)
+                path == "/api/profiles" -> respond(Json.encodeToString(parentFixture(kids = true, unlocked = true)), headers = json)
                 else -> respond("{}", headers = json)
             }
         }, browserMode = false)
@@ -159,11 +168,59 @@ class ParentRequiredStateTest {
         try {
             controller.selectProfile("1"); controller.job!!.join()
             assertNull(controller.state.value.error, "a missing household grant is not a dead end")
-            assertEquals("1", controller.state.value.householdPinFor)
+            assertEquals("Switch profile", controller.state.value.householdPinTitle)
             assertEquals(Screen.Profiles, controller.state.value.screen)
-            controller.submitHouseholdSwitch("4821"); controller.job!!.join()
-            assertNull(controller.state.value.householdPinFor)
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertNull(controller.state.value.householdPinTitle)
             assertNull(controller.state.value.error)
+        } finally { remote.close() }
+    }
+
+    @Test fun theManageProfilesEditorUnlocksTheHouseholdBeforeEachWrite() = runBlocking<Unit> {
+        val writes = EngineRequests<String>()
+        var unlocked = false
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            val path = request.url.encodedPath
+            val method = request.method.value
+            if (path == "/api/parent/unlock" || (path.startsWith("/api/profiles") && method != "GET"))
+                writes += "$method $path"
+            when {
+                path == "/api/parent/unlock" -> { unlocked = true; respond("{}", headers = json) }
+                path == "/api/profiles" && method == "GET" ->
+                    respond(Json.encodeToString(parentFixture(kids = true, unlocked = unlocked, restricted = true)), headers = json)
+                path == "/api/bootstrap" -> respond(bootstrap(parentFixture(kids = true, unlocked = unlocked), "1"), headers = json)
+                else -> respond("{}", headers = json)
+            }
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        fun editor() = ApplicationState(screen = Screen.ProfileEdit, selectedProfile = "1", profileToEdit = "1",
+            profiles = listOf(Profile("1", "Viewer", null), Profile("2", "Other", null)), profileManagement = locked())
+        try {
+            controller.mutable.value = editor()
+            controller.renameProfile("Renamed", ""); controller.settle()
+            assertEquals("Change this profile’s name", controller.state.value.householdPinTitle)
+            assertTrue(writes.isEmpty(), "nothing is written before the PIN: ${writes.toList()}")
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertEquals(listOf("POST /api/parent/unlock", "PATCH /api/profiles/1"), writes.toList())
+
+            writes.clear(); unlocked = false; controller.mutable.value = editor()
+            controller.setProfileAvatar("world", 3, ""); controller.settle()
+            assertEquals("Change this profile’s avatar", controller.state.value.householdPinTitle)
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertEquals(listOf("POST /api/parent/unlock", "PATCH /api/profiles/1"), writes.toList())
+
+            writes.clear(); unlocked = false; controller.mutable.value = editor()
+            controller.deleteProfile(""); controller.settle()
+            assertEquals("Delete this profile", controller.state.value.householdPinTitle)
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertEquals(listOf("POST /api/parent/unlock", "DELETE /api/profiles/1"), writes.toList())
+
+            writes.clear(); unlocked = false; controller.mutable.value = editor().copy(screen = Screen.Profiles)
+            controller.createProfile("Newcomer"); controller.settle()
+            assertEquals("Add a profile", controller.state.value.householdPinTitle)
+            controller.submitHouseholdPin("4821"); controller.settle()
+            assertEquals(listOf("POST /api/parent/unlock", "POST /api/profiles"), writes.toList())
         } finally { remote.close() }
     }
 

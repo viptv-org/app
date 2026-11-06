@@ -15,13 +15,13 @@ import kotlin.test.*
 class NativePublicMetadataDelegationTest {
     private class Fixture : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-public-metadata-")
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         var holdMetadata = false
         val metadataStarted = CompletableDeferred<Unit>()
         val releaseMetadata = CompletableDeferred<Unit>()
         val client = HttpClient(MockEngine { request ->
             val host = request.url.host; val route = request.url.encodedPath
-            synchronized(requests) { requests += "$host$route" }
+            requests += "$host$route"
             val body = when {
                 host == "search.example" && "/catalog/" in route -> """{"metas":[{"id":"tt1111111","type":"movie","name":"Search result"}]}"""
                 host == "metadata.example" && "/meta/" in route -> {

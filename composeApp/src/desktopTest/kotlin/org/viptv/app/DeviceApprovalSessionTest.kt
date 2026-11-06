@@ -19,7 +19,7 @@ class DeviceApprovalSessionTest {
     private suspend fun DeviceApprovalController.idle() = withTimeout(2_000) { while (isBusy()) yield() }
 
     @Test fun restoresAnExpiredAccessCookieUsingTheRefreshCookieWithoutMediaRequests() = runTest {
-        val paths = mutableListOf<String>(); var refreshed = false; var statuses = 0
+        val paths = EngineRequests<String>(); var refreshed = false; var statuses = 0
         val controller = DeviceApprovalController(this) {
             val client = HttpClient(MockEngine) {
                 engine {

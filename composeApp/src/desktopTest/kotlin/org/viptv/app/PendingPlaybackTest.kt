@@ -30,9 +30,9 @@ class PendingPlaybackTest {
     private val stream = SourceCandidate("opaque-stream", "addon:7", "1080p WEB")
 
     private inner class Host(val streamsHoldMillis: Long = 0, val movieMissing: Boolean = false) {
-        val streamRequests = mutableListOf<JsonObject>()
-        val playbackRequests = mutableListOf<JsonObject>()
-        val metaRequests = mutableListOf<String>()
+        val streamRequests = EngineRequests<JsonObject>()
+        val playbackRequests = EngineRequests<JsonObject>()
+        val metaRequests = EngineRequests<String>()
         val releaseStreams = CompletableDeferred<Unit>()
         private fun MockRequestHandleScope.json(text: String, status: HttpStatusCode = HttpStatusCode.OK) =
             respond(text, status, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -40,11 +40,11 @@ class PendingPlaybackTest {
         val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             when {
-                path == "/api/meta/series/$show" -> { synchronized(metaRequests) { metaRequests += path }; json(Json.encodeToString(detail)) }
+                path == "/api/meta/series/$show" -> { metaRequests += path; json(Json.encodeToString(detail)) }
                 path == "/api/meta/movie/tt0111161" && movieMissing -> json("""{"error":"Title not found","error_code":"metadata_not_found"}""", HttpStatusCode.NotFound)
                 path == "/api/meta/movie/tt0111161" -> json(Json.encodeToString(DetailSnapshot(movie.copy(provider_id = "addon:21", metadata_origin = origin), episodes = emptyList())))
                 path == "/api/streams" && request.method == HttpMethod.Post -> {
-                    synchronized(streamRequests) { streamRequests += body(request) }
+                    streamRequests += body(request)
                     json("""{"id":"job-1"}""")
                 }
                 path == "/api/streams/job-1" -> {
@@ -53,7 +53,7 @@ class PendingPlaybackTest {
                 }
                 path.endsWith("/source-ranking") -> json("""{"streams":[{"id":"${stream.id}"}]}""")
                 path == "/api/playback" && request.method == HttpMethod.Post -> {
-                    synchronized(playbackRequests) { playbackRequests += body(request) }
+                    playbackRequests += body(request)
                     json("""{"id":"lease-1","status":"ready","renew_after_seconds":20,
                         "delivery":{"kind":"direct","url":"https://media.example/episode.mp4","position":0}}""")
                 }
@@ -79,7 +79,7 @@ class PendingPlaybackTest {
             remote.close()
         }
 
-        fun streams() = synchronized(streamRequests) { streamRequests.toList() }
+        fun streams() = streamRequests.snapshot()
     }
 
     private suspend fun until(what: String, condition: () -> Boolean) {

@@ -25,7 +25,7 @@ class LibraryPagingFooterTest {
     }
 
     @Test fun aFailedPageKeepsCardsAndRetryRecovers() = runBlocking {
-        val requested = mutableListOf<Long>()
+        val requested = EngineRequests<Long>()
         var failNext = false
         val client = HttpClient(MockEngine { request ->
             when {
