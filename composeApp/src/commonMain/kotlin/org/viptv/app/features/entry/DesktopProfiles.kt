@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
+import org.viptv.app.components.dashedOutline
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.OutlinedButton
 
@@ -32,7 +33,7 @@ internal fun DesktopProfiles(
     add: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val count = profiles.size + if (local && profiles.size < 12) 1 else 0
+        val count = profiles.size + if (local) 1 else 0
         val width = 148.dp * count + 24.dp * maxOf(0, count - 1)
         val side = maxOf(0.dp, (maxWidth - width) / 2)
         Column(Modifier.fillMaxSize().padding(top = if (maxHeight >= 640.dp) 150.dp else 80.dp),
@@ -47,7 +48,7 @@ internal fun DesktopProfiles(
                         if (managing) edit(profile.id) else select(profile.id)
                     }
                 }
-                if (local && profiles.size < 12) item(key = "add") { DesktopAddProfileTile(busy, add) }
+                if (local) item(key = "add") { DesktopAddProfileTile(busy, canAdd = profiles.size < ProfileLimit, add) }
             }
             Spacer(Modifier.height(40.dp))
             if (local) OutlinedButton(onClick = if (managing) done else manage, enabled = !busy,
@@ -82,14 +83,16 @@ private fun DesktopProfileTile(profile: Profile, busy: Boolean, initialFocus: Bo
 }
 
 @Composable
-private fun DesktopAddProfileTile(busy: Boolean, add: () -> Unit) {
-    Column(Modifier.width(148.dp).pointerClickable(enabled = !busy, onClick = add),
+private fun DesktopAddProfileTile(busy: Boolean, canAdd: Boolean, add: () -> Unit) {
+    val enabled = !busy && canAdd
+    Column(Modifier.width(148.dp).pointerClickable(enabled = enabled, onClick = add),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(148.dp).padding(4.dp).border(2.dp, Color.White.copy(alpha = .14f),
-            RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-            androidx.compose.material3.Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp), tint = Palette.secondary)
+        Box(Modifier.size(148.dp).padding(4.dp)
+            .dashedOutline(Color.White.copy(alpha = if (enabled) .22f else .10f), 2.dp, 22.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp),
+                tint = if (enabled) Palette.secondary else Palette.tertiary)
         }
         Spacer(Modifier.height(8.dp))
-        Text("Add a profile", color = Palette.secondary, fontSize = 15.sp)
+        Text("Add a profile", color = if (enabled) Palette.secondary else Palette.tertiary, fontSize = 15.sp)
     }
 }

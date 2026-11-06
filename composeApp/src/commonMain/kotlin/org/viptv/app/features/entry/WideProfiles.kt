@@ -28,7 +28,6 @@ import org.viptv.app.theme.Palette
 private val TileSize = 150.dp
 private val TileRadius = 12.dp
 private val TileGap = 28.dp
-private const val ProfileLimit = 12
 
 @Composable
 internal fun WideProfiles(
