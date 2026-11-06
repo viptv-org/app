@@ -19,7 +19,8 @@ internal data class RememberedSource(
 )
 
 @Serializable
-internal data class SourceMemoryRecord(val entries: Map<String, RememberedSource> = emptyMap())
+internal data class SourceMemoryRecord(val entries: Map<String, RememberedSource> = emptyMap(),
+    val affinity: Map<String, String> = emptyMap())
 
 internal interface SourceMemoryStore {
     fun read(): String?
@@ -80,6 +81,20 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
         runCatching { store.write(encodeSourceMemory(record)) }
     }
 
+    // One provider per profile: the last start that reached a presented frame, manual or automatic.
+    fun affinity(profile: String): String? = record.affinity[profile]
+
+    fun rememberAffinity(profile: String, providerId: String) {
+        val provider = providerId.trim().takeIf { it.isNotEmpty() && it.length <= MAX_AFFINITY_LENGTH && it.none(Char::isISOControl) }
+            ?: return
+        if (record.affinity[profile] == provider) return
+        val merged = record.affinity - profile + (profile to provider)
+        val affinity = if (merged.size <= MAX_PROFILES) merged
+            else merged.entries.drop(merged.size - MAX_PROFILES).associate { it.key to it.value }
+        record = record.copy(affinity = affinity)
+        runCatching { store.write(encodeSourceMemory(record)) }
+    }
+
     fun forget(profile: String, card: Card) {
         val key = sourceMemoryKey(profile, card)
         if (key !in record.entries) return
@@ -90,6 +105,8 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
     companion object {
         const val MAX_ENTRIES = 200
         const val MAX_LANGUAGES = 8
+        const val MAX_PROFILES = 16
+        const val MAX_AFFINITY_LENGTH = 128
     }
 }
 
@@ -114,6 +131,11 @@ internal val rememberedKinds = setOf("movie", "series")
 
 internal fun PreferencesSnapshot?.rememberedSourceReuseEnabled(): Boolean =
     this?.preferences?.remembered_source_reuse != false
+
+internal fun ApplicationController.rememberProviderAffinity(profile: String) {
+    val provider = mutable.value.playingSource?.provider_id ?: return
+    sourceMemory.rememberAffinity(profile, provider)
+}
 
 internal fun ApplicationController.rememberSourceChoice() {
     val choice = sourceChoice
