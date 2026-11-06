@@ -45,8 +45,7 @@ class TvParentalControlsFocusTest {
                     install = {}, toggle = { _, _ -> }, profiles = {}, leave = {}, profile = PreviewData.profile,
                     initialSection = TvSettingsSection.Parental,
                     parental = { first, sidebar, scale -> TvParentControlsSettings(snapshot, controls, false, null, null, 0,
-                        {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {}, first, sidebar, scale) },
-                    maturity = "Up to age 10", pinAvailable = true)
+                        {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {}, first, sidebar, scale) })
                 focusManager = LocalFocusManager.current
             } }
         }
@@ -75,8 +74,7 @@ class TvParentalControlsFocusTest {
                     install = {}, toggle = { _, _ -> }, profiles = {}, leave = {}, profile = PreviewData.profile,
                     initialSection = TvSettingsSection.Parental,
                     parental = { first, sidebar, scale -> TvParentControlsSettings(snapshot, controls, false, null, null, 0,
-                        {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {}, first, sidebar, scale) },
-                    maturity = "Up to age 10", pinAvailable = true)
+                        {}, {}, { _, _ -> }, { _, _ -> }, { _, _, _ -> }, {}, first, sidebar, scale) })
                 focusManager = LocalFocusManager.current
             } }
         }
@@ -109,8 +107,7 @@ class TvParentalControlsFocusTest {
                         if (open != null) ParentTitlesSettings(open, false, null, { titles.value = null }, {}, {}, { _, _ -> }, {}, {}, {}, {}, first)
                         else TvParentControlsSettings(snapshot, controls, false, null, null, 0, {}, {}, { _, _ -> }, { _, _ -> },
                             { _, _, _ -> }, { profile -> titles.value = ParentTitlesState(profile, "Child", loaded = true) }, first, sidebar, scale)
-                    },
-                    maturity = "Up to age 10", pinAvailable = true)
+                    })
                 focusManager = LocalFocusManager.current
             } }
         }
