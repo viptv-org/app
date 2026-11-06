@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
 private const val LIST_STAGGER_CAP = 8
 
@@ -41,7 +40,7 @@ internal fun rememberListEntrance(hasContent: Boolean): ListEntrance {
     entrance.register(hasContent)
     if (entrance.animate) {
         LaunchedEffect(entrance) {
-            delay((Motion.staggerStep * LIST_STAGGER_CAP + Motion.arrive).toLong())
+            frameDelay((Motion.staggerStep * LIST_STAGGER_CAP + Motion.arrive).toLong())
             entrance.settle()
         }
     }
@@ -55,7 +54,7 @@ internal fun Modifier.listItemEntrance(index: Int, animate: Boolean): Modifier {
     val progress = remember { Animatable(0f) }
     val spec: FiniteAnimationSpec<Float> = motionSpec(tween(Motion.arrive, easing = Motion.standard))
     LaunchedEffect(index) {
-        delay((index.coerceAtMost(LIST_STAGGER_CAP) * Motion.staggerStep).toLong())
+        frameDelay((index.coerceAtMost(LIST_STAGGER_CAP) * Motion.staggerStep).toLong())
         progress.animateTo(1f, spec)
     }
     val shown = progress.value

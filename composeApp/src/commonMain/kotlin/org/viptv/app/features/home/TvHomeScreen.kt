@@ -27,13 +27,13 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.first
 import org.viptv.app.components.TopNavigation
 import org.viptv.app.components.motionSpec
+import org.viptv.app.components.frameDelay
 import org.viptv.app.connection.Profile
 import org.viptv.app.state.RowSeeAll
 import org.viptv.app.state.Screen
@@ -167,7 +167,7 @@ internal fun TvHomeScreen(home: HomeSnapshot?, open: (Card) -> Unit, play: (Card
         var heroTimerEnabled by remember(home?.scope?.owner()) { mutableStateOf(true) }
         LaunchedEffect(browsing) {
             if (browsing) heroTimerEnabled = false
-            else { delay(450); heroTimerEnabled = true }
+            else { frameDelay(450); heroTimerEnabled = true }
         }
         val carousel = rememberHeroCarousel(featured, !browsing && heroTimerEnabled, home?.scope?.owner(), parkAfterPass = true)
         val portraitSelection = { activeRow >= 0 && visibleRows.getOrNull(activeRow)?.id != "continue" }
