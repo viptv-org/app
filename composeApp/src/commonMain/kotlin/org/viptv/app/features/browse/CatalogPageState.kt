@@ -35,8 +35,7 @@ internal fun catalogNoun(type: String): String = when (type) {
 }
 
 internal fun catalogStateSource(label: String?, source: String?): String =
-    listOfNotNull(label?.takeIf { it.isNotBlank() }, source?.takeIf { it.isNotBlank() }).joinToString(" from ")
-        .ifBlank { "This catalog" }
+    source?.takeIf { it.isNotBlank() } ?: label?.takeIf { it.isNotBlank() } ?: "This catalog"
 
 internal fun catalogEmptyState(label: String?, source: String?, noun: String, applied: List<AppliedChip>,
     otherCatalog: Boolean): CatalogState {
@@ -48,7 +47,7 @@ internal fun catalogEmptyState(label: String?, source: String?, noun: String, ap
             actions = listOfNotNull(choose.takeIf { otherCatalog }))
         applied.size == 1 -> CatalogState(failure = false, title = CATALOG_FILTERED_TITLE,
             message = "${catalogStateSource(label, source)} has no $noun matching “${newest.label}”.",
-            actions = listOfNotNull(removeAction(newest), clear, choose.takeIf { otherCatalog }))
+            actions = listOfNotNull(removeAction(newest), choose.takeIf { otherCatalog }))
         else -> CatalogState(failure = false, title = CATALOG_FILTERED_TITLE,
             message = "${catalogStateSource(label, source)} has no $noun with all ${applied.size} filters. Removing the newest one usually helps.",
             actions = listOfNotNull(removeAction(newest), clear, choose.takeIf { otherCatalog }))

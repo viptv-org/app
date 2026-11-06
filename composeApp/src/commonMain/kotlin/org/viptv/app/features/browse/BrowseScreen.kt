@@ -124,7 +124,8 @@ fun BrowseScreen(screen: Screen, home: HomeSnapshot?, television: Boolean, open:
                 if (error != null && cards.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp, lineHeight = 16.sp)
                 if (failures.isNotEmpty() && cards.isNotEmpty()) AddonFailureNotice(failures, manageAddons)
                 val columns = when { compact -> 3; width >= 1200.dp -> 6; else -> 4 }
-                val chooseCatalog = if (controls?.catalogs?.any { it.type == query.type } == true) ({ catalogOpen.value = true }) else null
+                val otherCatalog = controls?.catalogs.orEmpty().count { it.type == query.type } > 1
+                val chooseCatalog = if (otherCatalog) ({ catalogOpen.value = true }) else null
                 val footerLoading = cards.isNotEmpty() && busy
                 val footerEnded = cards.isNotEmpty() && !busy && pageError == null && more == null
                 val footerFailed = cards.isNotEmpty() && !busy && pageError != null

@@ -33,6 +33,10 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
+import org.viptv.app.connection.catalogSource
+import org.viptv.app.connection.catalogTitle
+import org.viptv.app.connection.selectedCatalog
+import org.viptv.app.connection.selections
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.AddonFailure

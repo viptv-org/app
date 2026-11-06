@@ -97,6 +97,7 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
     val label = catalog?.catalogTitle(peers)
     val source = catalog?.catalogSource(peers)
     val chooseCatalog = { catalogOpen.value = true }
+    val otherCatalog = peers.count { it.type == query.type } > 1
     val pageState = listPageState(cards.size, busy, error)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
@@ -108,8 +109,8 @@ internal fun BrowserBrowseScreen(screen: Screen, cards: List<Card>, controls: Di
             when (pageState) {
                 ListPageState.Loading -> PosterSkeleton(phone = false, gap = 14.dp, tile = 172.dp)
                 ListPageState.Failed, ListPageState.Empty -> CatalogPageState(
-                    if (pageState == ListPageState.Failed) catalogFailureState(label, error, chooseCatalogAvailable = true)
-                    else catalogEmptyState(label, source, browseNoun(screen), applied, otherCatalog = true),
+                    if (pageState == ListPageState.Failed) catalogFailureState(label, error, otherCatalog)
+                    else catalogEmptyState(label, source, browseNoun(screen), applied, otherCatalog),
                     activate = { action ->
                         when (action.kind) {
                             CatalogActionKind.Retry -> retry()
