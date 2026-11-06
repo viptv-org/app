@@ -15,7 +15,9 @@ fun ApplicationController.calendarCategory(type: String) {
     run { loadCalendar() }
 }
 
-fun ApplicationController.retryCalendar() {
+fun ApplicationController.retryCalendar() = rolloverCalendar()
+
+fun ApplicationController.rolloverCalendar() {
     if (mutable.value.screen != Screen.Calendar) return
     run { loadCalendar() }
 }
