@@ -73,6 +73,7 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
             leavePinFrom = restored.leavePinFrom.takeIf { screen == Screen.ProfilePin },
             pendingAction = null,
             settingsEntrySection = if (screen == Screen.Settings) restored.settingsEntrySection else null,
+            settingsAddonTarget = if (screen == Screen.Settings) restored.settingsAddonTarget else null,
             liveSetupReturnFocus = restored.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
             settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) restored.settingsPage else null,
@@ -201,18 +202,21 @@ private fun ApplicationState.settingsLevelOpen() =
     screen == Screen.Settings && (parentTitles != null || settingsPage?.parent() != null)
 
 fun ApplicationController.showSettingsPage(page: SettingsPage) {
-    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) updateState { it.copy(settingsPage = page) }
+    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page)
+        updateState { it.copy(settingsPage = page, settingsAddonTarget = it.settingsAddonTarget.takeIf { page.section == "Add-ons" }) }
 }
 
 fun ApplicationController.openAddonsSettings() = openSettingsSection("Add-ons")
 
-fun ApplicationController.openSettingsSection(section: String) {
-    updateState { it.copy(settingsEntrySection = section, settingsPage = null) }
+fun ApplicationController.openSettingsSection(section: String, addonTarget: String? = null) {
+    updateState { it.copy(settingsEntrySection = section, settingsAddonTarget = addonTarget, settingsPage = null) }
     navigate(Screen.Settings)
 }
 
 fun ApplicationController.configureSource(providerId: String) {
-    sourceSettingsSection(providerId)?.let { openSettingsSection(it) }
+    sourceSettingsSection(providerId)?.let {
+        openSettingsSection(it, addonTarget = providerId.takeIf { it.startsWith("addon:") })
+    }
 }
 
 private fun ApplicationController.backWithinSettings(): Boolean {

@@ -27,6 +27,7 @@ data class ApplicationState(
     val navBack: List<BackEntry> = emptyList(),
     val navForward: List<BackEntry> = emptyList(),
     val settingsEntrySection: String? = null,
+    val settingsAddonTarget: String? = null,
     val settingsPage: SettingsPage? = null,
     val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
@@ -183,7 +184,7 @@ data class ApplicationState(
 // the account reads, the add-ons, the preferences and the writes in flight.
 internal fun ApplicationState.keepShell(): ApplicationState = ApplicationState(
     navBack = navBack, navForward = navForward,
-    settingsEntrySection = settingsEntrySection, settingsPage = settingsPage, settingsReturnsToPlayer = settingsReturnsToPlayer,
+    settingsEntrySection = settingsEntrySection, settingsAddonTarget = settingsAddonTarget, settingsPage = settingsPage, settingsReturnsToPlayer = settingsReturnsToPlayer,
     mutations = mutations,
     accountIdentity = accountIdentity, accountDevices = accountDevices, devicesRetryable = devicesRetryable,
     passwordChangeNotice = passwordChangeNotice, sessionNotice = sessionNotice,
