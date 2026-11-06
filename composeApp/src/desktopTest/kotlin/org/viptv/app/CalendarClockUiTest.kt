@@ -45,8 +45,8 @@ class CalendarClockUiTest {
 
     private fun today(days: List<CalendarDay> = calendarWindow(0).days) = days.single { it.label == "Today" }
 
-    @Test fun phoneAddsTheActionTheMomentTheReleaseAirs() = airs(television = false, width = 390, height = 844, name = "phone")
-    @Test fun tvAddsTheActionTheMomentTheReleaseAirs() = airs(television = true, width = 1920, height = 1080, name = "tv")
+    @Test fun phoneAddsTheActionAndTheStatusTheMomentTheReleaseAirs() = airs(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvAddsTheActionAndTheStatusTheMomentTheReleaseAirs() = airs(television = true, width = 1920, height = 1080, name = "tv")
     @Test fun phoneReloadsTheWeekWhenTheDayRollsOver() = rollsOver(television = false, width = 390, height = 844, name = "phone")
     @Test fun tvReloadsTheWeekWhenTheDayRollsOver() = rollsOver(television = true, width = 1920, height = 1080, name = "tv")
 
@@ -58,10 +58,12 @@ class CalendarClockUiTest {
         scene(television, width, height, { entries }, now) { s ->
             s.until("the row") { s.nodes().any { text(it).contains("Night show") } }
             assertFalse(s.nodes().any { text(it) == "Find S2 E4" }, "$name: an upcoming release has no action yet")
+            assertTrue(s.nodes().any { text(it).contains("in 1m") }, "$name: an upcoming release counts down")
             s.save("$name-calendar-before-airing")
             clock.at = clock.at.plusMinutes(1)
             now.value = calendarClock()
             s.until("the release's action") { s.nodes().any { text(it) == "Find S2 E4" } }
+            assertTrue(s.nodes().any { text(it).contains("Out now") }, "$name: the row turns into Out now at its air time")
             s.save("$name-calendar-after-airing")
         }
     }

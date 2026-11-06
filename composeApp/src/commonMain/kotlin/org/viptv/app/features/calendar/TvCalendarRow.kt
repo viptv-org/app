@@ -16,11 +16,12 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.textColumnWidth
+import org.viptv.app.connection.calendarClock
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean, first: FocusRequester?, up: FocusRequester?, right: FocusRequester,
-    focus: () -> Unit, open: () -> Unit, modifier: Modifier = Modifier) {
+    focus: () -> Unit, open: () -> Unit, modifier: Modifier = Modifier, nowMillis: Long = calendarClock().millis) {
     TvAction(modifier.fillMaxWidth().heightIn(min = 132.dp * scale).onFocusChanged { if (it.isFocused) focus() }
         .focusProperties { if (up != null) this.up = up; this.right = right }, scale, primary = selected, requester = first, activate = open,
         background = Color.White.copy(alpha = .06f), cornerRadius = 18.dp * scale, arrangement = Arrangement.Start,
@@ -39,7 +40,7 @@ internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean
                 maxLines = 1, overflow = TextOverflow.Ellipsis) }
             if (entry.library) CalendarYourShow(20 * scale, if (color == Palette.background) color else Palette.accent)
         }
-        entry.status?.let { Text(it, Modifier.padding(start = 16.dp * scale).widthIn(max = 220.dp * scale),
+        entry.statusAt(nowMillis)?.let { Text(it, Modifier.padding(start = 16.dp * scale).widthIn(max = 220.dp * scale),
             color = if (entry.aired) secondary else Palette.accent, maxLines = 2, overflow = TextOverflow.Ellipsis,
             fontSize = (24 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.Bold) }
     }
