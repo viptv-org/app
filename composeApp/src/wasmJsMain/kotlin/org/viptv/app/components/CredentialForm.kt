@@ -21,6 +21,7 @@ import org.w3c.dom.HTMLStyleElement
 
 private class CredentialFormNodes {
     val inputs = mutableListOf<HTMLInputElement>()
+    val notes = mutableListOf<HTMLDivElement>()
     var submit: HTMLButtonElement? = null
     var secondary: HTMLButtonElement? = null
     var errorRow: HTMLDivElement? = null
@@ -30,6 +31,7 @@ private const val inputHeight = 56
 private const val gap = 14
 private const val buttonHeight = 40
 private const val errorHeight = 20
+private const val noteHeight = 18
 
 private val submitImeActions = setOf(ImeAction.Go, ImeAction.Done, ImeAction.Send, ImeAction.Search)
 
@@ -55,6 +57,9 @@ private fun ensureCredentialStyle() {
             .viptv-cred-input[data-error="true"] { border-color:#FF7A6E; }
             .viptv-cred-input[data-error="true"]:focus { border-color:#FF7A6E; }
             .viptv-cred-input:disabled { opacity:.5; }
+            .viptv-cred-field { display:flex; flex-direction:column; gap:4px; }
+            .viptv-cred-note { height:${noteHeight}px; line-height:${noteHeight}px; color:#B6B4AF; font:13px Onest,sans-serif; overflow:hidden; }
+            .viptv-cred-note[data-error="true"] { color:#FF7A6E; }
             .viptv-cred-error { height:${errorHeight}px; line-height:${errorHeight}px; color:#FF7A6E; font:14px Onest,sans-serif; overflow:hidden; }
             .viptv-cred-actions { display:flex; flex-direction:row; gap:12px; align-items:center; height:${buttonHeight}px; }
             .viptv-cred-submit { height:${buttonHeight}px; padding:0 24px; border:none; border-radius:20px; background:#F4F2EE; color:#0B0B0C; font:600 14px Onest,sans-serif; cursor:pointer; }
@@ -96,7 +101,7 @@ internal actual fun CredentialForm(
     val latestOnSecondary by rememberUpdatedState(onSecondary)
     val nodes = remember { CredentialFormNodes() }
     var pendingStore by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val formHeight: Dp = (inputHeight * fields.size + gap * (fields.size + 1) + errorHeight + buttonHeight).dp
+    val formHeight: Dp = ((inputHeight + noteHeight + 4) * fields.size + gap * (fields.size + 1) + errorHeight + buttonHeight).dp
 
     HtmlElementView(
         factory = {
@@ -107,6 +112,7 @@ internal actual fun CredentialForm(
                 setAttribute("autocomplete", "on")
             }
             nodes.inputs.clear()
+            nodes.notes.clear()
             nodes.submit = null
             nodes.secondary = null
             nodes.errorRow = null
@@ -122,6 +128,7 @@ internal actual fun CredentialForm(
                     disabled = busy
                     setAttribute("data-error", if (field.errorText != null) "true" else "false")
                     enterKeyHint(field.imeAction)?.let { setAttribute("enterkeyhint", it) }
+                    setAttribute("aria-describedby", "viptv-cred-note-$index")
                 }
                 input.oninput = { latestOnChange(index, input.value); null }
                 input.onkeydown = { event ->
@@ -138,7 +145,17 @@ internal actual fun CredentialForm(
                     null
                 }
                 nodes.inputs += input
-                form.appendChild(input)
+                val fieldBox = document.createElement("div").apply { className = "viptv-cred-field" }
+                fieldBox.appendChild(input)
+                val note = (document.createElement("div") as HTMLDivElement).apply {
+                    id = "viptv-cred-note-$index"
+                    className = "viptv-cred-note"
+                    textContent = field.errorText ?: field.hintBelow ?: ""
+                    setAttribute("data-error", if (field.errorText != null) "true" else "false")
+                }
+                nodes.notes += note
+                fieldBox.appendChild(note)
+                form.appendChild(fieldBox)
             }
             val errorRow = (document.createElement("div") as HTMLDivElement).apply {
                 className = "viptv-cred-error"
@@ -186,6 +203,10 @@ internal actual fun CredentialForm(
                 input.disabled = busy
                 if (input.value != field.value && document.activeElement != input) input.value = field.value
                 input.setAttribute("data-error", if (field.errorText != null) "true" else "false")
+                nodes.notes.getOrNull(index)?.let { note ->
+                    note.textContent = field.errorText ?: field.hintBelow ?: ""
+                    note.setAttribute("data-error", if (field.errorText != null) "true" else "false")
+                }
             }
             nodes.submit?.let { button ->
                 button.disabled = !valid || busy
