@@ -58,6 +58,12 @@ class LiveEmptyArtworkTest {
         } finally { wide.close(); tall.close() }
     }
 
+    @Test fun everyScrimComesFromTheSharedStops() {
+        val feature = File("src/commonMain/kotlin/org/viptv/app/features/live/LiveEmptyArtwork.kt")
+        assertTrue(feature.isFile, "run from the composeApp module: ${feature.absolutePath}")
+        assertFalse(Regex("""Brush\.\w+Gradient""").containsMatchIn(feature.readText()), "the empty state reads its stops from Scrim")
+    }
+
     private fun scene(width: Int, height: Int, wide: Boolean) = ImageComposeScene(width, height, Density(1f)) {
         ViptvTheme(false) {
             Surface(Modifier.fillMaxSize(), color = Palette.background) {
