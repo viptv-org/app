@@ -5,7 +5,6 @@ import io.ktor.client.engine.mock.*
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
@@ -34,7 +33,7 @@ class ParentRequiredStateTest {
     private fun locked() = parentFixture(kids = true, unlocked = false, restricted = true)
 
     @Test fun aGatedProfileWriteUnlocksTheHouseholdFirstAndThenWrites() = runBlocking<Unit> {
-        val writes = ConcurrentLinkedQueue<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val open = parentFixture(kids = true, unlocked = true, restricted = true)
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             if (request.url.encodedPath == "/api/parent/unlock")
@@ -94,7 +93,7 @@ class ParentRequiredStateTest {
     }
 
     @Test fun switchingOffARestrictedProfileAsksForTheHouseholdPinFirst() = runBlocking<Unit> {
-        val requests = ConcurrentLinkedQueue<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += "${request.method.value} ${request.url.encodedPath}"
             val body = when (request.url.encodedPath) {
@@ -121,7 +120,7 @@ class ParentRequiredStateTest {
     }
 
     @Test fun aWrongHouseholdPinKeepsTheSwitchPromptOpenWithItsOwnCopy() = runBlocking<Unit> {
-        val requests = ConcurrentLinkedQueue<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += request.url.encodedPath
             respond("""{"error":"Incorrect parent PIN","error_code":"parent_pin_invalid"}""", HttpStatusCode.Forbidden, headers = json)

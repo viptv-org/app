@@ -18,7 +18,7 @@ class RemoteAddonsTest {
     private val configuration = """{"configuration":{"scope":{"connection_id":"server","account_id":"7","profile_id":"12","revision":9},"mode":"Server","name":"Parent","browsing_plugin":"stremio","assignments":[{"connection_id":"addon:1","enabled":["Sources"]},{"connection_id":"simkl:2","enabled":["Tracking"]}]},"connections":[{"id":"addon:1","plugin_id":"stremio","account_id":"7","name":"Existing","enabled":true,"revision":3,"capabilities":["Sources"]},{"id":"addon:2","plugin_id":"stremio","account_id":"7","name":"New","enabled":true,"revision":4,"capabilities":["Sources","Metadata"]},{"id":"simkl:2","plugin_id":"simkl","account_id":"7","name":"Tracking","enabled":true,"revision":1,"capabilities":["Tracking"]}]}"""
 
     @Test fun profileTogglePreservesOtherAssignmentsAndUsesRevision() = runBlocking {
-        val mutations = mutableListOf<JsonObject>()
+        val mutations = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("https://watch.example", request.headers[HttpHeaders.Origin])
             assertEquals("/api/profiles/12/integrations", request.url.encodedPath)
@@ -37,7 +37,7 @@ class RemoteAddonsTest {
     }
 
     @Test fun installAndRemoveUseAccountEndpointAndInventoryFollowsPagination() = runBlocking {
-        val writes = mutableListOf<String>()
+        val writes = EngineRequests<String>()
         var pageCount = 0
         val client = HttpClient(MockEngine { request ->
             val result = when {
@@ -70,7 +70,7 @@ class RemoteAddonsTest {
 
     @Test fun inventoryKeepsOnlyTheServerLogoRouteAndFetchesItWithTheSession() = runBlocking {
         val png = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
-        val requested = mutableListOf<String>()
+        val requested = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             when {
                 request.url.encodedPath.endsWith("/integrations") -> respond(configuration, headers = headersOf(HttpHeaders.ContentType, "application/json"))

@@ -34,7 +34,6 @@ import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.*
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class, DelicateCoilApi::class)
@@ -228,7 +227,7 @@ class MyListSeeAllTest {
     }
 
     private class MyListHost(saved: Int) : AutoCloseable {
-        val reads = CopyOnWriteArrayList<String>()
+        val reads = EngineRequests<String>()
         private val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
             override suspend fun save(session: SavedRemoteSession) = Unit

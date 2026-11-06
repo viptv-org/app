@@ -27,7 +27,7 @@ class MyListPendingTest {
             override suspend fun save(session: SavedRemoteSession) = Unit
             override suspend fun clear() = Unit
         }
-        val writes = mutableListOf<String>()
+        val writes = EngineRequests<String>()
         val client = HttpClient(MockEngine) {
             engine { dispatcher = StandardTestDispatcher(scheduler); addHandler(reply) }
             configureTransport()
@@ -43,7 +43,7 @@ class MyListPendingTest {
 
     @Test fun pressingAddFlipsTheControlInTheFrameDropsTheRepeatAndSettlesOnTheHost() = runTest {
         val release = CompletableDeferred<Unit>()
-        val writes = mutableListOf<String>()
+        val writes = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request ->
             when {
                 request.method == HttpMethod.Put -> { writes += "put"; release.await(); respond("{}", headers = json) }

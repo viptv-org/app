@@ -87,7 +87,7 @@ class LiveEmptyStateTest {
             Triple("""{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"device"}""", AccountAccess("device", false), false),
         )
         for ((body, expected, mayManageSources) in responses) {
-            val paths = mutableListOf<String>()
+            val paths = EngineRequests<String>()
             val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
                 paths += request.url.encodedPath
                 respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -106,7 +106,7 @@ class LiveEmptyStateTest {
     }
 
     @Test fun localModeNeverAsksTheServerForAnIdentity() = runBlocking<Unit> {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, HttpClient(MockEngine { request ->
             paths += request.url.encodedPath; respond("{}")
         }) { configureTransport() }, browserMode = false)

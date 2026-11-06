@@ -53,7 +53,7 @@ class PlaybackLifecycleTest {
     }
 
     @Test fun rendererStopSampleIsSavedEvenImmediatelyAfterThePeriodicSave() = runBlocking {
-        val positions = mutableListOf<Long>()
+        val positions = EngineRequests<Long>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/profile/progress", request.url.encodedPath)
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
@@ -79,7 +79,7 @@ class PlaybackLifecycleTest {
     }
 
     @Test fun leavingWhileAlreadyPausedSavesThePositionWithoutResumingOnReturn() = runBlocking {
-        val positions = mutableListOf<Long>()
+        val positions = EngineRequests<Long>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/profile/progress", request.url.encodedPath)
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
@@ -102,7 +102,7 @@ class PlaybackLifecycleTest {
     }
 
     @Test fun backgroundingThroughTheLifecycleFlushesThePositionWithoutPausing() = runBlocking {
-        val positions = mutableListOf<Long>()
+        val positions = EngineRequests<Long>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/profile/progress", request.url.encodedPath)
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject

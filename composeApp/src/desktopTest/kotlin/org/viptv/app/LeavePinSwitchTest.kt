@@ -38,7 +38,7 @@ class LeavePinSwitchTest {
     @Test fun switchingProfileAsksForTheLeavePinAndReportsWrongPinsAndTheLockout() = runBlocking<Unit> {
         var locked = false
         var current = "1"
-        val attempts = mutableListOf<JsonObject>()
+        val attempts = EngineRequests<JsonObject>()
         val controller = controller(this) { request ->
             val headers = headersOf(HttpHeaders.ContentType, "application/json")
             if (request.url.encodedPath == "/api/auth/profile") {

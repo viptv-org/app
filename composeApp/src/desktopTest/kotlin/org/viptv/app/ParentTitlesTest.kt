@@ -146,7 +146,7 @@ class ParentTitlesTest {
     }
 
     @Test fun approvalListLoadsBeyondFirstFiveHundredWithoutDroppingPriorRows() = runBlocking<Unit> {
-        val offsets = mutableListOf<Int>()
+        val offsets = EngineRequests<Int>()
         val controller = controller(this) { request ->
             if (request.url.encodedPath.endsWith("/blocked"))
                 return@controller respond("{\"items\":[]}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -245,7 +245,7 @@ class ParentTitlesTest {
     }
 
     @Test fun blockedTitlesLoadBeyondTheFirstPageWithoutDroppingPriorRows() = runBlocking<Unit> {
-        val blockedOffsets = mutableListOf<Int>()
+        val blockedOffsets = EngineRequests<Int>()
         val controller = controller(this) { request ->
             val headers = headersOf(HttpHeaders.ContentType, "application/json")
             if (request.url.encodedPath.endsWith("/blocked")) {

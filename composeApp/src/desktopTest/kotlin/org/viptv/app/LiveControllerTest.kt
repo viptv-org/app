@@ -37,7 +37,7 @@ class LiveControllerTest {
     }
 
     @Test fun favoriteToggleIsDeduplicatedUsesProfileRoutesAndDoesNotEnterVodLibrary() = runTest {
-        val finish = CompletableDeferred<Unit>(); val writes = mutableListOf<HttpMethod>()
+        val finish = CompletableDeferred<Unit>(); val writes = EngineRequests<HttpMethod>()
         val f = Fixture(this, testScheduler) { request ->
             assertEquals("/api/profiles/1/live/one/favorite", request.url.encodedPath)
             writes += request.method
@@ -61,7 +61,7 @@ class LiveControllerTest {
     }
 
     @Test fun aFailedFavoriteRevertsInPlaceAndRetriesTheSameWrite() = runTest {
-        var fail = true; val writes = mutableListOf<String>()
+        var fail = true; val writes = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request ->
             writes += request.method.value
             if (fail) { fail = false; throw java.io.IOException("The write did not answer") } else """{"channel_ids":["one"]}"""
@@ -135,7 +135,7 @@ class LiveControllerTest {
     }
 
     @Test fun favoritesFilterAutomaticallyTraversesEmptyFilteredPagesWithoutManualLoadMore() = runTest {
-        val offsets = mutableListOf<String>()
+        val offsets = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["two"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide("two", false)
@@ -166,7 +166,7 @@ class LiveControllerTest {
         } finally { f.close() }
     }
     @Test fun sparseFavoritePaginationContinuesAcrossPagesWithNoNewVisibleMatches() = runTest {
-        val offsets = mutableListOf<String>()
+        val offsets = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["one","four"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide("one", false)
@@ -190,7 +190,7 @@ class LiveControllerTest {
         groups = emptyList(), connections = connections(), next_cursor = next, complete = next == null, availability = Availability.AVAILABLE))
 
     @Test fun advertisedHostConnectionsSelectTheFeedAndResetItsGuideAndPaging() = runTest {
-        val queries = mutableListOf<Parameters>()
+        val queries = EngineRequests<Parameters>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["one"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide(if (request.url.encodedPath.contains("/one/")) "one" else "three", false)
@@ -210,7 +210,7 @@ class LiveControllerTest {
     }
 
     @Test fun favoritesFromAnotherFeedScanOnlySelectedFeedAndNeverExposeItsChannels() = runTest {
-        val feeds = mutableListOf<String>()
+        val feeds = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["from-other-feed"]}"""
             else -> { val feed = request.url.parameters["connection_id"] ?: "m3u:1"; feeds += feed

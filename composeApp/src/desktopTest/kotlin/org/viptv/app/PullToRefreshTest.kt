@@ -35,7 +35,7 @@ class PullToRefreshTest {
     }.toString()
 
     private inner class Server(val handle: suspend MockRequestHandleScope.(String) -> HttpResponseData) {
-        val paths: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request -> paths += request.url.encodedPath; handle(request.url.encodedPath) }) { configureTransport() }
     }
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
