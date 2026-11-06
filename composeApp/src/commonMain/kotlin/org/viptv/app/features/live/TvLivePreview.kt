@@ -67,7 +67,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             pending -> { MutationSpinner(24.dp * scale, scale = scale, color = it); Spacer(Modifier.width(10.dp * scale)); Text("Saving…", color = it, fontSize = (22 * scale).sp) }
             failure != null -> { Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale)); Text("Retry", color = it, fontSize = (22 * scale).sp) }
             else -> { Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
-                Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp) }
+                Text(favouriteActionLabel(channel.favorite), color = it, fontSize = (22 * scale).sp) }
         }
     }
     var focused by remember { mutableStateOf(false) }
