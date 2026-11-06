@@ -67,9 +67,10 @@ internal fun PopoverMenu(
     val metrics = MenuMetrics(television, scale)
     val menuShape = RoundedCornerShape(metrics.menuRadius)
     val washBrush = wash?.let { with(density) { Brush.verticalGradient(listOf(it.copy(alpha = .24f), Color.Transparent), endY = (88 * scale).dp.toPx()) } }
+    // A closing menu keeps drawing its exit but must not hold the keyboard: the control it opened from owns the next Back.
     Popup(onDismissRequest = onDismissRequest,
         popupPositionProvider = remember(density) { PopoverMenuPosition(density) },
-        properties = PopupProperties(focusable = true)) {
+        properties = PopupProperties(focusable = expanded)) {
         CompositionLocalProvider(LocalMenuMetrics provides metrics) {
         Column(modifier.width(width?.times(scale) ?: metrics.width)
             .graphicsLayer {
