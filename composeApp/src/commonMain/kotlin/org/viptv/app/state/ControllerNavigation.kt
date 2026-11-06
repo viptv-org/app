@@ -208,13 +208,15 @@ fun ApplicationController.showSettingsPage(page: SettingsPage) {
 
 fun ApplicationController.openAddonsSettings() = openSettingsSection("Add-ons")
 
-fun ApplicationController.openSettingsSection(section: String) {
-    updateState { it.copy(settingsEntrySection = section, settingsPage = null) }
+fun ApplicationController.openSettingsSection(section: String, addonTarget: String? = null) {
+    updateState { it.copy(settingsEntrySection = section, settingsAddonTarget = addonTarget, settingsPage = null) }
     navigate(Screen.Settings)
 }
 
 fun ApplicationController.configureSource(providerId: String) {
-    sourceSettingsSection(providerId)?.let { openSettingsSection(it) }
+    sourceSettingsSection(providerId)?.let {
+        openSettingsSection(it, addonTarget = providerId.takeIf { it.startsWith("addon:") })
+    }
 }
 
 private fun ApplicationController.backWithinSettings(): Boolean {

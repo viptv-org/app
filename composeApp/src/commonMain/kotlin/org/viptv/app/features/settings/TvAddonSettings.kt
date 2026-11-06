@@ -5,7 +5,6 @@ package org.viptv.app.features.settings
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +20,11 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.features.search.TvSearchKeyboard
@@ -58,12 +63,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     val listState = rememberLazyListState()
     val targetRow = remember(shown, initialAddonId) { shown.indexOfFirst { it.id == initialAddonId } }
     val targetFocus = remember(initialAddonId) { FocusRequester() }
-    LaunchedEffect(targetRow, shown) {
-        if (targetRow < 0) return@LaunchedEffect
-        listState.scrollToItem(targetRow)
-        withFrameNanos { }
-        runCatching { targetFocus.requestFocus() }
-    }
+    LaunchedEffect(targetRow) { if (targetRow >= 0) listState.scrollToItem(targetRow) }
     val searchChip = remember { FocusRequester() }
     val clear = { query = ""; provides = null }
     // Leaving the keyboard returns the D-pad to the chip that opened it.
@@ -87,7 +87,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                         val target = addon.id == initialAddonId
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                             .focusProperties { left = sidebar }
-                            .then(if (target) Modifier.focusRequester(targetFocus).border(2.dp * scale, Palette.accent, RoundedCornerShape(18.dp * scale))
+                            .then(if (target) targetFocus.requestFocusWhenPlaced().targetRing(scale)
                                 else if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
@@ -141,6 +141,19 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                     fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp, color = Palette.secondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
+    }
+}
+
+// The row's own fill covers a border modifier, so the arrival ring is drawn over the fill instead.
+@Composable
+private fun Modifier.targetRing(scale: Float): Modifier {
+    val accent = Palette.accent
+    return drawWithContent {
+        drawContent()
+        val stroke = 2.dp.toPx() * scale
+        drawRoundRect(accent, topLeft = Offset(stroke / 2, stroke / 2),
+            size = Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),
+            cornerRadius = CornerRadius((18.dp.toPx() - stroke / 2) * scale), style = Stroke(stroke))
     }
 }
 
