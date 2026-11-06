@@ -135,7 +135,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                     choose = chooseSources?.let(::chooseSourceAction),
                     back = close)
             state.buffering && !state.hasPresented ->
-                if (startup != null && !state.hasPresented) StartupProgressScreen(startup, title,
+                if (startup != null) StartupProgressScreen(startup, title,
                     artWidth = 640.dp * scale, titleSize = (44 * scale).sp, statusSize = (24 * scale).sp, reduceMotion = reduceMotion)
                 else TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,

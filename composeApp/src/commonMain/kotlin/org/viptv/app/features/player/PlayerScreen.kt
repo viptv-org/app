@@ -32,7 +32,6 @@ import org.viptv.app.player.*
 import org.viptv.app.state.StartupProgress
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned

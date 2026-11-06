@@ -18,7 +18,8 @@ internal data class StartupSignals(
     val inFlight: Boolean get() = discovering || opening || buffering
 }
 
-// Discovery and ranking report no share of their own, so the fill holds until the source opens.
+// Where discovery hands over to the source opening, and the source opening to buffering. Discovery
+// and ranking report no share of their own, so the fill holds until the source opens.
 private const val OPENING_START = 1f / 3f
 private const val BUFFERING_START = 2f / 3f
 
@@ -45,9 +46,11 @@ internal fun startupProgress(previous: StartupProgress?, signals: StartupSignals
         StartupStage.Buffering -> signals.bufferedFraction?.let { BUFFERING_START + (1f - BUFFERING_START) * it.coerceIn(0f, 1f) }
             ?: BUFFERING_START
     }
+    // A hundred steps keep a jittery renderer measure from republishing the app state on every tick.
+    val fill = (maxOf(previous?.fill ?: 0f, measured) * 100).toInt() / 100f
     return StartupProgress(
         stage = stage,
-        fill = maxOf(previous?.fill ?: 0f, measured),
+        fill = fill,
         holding = when (stage) {
             StartupStage.Discovery, StartupStage.Opening -> true
             StartupStage.Buffering -> signals.bufferedFraction == null
