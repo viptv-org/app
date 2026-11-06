@@ -24,7 +24,7 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
     val context = liveContext()
     var wanted = query
     var channels = if (append) mutable.value.livePage?.channels.orEmpty() else emptyList()
-    val initiallyVisibleFavorites = channels.count { it.id in mutable.value.liveFavorites }
+    val initiallyVisibleFavorites = channels.count { mutable.value.isLiveFavorite(it.id) }
     val offsets = mutableSetOf<Long>()
     var favoritesLoaded = append
     while (true) {
@@ -42,14 +42,14 @@ internal suspend fun ApplicationController.loadLive(query: LiveQuery, append: Bo
         val state = mutable.value
         val next = page.next_cursor?.toLongOrNull()
         val needsFavoritePage = state.liveFavoritesOnly && state.liveFavoritesAvailable && state.liveFavorites.isNotEmpty() &&
-            channels.count { it.id in state.liveFavorites } <= initiallyVisibleFavorites && page.next_cursor != null
+            channels.count { state.isLiveFavorite(it.id) } <= initiallyVisibleFavorites && page.next_cursor != null
         if (!needsFavoritePage) break
         if (next == null || next <= wanted.offset || next > 10_000)
             throw LocalFailure("Could not continue loading channels. Refresh Live TV.")
         wanted = wanted.copy(offset = next)
     }
     val selected = mutable.value.liveGuideChannel?.takeIf { id -> channels.any { it.id == id } }
-        ?: channels.firstOrNull { !mutable.value.liveFavoritesOnly || it.id in mutable.value.liveFavorites }?.id
+        ?: channels.firstOrNull { !mutable.value.liveFavoritesOnly || mutable.value.isLiveFavorite(it.id) }?.id
     selected?.let { showLiveGuide(it) }
 }
 
@@ -135,5 +135,5 @@ fun ApplicationController.playLive(channel: String) = run {
 internal fun ApplicationController.resetLiveRequests() {
     liveGuideRequest++; liveDirectoryRequest++; liveFavoriteScope++
     liveGuideJob?.cancel(); liveGuideJob = null; liveGuideFetchedAt.clear()
-    liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
+    cancelLiveFavoriteMutations()
 }
