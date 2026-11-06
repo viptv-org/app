@@ -36,15 +36,24 @@ internal fun TvProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, er
         }
         if (!values.local) {
             Spacer(Modifier.height(8.dp * scale))
-            TvSettingsRow("Kids profile", "Limits titles, search and Live for this profile.", scale, checked = values.kids,
-                left = sidebar) { if (!busy) dialogs.toggleKids(values, actions) }
+            TvSettingsRow("Kids profile",
+                if (values.limitsKnown) "Limits titles, search and Live for this profile." else limitsUnknownNote(values),
+                scale, checked = values.kids, left = sidebar) {
+                if (values.limitsKnown) dialogs.toggleKids(values, actions) else openParental()
+            }
             Spacer(Modifier.height(8.dp * scale))
-            TvSettingsRow("Maturity limit", "Titles above this rating are hidden for this profile", scale,
-                value = maturityLimitValue(values), left = sidebar) { if (!busy) dialogs.maturity = true }
+            TvSettingsRow("Maturity limit",
+                if (values.limitsKnown) "Titles above this rating are hidden for this profile" else limitsUnknownNote(values),
+                scale, value = maturityLimitValue(values), left = sidebar) {
+                if (values.limitsKnown) dialogs.maturity = true else openParental()
+            }
             if (values.kids) {
                 Spacer(Modifier.height(8.dp * scale))
-                TvSettingsRow("Approved titles", "Only these titles show in the kids library", scale,
-                    value = values.approvedTitles?.toString() ?: "—", left = sidebar) { actions.approvedTitles() }
+                TvSettingsRow("Approved titles",
+                    if (values.limitsKnown) "Only these titles show in the kids library" else limitsUnknownNote(values),
+                    scale, value = approvedTitlesValue(values), left = sidebar) {
+                    if (values.limitsKnown) actions.approvedTitles() else openParental()
+                }
             }
         }
         Spacer(Modifier.height(8.dp * scale))
