@@ -35,8 +35,8 @@ class HomePageStateTest {
 
     @Test fun theFirstAnswerBeforeThePageArrivesIsTheSkeleton() {
         assertEquals(ListPageState.Loading, homePageState(null, busy = true, error = null))
-        assertEquals(ListPageState.Loading, homePageState(null, busy = false, error = null),
-            "no page and no error is still a page on its way")
+        assertEquals(ListPageState.Failed, homePageState(null, busy = false, error = null),
+            "no page and no request open never leaves the skeleton up forever")
         assertEquals(ListPageState.Loading, homePageState(home(complete = false), busy = true, error = null),
             "a page that has not finished answering draws its rows, never the empty state")
     }
@@ -51,8 +51,8 @@ class HomePageStateTest {
         assertEquals(ListPageState.Empty, homePageState(home(), busy = false, error = null))
         assertEquals(ListPageState.Empty, homePageState(home(rows = listOf(row(state = RowState.EMPTY, cards = emptyList()))),
             busy = false, error = null))
-        assertEquals(ListPageState.Empty, homePageState(home(rows = listOf(row(state = RowState.FAILED, cards = emptyList()))),
-            busy = false, error = null), "a catalog that answered nothing leaves the page empty")
+        assertEquals(ListPageState.Failed, homePageState(home(rows = listOf(row(state = RowState.FAILED, cards = emptyList()))),
+            busy = false, error = null), "a catalog that failed its first read is a failed page, not an empty one")
     }
 
     @Test fun anyContentKeepsThePage() {
