@@ -28,8 +28,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageRestoreState
+import org.viptv.app.components.ListEntrance
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LIST_TITLES
+import org.viptv.app.components.ListPageState
+import org.viptv.app.components.PosterSkeleton
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.rememberPageRestore
@@ -57,8 +62,11 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
     }
     val restore = rememberPageRestore("search")
     val visible = results.distinctBy(::searchCardKey).filter { it.matchesSearchFilter(filters) }
-    val groups = if (searchRows.isNotEmpty()) searchResultGroups(searchRows, filters) else searchGroups(visible, addons)
-    val hasResults = if (searchRows.isNotEmpty()) groups.any { it.cards.isNotEmpty() } else visible.isNotEmpty()
+    val answeredGroups = searchResultGroups(searchRows, filters)
+    val answered = answeredGroups.any { it.cards.isNotEmpty() }
+    val groups = if (answered) answeredGroups else searchGroups(visible, addons)
+    val hasResults = groups.any { it.cards.isNotEmpty() }
+    val pageState = listPageState(if (hasResults) 1 else 0, busy, error)
     val entrance = rememberListEntrance(hasResults)
     BoxWithConstraints(Modifier.fillMaxSize()) {
     val phone = maxWidth < 640.dp
@@ -68,7 +76,7 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
             Modifier.padding(horizontal = gutter),
             style = if (desktop) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge)
         if (!desktop) Box(Modifier.fillMaxWidth().padding(horizontal = gutter)) { SearchField(term, query) }
-        LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = gutter),
+        if (term.isNotBlank()) LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = gutter),
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(searchFilterOptions) { tab ->
                 val active = if (tab == "All") filters.isEmpty() else tab in filters
@@ -88,73 +96,83 @@ fun SearchScreen(term: String, results: List<Card>, addons: List<IntegrationConn
                     fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = gutter), color = Palette.accent)
-        if (!hasResults) error?.let { message -> SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter)) }
-        if (!busy && term.isNotBlank() && !hasResults && error == null) {
-            val copy = searchNoResultsCopy(searchRows, filters)
-            if (searchFailed(searchRows)) SearchFailureLine(copy, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
-            else Text(copy, Modifier.padding(horizontal = gutter), color = Palette.secondary)
-        }
-        if (phone && term.isNotBlank() && hasResults && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         val footer: (@Composable (Modifier) -> Unit)? = when {
             !busy && error != null && hasResults -> { { ListEndFooter(failed = true, retry = retry, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
             busy && hasResults -> { { ListEndFooter(loading = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
             !busy && error == null && hasResults -> { { ListEndFooter(ended = true, noun = LIST_TITLES, modifier = it, television = false, scale = 1f) } }
             else -> null
         }
-        if (term.isBlank() && !busy && error == null) {
+        if (term.isBlank() && pageState != ListPageState.Failed) {
             SearchIdle(recentSearches, trendingSearches, gutter, query, clearRecents, Modifier.weight(1f))
-        } else if (searchRows.isNotEmpty() || groups.size > 1) {
-            val column = rememberLazyListState()
-            val anchorGroup = remember(restore.lastKey, groups) {
-                groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
+        } else when (pageState) {
+            ListPageState.Failed -> SearchFailureLine(error.orEmpty(), retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
+            ListPageState.Loading -> PosterSkeleton(phone = phone, modifier = Modifier.weight(1f).padding(horizontal = gutter),
+                gap = if (phone) 10.dp else 14.dp, tile = 172.dp)
+            ListPageState.Empty -> {
+                val copy = searchNoResultsCopy(searchRows, filters)
+                if (searchFailed(searchRows)) SearchFailureLine(copy, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
+                else Text(copy, Modifier.padding(horizontal = gutter), color = Palette.secondary)
             }
-            PageRestore(column, restore, target = { anchorGroup.takeIf { it >= 0 } })
-            LazyColumn(Modifier.weight(1f), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-                groups.forEach { group ->
-                    item(key = group.id) {
-                        val anchoredRow = remember(group.cards, restore.lastKey) {
-                            group.cards.indexOfFirst { searchCardKey(it) == restore.lastKey }
+            else -> SearchResults(visible, groups, answered, footer, restore, entrance, phone, gutter, term, searchRows, retry, open)
+        }
+    }
+}
+}
+
+@Composable
+private fun ColumnScope.SearchResults(visible: List<Card>, groups: List<SearchGroup>, answered: Boolean,
+    footer: (@Composable (Modifier) -> Unit)?, restore: PageRestoreState, entrance: ListEntrance,
+    phone: Boolean, gutter: Dp, term: String, searchRows: List<SearchResultRow>, retry: (() -> Unit)?, open: (Card) -> Unit) {
+    if (phone && searchRows.isEmpty()) Text("Top results", Modifier.padding(horizontal = gutter), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    if (answered || groups.size > 1) {
+        val column = rememberLazyListState()
+        val anchorGroup = remember(restore.lastKey, groups) {
+            groups.indexOfFirst { group -> group.cards.any { searchCardKey(it) == restore.lastKey } }
+        }
+        PageRestore(column, restore, target = { anchorGroup.takeIf { it >= 0 } })
+        LazyColumn(Modifier.weight(1f), state = column, verticalArrangement = Arrangement.spacedBy(24.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            groups.forEach { group ->
+                item(key = group.id) {
+                    val anchoredRow = remember(group.cards, restore.lastKey) {
+                        group.cards.indexOfFirst { searchCardKey(it) == restore.lastKey }
+                    }
+                    val row = rememberLazyListState()
+                    PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
+                        group.message?.let { message ->
+                            if (group.failed) SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
+                            else Text(message, Modifier.padding(horizontal = gutter), color = Palette.secondary)
                         }
-                        val row = rememberLazyListState()
-                        PageRestore(row, restore, target = { anchoredRow.takeIf { it >= 0 } })
-                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(group.label, Modifier.padding(horizontal = gutter), style = MaterialTheme.typography.titleMedium)
-                            group.message?.let { message ->
-                                if (group.failed) SearchFailureLine(message, retry, Modifier.fillMaxWidth().padding(horizontal = gutter))
-                                else Text(message, Modifier.padding(horizontal = gutter), color = Palette.secondary)
-                            }
-                            LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
-                                    val key = searchCardKey(card)
-                                    MediaCard(card, width = 160, portrait = true, showLabels = true,
-                                        searchQuery = term,
-                                        open = { restore.mark(key, index); open(it) },
-                                        modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index).listItemEntrance(index, entrance.animate))
-                                }
+                        LazyRow(state = row, contentPadding = PaddingValues(horizontal = gutter), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            rowItemsIndexed(group.cards, key = { _, card -> searchCardKey(card) }) { index, card ->
+                                val key = searchCardKey(card)
+                                MediaCard(card, width = 160, portrait = true, showLabels = true,
+                                    searchQuery = term,
+                                    open = { restore.mark(key, index); open(it) },
+                                    modifier = Modifier.pageAnchor(restore, key, index, target = anchoredRow == index).listItemEntrance(index, entrance.animate))
                             }
                         }
                     }
                 }
-                footer?.let { render -> item(key = "footer") { render(Modifier.fillMaxWidth().padding(horizontal = gutter)) } }
             }
-        } else {
-            val grid = rememberLazyGridState()
-            val anchored = restore.anchor(visible.size) { searchCardKey(visible[it]) }
-            PageRestore(grid, restore, target = { restore.anchor(visible.size) { searchCardKey(visible[it]) } })
-            LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(start = gutter, end = gutter, bottom = 24.dp)) {
-                gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
-                    val key = searchCardKey(card)
-                    MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
-                        searchQuery = term,
-                        open = { restore.mark(key, index); open(it) },
-                        modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
-                }
-                footer?.let { render -> item(span = { GridItemSpan(maxLineSpan) }, key = "footer") { render(Modifier.fillMaxWidth()) } }
+            footer?.let { render -> item(key = "footer") { render(Modifier.fillMaxWidth().padding(horizontal = gutter)) } }
+        }
+    } else {
+        val grid = rememberLazyGridState()
+        val anchored = restore.anchor(visible.size) { searchCardKey(visible[it]) }
+        PageRestore(grid, restore, target = { restore.anchor(visible.size) { searchCardKey(visible[it]) } })
+        LazyVerticalGrid(if (phone) GridCells.Fixed(3) else GridCells.Adaptive(172.dp), modifier = Modifier.weight(1f), state = grid, horizontalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 14.dp), verticalArrangement = Arrangement.spacedBy(if (phone) 10.dp else 20.dp), contentPadding = PaddingValues(start = gutter, end = gutter, bottom = 24.dp)) {
+            gridItemsIndexed(visible, key = { _, card -> searchCardKey(card) }) { index, card ->
+                val key = searchCardKey(card)
+                MediaCard(card, width = if (phone) 112 else 172, portrait = true, showLabels = true,
+                    searchQuery = term,
+                    open = { restore.mark(key, index); open(it) },
+                    modifier = Modifier.pageAnchor(restore, key, index, target = anchored == index).listItemEntrance(index, entrance.animate))
             }
+            footer?.let { render -> item(span = { GridItemSpan(maxLineSpan) }, key = "footer") { render(Modifier.fillMaxWidth()) } }
         }
     }
-}
 }
 
 @Composable
