@@ -17,7 +17,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, scale: Float, initial: FocusRequester,
-    sidebar: FocusRequester, change: (TvSettingsPreferences, String) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit,
+    sidebar: FocusRequester, change: (TvSettingsPreferences, String) -> Unit, choose: (String, List<String>, String?, (String) -> Unit) -> Unit,
     actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
     val rows = tvPlaybackRows(actualPreferencesOnly, deviceRows = devicePlayback != null)
     val deviceHeight = remember { deviceMaxVideoHeight() }
@@ -39,14 +39,14 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, sca
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(rememberSource = !prefs.rememberSource), row) }
                 "Default source" -> TvSettingsRow(row, scale = scale, value = prefs.source, pending = mutations.isPending(preferenceTarget(row)),
                     requester = requester, left = sidebar) {
-                    choose(row, listOf("Best match", "Always ask")) { change(prefs.copy(source = it), row) } }
+                    choose(row, listOf("Best match", "Always ask"), prefs.source) { change(prefs.copy(source = it), row) } }
                 "Preferred quality" -> TvSettingsRow(row, scale = scale,
                     value = tvQualityLabel(prefs.quality, deviceHeight), requester = requester, left = sidebar,
                     pending = mutations.isPending(preferenceTarget(row))) {
-                    choose(row, listOf("Auto", "4K", "1080p", "720p")) { change(prefs.copy(quality = it), row) } }
+                    choose(row, listOf("Auto", "4K", "1080p", "720p"), tvQualityChoice(prefs.quality)) { change(prefs.copy(quality = it), row) } }
                 "HDR and Dolby Vision" -> TvSettingsRow(row, scale = scale, value = prefs.hdr, pending = mutations.isPending(preferenceTarget(row)),
                     requester = requester, left = sidebar) {
-                    choose(row, hdrPreferenceChoices.map { it.second }) { change(prefs.copy(hdr = it), row) } }
+                    choose(row, hdrPreferenceChoices.map { it.second }, prefs.hdr) { change(prefs.copy(hdr = it), row) } }
                 "Match frame rate" -> TvSettingsRow(row, "Switches the TV to the video’s frame rate for smoother motion", scale, checked = prefs.frameRate,
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(frameRate = !prefs.frameRate), row) }
             }

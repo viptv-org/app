@@ -35,7 +35,7 @@ internal fun tvSubtitleColourLabel(value: Long): String = tvSubtitleColours.firs
 
 @Composable
 internal fun TvSubtitleSettings(prefs: TvSettingsPreferences, scale: Float, initial: FocusRequester, sidebar: FocusRequester,
-    change: (TvSettingsPreferences, String) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit, actualPreferencesOnly: Boolean = false) {
+    change: (TvSettingsPreferences, String) -> Unit, choose: (String, List<String>, String?, (String) -> Unit) -> Unit, actualPreferencesOnly: Boolean = false) {
     val mutations = LocalPendingMutation.current
     Column(verticalArrangement = Arrangement.spacedBy(40.dp * scale)) {
         TvSettingsHeading("Subtitles & audio", scale)
@@ -43,24 +43,24 @@ internal fun TvSubtitleSettings(prefs: TvSettingsPreferences, scale: Float, init
             Column(Modifier.width(560.dp * scale), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 tvSubtitleRows.forEachIndexed { index, row ->
                     val requester = if (index == 0) initial else null
-                    fun pick(values: List<String>, apply: (TvSettingsPreferences, String) -> TvSettingsPreferences) {
-                        choose(row, values) { change(apply(prefs, it), row) }
+                    fun pick(values: List<String>, current: String?, apply: (TvSettingsPreferences, String) -> TvSettingsPreferences) {
+                        choose(row, values, current) { change(apply(prefs, it), row) }
                     }
                     when (row) {
                         "Audio language" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = prefs.audioLanguage, requester = requester, left = sidebar) {
-                            pick(listOf("Original language", "English", "Spanish", "French", "German")) { p, v -> p.copy(audioLanguage = v) } }
+                            pick(listOf("Original language", "English", "Spanish", "French", "German"), prefs.audioLanguage) { p, v -> p.copy(audioLanguage = v) } }
                         "Subtitles" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = subtitleModeLabel(prefs.subtitleMode, prefs.audioLanguageTag()),
                             requester = requester, left = sidebar) {
-                            pick(subtitleModeChoices(prefs.audioLanguageTag()).map { it.second }) { p, v -> p.copy(subtitleMode = subtitleModeValue(v)) } }
+                            pick(subtitleModeChoices(prefs.audioLanguageTag()).map { it.second }, subtitleModeLabel(prefs.subtitleMode, prefs.audioLanguageTag())) { p, v -> p.copy(subtitleMode = subtitleModeValue(v)) } }
                         "Subtitle language" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = prefs.subtitleLanguage, requester = requester, left = sidebar) {
-                            pick(listOf("Default", "English", "Spanish", "Portuguese", "French", "German")) { p, v -> p.copy(subtitleLanguage = v) } }
+                            pick(listOf("Default", "English", "Spanish", "Portuguese", "French", "German"), prefs.subtitleLanguage) { p, v -> p.copy(subtitleLanguage = v) } }
                         "Subtitle size" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = prefs.subtitleSize, requester = requester, left = sidebar) {
-                            pick(listOf("Small", "Medium", "Large", "Extra large")) { p, v -> p.copy(subtitleSize = v) } }
+                            pick(listOf("Small", "Medium", "Large", "Extra large"), prefs.subtitleSize) { p, v -> p.copy(subtitleSize = v) } }
                         "Subtitle background" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = prefs.subtitleBackground, requester = requester, left = sidebar) {
-                            pick(if (actualPreferencesOnly) listOf("None", "Box") else listOf("None", "Shadow", "Box")) { p, v -> p.copy(subtitleBackground = v) } }
+                            pick(if (actualPreferencesOnly) listOf("None", "Box") else listOf("None", "Shadow", "Box"), prefs.subtitleBackground) { p, v -> p.copy(subtitleBackground = v) } }
                         "Subtitle colour" -> TvSettingsRow(row, scale = scale, pending = mutations.isPending(preferenceTarget(row)), value = tvSubtitleColourLabel(prefs.subtitleColor),
                             requester = requester, left = sidebar) {
-                            pick(tvSubtitleColours.map { it.first }) { p, v -> p.copy(subtitleColor = tvSubtitleColours.first { it.first == v }.second) } }
+                            pick(tvSubtitleColours.map { it.first }, tvSubtitleColourLabel(prefs.subtitleColor)) { p, v -> p.copy(subtitleColor = tvSubtitleColours.first { it.first == v }.second) } }
                     }
                 }
             }
