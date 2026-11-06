@@ -32,6 +32,11 @@ class ServerAddressUiTest {
         scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
     private fun fields(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.SetText) }
+    // The TV panel behind the dialog has its own Username and Password fields, so the address is the labelled one.
+    private fun addressFieldOrNull(scene: ImageComposeScene) = fields(scene).firstOrNull { field ->
+        field.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { it.contains("HTTPS server address") }
+    }
+    private fun addressField(scene: ImageComposeScene) = assertNotNull(addressFieldOrNull(scene), "no HTTPS server address field")
     private fun render(width: Int, height: Int, television: Boolean = false, content: @Composable () -> Unit): ImageComposeScene {
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television) { content() } }
         return scene
@@ -56,21 +61,22 @@ class ServerAddressUiTest {
         }
         try {
             frames(scene)
-            val dialog = fields(scene).single()
+            val dialog = addressField(scene)
             assertTrue(dialog.config.getOrNull(SemanticsProperties.EditableText)?.text.isNullOrEmpty(),
                 "the address field opens empty, not on a placeholder host: ${dialog.config.getOrNull(SemanticsProperties.EditableText)}")
             assertFalse(nodes(scene).any { text(it).contains("your-server.example") }, "no placeholder host is drawn")
             type(dialog, "http://watch.example")
-            click(scene, "Done")
+            frames(scene)
+            click(scene, "Connect")
             frames(scene)
             assertTrue(nodes(scene).any { text(it).contains(SERVER_ADDRESS_ERROR) }, "an invalid address reports the one error inline")
             capture(scene, "tv-address-error")
-            type(fields(scene).single(), "https://watch.example")
+            type(addressField(scene), "https://watch.example")
             frames(scene)
             assertFalse(nodes(scene).any { text(it) == SERVER_ADDRESS_ERROR }, "correcting the address clears the error")
-            click(scene, "Done")
+            click(scene, "Connect")
             frames(scene)
-            assertFalse(nodes(scene).any { it.config.contains(SemanticsActions.SetText) }, "a valid address closes the dialog")
+            assertNull(addressFieldOrNull(scene), "a valid address closes the dialog")
         } finally { scene.close() }
         assertEquals(0, connections)
     }

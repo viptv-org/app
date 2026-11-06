@@ -1,9 +1,6 @@
 package org.viptv.app.features.entry
 
-import org.viptv.app.components.AppTextField
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,11 +12,10 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.TvTextField
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
@@ -69,12 +65,9 @@ internal fun TvPinScreen(profile: Profile?, pin: String, busy: Boolean, error: S
             Text(if (leaving) "Enter the PIN to leave ${profile?.name.orEmpty()}’s profile" else if (profile?.lockKind == "parent") "Enter the account parent PIN" else "Enter the PIN for ${profile?.name.orEmpty()}",
                 fontSize = (44 * scale).sp, lineHeight = (50.6f * scale).sp, letterSpacing = (-.88f * scale).sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(29.dp * scale))
-            AppTextField(pin, change, Modifier.width(480.dp * scale).focusRequester(field), enabled = !busy, label = "PIN",
-                textStyle = androidx.compose.material3.LocalTextStyle.current.copy(fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape((20 * scale).dp),
-                visualTransformation = PasswordVisualTransformation(), autocomplete = "one-time-code",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { if (canSubmit) submit() }))
+            TvTextField(pin, change, scale, Modifier.width(480.dp * scale), label = "PIN", placeholder = "PIN",
+                enabled = !busy, secret = true, numeric = true, imeAction = ImeAction.Done,
+                submit = { if (canSubmit) submit() }, requester = field)
             Spacer(Modifier.height(24.dp * scale))
             var forgotFocused by remember { mutableStateOf(false) }
             Text("Forgot PIN?", Modifier

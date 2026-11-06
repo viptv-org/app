@@ -9,10 +9,12 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -94,7 +96,7 @@ class TvAddonFilterFocusTest {
         } finally { scene.close() }
     }
 
-    @Test fun theSearchChipOpensTheKeyboardAndTheTermFiltersTheList() = onEdt {
+    @Test fun theSearchChipOpensTheFieldAndTheTermFiltersTheList() = onEdt {
         val scene = scene()
         try {
             settle(scene)
@@ -102,9 +104,12 @@ class TvAddonFilterFocusTest {
             repeat(3) { if (focusedText(scene) != "Search") press(scene, Key.DirectionLeft) }
             assertEquals("Search", focusedText(scene), "the search chip opens the row")
             activate(scene)
-            assertTrue(nodes(scene).any { text(it) == "Search add-ons" }, "the keyboard panel opens")
-            assertEquals("h", focusedText(scene), "the keyboard takes the D-pad")
-            activate(scene)
+            assertTrue(nodes(scene).any { text(it) == "Search add-ons" }, "the search panel opens")
+            val field = nodes(scene).firstOrNull { it.config.contains(SemanticsActions.SetText) }
+            assertNotNull(field, "the panel offers an editable field")
+            assertTrue(field.config.getOrNull(SemanticsProperties.Focused) == true, "the field takes the D-pad")
+            field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("zzz"))
+            settle(scene)
             assertTrue(nodes(scene).any { text(it).contains("No add-ons match") }, "the typed term filters the list")
         } finally { scene.close() }
     }

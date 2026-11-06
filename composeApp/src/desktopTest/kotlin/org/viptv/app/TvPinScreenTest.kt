@@ -51,6 +51,8 @@ class TvPinScreenTest {
 
         fun nodes(): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+        fun described(node: SemanticsNode) =
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ").orEmpty()
         fun field() = nodes().firstOrNull { it.config.contains(SemanticsActions.SetText) }
         fun type(value: String) {
             field()!!.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString(value)); frames()
@@ -76,7 +78,7 @@ class TvPinScreenTest {
             val field = screen.field()
             assertNotNull(field, "the gate offers a text field")
             assertTrue(field.config.getOrNull(SemanticsProperties.Focused) == true, "the field takes focus")
-            assertTrue(field.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "PIN" } == true, "the field is labelled PIN")
+            assertTrue(screen.text(field) == "PIN" || screen.described(field).contains("PIN"), "the field is labelled PIN")
             assertFalse(screen.nodes().any { screen.text(it) == "Erase" || screen.text(it) == "OK" }, "no app-rendered keypad")
             for (key in listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"))
                 assertFalse(screen.nodes().any { screen.text(it) == key && it.config.contains(SemanticsActions.OnClick) }, "no '$key' key")

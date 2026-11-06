@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.state.ToggleableState
@@ -37,11 +38,11 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TvTextField
 import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.components.tvHold
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
-import org.viptv.app.features.search.TvSearchKeyboard
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.MutationKind
@@ -212,7 +213,7 @@ private fun TvAddonFilterChip(label: String, icon: ImageVector?, selected: Boole
 
 @Composable
 private fun TvAddonSearchPanel(query: String, queryChange: (String) -> Unit, scale: Float, finish: () -> Unit) {
-    Column(Modifier.width(520.dp * scale).background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
+    Column(Modifier.width(520.dp * scale).imePadding().background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
         .padding(horizontal = 24.dp * scale, vertical = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Search add-ons", Modifier.weight(1f), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
@@ -220,9 +221,8 @@ private fun TvAddonSearchPanel(query: String, queryChange: (String) -> Unit, sca
                 Text("Done", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        Text(query.ifBlank { "Type part of a name" }, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, color = if (query.isBlank()) Palette.secondary else Palette.text)
-        TvSearchKeyboard({ transform -> queryChange(transform(query)) }, scale)
+        TvTextField(query, queryChange, scale, Modifier.fillMaxWidth(),
+            placeholder = "Type part of a name", imeAction = ImeAction.Done, submit = finish, focusOnEnter = true, onEscape = finish)
     }
 }
 

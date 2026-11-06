@@ -147,6 +147,7 @@ class TvXtreamConnectionsFocusTest {
     private suspend fun frames(scene: ImageComposeScene) = repeat(16) { scene.render(clock++ * 16_666_667L).close(); delay(4) }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
     private fun text(node: SemanticsNode): String = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+        .ifEmpty { node.config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty() }
     private fun focusedLabels(scene: ImageComposeScene): List<String> =
         nodes(scene).filter { it.config.getOrNull(SemanticsProperties.Focused) == true }.map(::text)
     private suspend fun assertFocused(scene: ImageComposeScene, label: String) {
