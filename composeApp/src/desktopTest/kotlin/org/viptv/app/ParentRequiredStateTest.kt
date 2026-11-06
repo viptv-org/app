@@ -5,6 +5,7 @@ import io.ktor.client.engine.mock.*
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
@@ -32,7 +33,7 @@ class ParentRequiredStateTest {
     private fun locked() = parentFixture(kids = true, unlocked = false, restricted = true)
 
     @Test fun aGatedProfileWriteUnlocksTheHouseholdFirstAndThenWrites() = runBlocking<Unit> {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = ConcurrentLinkedQueue<Pair<String, JsonObject>>()
         val open = parentFixture(kids = true, unlocked = true, restricted = true)
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             if (request.url.encodedPath == "/api/parent/unlock")
@@ -51,8 +52,9 @@ class ParentRequiredStateTest {
         controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2")
         try {
             controller.saveProfileName("Renamed", "", "4821"); controller.job!!.join()
-            assertEquals("/api/parent/unlock", writes.firstOrNull()?.first, "the household unlock runs before the write")
-            assertEquals("/api/profiles/2" to buildJsonObject { put("name", "Renamed") }, writes.last())
+            val sent = writes.toList()
+            assertEquals("/api/parent/unlock", sent.firstOrNull()?.first, "the household unlock runs before the write")
+            assertEquals("/api/profiles/2" to buildJsonObject { put("name", "Renamed") }, sent.last())
             assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
@@ -91,7 +93,7 @@ class ParentRequiredStateTest {
     }
 
     @Test fun switchingOffARestrictedProfileAsksForTheHouseholdPinFirst() = runBlocking<Unit> {
-        val requests = mutableListOf<String>()
+        val requests = ConcurrentLinkedQueue<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += "${request.method.value} ${request.url.encodedPath}"
             val body = when (request.url.encodedPath) {
@@ -109,16 +111,16 @@ class ParentRequiredStateTest {
             controller.selectProfile("1"); controller.job?.join()
             assertEquals("1", controller.state.value.householdPinFor, "the picker asks for the household PIN")
             assertEquals(Screen.Profiles, controller.state.value.screen)
-            assertTrue(requests.isEmpty(), "nothing is sent until the PIN arrives: $requests")
+            assertTrue(requests.isEmpty(), "nothing is sent until the PIN arrives: ${requests.toList()}")
             controller.submitHouseholdSwitch("4821"); controller.job!!.join()
-            assertEquals(listOf("POST /api/parent/unlock", "POST /api/auth/profile"), requests.take(2))
+            assertEquals(listOf("POST /api/parent/unlock", "POST /api/auth/profile"), requests.toList().take(2))
             assertNull(controller.state.value.householdPinFor)
             assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
 
     @Test fun aWrongHouseholdPinKeepsTheSwitchPromptOpenWithItsOwnCopy() = runBlocking<Unit> {
-        val requests = mutableListOf<String>()
+        val requests = ConcurrentLinkedQueue<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += request.url.encodedPath
             respond("""{"error":"Incorrect parent PIN","error_code":"parent_pin_invalid"}""", HttpStatusCode.Forbidden, headers = json)
@@ -133,7 +135,7 @@ class ParentRequiredStateTest {
             assertEquals("1", controller.state.value.householdPinFor, "the prompt stays open for another try")
             assertEquals("Incorrect PIN. Try again.", controller.state.value.error)
             assertEquals(Screen.Profiles, controller.state.value.screen)
-            assertEquals(listOf("/api/parent/unlock"), requests)
+            assertEquals(listOf("/api/parent/unlock"), requests.toList())
         } finally { remote.close() }
     }
 
