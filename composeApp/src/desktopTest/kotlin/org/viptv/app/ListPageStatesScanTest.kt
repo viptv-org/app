@@ -16,7 +16,8 @@ class ListPageStatesScanTest {
         "features/history/TvHistoryScreen.kt",
         "features/browse/BrowseScreen.kt",
         "features/browse/BrowserBrowseScreen.kt",
-        "features/browse/TvBrowseScreen.kt")
+        "features/browse/TvBrowseScreen.kt",
+        "features/search/SearchScreen.kt")
 
     @Test fun everyListPageTakesItsBodyFromTheSharedState() {
         assertTrue(root.isDirectory, "run from the composeApp module: ${root.absolutePath}")
