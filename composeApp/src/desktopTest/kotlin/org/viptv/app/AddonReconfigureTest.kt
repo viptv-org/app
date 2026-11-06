@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import androidx.compose.foundation.layout.fillMaxSize
 import kotlinx.coroutines.withTimeout
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.addonConfigureFailureText
@@ -119,5 +120,49 @@ class AddonReconfigureTest {
         assertEquals("addon:7", ApplicationState(playingSource = source).playerAddonTarget())
         assertEquals(null, ApplicationState(playingSource = source.copy(provider_id = "iptv:2")).playerAddonTarget())
         assertEquals(null, ApplicationState().playerAddonTarget())
+    }
+}
+
+@org.junit.runner.RunWith(org.junit.runners.JUnit4::class)
+class AddonReconfigureRenderTest {
+    @get:org.junit.Rule val uiThread = UiThreadRule()
+    @get:org.junit.Rule val deterministicImages = DeterministicImageLoaderRule()
+
+    private fun addon(index: Int) = org.viptv.engine.wire.IntegrationConnection("addon:$index", "stremio", "1", null,
+        "Fixture $index", true, 1, listOf(org.viptv.engine.wire.Capability.DISCOVERY))
+
+    private class Shot(width: Int, height: Int, television: Boolean, content: @androidx.compose.runtime.Composable () -> Unit) : AutoCloseable {
+        private val scene = androidx.compose.ui.ImageComposeScene(width, height, androidx.compose.ui.unit.Density(1f)) {
+            org.viptv.app.theme.ViptvTheme(television, pointer = !television) {
+                androidx.compose.material3.Surface(androidx.compose.ui.Modifier.fillMaxSize(), color = org.viptv.app.theme.Palette.background) { content() }
+            }
+        }
+        fun capture(dir: String, name: String) {
+            java.io.File(dir).mkdirs()
+            repeat(20) { scene.render(0).close() }
+            scene.render(0).use { image -> image.encodeToData()!!.use { java.io.File(dir, "$name.png").writeBytes(it.bytes) } }
+        }
+        override fun close() = scene.close()
+    }
+
+    @org.junit.Test fun rendersForEvidence(): Unit = runBlocking {
+        val dir = System.getenv("VIPTV_RECONFIGURE_CAPTURE_DIR") ?: return@runBlocking
+        val addons = (1..4).map(::addon)
+        Shot(1280, 800, television = false) {
+            org.viptv.app.features.settings.AddonSettings(false, addons, addons.map { it.id }.toSet(), false, null, null,
+                {}, { _, _ -> }, {}, managementAvailable = true, configurableAddons = setOf("addon:2"))
+        }.use { it.capture(dir, "addons-desktop-1280") }
+        Shot(390, 844, television = false) {
+            org.viptv.app.features.settings.AddonSettings(false, addons, addons.map { it.id }.toSet(), false, null, null,
+                {}, { _, _ -> }, {}, managementAvailable = true, configurableAddons = setOf("addon:2"),
+                configureFailure = "addon:2" to org.viptv.app.state.ADDON_CONFIGURE_FAILURE)
+        }.use { it.capture(dir, "addons-phone-390") }
+        Shot(1920, 1080, television = true) {
+            org.viptv.app.features.settings.TvAddonManageDialog(addons[1], true, true, false, 1f, {}, {}, {})
+        }.use { it.capture(dir, "manage-tv-1920") }
+        Shot(1920, 1080, television = true) {
+            org.viptv.app.features.settings.TvAddonConfigureDialog(
+                org.viptv.app.state.AddonConfigureRequest("addon:2", "Fixture 2", "https://watch.example/api/addons/configure/ticket-1", 300), 1f, {}, {})
+        }.use { it.capture(dir, "qr-tv-1920") }
     }
 }
