@@ -31,10 +31,34 @@ private fun ApplicationController.leaveAnimeIfUnavailable() {
 
 internal fun ApplicationController.publishAddons(result: RemoteAddons, keepBrowse: Boolean = false) {
     updateState { state -> state.copy(addons = result.addons, addonLogos = result.logos, enabledAddonIds = result.enabled, browsingConfiguration = result.browsing,
+        configurableAddons = result.configurable,
         browseControls = state.browseControls.takeIf { keepBrowse }, browseCards = if (keepBrowse) state.browseCards else emptyList(),
         browseNext = state.browseNext.takeIf { keepBrowse }) }
     leaveAnimeIfUnavailable()
 }
+
+// Phone, tablet, desktop and web open the add-on's configure page in the browser; TV asks for the link to show it as a QR code.
+fun ApplicationController.configureAddon(addon: String, openInBrowser: Boolean = true) {
+    val state = mutable.value
+    val name = state.addons.firstOrNull { it.id == addon }?.name ?: addon
+    updateState { it.copy(addonConfigure = AddonConfigureRequest(addon, name)) }
+    scope.launch {
+        val link = try {
+            requireNotNull(connection) { "This add-on is not on a server connection." }.addonConfigureLink(addon)
+        } catch (error: CancellationException) { throw error } catch (error: Exception) {
+            updateState { current -> current.copy(addonConfigure = current.addonConfigure?.copy(failure = error.message ?: ADDON_CONFIGURE_FAILURE)) }
+            return@launch
+        }
+        if (mutable.value.addonConfigure?.addon == addon) updateState { current ->
+            current.copy(addonConfigure = current.addonConfigure?.copy(link = link.url, expiresInSeconds = link.expiresInSeconds))
+        }
+        if (openInBrowser) browserOpen(link.url)
+    }
+}
+
+fun ApplicationController.dismissAddonConfigure() { updateState { it.copy(addonConfigure = null) } }
+
+const val ADDON_CONFIGURE_FAILURE = "Couldn’t get the configure link."
 
 internal fun ApplicationController.startBrowsingConfiguration(profile: String) {
     val device = local

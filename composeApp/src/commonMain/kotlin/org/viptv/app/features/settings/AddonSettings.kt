@@ -36,7 +36,8 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null, logos: Map<String, String> = emptyMap(),
-    initialAddonId: String? = null) {
+    initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
+    configureFailure: Pair<String, String>? = null, retryConfigure: () -> Unit = {}) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
     var submission by remember { mutableStateOf<Any?>(null) }
@@ -103,6 +104,12 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                     if (!compact && managementAvailable) AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) })
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                     error?.let { Text(it, color = Palette.danger) }
+                    configureFailure?.let { (_, message) ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(message, color = Palette.danger, modifier = Modifier.weight(1f, fill = false))
+                            TextButton(retryConfigure) { Text("Try again") }
+                        }
+                    }
                     if (addons.isNotEmpty()) {
                         AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
                     }
@@ -115,7 +122,9 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                 AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
                     { toggle(addon.id, it) }, { removing = addon }, logos[addon.id],
                     highlighted = addon.id == initialAddonId,
-                    focusRequester = targetFocus.takeIf { addon.id == initialAddonId })
+                    focusRequester = targetFocus.takeIf { addon.id == initialAddonId },
+                    configurable = addon.id in configurableAddons,
+                    reconfigure = { configure(addon.id) })
             }
         }
         PhoneSheet(visible = installing, title = "Add an add-on", dismiss = closeInstall,

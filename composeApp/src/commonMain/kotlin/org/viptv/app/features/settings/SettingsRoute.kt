@@ -58,6 +58,12 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         initialSection = state.settingsEntrySection ?: if (browser && !compact && accountSession) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
         addonTarget = state.settingsAddonTarget,
+        configurableAddons = state.configurableAddons,
+        configureAddon = { controller.configureAddon(it, openInBrowser = !television) },
+        configureAddonFailure = state.addonConfigure?.failure?.let { (state.addonConfigure?.addon ?: "") to it },
+        retryConfigureAddon = { state.addonConfigure?.addon?.let { controller.configureAddon(it, openInBrowser = !television) } },
+        addonConfigure = state.addonConfigure,
+        dismissAddonConfigure = controller::dismissAddonConfigure,
         desktop = desktop, browser = browser,
         profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
         profileTitles = if (state.parentTitles != null) ({ compact ->
