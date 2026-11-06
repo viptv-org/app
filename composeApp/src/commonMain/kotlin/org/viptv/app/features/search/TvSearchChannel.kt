@@ -31,11 +31,12 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 
 @Composable
-internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false) {
+internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false,
+    modifier: Modifier = Modifier) {
     var focused by remember { mutableStateOf(false) }
     val frame by animateFloatAsState(if (focused) 1f else 0f, tween(120), label = "Channel focus")
     val shape = RoundedCornerShape(10.dp * scale)
-    Column(Modifier.width(356.dp * scale)
+    Column(modifier.width(356.dp * scale)
         .focusProperties { if (last) right = androidx.compose.ui.focus.FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {

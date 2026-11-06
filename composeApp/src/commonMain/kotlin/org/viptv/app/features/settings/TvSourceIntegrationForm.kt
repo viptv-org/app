@@ -2,7 +2,6 @@ package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,10 +39,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TvTextField
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.connection.SourceIntegrationSchema
 import org.viptv.app.connection.SourceIntegrationSnapshot
-import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 
@@ -53,7 +51,6 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
     back: () -> Unit, save: (JsonObject) -> Unit, scale: Float, profileName: String? = null, origin: String? = null) {
     val values = remember(schema.plugin_id) { mutableStateMapOf<String, String>() }
     var selected by remember(schema.plugin_id) { mutableStateOf(emptySet<String>()) }
-    var editingField by remember(schema.plugin_id) { mutableStateOf(schema.credential_fields.firstOrNull()?.id) }
     val shown = remember(schema.plugin_id) { mutableStateMapOf<String, Boolean>() }
     val fieldFocus = remember { FocusRequester() }
     val cancelFocus = remember { FocusRequester() }
@@ -74,44 +71,25 @@ internal fun TvSourceIntegrationPage(schema: SourceIntegrationSchema, busy: Bool
         Row(Modifier.fillMaxWidth()) {
             org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.width(820.dp * scale).verticalScroll(rememberScrollState())) {
                 schema.credential_fields.forEach { field ->
-                    val active = editingField == field.id
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                         Text(field.label, fontSize = (24 * scale).sp, color = Palette.text, fontWeight = FontWeight.SemiBold)
                         if (field.required) Text("Required", color = Palette.tertiary, fontSize = (20 * scale).sp)
                     }
                     Spacer(Modifier.height(10.dp * scale))
                     val requester = if (field.id == schema.credential_fields.firstOrNull()?.id) fieldFocus else remember { FocusRequester() }
-                    Row(Modifier.fillMaxWidth().height(80.dp * scale)
-                        .clip(RoundedCornerShape(14.dp * scale))
-                        .background(Color.White.copy(alpha = 0.08f))
-                        .border((if (active) 2 else 1).dp * scale, if (active) Palette.text else Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp * scale))
-                        .focusRequester(requester)
-                        .focusable(enabled = !busy)
-                        .onFocusChanged { if (it.isFocused) editingField = field.id }
-                        .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { editingField = field.id }
-                        .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-                        val raw = values[field.id].orEmpty()
-                        val masked = field.secret && shown[field.id] != true
-                        Text(if (raw.isEmpty()) field.label else if (masked) "•".repeat(raw.length.coerceAtMost(48)) else raw,
-                            Modifier.weight(1f), fontSize = (28 * scale).sp,
-                            color = if (raw.isEmpty()) Palette.secondary else Palette.text,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (field.secret && raw.isNotEmpty()) {
+                    val raw = values[field.id].orEmpty()
+                    val reveal: (@Composable () -> Unit)? = if (field.secret && raw.isNotEmpty()) {
+                        {
                             Text(if (shown[field.id] == true) "Hide" else "Show", color = Palette.secondary, fontSize = (22 * scale).sp,
                                 modifier = Modifier.pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) {
                                     shown[field.id] = shown[field.id] != true
-                                }.padding(start = 16.dp * scale))
+                                })
                         }
-                        if (active) Box(Modifier.padding(start = 16.dp * scale).width(2.dp * scale).height(40.dp * scale).background(Palette.accent))
-                    }
+                    } else null
+                    TvTextField(raw, { values[field.id] = it.take(512) }, scale, Modifier.fillMaxWidth(),
+                        placeholder = field.label, enabled = !busy, secret = field.secret && shown[field.id] != true,
+                        requester = requester, trailing = reveal)
                     Spacer(Modifier.height(24.dp * scale))
-                    if (active && !busy) {
-                        TvEntryKeyboard(scale, onDelete = { values[field.id] = values[field.id].orEmpty().dropLast(1) },
-                            onClear = { values[field.id] = "" }) { value ->
-                            values[field.id] = (values[field.id].orEmpty() + value).take(512)
-                        }
-                        Spacer(Modifier.height(24.dp * scale))
-                    }
                 }
                 if (origin != null) {
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp * scale)).background(Color.White.copy(alpha = 0.06f))

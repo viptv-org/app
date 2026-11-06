@@ -3,7 +3,6 @@ package org.viptv.app.features.settings
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,12 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,10 +27,9 @@ import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.X
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TvTextField
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
-import org.viptv.app.features.entry.TvEntryKeyboard
-import org.viptv.app.features.search.TvSearchKeyboard
 import org.viptv.app.state.VodMatchForm
 import org.viptv.app.state.VodMatchRow
 import org.viptv.app.state.VodMatchesState
@@ -182,7 +179,7 @@ private fun TvVodMatchChip(label: String, icon: ImageVector?, selected: Boolean,
 
 @Composable
 private fun TvVodMatchSearchPanel(query: String, queryChange: (String) -> Unit, scale: Float, finish: () -> Unit) {
-    Column(Modifier.width(520.dp * scale).background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
+    Column(Modifier.width(520.dp * scale).imePadding().background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
         .padding(horizontal = 24.dp * scale, vertical = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Search titles", Modifier.weight(1f), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
@@ -191,21 +188,18 @@ private fun TvVodMatchSearchPanel(query: String, queryChange: (String) -> Unit, 
                 Text("Done", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        Text(query.ifBlank { "Type part of a title" }, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, color = if (query.isBlank()) Palette.secondary else Palette.text)
-        TvSearchKeyboard({ transform -> queryChange(transform(query)) }, scale)
+        TvTextField(query, queryChange, scale, Modifier.fillMaxWidth(), placeholder = "Type part of a title",
+            imeAction = ImeAction.Done, submit = finish, focusOnEnter = true, onEscape = finish)
     }
 }
 
 @Composable
 private fun TvVodMatchForm(form: VodMatchForm, saving: Boolean, error: String?, scale: Float,
     change: (String) -> Unit, save: () -> Unit, cancel: () -> Unit) {
-    // Backspace edits only while focus is inside the keyboard area; on Save or Cancel it must not delete metadata characters.
-    var keyboardActive by remember { mutableStateOf(true) }
-    Column(Modifier.fillMaxSize().onPreviewKeyEvent { event ->
+    val field = remember { FocusRequester() }
+    Column(Modifier.fillMaxSize().imePadding().onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) false else when (event.key) {
             Key.Back, Key.Escape -> { if (!saving) cancel(); true }
-            Key.Backspace -> { if (!saving && keyboardActive) change(form.metadataId.dropLast(1)); keyboardActive }
             else -> false
         }
     }, verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
@@ -217,23 +211,8 @@ private fun TvVodMatchForm(form: VodMatchForm, saving: Boolean, error: String?, 
         Text(listOfNotNull(vodMatchTypeLabel(form.type), form.providerName).joinToString(" · "),
             fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary)
         Spacer(Modifier.height(6.dp * scale))
-        Text("Metadata ID", fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, fontWeight = FontWeight.SemiBold,
-            color = Palette.body)
-        val shape = RoundedCornerShape(14.dp * scale)
-        Row(Modifier.width(1060.dp * scale).height(76.dp * scale)
-            .background(Color.White.copy(alpha = .07f), shape).border(2.dp * scale, Palette.text, shape)
-            .padding(horizontal = 24.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-            Text(form.metadataId.ifEmpty { "tt0111161" }, Modifier.widthIn(max = 998.dp * scale),
-                fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Medium,
-                color = if (form.metadataId.isEmpty()) Palette.secondary else Palette.text, maxLines = 1,
-                overflow = TextOverflow.Ellipsis)
-            Box(Modifier.padding(start = 6.dp * scale).size(3.dp * scale, 32.dp * scale).background(Palette.accent))
-        }
-        Box(Modifier.width(1060.dp * scale).onFocusChanged { keyboardActive = it.hasFocus }) {
-            TvEntryKeyboard(scale, suffixes = false, onDelete = { if (!saving) change(form.metadataId.dropLast(1)) }) { value ->
-                if (!saving) change(form.metadataId + value)
-            }
-        }
+        TvTextField(form.metadataId, { if (!saving) change(it) }, scale, Modifier.width(1060.dp * scale),
+            label = "Metadata ID", placeholder = "tt0111161", enabled = !saving, requester = field, focusOnEnter = true)
         Spacer(Modifier.height(6.dp * scale))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true,

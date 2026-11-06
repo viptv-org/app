@@ -1,8 +1,6 @@
 package org.viptv.app.features.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +17,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,13 +26,13 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.SecureWindow
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TvTextField
 import org.viptv.app.components.TvFocusScroll
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.connection.XtreamConnection
 import org.viptv.app.connection.XtreamScopes
-import org.viptv.app.features.entry.TvEntryKeyboard
 import org.viptv.app.theme.Palette
 
 private enum class TvXtreamMode { Actions, Edit, Password, Delete }
@@ -171,7 +168,6 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
     var username by remember(connection?.id) { mutableStateOf("") }
     var password by remember(connection?.id) { mutableStateOf("") }
     var scopes by remember(connection?.id) { mutableStateOf(connection?.scopes ?: XtreamScopes()) }
-    var field by remember(mode) { mutableStateOf<String?>(null) }
     val initial = remember { FocusRequester() }
     val manageable = canManage && (connection == null || connection.credentialsEncrypted)
     val editable = manageable && !busy
@@ -236,9 +232,8 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
                                     TvXtreamField(label = when (key) {
                                         "name" -> "Connection name"; "url" -> "Server URL"; "username" -> "Username"
                                         else -> if (creating) "Password" else "New password"
-                                    }, value = value(key), secret = key == "password", active = field == key, busy = !editable,
-                                        scale = scale, requester = if (index == 0) initial else null, keepFocus = manageable,
-                                        onActivate = { field = key })
+                                    }, value = value(key), secret = key == "password", enabled = editable, keepFocus = manageable,
+                                        scale = scale, requester = if (index == 0) initial else null) { next -> change(key) { next } }
                                 }
                                 if (mode == TvXtreamMode.Edit) {
                                     Text("Available content", color = Palette.secondary, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
@@ -246,11 +241,6 @@ private fun TvXtreamPage(connection: XtreamConnection?, creating: Boolean, defau
                                         TvXtreamScopeRow(label, scopes.flag(key), editable, scale, null,
                                             activate = { scopes = scopes.with(key, !scopes.flag(key)) })
                                     }
-                                }
-                                val active = field
-                                if (active != null && editable) TvEntryKeyboard(scale,
-                                    onDelete = { change(active) { it.dropLast(1) } }, onClear = { change(active) { "" } }) { input ->
-                                    change(active) { it + input }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                                     TvAction(Modifier.heightIn(min = 72.dp * scale).width(280.dp * scale), scale, primary = true,
@@ -333,24 +323,10 @@ private fun TvXtreamActions(connection: XtreamConnection, defaultLive: Boolean, 
 }
 
 @Composable
-private fun TvXtreamField(label: String, value: String, secret: Boolean, active: Boolean, busy: Boolean, scale: Float,
-    requester: FocusRequester?, keepFocus: Boolean, onActivate: () -> Unit) {
-    var focused by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
-        Text(label, fontSize = (24 * scale).sp, color = Palette.text, fontWeight = FontWeight.SemiBold)
-        Row(Modifier.fillMaxWidth().height(80.dp * scale).clip(RoundedCornerShape(14.dp * scale))
-            .background(Color.White.copy(alpha = 0.08f))
-            .border((if (active) 2 else 1).dp * scale, if (active) Palette.text else Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp * scale))
-            .then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
-            .focusable(enabled = !busy || keepFocus).onFocusChanged { focused = it.isFocused }
-            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !busy) { onActivate() }
-            .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (value.isEmpty()) label else if (secret) "•".repeat(value.length.coerceAtMost(48)) else value,
-                Modifier.weight(1f), fontSize = (28 * scale).sp, color = if (value.isEmpty()) Palette.secondary else Palette.text,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (focused && active) Box(Modifier.padding(start = 16.dp * scale).width(2.dp * scale).height(40.dp * scale).background(Palette.accent))
-        }
-    }
+private fun TvXtreamField(label: String, value: String, secret: Boolean, enabled: Boolean, keepFocus: Boolean, scale: Float,
+    requester: FocusRequester?, change: (String) -> Unit) {
+    TvTextField(value, change, scale, Modifier.fillMaxWidth(), label = label, placeholder = label,
+        enabled = enabled, secret = secret, keepFocus = keepFocus, requester = requester)
 }
 
 @Composable
