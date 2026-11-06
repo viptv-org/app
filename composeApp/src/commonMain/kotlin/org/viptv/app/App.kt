@@ -237,7 +237,7 @@ fun App(
                   val prefs = watchOnTvState.value
                   val remoteTvName = prefs.tvName
                   val remote: (@Composable () -> Unit)? =
-                      if (watchOnTvPlatform && remoteTvName != null && state.screen in listOf(Screen.Discover, Screen.Live, Screen.Library)) {
+                      if (watchOnTvPlatform && remoteTvName != null) {
                           { RemoteHeaderButton(remoteTvName, showTip = !prefs.tipDismissed, dismissTip = watchOnTvState::dismissRemoteTip, open = { remoteOpen = true }) }
                       } else null
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
@@ -248,7 +248,7 @@ fun App(
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
                         if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
-                        else if (tablet) TabletHeader()
+                        else if (tablet) TabletHeader(state.screen)
                     }
 
                     Row(Modifier.weight(1f)) {

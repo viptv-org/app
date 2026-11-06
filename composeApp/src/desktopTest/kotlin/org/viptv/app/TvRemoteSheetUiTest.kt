@@ -121,7 +121,7 @@ class TvRemoteSheetUiTest {
         try {
             probe.frames(8)
             assertTrue(probe.has("Your TV remote"), probe.texts().toString())
-            assertTrue(probe.has("It stays up here on Discover, Live and My List. Turn it off in Settings › Watch on TV."), probe.texts().toString())
+            assertTrue(probe.has("It stays up here on Home, Live and My List. Turn it off in Settings › Watch on TV."), probe.texts().toString())
             probe.click("Got it")
             assertEquals(1, dismissed)
             probe.clickContent("TV remote: Living Room")

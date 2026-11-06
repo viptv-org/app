@@ -43,7 +43,7 @@ internal fun RemoteHeaderButton(
                 Column(Modifier.width(260.dp).clip(RoundedCornerShape(16.dp)).background(Palette.text).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Your TV remote", color = RemoteOnLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("It stays up here on Discover, Live and My List. Turn it off in Settings › Watch on TV.",
+                    Text("It stays up here on ${RemoteHeaderPages.names}. Turn it off in Settings › Watch on TV.",
                         color = RemoteOnLight, fontSize = 14.sp)
                     Text("Got it", Modifier.pointerClickable { dismissTip() }, color = RemoteOnLight, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
