@@ -39,6 +39,8 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         val subtitleFiles = remember { mutableListOf<File>() }
         val requiredAudio = remember { RequiredAudioSelection(input.requiredAudioIndex) }
         val transport = remember { PlaybackTransportGate() }
+        val slateDetector = remember { ErrorSlateDetector() }
+        val slateWarm = remember { AtomicBoolean(false) }
         val candidates by input.providerSubtitles.collectAsState()
         val state by session.state.collectAsState()
         DisposableEffect(renderer) {
@@ -63,6 +65,16 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                             latestObserve(PlayerFact.Presentation(PresentationProof.DesktopDrawCompleted, now, exact = false))
                         }
                     }
+                }
+            }
+            // The first scaled sample costs a one-time Skia setup; spend it on the opening frame, not at 2 s.
+            if (!slateWarm.get() && renderer.generation > 0 && slateWarm.compareAndSet(false, true)) renderer.graySample()
+            val position = renderer.framePositionMs
+            if (slateDetector.due(position) && state.status == "Playing") renderer.graySample()?.let { sample ->
+                val value = session.state.value
+                if (slateDetector.take(position, sample, slateLowBitrate(value.bitrate, value.width, value.height))) {
+                    input.diagnostics?.invoke("error_slate=probable position_ms=$position bitrate=${value.bitrate} size=${value.width}x${value.height}")
+                    scope.launch { latestObserve(PlayerFact.ProbableErrorSlate) }
                 }
             }
         }
@@ -149,6 +161,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                 if (opened) try {
                     when (command) {
                         is PlayerCommand.Seek -> {
+                            slateDetector.reset()
                             input.diagnostics?.invoke("seek_requested target_ms=${command.positionMillis} opened=$opened")
                             if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
                             else session.command("seek", (command.positionMillis.coerceAtLeast(0) / 1000.0).toString(), "absolute+exact")
