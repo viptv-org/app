@@ -23,12 +23,19 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.Button
+import org.viptv.app.components.InlineMutationError
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.format.providerText
+import org.viptv.app.state.liveFavoriteTarget
 
 @Composable
 internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, phone: Boolean, television: Boolean,
     scale: Float, watch: () -> Unit, favourite: (() -> Unit)?, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
+    val mutations = LocalPendingMutation.current
+    val favoriteTarget = liveFavoriteTarget(channel.id)
+    val favoritePending = mutations.isPending(favoriteTarget)
     if (phone) {
         Box(Modifier.fillMaxWidth().heightIn(min = 196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
             if (art != null) AsyncImage(art, channel.card.title, Modifier.matchParentSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
@@ -69,14 +76,17 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }
-                favourite?.let { save -> Button(save, enabled = !channel.favoritePending, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                    Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text); Spacer(Modifier.width(8.dp)); Text(if (channel.favorite) "Favourited" else "Favourite")
+                favourite?.let { save -> Button(save, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                    if (favoritePending) MutationSpinner(16.dp, color = Palette.text)
+                    else Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text)
+                    Spacer(Modifier.width(8.dp)); Text(if (favoritePending) "Saving…" else if (channel.favorite) "Favourited" else "Favourite")
                 } }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     Icon(Lucide.LayoutGrid, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Full guide")
                 }
             }
+            mutations.failure(favoriteTarget)?.let { InlineMutationError(it, retry = { mutations.retry(favoriteTarget) }) }
         }
         if (television && art != null) AsyncImage(art, channel.card.title, Modifier.width(640.dp * scale).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)

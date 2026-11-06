@@ -43,6 +43,8 @@ class MergedCalendarAppUiTest {
     @Test fun tabletShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1024, height = 768, name = "tablet", details = false)
     @Test fun desktopShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "desktop", details = false, desktopChrome = true)
     @Test fun webShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "web", details = false, browser = true)
+    @Test fun phoneKeepsTheShowsFilterWhenReturningFromARelease() = returns(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvKeepsTheShowsFilterWhenReturningFromARelease() = returns(television = true, width = 1920, height = 1080, name = "tv")
 
     @Test fun phoneLibraryOnlyProfileHasNoFilter() = single(MergedCalendarWire.page(listOf(
         MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, poster = art("poster3.jpg")),
@@ -59,6 +61,24 @@ class MergedCalendarAppUiTest {
         assertTrue(nodes.any { text(it).contains("Public show") })
         assertFalse(nodes.any { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList && text(it).startsWith("Shows: ") })
         assertFalse(nodes.any { marked(it) || text(it) == "Your shows" })
+    }
+
+    private fun returns(television: Boolean, width: Int, height: Int, name: String) = scene(mergedPage, television, width, height) { s ->
+        if (!television && width < 640) s.showToday()
+        s.until("the merged rows") { s.nodes().any { text(it).contains("Slow Horses") } }
+        s.chooseShows("All")
+        s.until("the public schedule") { s.nodes().any { text(it).contains("Public premiere") } }
+        s.save("$name-calendar-all-before-return")
+        s.openRow("Public premiere")
+        s.until("Details") { s.controller.state.value.screen == Screen.Details }
+        s.controller.navigateBack()
+        s.until("the Calendar") { s.controller.state.value.screen == Screen.Calendar && s.showsTrigger() != null }
+        s.until("the release back in the list") { s.nodes().any { text(it).contains("Public premiere") && it.config.contains(SemanticsActions.OnClick) } }
+        assertEquals("Shows: All", s.showsLabel(), "$name: Back keeps the picked Shows value; filter=" +
+            s.controller.state.value.calendarFilter + "; texts=" + s.nodes().map(::text).filter(String::isNotBlank))
+        assertTrue(s.nodes().any { text(it).contains("Slow Horses") }, "$name: the other release stays listed")
+        assertFalse(s.nodes().any { text(it) == CALENDAR_FALLBACK }, "$name: All needs no fallback line")
+        s.save("$name-calendar-all-after-return")
     }
 
     private fun art(name: String) = Res.getUri("files/ui-preview/$name")
@@ -215,6 +235,13 @@ class MergedCalendarAppUiTest {
                 })
                 frames(10)
             }
+        }
+
+        fun openRow(title: String) {
+            val row = nodes().firstOrNull { text(it).contains(title) && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(row != null, "no $title row; texts=" + nodes().map(::text).filter(String::isNotBlank))
+            assertTrue(row!!.config[SemanticsActions.OnClick].action!!.invoke(), "$title opens")
+            frames(10)
         }
 
         fun showToday() {

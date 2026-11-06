@@ -27,6 +27,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.*
 import org.viptv.app.components.AccessibleIconButton
+import org.viptv.app.components.dismissScrim
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.rememberArriveFade
 import org.viptv.app.components.tvFocusOutline
@@ -53,7 +54,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
     val apply = { next: ProfilePreferences -> draft = next; onPreferences(next) }
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
         BoxWithConstraints(Modifier.fillMaxSize().alpha(reveal)) {
-            Box(Modifier.fillMaxSize().pointerClickable(onClick = close))
+            Box(Modifier.fillMaxSize().dismissScrim(close))
             val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.82f)
                 else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = bottomInset).widthIn(max = 680.dp).fillMaxWidth().heightIn(max = 460.dp)
             Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)

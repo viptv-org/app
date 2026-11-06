@@ -23,12 +23,19 @@ import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvMediaBadge
+import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.format.providerText
+import org.viptv.app.state.liveFavoriteTarget
 
 @Composable
 internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, scale: Float, favorite: (() -> Unit)? = null,
     onHeight: (Int) -> Unit = {}, watch: () -> Unit) {
+    val mutations = LocalPendingMutation.current
+    val target = liveFavoriteTarget(channel.id)
+    val pending = mutations.isPending(target)
+    val failure = mutations.failure(target)
     Column(Modifier.offset(96.dp * scale, (-2).dp * scale).width(820.dp * scale).onSizeChanged { onHeight(it.height) },
         verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp * scale)) {
@@ -52,11 +59,16 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                 color = Palette.body, maxLines = 2) }
         }
+        failure?.let { Text(it, fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, color = Palette.danger) }
     }
     if (favorite != null) TvAction(Modifier.offset(96.dp * scale, 306.dp * scale).heightIn(min = 52.dp * scale), scale,
-        activate = favorite, enabled = !channel.favoritePending, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
-        Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
-        Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp)
+        activate = if (failure != null) ({ mutations.retry(target) }) else favorite, contentPadding = PaddingValues(horizontal = 22.dp * scale)) {
+        when {
+            pending -> { MutationSpinner(24.dp * scale, scale = scale, color = it); Spacer(Modifier.width(10.dp * scale)); Text("Saving…", color = it, fontSize = (22 * scale).sp) }
+            failure != null -> { Icon(Lucide.RotateCcw, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale)); Text("Retry", color = it, fontSize = (22 * scale).sp) }
+            else -> { Icon(Lucide.Star, null, Modifier.size(24.dp * scale), tint = it); Spacer(Modifier.width(10.dp * scale))
+                Text(if (channel.favorite) "Remove favourite" else "Favourite channel", color = it, fontSize = (22 * scale).sp) }
+        }
     }
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp * scale)

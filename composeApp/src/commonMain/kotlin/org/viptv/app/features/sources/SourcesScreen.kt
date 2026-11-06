@@ -43,7 +43,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.features.details.TvDetailExtras
 import org.viptv.engine.wire.SourceCandidate
-import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.dismissScrim
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.requestPlacedFocus
@@ -100,7 +100,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
         val drag = rememberSheetDrag(enabled = touch && phone, threshold = sheetHeight / 3f, dismiss = back,
             dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
         LaunchedEffect(motion.presented) { if (!motion.presented) onClosed() }
-        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.pointerClickable(onClick = back))
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = 0.55f)).focusProperties { canFocus = false }.dismissScrim(back))
         val panel = when {
             phone -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.84f)
             television -> Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.5f)

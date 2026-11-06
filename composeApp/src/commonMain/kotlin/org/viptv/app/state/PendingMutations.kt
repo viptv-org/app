@@ -3,7 +3,7 @@ package org.viptv.app.state
 import androidx.compose.runtime.Immutable
 
 /** What a write changes; [MutationTarget.target] names the row, toggle, dialog or track it is keyed by. */
-enum class MutationKind { MyList, Preference, Addon, SourceIntegration, Xtream, Gateway, AudioTrack, Profile, Account }
+enum class MutationKind { MyList, LiveFavorite, Preference, Addon, SourceIntegration, Xtream, Gateway, AudioTrack, Profile, Account }
 
 @Immutable
 data class MutationTarget(val kind: MutationKind, val target: String)

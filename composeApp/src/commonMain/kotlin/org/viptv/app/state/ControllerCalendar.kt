@@ -5,6 +5,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.features.calendar.CALENDAR_TYPE_ALL
 import org.viptv.app.features.calendar.CALENDAR_WEEK_LIMIT
 import org.viptv.app.features.calendar.CalendarEntry
+import org.viptv.app.features.calendar.CalendarFilter
 import org.viptv.app.features.calendar.CalendarTypeRequests
 import org.viptv.engine.wire.*
 
@@ -24,6 +25,11 @@ fun ApplicationController.calendarWeek(change: Int) {
     val week = if (change == 0) 0 else (mutable.value.calendarWeek + change).coerceIn(-CALENDAR_WEEK_LIMIT, CALENDAR_WEEK_LIMIT)
     updateState { next -> next.copy(calendarWeek = week) }
     run { loadCalendar() }
+}
+
+fun ApplicationController.calendarFilter(filter: CalendarFilter) {
+    if (mutable.value.calendarFilter == filter) return
+    updateState { next -> next.copy(calendarFilter = filter) }
 }
 
 internal suspend fun ApplicationController.loadCalendar() {

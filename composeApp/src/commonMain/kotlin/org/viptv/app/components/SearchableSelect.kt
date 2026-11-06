@@ -296,7 +296,7 @@ private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, co
             val drag = rememberSheetDrag(enabled = touch, threshold = sheetHeight / 3f, dismiss = dismiss,
                 dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
             Box(Modifier.matchParentSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = .62f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = height)
                 .graphicsLayer { translationY = size.height * (1f - motion.container) + drag.offset }
                 .onSizeChanged { sheetHeight = it.height.toFloat() }
@@ -325,7 +325,7 @@ private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Compo
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
             Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .6f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(760.dp * scale).fillMaxHeight()
                 // Back and Escape close only the panel; the chip row behind it stays as it was.
                 .onPreviewKeyEvent { event ->
