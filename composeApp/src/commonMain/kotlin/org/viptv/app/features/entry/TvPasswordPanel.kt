@@ -83,7 +83,7 @@ private fun TvServerAddressDialog(address: String, error: String?, scale: Float,
         TvDialogAction(scale, "Done", done, enabled = address.isNotBlank(), activate = accept)
         TvDialogAction(scale, "Cancel", cancel, activate = dismiss)
     }) {
-        Text("Enter the address of your server, starting with https://.", color = Palette.secondary,
+        Text("Enter the HTTPS address of your server.", color = Palette.secondary,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
         Spacer(Modifier.height((24 * scale).dp))
         TvTextField(address, change, scale, Modifier.tvDialogFocusWatch(field).fillMaxWidth(),
