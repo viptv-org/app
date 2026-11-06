@@ -15,6 +15,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.LocalListRemoval
+import org.viptv.app.features.continuewatching.ContinueWatchingRemoval
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.*
 
@@ -23,13 +25,15 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
     summaryCards: Map<String, Card> = emptyMap(), enrichSummary: (Card) -> Unit = {},
     heroRotates: Boolean = true,
     seeAllFor: (HomeRow) -> RowSeeAll? = { null }, openSeeAll: (RowSeeAll) -> Unit = {},
-    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap()) {
+    moreRow: ((String) -> Unit)? = null, rowBusy: Set<String> = emptySet(), rowErrors: Map<String, String> = emptyMap(),
+    removeContinueWatching: ((Card) -> Unit)? = null) {
     if (television) {
         TvHomeScreen(home, open, play, retry, navigate, profile, summaryCards = summaryCards, save = save, saved = saved, backChanged = backChanged, busy = busy, error = error, enrichSummary = enrichSummary,
             moreRow = moreRow, rowBusy = rowBusy, rowErrors = rowErrors,
-            seeAllFor = seeAllFor, openSeeAll = openSeeAll)
+            seeAllFor = seeAllFor, openSeeAll = openSeeAll, removeContinueWatching = removeContinueWatching)
         return
     }
+    val removal = remember(removeContinueWatching) { ContinueWatchingRemoval(removeContinueWatching) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val entrance = rememberListEntrance(home != null)
         val continueRow = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }
@@ -76,16 +80,19 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
                     HomeStatus(home, null, busy, retry, navigate, Modifier.padding(horizontal = gutter, vertical = 16.dp))
                 }
                 items(visibleRows, key = { it.id }, contentType = { if (it.id == CONTINUE_ROW) "continue" else "catalog" }) { row ->
-                    HomeCatalogRow(row, compact, television, Modifier,
-                        { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
-                        entrance = entrance,
-                        more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
-                        hover = { card, inside ->
-                            val key = cardLookupKey(card)
-                            hoveredContinue = if (inside) key else hoveredContinue?.takeIf { it != key }
-                        })
+                    CompositionLocalProvider(LocalListRemoval provides if (row.id == CONTINUE_ROW) removal.offer else LocalListRemoval.current) {
+                        HomeCatalogRow(row, compact, television, Modifier,
+                            { focused = it }, open, scale, tablet, browser, play, gutter = gutter, seeAllFor = seeAllFor, openSeeAll = openSeeAll,
+                            entrance = entrance,
+                            more = moreRow, appending = row.id in rowBusy, appendError = rowErrors[row.id],
+                            hover = { card, inside ->
+                                val key = cardLookupKey(card)
+                                hoveredContinue = if (inside) key else hoveredContinue?.takeIf { it != key }
+                            })
+                    }
                 }
             }
         }
+        removal.confirmation()
     }
 }

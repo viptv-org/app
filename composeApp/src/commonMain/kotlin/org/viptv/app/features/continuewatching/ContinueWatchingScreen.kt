@@ -22,9 +22,7 @@ import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
-import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.ListPageState
-import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.ListSkeletonTile
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.PageRestore
@@ -55,8 +53,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
     PageRestore(grid, restore, target = {
         if (page.loaded) restore.anchor(cards.size) { cardLookupKey(cards[it]) }?.plus(CARDS_AFTER) else null
     })
-    var confirming by remember { mutableStateOf<Card?>(null) }
-    val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_CONTINUE_LABEL, continueWatching = true) { card -> confirming = card } } }
+    val removal = remember(remove) { ContinueWatchingRemoval(remove) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
         val gutter = if (phone) 16.dp else 40.dp
@@ -69,7 +66,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
             layout.visibleItemsInfo.filter { it.contentType == CARD_TYPE }.maxOfOrNull { it.index }
                 ?.minus(layout.totalItemsCount - cards.size) ?: -1
         }
-        CompositionLocalProvider(LocalListRemoval provides removal) {
+        CompositionLocalProvider(LocalListRemoval provides removal.offer) {
             LazyVerticalGrid(GridCells.Fixed(columns), Modifier.fillMaxSize(), state = grid,
                 contentPadding = PaddingValues(start = gutter, end = gutter, top = if (phone) 0.dp else 24.dp, bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(gap), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -119,9 +116,7 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
             }
         }
     }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
-    }
+    removal.confirmation()
 }
 
 @Composable
