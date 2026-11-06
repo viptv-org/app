@@ -78,6 +78,16 @@ class SettingsRowValueTest {
         assertTrue(value < label, "the value is bounded by its share, was $value wide beside a $label label")
     }
 
+    @Test fun aShortValueHugsTheEndOfTheRow() {
+        val scene = scene(390, 200) { Row { Text("Approved titles", Modifier.weight(1f)); SettingsRowValue("12") } }
+        try {
+            render(scene)
+            val short = node(scene, "12").boundsInRoot
+            assertEquals(390f, short.right, 1f, "a short value ends where the row ends, beside the chevron")
+            assertTrue(short.left > 200f, "the label keeps its share, the value starts at ${short.left}")
+        } finally { scene.close() }
+    }
+
     @Test fun aWideRowStillShowsTheWholeValue() {
         val (narrowLabel, narrowValue) = labelAndValueWidth(390)
         val (wideLabel, wideValue) = labelAndValueWidth(1280)
