@@ -47,7 +47,7 @@ internal class TvBannerFocus {
 
 internal val LocalTvBannerFocus = compositionLocalOf<TvBannerFocus?> { null }
 
-private val IconGround = Color(0xFF2A2A2E)
+private val IconGround = Palette.surface3
 
 internal fun backendBannerScreen(screen: Screen): Boolean = screen !in setOf(
     Screen.Connect, Screen.RecoveryCodes, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit, Screen.Player)

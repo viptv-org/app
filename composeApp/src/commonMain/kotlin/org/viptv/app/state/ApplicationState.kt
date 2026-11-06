@@ -72,6 +72,8 @@ data class ApplicationState(
     val continueWatching: ContinueWatchingList? = null,
     val continueWatchingPageError: String? = null,
     val continueUndo: ContinueUndo? = null,
+    val myListUndo: MyListUndo? = null,
+    val notice: AppNotice? = null,
     val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),

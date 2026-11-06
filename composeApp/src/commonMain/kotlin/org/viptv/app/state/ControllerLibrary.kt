@@ -8,6 +8,7 @@ import org.viptv.engine.wire.*
 
 fun ApplicationController.toggleFavorite(card: Card) {
     val saved = mutable.value.isSaved(card)
+    val index = if (saved) mutable.value.savedIndex(card) else -1
     mutate(saveTarget(card), optimistic = { it.withSavedOverride(card, !saved) }, revert = { it.withSavedOverride(card, null) },
         ownsControllerJob = true) {
         val profile = requireNotNull(mutable.value.selectedProfile)
@@ -26,7 +27,14 @@ fun ApplicationController.toggleFavorite(card: Card) {
         if (!wasSaved) adoptFavoriteAssertions(favorite)
         reloadMyListAfterWrite(unsaved = if (wasSaved) card else null)
         updateState { it.withSavedOverride(card, null) }
+        if (wasSaved) offerMyListUndo(card, index) else showNotice(ADDED_TO_MY_LIST)
     }
+}
+
+// The notice answers every trigger of the write: the page's Remove action, the title menu and a card's star.
+private fun ApplicationController.offerMyListUndo(card: Card, index: Int) {
+    val profile = mutable.value.selectedProfile ?: return
+    updateState { it.withRemovalNotice(REMOVED_FROM_MY_LIST, ++noticeSerial, myList = MyListUndo(profile, card, index)) }
 }
 
 // The control the viewer pressed flips in the same frame; the write then settles it.
@@ -50,6 +58,7 @@ internal fun ApplicationState.isSavedByHost(card: Card): Boolean {
 // The card leaves at once; the re-read then agrees with the host on membership and the page.
 fun ApplicationController.removeFromMyList(card: Card) {
     val before = mutable.value
+    val index = before.savedIndex(card)
     mutate(saveTarget(card),
         optimistic = { it.withoutSavedCard(card).withSavedOverride(card, false) },
         revert = { it.copy(library = before.library, libraryPage = before.libraryPage, home = before.home,
@@ -65,6 +74,7 @@ fun ApplicationController.removeFromMyList(card: Card) {
         loadLibrary()
         reloadMyListAfterWrite(unsaved = card)
         updateState { it.withSavedOverride(card, null) }
+        offerMyListUndo(card, index)
     }
 }
 

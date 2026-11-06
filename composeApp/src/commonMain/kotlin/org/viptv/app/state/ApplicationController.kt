@@ -64,6 +64,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var rememberedNavigationProfile: String? = null
     internal var continueChecked: ContinueCheck? = null
     internal var continueVisibilityJob: Job? = null
+    // A newer notice restarts the toast's timer, so each one carries its own serial.
+    internal var noticeSerial = 0L
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null

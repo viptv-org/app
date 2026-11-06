@@ -35,7 +35,6 @@ import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.features.home.MediaCard
-import org.viptv.app.state.ContinueUndo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -48,7 +47,7 @@ internal const val REMOVE_CONTINUE_LABEL = "Remove from Continue Watching"
 @Composable
 internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, back: () -> Unit, home: () -> Unit,
-    remove: ((Card) -> Unit)? = null, undo: ContinueUndo? = null, undoRemove: () -> Unit = {}) {
+    remove: ((Card) -> Unit)? = null) {
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore("continue")
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
@@ -86,7 +85,6 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                                 textAlign = TextAlign.Start)
                         }
                         page.error?.let { Text(it, color = Palette.danger) }
-                        if (undo != null) RemovedNotice(undo, undoRemove)
                     }
                 }
                 when {
@@ -123,17 +121,6 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
     }
     confirming?.let { card ->
         ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
-    }
-}
-
-@Composable
-internal fun RemovedNotice(undo: ContinueUndo, undoRemove: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Palette.surface)
-        .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Removed “${undo.card.title}” from Continue Watching.", Modifier.weight(1f), fontSize = 13.sp,
-            lineHeight = 18.sp, color = Palette.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        TextButton(onClick = undoRemove) { Text("Undo", fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 
