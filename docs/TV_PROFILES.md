@@ -4,7 +4,7 @@
 avatars at 380 px, 56 px gaps, 20 px name spacing, 4 px focus borders, and a
 300×72 Manage profiles button at 780 px. The centered lazy row includes its
 edge padding in its measured width so the first avatar starts at the supplied
-348 px when four profiles plus Add profile are present.
+348 px when four profiles plus Add a profile are present.
 
 Focus frames fade over 120 ms without scaling the artwork. Down from each
 profile or Add reaches Manage profiles; Up returns to the first profile. With
@@ -25,8 +25,8 @@ the next profile, Down into Manage profiles, Manage/Done state changes, and a
 supplied locked-profile marker. This is preview interaction evidence, not a new
 claim about backend authentication or profile persistence.
 
-A subsequent render check confirmed the focus frame is white, and the empty
-local picker initially focuses Add profile and opens the existing name dialog.
+The focus frame is white; an empty local picker focuses Add a profile and opens
+the name dialog.
 
 Profile tiles now enter with the supplied 450 ms fade/16 px rise and 60 ms
 per-item stagger. Tween owns the delay; completed animation state is kept above
