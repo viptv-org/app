@@ -24,8 +24,10 @@ internal fun TvSettingsChoiceDialog(choice: TvSettingsChoice, scale: Float, dism
     TvDialogPanel(scale, choice.title, stops = stops, focus = stops.getOrElse(checked) { stops.first() }, dismiss = dismiss, actions = {
         TvDialogAction(scale, "Cancel", stop = cancel) { dismiss() }
     }) {
-        choice.values.forEachIndexed { index, value ->
-            TvDialogChoiceRow(value, selected = index == checked, scale = scale, stop = stops[index]) { choice.select(value); dismiss() }
+        Column(verticalArrangement = Arrangement.spacedBy((8 * scale).dp)) {
+            choice.values.forEachIndexed { index, value ->
+                TvDialogChoiceRow(value, selected = index == checked, scale = scale, stop = stops[index]) { choice.select(value); dismiss() }
+            }
         }
     }
 }

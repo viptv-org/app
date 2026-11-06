@@ -22,6 +22,9 @@ import org.junit.Rule
 import org.viptv.app.features.settings.TvDialogPanelTag
 import org.viptv.app.features.settings.TvSettingsChoice
 import org.viptv.app.features.settings.TvSettingsChoiceDialog
+import org.viptv.app.features.settings.TvSettingsPreferences
+import org.viptv.app.features.settings.TvSettingsScreen
+import org.viptv.app.features.settings.TvSettingsSection
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import java.io.File
@@ -36,11 +39,13 @@ class TvSettingsChoiceDialogUiTest {
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private companion object {
-        val captures = File("/tmp/viptv-1068-choice").apply { deleteRecursively(); mkdirs() }
+        val captures = File("/tmp/viptv-1068-choice2").apply { deleteRecursively(); mkdirs() }
     }
 
-    private val languages = listOf("Original language", "English", "Spanish", "Portuguese", "French", "German",
-        "Italian", "Japanese", "Korean", "Mandarin", "Polish", "Russian")
+    // The list the Subtitle language row offers today.
+    private val languages = listOf("Default", "English", "Spanish", "Portuguese", "French", "German")
+
+    private val longList = languages + listOf("Italian", "Japanese", "Korean", "Mandarin", "Polish", "Russian")
 
     private var picked: String? = null
     private var dismissals = 0
@@ -68,6 +73,10 @@ class TvSettingsChoiceDialogUiTest {
         fun row(text: String) = nodes().firstOrNull {
             it.config.contains(SemanticsActions.OnClick) && label(it) == text
         }
+        // A settings row reads "Subtitle language Spanish": its name and the value it shows.
+        fun rowNamed(name: String) = nodes().firstOrNull {
+            it.config.contains(SemanticsActions.OnClick) && (label(it) == name || label(it).startsWith("$name "))
+        }
         fun focused(): String? = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::label)
         fun checked(): List<String> = nodes().filter { it.config.getOrNull(SemanticsProperties.Selected) == true }.map(::label)
 
@@ -80,9 +89,26 @@ class TvSettingsChoiceDialogUiTest {
 
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    private fun dialog(current: String?) = Panel("languages") {
-        TvSettingsChoiceDialog(TvSettingsChoice("Subtitle language", languages, current) { picked = it },
+    private fun dialog(current: String?, values: List<String> = languages, capture: String = "languages") = Panel(capture) {
+        TvSettingsChoiceDialog(TvSettingsChoice("Subtitle language", values, current) { picked = it },
             scale = 1f, dismiss = { dismissals++ })
+    }
+
+    @Test fun theSettingsPaneHandsTheRowItsOwnValue() = onEdt {
+        val prefs = TvSettingsPreferences(subtitleLanguage = "Spanish")
+        Panel("pane") {
+            TvSettingsScreen(local = false, addons = emptyList(), enabled = emptySet(), busy = false, error = null, notice = null,
+                install = {}, toggle = { _, _ -> }, profiles = {}, leave = {}, profile = null,
+                initialSection = TvSettingsSection.Subtitles, prefs = prefs, change = { _, _ -> })
+        }.use { panel ->
+            panel.settle(40)
+            val row = assertNotNull(panel.rowNamed("Subtitle language"), "the pane offers the row: ${panel.labels()}")
+            assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke(), "the row opens its list")
+            panel.settle()
+            assertEquals(listOf("Spanish"), panel.checked(),
+                "the pane passes the value its row shows, so the list checks it: ${panel.labels()}")
+            panel.capture()
+        }
     }
 
     @Test fun theCurrentValueIsCheckedAndTakesFocusFirst() = onEdt {
@@ -114,13 +140,13 @@ class TvSettingsChoiceDialogUiTest {
     }
 
     @Test fun aLongListScrollsThePanelToKeepTheFocusedValueInView() = onEdt {
-        dialog("Original language").use { panel ->
+        dialog("Default", longList, capture = "scrolled").use { panel ->
             panel.settle()
             val frame = assertNotNull(panel.panel(), "the list draws the TV panel").boundsInRoot
             val down = androidx.compose.ui.input.key.KeyEvent(androidx.compose.ui.input.key.Key.DirectionDown,
                 androidx.compose.ui.input.key.KeyEventType.KeyDown)
             var seen = 0
-            for (step in languages.indices) {
+            for (step in longList.indices) {
                 panel.scene.sendKeyEvent(down)
                 panel.settle(6)
                 val name = panel.focused() ?: continue
@@ -129,7 +155,7 @@ class TvSettingsChoiceDialogUiTest {
                     "step $step: “$name” stays inside the panel at ${bounds.top}..${bounds.bottom} of ${frame.top}..${frame.bottom}")
                 seen++
             }
-            assertEquals(languages.size, seen, "the remote walks every value")
+            assertEquals(longList.size, seen, "the remote walks every value")
             panel.capture()
         }
     }
@@ -147,9 +173,9 @@ class TvSettingsChoiceDialogUiTest {
         dismissals = 0
         dialog("English").use { panel ->
             panel.settle()
-            assertTrue(panel.row("Korean")!!.config[SemanticsActions.OnClick].action!!.invoke(), "Korean takes the press")
+            assertTrue(panel.row("German")!!.config[SemanticsActions.OnClick].action!!.invoke(), "German takes the press")
             panel.settle(8)
-            assertEquals("Korean", picked, "the pick applies")
+            assertEquals("German", picked, "the pick applies")
             assertEquals(1, dismissals, "the pick closes the panel")
         }
     }

@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -82,14 +83,21 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
             BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // The body scrolls; the title and the actions never leave the panel, however short the window.
                 val panelHeight = maxHeight * .92f
+                val scroll = rememberScrollState()
                 Column(Modifier.testTag(TvDialogPanelTag).width((860 * scale).dp).heightIn(max = panelHeight).clip(RoundedCornerShape((24 * scale).dp))
                     .background(Palette.raised)) {
-                    Text(title, Modifier.padding(start = (48 * scale).dp, top = (48 * scale).dp, end = (48 * scale).dp),
+                    Text(title, Modifier.padding(start = (48 * scale).dp, top = (48 * scale).dp, end = (48 * scale).dp,
+                        bottom = (16 * scale).dp),
                         fontSize = (44 * scale).sp, lineHeight = (50 * scale).sp, letterSpacing = (-.88f * scale).sp,
                         fontWeight = FontWeight.Bold)
-                    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
-                        .padding(start = (48 * scale).dp, top = (24 * scale).dp, end = (48 * scale).dp)) {
-                        body()
+                    Box(Modifier.weight(1f, fill = false)) {
+                        Column(Modifier.fillMaxWidth().verticalScroll(scroll)
+                            .padding(start = (48 * scale).dp, top = (8 * scale).dp, end = (48 * scale).dp)) {
+                            body()
+                        }
+                        // A scrolled row fades under the title instead of peeking out as a clipped sliver.
+                        if (scroll.value > 0) Box(Modifier.fillMaxWidth().height((20 * scale).dp)
+                            .background(Brush.verticalGradient(listOf(Palette.raised, Palette.raised.copy(alpha = 0f)))))
                     }
                     FlowRow(Modifier.fillMaxWidth().padding(start = (48 * scale).dp, end = (48 * scale).dp, top = (36 * scale).dp,
                         bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp, Alignment.Start),
