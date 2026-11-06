@@ -22,18 +22,35 @@ import org.viptv.engine.wire.IntegrationConnection
 // OK on a TV add-on row toggles the switch, so its other actions live on a hold.
 @Composable
 internal fun TvAddonManageDialog(addon: IntegrationConnection, enabled: Boolean, configurable: Boolean, busy: Boolean,
-    scale: Float, toggle: (Boolean) -> Unit, reconfigure: () -> Unit, dismiss: () -> Unit) {
-    val stops = rememberTvDialogStops(2 + if (configurable) 1 else 0)
+    scale: Float, toggle: (Boolean) -> Unit, reconfigure: () -> Unit, remove: () -> Unit, dismiss: () -> Unit) {
+    val stops = rememberTvDialogStops(2 + (if (configurable) 1 else 0) + 1)
     val first = stops.first()
+    val removeStop = stops[stops.size - 2]
     val dismissStop = stops.last()
     TvDialogPanel(scale, "Manage ${addon.name}", stops, first, dismiss, actions = {
         TvDialogAction(scale, if (enabled) "Disable" else "Enable", first, enabled = !busy) { toggle(!enabled) }
         if (configurable) {
             TvDialogAction(scale, "Reconfigure", stops[stops.size - 2], enabled = !busy) { reconfigure() }
         }
+        TvDialogAction(scale, "Remove addon", removeStop, danger = true, enabled = !busy) { remove() }
         TvDialogAction(scale, "Cancel", dismissStop, enabled = true) { dismiss() }
     }) {
         Text(addon.providesSummary().ifBlank { "This add-on is installed for this account." },
+            color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
+    }
+}
+
+@Composable
+internal fun TvAddonRemoveDialog(addon: IntegrationConnection, local: Boolean, busy: Boolean, pending: Boolean, scale: Float,
+    confirm: () -> Unit, dismiss: () -> Unit) {
+    val stops = rememberTvDialogStops(2)
+    val dismissStop = stops.first()
+    val removeStop = stops.last()
+    TvDialogPanel(scale, "Remove ${addon.name}?", stops, dismissStop, dismiss, actions = {
+        TvDialogAction(scale, "Cancel", dismissStop, enabled = !busy) { dismiss() }
+        TvDialogAction(scale, if (pending) "Removing…" else "Remove", removeStop, danger = true, enabled = !pending) { confirm() }
+    }) {
+        Text(if (local) "Its catalogs leave this device." else "This removes the add-on from this account and its profiles.",
             color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
     }
 }

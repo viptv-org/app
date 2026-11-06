@@ -72,7 +72,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             addonLogos = addonLogos,
             addonsManageable = addonsManageable, addonTarget = addonTarget,
             configurableAddons = configurableAddons, configureAddon = configureAddon,
-            addonConfigure = addonConfigure, dismissAddonConfigure = dismissAddonConfigure)
+            addonConfigure = addonConfigure, dismissAddonConfigure = dismissAddonConfigure, removeAddon = remove)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
