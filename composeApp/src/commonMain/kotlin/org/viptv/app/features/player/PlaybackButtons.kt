@@ -92,7 +92,7 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < CompactButtonsBelow) Column {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                playPause(); skipBack(); skipForward(); nextAction(); muteAction(); closeAction()
+                skipBack(); playPause(); skipForward(); nextAction(); muteAction(); closeAction()
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 episodesIcon()
@@ -100,10 +100,11 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
                 tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill)
             }
         } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            playPause(); skipBack(); skipForward(); nextAction(); muteAction()
-            PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
+            skipBack(); playPause(); skipForward(); nextAction()
             Spacer(Modifier.weight(1f))
-            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill); fullscreenAction(); closeAction()
+            episodesAction(); streamsAction(Modifier); tracksAction(); muteAction()
+            PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
+            speedAction(); PlaybackFitFill(fill, toggleFill); fullscreenAction(); closeAction()
         }
     }
 }
