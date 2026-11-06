@@ -140,7 +140,7 @@ class BottomClearanceUiTest {
         add(Case("Settings › Account") { AccountIdentityScreen(AccountIdentity("1", "viewer", "Viewer", "owner"), false, null, {}) })
         add(Case("Settings › Profile") {
             ProfileSettingsPage(ProfilePageValues(profile = Profile("1", "Viewer", null), local = false),
-                false, null, 0L, ProfilePageActions(), SettingsLayout.Phone)
+                false, null, 0L, null, ProfilePageActions(), SettingsLayout.Phone)
         })
         add(Case("Settings › Playback") { PhoneProfilePreferences("Playback", null, false, null, {}, {}) })
         add(Case("Settings › Subtitles & audio") { PhoneProfilePreferences("Subtitles & audio", null, false, null, {}, {}) })

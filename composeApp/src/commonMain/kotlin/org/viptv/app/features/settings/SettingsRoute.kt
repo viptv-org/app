@@ -79,9 +79,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
-        householdPin = if (ownerWrites) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
+        householdPin = if (accountSession) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
-            controller::unlockParentControls, controller::changeParentPin, compact = compact) }) else null,
+            controller::unlockParentControls, controller::changeParentPin, compact = compact, canManage = ownerWrites) }) else null,
         password = if (accountSession) passwordPage else null,
         deleteAccount = if (accountSession) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
             DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
@@ -149,7 +149,7 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles,
-                openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
+                openHouseholdPin = if (accountSession) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
             else ParentControlsNative({ controller.navigate(Screen.Profiles) }, compact = compact)
         },
         tvParental = ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
