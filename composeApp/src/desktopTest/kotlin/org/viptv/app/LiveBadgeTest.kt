@@ -21,6 +21,7 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.LiveRed
+import org.viptv.app.components.withoutLiveTag
 import org.viptv.app.features.live.LiveChannel
 import org.viptv.app.features.live.LivePreview
 import org.viptv.app.features.live.LiveProgram
@@ -47,8 +48,9 @@ class LiveBadgeTest {
     }
 
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(false) }
-    private fun drawsLive(scene: ImageComposeScene) = nodes(scene).any { node ->
-        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "LIVE" } == true
+    private fun drawsLive(scene: ImageComposeScene) = words(scene, "LIVE") > 0
+    private fun words(scene: ImageComposeScene, word: String) = nodes(scene).count { node ->
+        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == word } == true
     }
 
     @Test fun theBadgeGroundsTheWordOnTheSameGlassAtEverySize() {
@@ -81,6 +83,22 @@ class LiveBadgeTest {
                 assertTrue(dot.any { it == LiveRed.toArgb() }, "${size.first}px: the badge carries the LIVE red dot")
             } finally { scene.close() }
         }
+    }
+
+    @Test fun aCardLiveTagDoesNotSayLiveTwiceBesideTheBadge() {
+        val tagged = channel.copy(card = channel.card.copy(badges = listOf("LIVE", "1080p")))
+        val surfaces = listOf(
+            Triple(390 to 260, false, @Composable { LivePreview(tagged, program, 15, phone = true, television = false, scale = 1f, watch = {}, favourite = null) }),
+            Triple(1920 to 1080, true, @Composable { TvLivePreview(tagged, program, 15, 1f, favorite = null, watch = {}) }),
+        )
+        for ((size, television, content) in surfaces) {
+            val scene = scene(size.first, size.second, television, content)
+            try {
+                assertEquals(1, words(scene, "LIVE"), "${size.first}px: the badge is the only LIVE on the surface")
+            } finally { scene.close() }
+        }
+        assertEquals(listOf("1080p"), listOf("LIVE", "1080p").withoutLiveTag(), "the tag row keeps every other tag")
+        assertEquals(listOf("1080p"), listOf("live", "1080p").withoutLiveTag(), "the tag is matched however the add-on spells it")
     }
 
     @Test fun nothingElseDrawsALiveBadgeOfItsOwn() {

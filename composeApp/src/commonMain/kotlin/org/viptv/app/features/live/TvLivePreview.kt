@@ -27,6 +27,7 @@ import org.viptv.app.theme.Scrim
 import org.viptv.app.components.FavouriteStar
 import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.withoutLiveTag
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.LocalPendingMutation
@@ -58,7 +59,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                 Text("${liveTime(it.start)} – ${liveTime(it.end, true)}${liveRangeStatus(it, now)}", fontSize = (24 * scale).sp,
                     lineHeight = (30 * scale).sp, color = Palette.body, fontWeight = FontWeight.Medium)
-                channel.card.badges.forEach { TvMediaBadge(it, scale) }
+                channel.card.badges.withoutLiveTag().forEach { TvMediaBadge(it, scale) }
             }
             it.description.providerText()?.let { description -> Text(description, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp,
                 color = Palette.body, maxLines = 2) }

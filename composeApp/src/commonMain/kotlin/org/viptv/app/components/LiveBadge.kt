@@ -25,6 +25,9 @@ import org.viptv.app.theme.Palette
 
 internal val LiveRed = Color(0xFFFF5A4E)
 
+// The badge already says LIVE: a card's own LIVE tag in the row beside it would say it twice.
+internal fun List<String>.withoutLiveTag() = filterNot { it.equals("LIVE", true) }
+
 // The glass fill is what grounds the word: a solid badge in the same red reads under 4.5:1.
 @Composable
 internal fun LiveBadge(modifier: Modifier = Modifier, scale: Float = 1f, television: Boolean = false) {
