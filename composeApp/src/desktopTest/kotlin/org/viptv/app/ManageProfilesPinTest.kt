@@ -24,7 +24,6 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,7 +99,7 @@ class ManageProfilesPinTest {
 
     private inner class Host(compact: Boolean, width: Int, height: Int, television: Boolean = false) : AutoCloseable {
         private val json = headersOf(HttpHeaders.ContentType, "application/json")
-        val writes = ConcurrentLinkedQueue<String>()
+        val writes = EngineRequests<String>()
         private var unlocked = false
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
