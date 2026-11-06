@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import androidx.compose.foundation.layout.fillMaxSize
 import kotlinx.coroutines.withTimeout
+import org.junit.Rule
 import org.viptv.app.connection.*
 import org.viptv.app.features.settings.addonConfigureFailureText
 import org.viptv.app.state.*
@@ -123,10 +124,9 @@ class AddonReconfigureTest {
     }
 }
 
-@org.junit.runner.RunWith(org.junit.runners.JUnit4::class)
 class AddonReconfigureRenderTest {
-    @get:org.junit.Rule val uiThread = UiThreadRule()
-    @get:org.junit.Rule val deterministicImages = DeterministicImageLoaderRule()
+    @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     private fun addon(index: Int) = org.viptv.engine.wire.IntegrationConnection("addon:$index", "stremio", "1", null,
         "Fixture $index", true, 1, listOf(org.viptv.engine.wire.Capability.DISCOVERY))
@@ -145,7 +145,7 @@ class AddonReconfigureRenderTest {
         override fun close() = scene.close()
     }
 
-    @org.junit.Test fun rendersForEvidence(): Unit = runBlocking {
+    @Test fun rendersForEvidence(): Unit = runBlocking {
         val dir = System.getenv("VIPTV_RECONFIGURE_CAPTURE_DIR") ?: return@runBlocking
         val addons = (1..4).map(::addon)
         Shot(1280, 800, television = false) {
