@@ -89,7 +89,7 @@ private fun ApplicationController.pageWrite(target: MutationTarget, operation: s
     try { operation() } finally { updateState { it.copy(mutations = it.mutations.settled(target)) } }
 }
 
-private suspend fun ApplicationController.unlockHousehold(remote: RemoteConnection?, pin: String) {
+internal suspend fun ApplicationController.unlockHousehold(remote: RemoteConnection?, pin: String) {
     if (remote == null || pin.isEmpty()) return
     if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
     remote.unlockParent(pin)

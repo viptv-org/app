@@ -83,7 +83,7 @@ class MergedCalendarAppUiTest {
 
     private fun art(name: String) = Res.getUri("files/ui-preview/$name")
 
-    private val metaOffsets = mutableListOf<Int>()
+    private val metaOffsets = EngineRequests<Int>()
     private val slowHorses get() = MergedCalendarWire.seriesCard("Slow Horses").copy(poster = art("poster3.jpg"),
         landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series.")
     private val allEpisodes = (1L..5L).flatMap { season -> (1L..6L).map { season to it } }
@@ -131,7 +131,7 @@ class MergedCalendarAppUiTest {
         assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
         s.until("season 5's episodes") { s.nodes().any { text(it).contains("Episode 5-3") } }
         assertTrue(s.nodes().any { text(it).contains("Season 5") }, "Season 5 is selected")
-        assertTrue(24 in synchronized(metaOffsets) { metaOffsets.toList() }, "Season 5 loads through Details paging: $metaOffsets")
+        assertTrue(24 in metaOffsets.snapshot(), "Season 5 loads through Details paging: $metaOffsets")
         s.save("$name-details-from-calendar")
     }
 
@@ -267,7 +267,7 @@ class MergedCalendarAppUiTest {
                 path == "/api/calendar" -> page
                 path.startsWith("/api/meta/series/") -> {
                     val offset = request.url.parameters["offset"]?.toInt() ?: 0
-                    synchronized(metaOffsets) { metaOffsets += offset }
+                    metaOffsets += offset
                     detailPage(offset, request.url.parameters["limit"]?.toInt() ?: 24)
                 }
                 else -> return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))

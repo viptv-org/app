@@ -87,7 +87,7 @@ class UnifiedSearchTest {
     }
 
     @Test fun olderServerWithoutGroupedSearchUsesItsExistingSearchRoute() = runBlocking {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             paths += request.url.encodedPath
             if (request.url.encodedPath == "/api/search/stream" || request.url.encodedPath == "/api/search") respond("{}", HttpStatusCode.NotFound,

@@ -129,7 +129,7 @@ class ReleaseFactsTest {
         }, sourceRankingRequest(candidates, heights))
         assertFalse("device_max_height" in sourceRankingRequest(candidates, RankingContext()))
         assertFalse("device_max_height" in sourceRankingRequest(candidates, RankingContext(device = DeviceCapability(maxHeight = 100))))
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/profiles/7/source-ranking", request.url.encodedPath)
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject

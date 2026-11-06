@@ -55,7 +55,7 @@ class HistoryCorrectionControllerTest {
 
     @Test fun markWatchedSendsActionWatchedOnceAndFlipsTheRow() = runBlocking<Unit> {
         val started = display("movie-1")
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val controller = controller { request ->
             when (request.url.encodedPath) {
                 "/api/profiles/4/progress/correct" -> {
@@ -79,7 +79,7 @@ class HistoryCorrectionControllerTest {
 
     @Test fun markUnwatchedAndASavedPositionSendTheExpectedBodies() = runBlocking<Unit> {
         val started = display("movie-1", watched = true, position = 100.0).copy(resumeActive = false)
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val controller = controller { request ->
             when (request.url.encodedPath) {
                 "/api/profiles/4/progress/correct" -> {

@@ -66,11 +66,12 @@ class StartupRefreshHandoffTest {
             }
             override suspend fun clear() { saved = null }
         }
-        val tokens = mutableListOf<String>()
+        val tokens = EngineRequests<String>()
         fun client() = HttpClient(MockEngine { request ->
             val body = if (request.url.encodedPath.endsWith("/refresh")) {
                 val token = Json.parseToJsonElement((request.body as TextContent).text).jsonObject.getValue("refresh_token").jsonPrimitive.content
-                val duplicate = synchronized(tokens) { val seen = token in tokens; tokens += token; seen }
+                val duplicate = token in tokens
+                tokens += token
                 if (duplicate) return@MockEngine respond("{}", HttpStatusCode.Unauthorized)
                 val next = if (token == "r1") "r2" else "r3"
                 """{"access_token":"access-$next","refresh_token":"$next"}"""

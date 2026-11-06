@@ -52,7 +52,7 @@ class AccountDevicesTest {
     }
 
     @Test fun nativeViewingConnectionsReadDevicesButCannotSignOut(): Unit = runBlocking {
-        val calls = mutableListOf<HttpMethod>()
+        val calls = EngineRequests<HttpMethod>()
         val remote = RemoteConnection("https://watch.example",store,HttpClient(MockEngine { request ->
             calls += request.method
             respond(accountFixture,HttpStatusCode.OK,headersOf(HttpHeaders.ContentType,"application/json"))

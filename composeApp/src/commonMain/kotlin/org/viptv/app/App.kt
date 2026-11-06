@@ -47,6 +47,7 @@ import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.features.settings.HouseholdPinDialog
+import org.viptv.app.features.settings.TvHouseholdPinDialog
 import org.viptv.app.features.settings.LocalTvDisplayState
 import org.viptv.app.features.settings.rememberSystemReducedMotion
 import org.viptv.app.features.settings.rememberTvDisplayState
@@ -220,9 +221,6 @@ fun App(
                         controller::selectProfile, controller::editProfile, controller::manageProfiles, controller::stopManagingProfiles, controller::createProfile, television,
                         // The picker opened by Back from Home has no arrow: Back leaves the app.
                         back = if (state.selectedProfile != null && !state.profilesFromHome) controller::navigateBack else null)
-                    if (state.householdPinFor != null) HouseholdPinDialog("Switch profile", state.busy, state.error,
-                        controller::cancelHouseholdSwitch, controller::submitHouseholdSwitch,
-                        note = "Enter the household PIN to switch profiles.")
                 }
                 Screen.ProfilePin -> ProfilePinScreen(state.profiles.find { it.id == (state.leavePinFrom ?: state.profileToOpen) }, compact,
                     state.busy, state.error, controller::submitProfilePin, controller::navigateBack, television,
@@ -381,6 +379,13 @@ fun App(
                 val update = appUpdateAction(LocalAppUpdater.current)
                 AppUpdateRequiredNotice(television, update?.let { act -> { controller.dismissUpdateRequired(); act() } },
                     controller::dismissUpdateRequired)
+            }
+            state.householdPinTitle?.let { title ->
+                if (television) BoxWithConstraints(Modifier.fillMaxSize()) {
+                    TvHouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                        controller::submitHouseholdPin, scale = maxWidth / 1920.dp)
+                } else HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                    controller::submitHouseholdPin)
             }
         }
     }

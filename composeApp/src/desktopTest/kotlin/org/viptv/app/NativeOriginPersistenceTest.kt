@@ -17,7 +17,7 @@ class NativeOriginPersistenceTest {
         val directory = Files.createTempDirectory("viptv-native-origin-bridge-")
         val path = directory.resolve("local.sqlite").toString()
         val ids = mutableMapOf("first.example" to "tt1111111", "second.example" to "tt2222222")
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val secrets = object : SecretStore {
             val values = ConcurrentHashMap<String, String>()
             override fun get(key: String) = values[key]
@@ -27,7 +27,7 @@ class NativeOriginPersistenceTest {
         fun client() = HttpClient(MockEngine { request ->
             val host = request.url.host; val route = request.url.encodedPath
             val metadataId = if (route.endsWith("/other.json")) "other" else "opaque"
-            synchronized(requests) { requests += "$host$route" }
+            requests += "$host$route"
             val body = when {
                 "/meta/" in route -> """{"meta":{"id":"$metadataId","type":"movie","name":"$host title","imdb_id":"${ids.getValue(host)}"}}"""
                 "/stream/" in route -> """{"streams":[{"name":"$host 1080p","url":"https://media.example/$host.mp4"}]}"""

@@ -82,7 +82,7 @@ class TvDetailsFocusReturnTest {
         val releaseDetails = CompletableDeferred<Unit>()
         /** The title's first Details answers fail with the host's 404 (app#140's Retry). */
         private val failures = java.util.concurrent.atomic.AtomicInteger(detailFailures)
-        val pageOffsets = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val pageOffsets = EngineRequests<String>()
         private suspend fun MockRequestHandleScope.host(request: HttpRequestData) = when (request.url.encodedPath) {
             // The first page, or any later page the test is not holding: the fixture's own episodes,
             // so a page nobody asked for leaves the shelf as it was.

@@ -23,7 +23,7 @@ class RemotePlaybackTest {
     }
 
     @Test fun gatewayLeaseKeepsControlAuthenticatedAndStops() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             if (!request.url.encodedPath.startsWith("/api/auth/")) assertEquals("fixture-csrf", request.headers["x-csrf-token"])
             if (request.url.encodedPath.startsWith("/api/")) calls += "${request.method.value} ${request.url.encodedPath}"
@@ -63,7 +63,7 @@ class RemotePlaybackTest {
     }
 
     @Test fun directPlaybackRenewsWithoutGatewayFrameAcknowledgment() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             calls += request.url.encodedPath
             if (request.url.encodedPath.endsWith("/heartbeat")) assertEquals(0L, request.body.contentLength ?: 0L)
@@ -131,7 +131,7 @@ class RemotePlaybackTest {
         "delivery":{"kind":"native_torrent","live":false,"format":"original","position":12.5,"preferences":{"audio_language":null,"subtitle_language":null,"subtitles_enabled":false},"grant":{}}}"""
 
     @Test fun torrentGrantPlaysTheDevicesOwnRuntime() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         var sent: JsonObject? = null
         val client = HttpClient(MockEngine { request ->
             calls += "${request.method.value} ${request.url.encodedPath}"
@@ -179,7 +179,7 @@ class RemotePlaybackTest {
     }
 
     @Test fun failedLocalAcquisitionReleasesTheLease() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             calls += "${request.method.value} ${request.url.encodedPath}"
             respond(if (request.url.encodedPath == "/api/playback") """{"id":"lease","status":"starting"}"""
@@ -225,7 +225,7 @@ class RemotePlaybackTest {
 
     @Test fun cancellingStartingLeaseStopsIt() = runBlocking {
         val started = CompletableDeferred<Unit>()
-        val stopped = mutableListOf<String>()
+        val stopped = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             if (request.method == HttpMethod.Delete) stopped += request.url.encodedPath
             else if (request.method == HttpMethod.Get) { started.complete(Unit); awaitCancellation() }
@@ -267,7 +267,7 @@ class RemotePlaybackTest {
 
     @Test fun cancellingBeforeStartReplyCancelsByRequestAuthority() = runBlocking {
         val started = CompletableDeferred<Unit>()
-        val cancelled = mutableListOf<String>()
+        val cancelled = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             if (request.method == HttpMethod.Post) {
                 started.complete(Unit)
@@ -285,7 +285,7 @@ class RemotePlaybackTest {
     }
 
     @Test fun preparedDeliveryPreparesWithoutStartAndPromotesWithReplaces() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         var prepareBody: JsonObject? = null
         var promoteBody: JsonObject? = null
         val client = HttpClient(MockEngine { request ->

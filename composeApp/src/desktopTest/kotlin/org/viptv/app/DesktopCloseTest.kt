@@ -36,7 +36,7 @@ class DesktopCloseTest {
     }
 
     @Test fun closeSavesProgressAndReleasesLeaseBeforeExit() = runBlocking {
-        val events = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val events = EngineRequests<String>()
         val progress = CompletableDeferred<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             when {

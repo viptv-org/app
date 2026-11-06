@@ -124,7 +124,7 @@ class ChangePasswordTest {
         """{"account":{"id":"1","username":"viewer","name":"Viewer","role":"owner"},"capabilities":{"manage_account":$manageAccount}}"""
 
     @Test fun aWrongCurrentPasswordClearsThatFieldAndKeepsTheNewOne() {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond("""{"error_code":"password_incorrect","error":"That password is not correct."}""", HttpStatusCode.BadRequest, json)
@@ -205,7 +205,7 @@ class ChangePasswordTest {
     }
 
     @Test fun aSignedInPhoneChangesThePasswordToo() = runBlocking {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond(changedFixture, HttpStatusCode.OK, json)
@@ -219,7 +219,7 @@ class ChangePasswordTest {
     }
 
     @Test fun aChangedPasswordLeavesThePageAndSendsBothPasswords() {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val remote = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond(changedFixture, HttpStatusCode.OK, json)
