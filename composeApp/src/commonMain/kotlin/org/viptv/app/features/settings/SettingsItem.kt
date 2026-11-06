@@ -7,7 +7,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
@@ -24,7 +23,7 @@ internal fun SettingsItem(label: String, icon: ImageVector, subtitle: String? = 
             Text(label, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
             subtitle?.let { Text(it, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = Palette.secondary) }
         }
-        value?.let { Text(it, Modifier.widthIn(max = 150.dp), color = Palette.secondary, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        value?.let { SettingsRowValue(it) }
         Icon(Lucide.ChevronRight, null, Modifier.size(17.dp), tint = Palette.tertiary)
     }
 }
