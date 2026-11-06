@@ -20,8 +20,8 @@ import org.viptv.app.theme.Palette
 internal fun AccountIdentityScreen(identity: AccountIdentity?, busy: Boolean, error: String?, load: () -> Unit,
     notice: String? = null, compact: Boolean = false) {
     LaunchedEffect(Unit) { load() }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        if (!compact) Text("Account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        if (!compact) SettingsPaneTitle("Account")
         if (identity != null) {
             Column(Modifier.fillMaxWidth()) {
                 IdentityRow("Name", identity.name)

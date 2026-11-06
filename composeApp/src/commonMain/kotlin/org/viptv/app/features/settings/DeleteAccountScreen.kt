@@ -44,9 +44,9 @@ internal fun DeleteAccountScreen(identity: AccountIdentity?, pinConfigured: Bool
     val deleting = mutations.isPending(target)
     val failure = mutations.failure(target)
     val ready = confirmed && password.isNotEmpty() && pinOk && !busy && !deleting
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        if (!compact) Text("Delete account", fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold, color = Palette.danger)
+        if (!compact) SettingsPaneTitle("Delete account", color = Palette.danger)
         Text(if (identity != null) "This deletes ${identity.name}’s account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone."
             else "This deletes the account, its profiles, their history, My List, add-ons and paired devices. It cannot be undone.",
             fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary)

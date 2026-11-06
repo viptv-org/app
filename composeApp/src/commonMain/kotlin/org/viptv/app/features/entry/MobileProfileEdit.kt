@@ -127,7 +127,7 @@ private fun DeleteProfileDialog(profile: Profile?, busy: Boolean, pinAvailable: 
     var pin by remember(profile?.id) { mutableStateOf("") }
     AlertDialog(onDismissRequest = dismiss, title = { Text("Delete ${profile?.name}?") },
         text = { Column {
-            Text("This removes this profile’s history and add-on choices.")
+            Text("This permanently removes this profile’s watch history, favorites and preferences.")
             if (profile.requiresLocalPin(pinAvailable)) PinField(pin, onEscape = dismiss) { pin = it }
         } },
         confirmButton = { TextButton(onClick = { delete(pin) }, enabled = !busy && (!profile.requiresLocalPin(pinAvailable) || pin.length in 4..8)) { Text("Delete") } },

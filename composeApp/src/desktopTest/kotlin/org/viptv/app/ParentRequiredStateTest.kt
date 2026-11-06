@@ -6,6 +6,7 @@ import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
@@ -222,5 +223,33 @@ class ParentRequiredStateTest {
             controller.submitHouseholdPin("4821"); controller.settle()
             assertEquals(listOf("POST /api/parent/unlock", "POST /api/profiles"), writes.toList())
         } finally { remote.close() }
+    }
+
+    @Test fun aProfilePageSaveMarksItsDialogPendingUntilItLands() = runBlocking<Unit> {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            if (request.method == HttpMethod.Patch) {
+                started.complete(Unit); release.await()
+                respond("{}", headers = json)
+            } else respond(
+                when (request.url.encodedPath) {
+                    "/api/profiles" -> Json.encodeToString(parentFixture(kids = false, unlocked = true))
+                    "/api/bootstrap" -> bootstrap(parentFixture(kids = false, unlocked = true), "1")
+                    else -> "{}"
+                }, headers = json)
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
+        try {
+            controller.saveProfileName("Renamed", "")
+            started.await()
+            assertTrue(controller.state.value.mutations.isPending(profileMutationTarget(PROFILE_RENAME)),
+                "the dialog's Save draws its pending label while the write is in flight")
+            release.complete(Unit); controller.job!!.join()
+            assertFalse(controller.state.value.mutations.isPending(profileMutationTarget(PROFILE_RENAME)))
+            assertNull(controller.state.value.error)
+        } finally { release.complete(Unit); remote.close() }
     }
 }
