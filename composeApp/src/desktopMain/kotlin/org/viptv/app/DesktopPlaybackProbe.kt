@@ -26,7 +26,7 @@ internal class DesktopPlaybackProbe(private val result: Path?) {
             is PlayerFact.Tracks -> tracks.value = fact.options
             is PlayerFact.Status -> { status.value = fact.name; println("VIPTV_DESKTOP_QA: state=${fact.name}") }
             is PlayerFact.Presentation -> { proof = fact.proof.name; presented.value = true }
-            is PlayerFact.Buffered -> Unit
+            is PlayerFact.Buffered, PlayerFact.ProbableErrorSlate -> Unit
             PlayerFact.Failed, is PlayerFact.ControlFailed, PlayerFact.Undecodable -> failure = true
         }
     }

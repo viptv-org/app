@@ -70,6 +70,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
                 pendingAudio?.takeIf { id -> fact.options.audio.firstOrNull { it.selected }?.id == id }?.let { pendingAudio = null }
             }
             is PlayerFact.Buffered -> buffered = fact.ranges
+            PlayerFact.ProbableErrorSlate -> Unit
             is PlayerFact.Properties -> subtitleSize = fact.subtitleSize
             is PlayerFact.Status -> {
                 buffering = fact.name in PlaybackWaitingStatuses

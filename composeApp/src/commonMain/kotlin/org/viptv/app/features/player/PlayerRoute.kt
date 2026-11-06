@@ -49,6 +49,8 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         fallback = fallbackNotice?.let { PlayerFallbackNotice(it.reason, it.next.label, it.next.fallbackFacts()) },
         stopFallback = if (fallbackNotice != null) controller::stopBestMatchFallback else null,
         audioNotice = state.audioNotice,
+        slateProvider = state.playingSource?.presentation?.provider_name?.takeIf { it.isNotBlank() },
+        configureSource = controller::openPlayerAddons,
         nextSource = if (state.bestMatch != null) controller::playNextSource else null,
         openingSource = state.openingSource,
         fullscreen = fullscreen, toggleFullscreen = toggleFullscreen,

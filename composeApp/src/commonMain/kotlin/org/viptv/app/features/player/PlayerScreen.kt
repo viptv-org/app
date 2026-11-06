@@ -55,6 +55,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     openSettings: (() -> Unit)? = null,
     autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    slateProvider: String? = null, configureSource: (() -> Unit)? = null,
     preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null,
     failure: PlaybackFailure? = null, failedSource: String? = null) {
@@ -63,6 +64,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
             fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource,
+            slateProvider = slateProvider, configureSource = configureSource,
             failure = failure, failedSource = failedSource)
         return
     }
@@ -92,6 +94,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var subtitleError by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
     var pendingAudio by remember(playbackKey) { mutableStateOf<Int?>(null) }
     var audioError by remember(playbackKey) { mutableStateOf<Int?>(null) }
+    var slateNotice by remember(playbackKey) { mutableStateOf(false) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var undecodable by remember(playbackKey, input) { mutableStateOf(false) }
@@ -216,12 +219,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 fact.control == PlaybackControl.Track && pendingAudio != null -> { audioError = pendingAudio; pendingAudio = null }
                 else -> controlError = playbackControlErrorCopy
             }
+            PlayerFact.ProbableErrorSlate -> slateNotice = true
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.Undecodable -> { buffering = false; failed = true; undecodable = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
     LaunchedEffect(controlError) { if (controlError != null) { frameDelay(playbackControlErrorVisibleMillis); controlError = null } }
+    LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
@@ -341,7 +346,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }
-                if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
+                if (!stopped && slateNotice && phonePanel == null && !showTracks)
+                    PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
+                else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
                     PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }
