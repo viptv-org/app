@@ -79,6 +79,17 @@ class ListPageStatesScanTest {
         assertEquals(emptyList(), found, "copy.md owns Home's empty and failure strings")
     }
 
+    @Test fun everyCatalogPageDrawsTheSameEmptyAndFailedState() {
+        assertTrue(source("features/browse/CatalogPageState.kt").contains("PageState("), "the catalog states are the shared block")
+        for (page in listOf("features/browse/BrowseScreen.kt", "features/browse/BrowserBrowseScreen.kt",
+            "features/browse/TvBrowseScreen.kt")) {
+            val text = source(page)
+            assertTrue(text.contains("CatalogPageState("), "$page draws the shared catalog state")
+            assertFalse(text.contains("Nothing matches these filters\""), "$page never writes the headline itself")
+            assertFalse(text.contains("all \$count filters"), "$page never prints a raw filter count")
+        }
+    }
+
     @Test fun continueWatchingStatesComeFromTheSharedRule() {
         val page = source("features/continuewatching/ContinueWatchingRoute.kt")
         assertTrue(page.contains("val state get() = listPageState("), "the page state is the shared rule")

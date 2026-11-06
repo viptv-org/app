@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.theme.Palette
@@ -43,7 +44,8 @@ internal fun PageState(icon: ImageVector, title: String, message: String, action
     val television = layout == PageStateLayout.Tv
     if (television) TvRequestedFocus(focus, title, enabled)
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(Modifier.widthIn(max = if (television) 980.dp * scale else 440.dp).testTag(PAGE_STATE_TAG)
+        Column(Modifier.widthIn(max = when (layout) { PageStateLayout.Tv -> 980.dp * scale; PageStateLayout.Wide -> 620.dp; PageStateLayout.Phone -> 440.dp })
+            .testTag(PAGE_STATE_TAG)
             .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(when (layout) { PageStateLayout.Tv -> 18.dp * scale; PageStateLayout.Wide -> 10.dp; PageStateLayout.Phone -> 12.dp })) {
@@ -54,7 +56,8 @@ internal fun PageState(icon: ImageVector, title: String, message: String, action
             else Icon(icon, null, Modifier.size(30.dp), tint = Palette.text)
             Text(title, Modifier.semantics { heading() }, fontSize = (if (television) 44 * scale else 22f).sp,
                 lineHeight = (if (television) 50 * scale else 25f).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            if (message.isNotBlank()) Text(message, color = Palette.secondary,
+            if (message.isNotBlank()) Text(message, Modifier.widthIn(max = if (layout == PageStateLayout.Wide) 440.dp else Dp.Unspecified),
+                color = Palette.secondary,
                 fontSize = (when (layout) { PageStateLayout.Tv -> 26 * scale; PageStateLayout.Wide -> 14f; PageStateLayout.Phone -> 15f }).sp,
                 lineHeight = (when (layout) { PageStateLayout.Tv -> 38 * scale; PageStateLayout.Wide -> 20f; PageStateLayout.Phone -> 22f }).sp,
                 textAlign = TextAlign.Center)
@@ -95,6 +98,6 @@ private fun PageStateActionButton(action: PageStateAction, layout: PageStateLayo
             contentColor = if (action.primary) Palette.background else Palette.text),
         contentPadding = PaddingValues(horizontal = if (phone) 18.dp else 16.dp)) {
         action.icon?.let { Icon(it, null, Modifier.size(17.dp)); Spacer(Modifier.width(7.dp)) }
-        Text(action.label, fontSize = (if (phone) 15 else 14).sp, fontWeight = FontWeight.Bold)
+        Text(action.label, fontSize = (if (phone) 15 else 14).sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
