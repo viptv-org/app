@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.*
+import org.viptv.app.features.sources.sourceSettingsSection
 import org.viptv.engine.wire.LiveQuery
 import kotlinx.coroutines.CancellationException
 
@@ -205,9 +206,15 @@ fun ApplicationController.showSettingsPage(page: SettingsPage) {
         updateState { it.copy(settingsPage = page, settingsAddonTarget = it.settingsAddonTarget.takeIf { page.section == "Add-ons" }) }
 }
 
-fun ApplicationController.openAddonsSettings() {
-    updateState { it.copy(settingsEntrySection = "Add-ons", settingsPage = null) }
+fun ApplicationController.openAddonsSettings() = openSettingsSection("Add-ons")
+
+fun ApplicationController.openSettingsSection(section: String) {
+    updateState { it.copy(settingsEntrySection = section, settingsPage = null) }
     navigate(Screen.Settings)
+}
+
+fun ApplicationController.configureSource(providerId: String) {
+    sourceSettingsSection(providerId)?.let { openSettingsSection(it) }
 }
 
 private fun ApplicationController.backWithinSettings(): Boolean {
