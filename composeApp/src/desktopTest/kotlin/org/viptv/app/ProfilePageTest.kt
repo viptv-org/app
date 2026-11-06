@@ -131,7 +131,7 @@ class ProfilePageTest {
 
     @Test fun turningKidsOnAsksForTheHouseholdPinWhileTheSessionHasNotEnteredIt() {
         Page(ProfilePageValues(profile = profile(), local = false, kids = false, maxAge = null,
-            householdPinConfigured = true, householdUnlocked = false)).use { page ->
+            policy = parentKids(false, 12), householdPinConfigured = true, householdUnlocked = false)).use { page ->
             page.render()
             page.click("Kids profile")
             assertTrue(page.shows("Turn on Kids profile"))
@@ -140,7 +140,8 @@ class ProfilePageTest {
             assertEquals(listOf("kids:true:4821"), calls)
         }
         calls.clear()
-        Page(ProfilePageValues(profile = profile(), local = false, kids = false, householdPinConfigured = false)).use { page ->
+        Page(ProfilePageValues(profile = profile(), local = false, kids = false, policy = parentKids(false, 12),
+            householdPinConfigured = false)).use { page ->
             page.render()
             page.click("Kids profile")
             assertEquals(listOf("kids:true:"), calls, "a session that already unlocked the limit saves without a prompt")
@@ -149,7 +150,7 @@ class ProfilePageTest {
 
     @Test fun turningKidsOffSavesWithoutAPin() {
         Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13,
-            householdPinConfigured = true, householdUnlocked = false)).use { page ->
+            policy = parentKids(true, 13), householdPinConfigured = true, householdUnlocked = false)).use { page ->
             page.render()
             page.click("Kids profile")
             assertEquals(listOf("kids:false:"), calls)
@@ -158,7 +159,7 @@ class ProfilePageTest {
 
     @Test fun theMaturityRowEditsTheSamePerTypeRatingsAsParentalControls() {
         Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
-            movieRating = "PG", seriesRating = "TV-PG", ratings = parentRatings, approvedTitles = 2)).use { page ->
+            policy = parentKids(true, 10, "PG", "TV-PG"), approvedTitles = 2)).use { page ->
             page.render()
             assertTrue(page.shows("Maturity limit"), "the row appears while Kids profile is on")
             assertTrue(page.shows("Movies up to PG · Series up to TV-PG"), "the row shows both per-type limits")
@@ -174,8 +175,7 @@ class ProfilePageTest {
         var saved: Triple<String?, String?, Boolean>? = null
         val scene = ImageComposeScene(720, 900, Density(1f)) {
             ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                MaturityLimitDialog(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
-                    movieRating = "PG", seriesRating = "TV-PG", ratings = parentRatings),
+                MaturityLimitDialog(parentKids(true, 10, "PG", "TV-PG"),
                     false, null, {}, { movie, series, unrated -> saved = Triple(movie, series, unrated) })
             } }
         }
@@ -192,7 +192,8 @@ class ProfilePageTest {
     }
 
     @Test fun approvedTitlesShowsItsCountAndOpensOnlyWhileKidsIsOn() {
-        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13, approvedTitles = 3)).use { page ->
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13,
+            policy = parentKids(true, 13), approvedTitles = 3)).use { page ->
             page.render()
             assertTrue(page.shows("Approved titles"))
             assertTrue(page.shows("3"))
@@ -200,9 +201,35 @@ class ProfilePageTest {
             assertEquals(listOf("approved titles"), calls)
         }
         calls.clear()
-        Page(ProfilePageValues(profile = profile(), local = false, kids = false, approvedTitles = 3)).use { page ->
+        Page(ProfilePageValues(profile = profile(), local = false, kids = false,
+            policy = parentKids(false, 12), approvedTitles = 3)).use { page ->
             page.render()
             assertFalse(page.shows("Approved titles"), "approved titles only shows in the kids library")
+        }
+    }
+
+    @Test fun aKidsPolicyThePageCannotReadIsNeverDrawnAsAllRatingsOrADash() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
+            householdPinConfigured = true, householdUnlocked = false, approvedTitles = null)).use { page ->
+            page.render()
+            assertFalse(page.shows("All ratings"), "a limit the session cannot read is not printed as All ratings")
+            assertFalse(page.shows("—"), "an approved count the session cannot read is not printed as a dash")
+            assertTrue(page.shows("Unavailable"), "the rows say the value is unavailable")
+            assertTrue(page.shows("Enter the parent PIN to manage this household."),
+                "the note names the reason the value is missing")
+            page.click("Maturity limit")
+            assertEquals(listOf("parental controls"), calls, "a locked row leads to the household PIN, not to an editor")
+        }
+    }
+
+    @Test fun aLimitThatFailedToLoadOffersTheParentalControlsRetryInsteadOfAnEditor() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
+            householdUnlocked = true, approvedTitles = null)).use { page ->
+            page.render()
+            assertTrue(page.shows("Unavailable"))
+            assertTrue(page.shows("Open Parental controls to try again."))
+            page.click("Approved titles")
+            assertEquals(listOf("parental controls"), calls)
         }
     }
 

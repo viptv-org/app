@@ -11,6 +11,9 @@ import org.viptv.engine.wire.*
 
 internal class ListRemovalHost : AutoCloseable {
     val deletes = CopyOnWriteArrayList<String>()
+    val saves = CopyOnWriteArrayList<JsonObject>()
+    // The host lists saved titles by the order they were added, so a re-save returns to its old place.
+    private val removedAt = java.util.concurrent.ConcurrentHashMap<String, Int>()
     val visibility = CopyOnWriteArrayList<JsonObject>()
     var libraryCards = (1..3).map(::libraryCard)
     var continueCards = (1..4).map(::continueCard)
@@ -32,9 +35,19 @@ internal class ListRemovalHost : AutoCloseable {
         val path = request.url.encodedPath
         when {
             path == "/api/profiles/1/library/membership" -> json(Json.encodeToJsonElement(membership))
+            path == "/api/profiles/1/library" && request.method == HttpMethod.Put -> {
+                val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                val card = Json.decodeFromJsonElement<Card>(body.getValue("card"))
+                saves += body
+                val id = "${card.identity.kind}/${card.identity.id}"
+                if (libraryCards.none { "${it.identity.kind}/${it.identity.id}" == id })
+                    libraryCards = libraryCards.toMutableList().apply { add((removedAt[id] ?: size).coerceIn(0, size), card) }
+                json("""{"ok":true,"saved":true}""")
+            }
             path.startsWith("/api/profiles/1/library/") && request.method == HttpMethod.Delete -> {
                 val id = path.removePrefix("/api/profiles/1/library/")
                 deletes += id
+                removedAt[id] = libraryCards.indexOfFirst { "${it.identity.kind}/${it.identity.id}" == id }
                 libraryCards = libraryCards.filterNot { "${it.identity.kind}/${it.identity.id}" == id }
                 json("""{"ok":true}""")
             }

@@ -28,7 +28,7 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Screen) -> Unit) {
-    BoxWithConstraints(Modifier.width(92.dp).fillMaxHeight().tvBackdropBlur(24.dp)
+    BoxWithConstraints(Modifier.width(textChromeWidth(92.dp)).fillMaxHeight().tvBackdropBlur(24.dp)
         .background(Color(0xFF0B0B0C).copy(alpha = .55f))
         .drawBehind { drawRect(Color.White.copy(alpha = .08f), Offset(size.width - 1.dp.toPx(), 0f), Size(1.dp.toPx(), size.height)) }) {
         val short = maxHeight < TabletMinSide

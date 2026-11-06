@@ -34,6 +34,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pointerToggleable
+import org.viptv.app.connection.KidsPolicy
 import org.viptv.app.connection.RatingLabel
 import org.viptv.app.features.entry.AvatarPicker
 import org.viptv.app.features.entry.AvatarPickerLayout
@@ -196,25 +197,25 @@ internal fun TvProfileNameDialog(name: String, pinRequired: Boolean, busy: Boole
 }
 
 @Composable
-internal fun TvMaturityLimitDialog(values: ProfilePageValues, busy: Boolean, failure: String?, dismiss: () -> Unit,
+internal fun TvMaturityLimitDialog(policy: KidsPolicy, busy: Boolean, failure: String?, dismiss: () -> Unit,
     save: (String?, String?, Boolean) -> Unit, scale: Float) {
-    var movie by remember(values.movieRating) { mutableStateOf(values.movieRating) }
-    var series by remember(values.seriesRating) { mutableStateOf(values.seriesRating) }
-    var unrated by remember(values.allowUnrated) { mutableStateOf(values.allowUnrated) }
-    val movieStops = rememberTvDialogStops(values.ratings.movie.size + 1)
-    val seriesStops = rememberTvDialogStops(values.ratings.series.size + 1)
+    var movie by remember(policy) { mutableStateOf(policy.movie_rating) }
+    var series by remember(policy) { mutableStateOf(policy.series_rating) }
+    var unrated by remember(policy) { mutableStateOf(policy.allow_unrated) }
+    val movieStops = rememberTvDialogStops(policy.ratings.movie.size + 1)
+    val seriesStops = rememberTvDialogStops(policy.ratings.series.size + 1)
     val toggleStop = rememberTvDialogStop()
     val saveStop = rememberTvDialogStop()
     val cancelStop = rememberTvDialogStop()
     val stops = buildList {
-        if (values.ratings.movie.isNotEmpty()) addAll(movieStops)
-        if (values.ratings.series.isNotEmpty()) addAll(seriesStops)
+        if (policy.ratings.movie.isNotEmpty()) addAll(movieStops)
+        if (policy.ratings.series.isNotEmpty()) addAll(seriesStops)
         add(toggleStop); add(saveStop); add(cancelStop)
     }
     // The remote opens on the option in force, as a chip's list does.
     val first = when {
-        values.ratings.movie.isNotEmpty() -> movieStops[values.ratings.movie.indexOfFirst { it.label == movie } + 1]
-        values.ratings.series.isNotEmpty() -> seriesStops[values.ratings.series.indexOfFirst { it.label == series } + 1]
+        policy.ratings.movie.isNotEmpty() -> movieStops[policy.ratings.movie.indexOfFirst { it.label == movie } + 1]
+        policy.ratings.series.isNotEmpty() -> seriesStops[policy.ratings.series.indexOfFirst { it.label == series } + 1]
         else -> toggleStop
     }
     val close = { if (!busy) dismiss() }
@@ -224,13 +225,13 @@ internal fun TvMaturityLimitDialog(values: ProfilePageValues, busy: Boolean, fai
     }) {
         Text("Titles above this rating are hidden for this profile", color = Palette.secondary,
             fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
-        if (values.ratings.movie.isNotEmpty()) {
+        if (policy.ratings.movie.isNotEmpty()) {
             Spacer(Modifier.height((24 * scale).dp))
-            TvRatingRow("Movies up to", values.ratings.movie, movie, !busy, scale, movieStops) { movie = it }
+            TvRatingRow("Movies up to", policy.ratings.movie, movie, !busy, scale, movieStops) { movie = it }
         }
-        if (values.ratings.series.isNotEmpty()) {
+        if (policy.ratings.series.isNotEmpty()) {
             Spacer(Modifier.height((24 * scale).dp))
-            TvRatingRow("Series up to", values.ratings.series, series, !busy, scale, seriesStops) { series = it }
+            TvRatingRow("Series up to", policy.ratings.series, series, !busy, scale, seriesStops) { series = it }
         }
         Spacer(Modifier.height((28 * scale).dp))
         TvDialogToggle("Allow titles with no rating", "Unrated titles and titles whose ratings disagree stay hidden unless you allow them.",
@@ -312,9 +313,11 @@ internal fun TvProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePag
         choose = { pick, pin -> actions.avatar(pick, pin) })
     if (dialogs.lock) TvProfileLockDialog(values.profile, busy, scale, { if (!busy) dialogs.lock = false },
         setPin = { old, next -> actions.lock(old, next) }, pinAvailable = true)
-    if (dialogs.maturity) TvMaturityLimitDialog(values, busy, error, dismiss = { if (!busy) dialogs.maturity = false },
-        save = { movie, series, unrated -> dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) },
-        scale = scale)
+    if (dialogs.maturity) values.policy?.let { policy ->
+        TvMaturityLimitDialog(policy, busy, error, dismiss = { if (!busy) dialogs.maturity = false },
+            save = { movie, series, unrated -> dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) },
+            scale = scale)
+    }
     if (dialogs.delete) TvDeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
         dismiss = { if (!busy) dialogs.delete = false }, delete = { pin -> actions.delete(pin) },
         pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE)), scale = scale)

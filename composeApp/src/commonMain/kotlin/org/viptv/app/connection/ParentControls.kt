@@ -18,7 +18,7 @@ data class KidsPolicy(val enabled: Boolean = false, val max_age: Int = 12, val m
 data class ProfilePinStatus(val availability: String = "Unsupported", val message: String? = null,
     val configured: Boolean = false)
 
-data class ParentProfileControls(val policy: KidsPolicy = KidsPolicy(), val leavePin: Boolean? = null)
+data class ParentProfileControls(val policy: KidsPolicy? = null, val leavePin: Boolean? = null)
 
 internal val ProfileManagement.profilePinAvailable: Boolean
     get() = capabilities.profile_pin.availability == "Available"

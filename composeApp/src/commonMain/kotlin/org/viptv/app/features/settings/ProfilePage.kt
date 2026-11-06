@@ -26,7 +26,6 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerToggleable
 import org.viptv.app.connection.KidsPolicy
-import org.viptv.app.connection.KidsRatings
 import org.viptv.app.connection.Profile
 import org.viptv.app.features.entry.AvatarPick
 import org.viptv.app.features.entry.AvatarPicker
@@ -50,14 +49,12 @@ internal data class ProfilePageValues(
     val audioLanguage: String? = null,
     val subtitleLanguage: String? = null,
     val canDelete: Boolean = true,
-    val movieRating: String? = null,
-    val seriesRating: String? = null,
-    val allowUnrated: Boolean = false,
-    val ratings: KidsRatings = KidsRatings(),
+    val policy: KidsPolicy? = null,
 ) {
     val pinRequired get() = profile.requiresLocalPin(local)
     val householdPinRequired get() = householdPinConfigured && !householdUnlocked
-    fun kidsPolicy() = KidsPolicy(kids, maxAge ?: 12, movieRating, seriesRating, allowUnrated, ratings)
+    val limitsKnown get() = policy != null
+    fun kidsPolicy(): KidsPolicy? = policy?.copy(enabled = kids, max_age = maxAge ?: policy.max_age)
 }
 
 internal data class ProfilePageActions(
@@ -74,14 +71,24 @@ internal data class ProfilePageActions(
 
 internal data class MaturitySelection(val movie: String?, val series: String?, val unrated: Boolean)
 
-internal fun maturityLimitValue(values: ProfilePageValues): String = when {
-    !values.kids -> "All ratings"
-    values.movieRating == null && values.seriesRating == null -> "All ratings"
-    else -> listOfNotNull(
-        values.movieRating?.let { "Movies up to $it" },
-        values.seriesRating?.let { "Series up to $it" },
+internal const val LIMITS_UNKNOWN = "Unavailable"
+
+internal fun limitsUnknownNote(values: ProfilePageValues): String =
+    if (values.householdPinRequired) "Enter the parent PIN to manage this household."
+    else "Open Parental controls to try again."
+
+internal fun maturityLimitValue(values: ProfilePageValues): String {
+    if (!values.kids) return "All ratings"
+    val policy = values.policy ?: return LIMITS_UNKNOWN
+    if (policy.movie_rating == null && policy.series_rating == null) return "All ratings"
+    return listOfNotNull(
+        policy.movie_rating?.let { "Movies up to $it" },
+        policy.series_rating?.let { "Series up to $it" },
     ).joinToString(" · ")
 }
+
+internal fun approvedTitlesValue(values: ProfilePageValues): String =
+    values.approvedTitles?.toString() ?: LIMITS_UNKNOWN
 
 internal fun languageSummary(audio: String?, subtitle: String?): String {
     val parts = listOfNotNull(audio?.takeIf(String::isNotBlank), subtitle?.takeIf(String::isNotBlank))
@@ -150,16 +157,27 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
                 ProfileRow("Avatar", leading = { ProfileAvatar(values.profile, 32.dp, 10.dp) }, enabled = !busy) { dialogs.avatar = true }
                 if (!values.local) {
                     SettingsDividerLine()
-                    ProfileRow("Kids profile", note = "Limits titles, search and Live for this profile.", checked = values.kids,
-                        enabled = !busy) { dialogs.toggleKids(values, actions) }
+                    ProfileRow("Kids profile",
+                        note = if (values.limitsKnown) "Limits titles, search and Live for this profile."
+                        else limitsUnknownNote(values),
+                        checked = values.kids, enabled = !busy) {
+                        if (values.limitsKnown) dialogs.toggleKids(values, actions) else actions.parentalControls()
+                    }
                     SettingsDividerLine()
-                    ProfileRow("Maturity limit", note = "Titles above this rating are hidden for this profile",
-                        value = maturityLimitValue(values), enabled = !busy) { dialogs.maturity = true }
+                    ProfileRow("Maturity limit",
+                        note = if (values.limitsKnown) "Titles above this rating are hidden for this profile"
+                        else limitsUnknownNote(values),
+                        value = maturityLimitValue(values), enabled = !busy) {
+                        if (values.limitsKnown) dialogs.maturity = true else actions.parentalControls()
+                    }
                     if (values.kids) {
                         SettingsDividerLine()
-                        ProfileRow("Approved titles", note = "Only these titles show in the kids library",
-                            value = values.approvedTitles?.toString() ?: "—",
-                            enabled = !busy) { actions.approvedTitles() }
+                        ProfileRow("Approved titles",
+                            note = if (values.limitsKnown) "Only these titles show in the kids library"
+                            else limitsUnknownNote(values),
+                            value = approvedTitlesValue(values), enabled = !busy) {
+                            if (values.limitsKnown) actions.approvedTitles() else actions.parentalControls()
+                        }
                     }
                 }
                 SettingsDividerLine()
@@ -201,9 +219,10 @@ internal fun ProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePageV
     if (dialogs.lock) ProfileLockDialog(values.profile.locked, values.pinRequired, busy, error,
         dismiss = { if (!busy) dialogs.lock = false }, save = { old, next -> actions.lock(old, next) },
         pending = mutations.isPending(profileMutationTarget(PROFILE_PIN)))
-    if (dialogs.maturity) MaturityLimitDialog(values, busy, error,
-        { if (!busy) dialogs.maturity = false }) { movie, series, unrated ->
-        dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) }
+    if (dialogs.maturity) values.policy?.let { policy ->
+        MaturityLimitDialog(policy, busy, error, { if (!busy) dialogs.maturity = false }) { movie, series, unrated ->
+            dialogs.chooseMaturity(MaturitySelection(movie, series, unrated), values, actions) }
+    }
     if (dialogs.delete) DeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
         dismiss = { if (!busy) dialogs.delete = false }, delete = { pin -> actions.delete(pin) },
         pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE)))
@@ -308,18 +327,18 @@ internal fun DeleteProfileDialog(name: String, pinRequired: Boolean, busy: Boole
 }
 
 @Composable
-internal fun MaturityLimitDialog(values: ProfilePageValues, busy: Boolean, failure: String?, dismiss: () -> Unit,
+internal fun MaturityLimitDialog(policy: KidsPolicy, busy: Boolean, failure: String?, dismiss: () -> Unit,
     save: (String?, String?, Boolean) -> Unit) {
-    var movie by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.movieRating) }
-    var series by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.seriesRating) }
-    var unrated by remember(values.movieRating, values.seriesRating, values.allowUnrated) { mutableStateOf(values.allowUnrated) }
+    var movie by remember(policy) { mutableStateOf(policy.movie_rating) }
+    var series by remember(policy) { mutableStateOf(policy.series_rating) }
+    var unrated by remember(policy) { mutableStateOf(policy.allow_unrated) }
     AlertDialog(onDismissRequest = { if (!busy) dismiss() }, title = { Text("Maturity limit") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("Titles above this rating are hidden for this profile", color = Palette.secondary)
-            if (values.ratings.movie.isNotEmpty())
-                RatingChoices("Movies up to", values.ratings.movie, movie, !busy) { movie = it }
-            if (values.ratings.series.isNotEmpty())
-                RatingChoices("Series up to", values.ratings.series, series, !busy) { series = it }
+            if (policy.ratings.movie.isNotEmpty())
+                RatingChoices("Movies up to", policy.ratings.movie, movie, !busy) { movie = it }
+            if (policy.ratings.series.isNotEmpty())
+                RatingChoices("Series up to", policy.ratings.series, series, !busy) { series = it }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Allow titles with no rating")

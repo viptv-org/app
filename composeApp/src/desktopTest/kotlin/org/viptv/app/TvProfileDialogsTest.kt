@@ -20,6 +20,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.viptv.app.connection.KidsPolicy
 import org.viptv.app.connection.KidsRatings
 import org.viptv.app.connection.Profile
 import org.viptv.app.connection.RatingLabel
@@ -58,8 +59,8 @@ class TvProfileDialogsTest {
         delete = { pin -> calls += "delete:$pin"; saved.value += 1 })
 
     private fun values(householdLocked: Boolean = false) = ProfilePageValues(profile = profile(), local = false,
-        kids = true, maxAge = 10, movieRating = "PG", seriesRating = "TV-PG", approvedTitles = 2,
-        householdPinConfigured = householdLocked, householdUnlocked = false, ratings = ratings)
+        kids = true, maxAge = 10, approvedTitles = 2, householdPinConfigured = householdLocked, householdUnlocked = false,
+        policy = KidsPolicy(enabled = true, max_age = 10, movie_rating = "PG", series_rating = "TV-PG", ratings = ratings))
 
     private inner class Page(page: ProfilePageValues, width: Int = 1920, height: Int = 1080) : AutoCloseable {
         val saved = mutableStateOf(0L)
