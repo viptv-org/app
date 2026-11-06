@@ -63,7 +63,7 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
     val seasonChoice = rememberSeasonChoice(detail, focus)
     val selected = seasonChoice.selected(seasons, resume)
     AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
-    val list = rememberLazyListState()
+    val list = rememberDetailListState(detail?.item)
     val landing = if (detail != null) (if (focus != null) resume.indexIn(selected?.episodes) else null) ?: focus.episodeIn(selected) else null
     LandOnResume(seasonChoice, list, landing?.let { episode ->
         (if (busy) 1 else 0) + (if (error != null) 1 else 0) + 2 +
