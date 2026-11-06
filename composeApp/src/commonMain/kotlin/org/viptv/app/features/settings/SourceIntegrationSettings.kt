@@ -46,7 +46,7 @@ internal fun SourceIntegrationSettings(snapshot: SourceIntegrationSnapshot, busy
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (compact) TextButton(retry, enabled = !busy) { Text("Refresh") }
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Source integrations", style = MaterialTheme.typography.titleLarge)
+            SettingsPaneTitle("Source integrations")
             TextButton(retry, enabled = !busy) { Text("Refresh") }
         }
         Text("Configuration applies to this profile. Saved credentials are never displayed.", color = Palette.secondary)

@@ -36,7 +36,9 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
         if (snapshot == null) removingAll = false
         if (removing != null && snapshot?.devices?.none { it.id == removing?.id } != false) removing = null
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = if (compact) PaddingValues(start = 16.dp, end = 16.dp) else PaddingValues(0.dp)) {
+    val horizontal = settingsPaneHorizontalPadding(compact, fallback = if (compact) 16.dp else 0.dp)
+    val vertical = settingsPaneVerticalPadding(compact, fallback = 0.dp)
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = horizontal, vertical = vertical)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (compact) {
@@ -45,7 +47,7 @@ internal fun AccountDevicesScreen(snapshot: AccountDevices?, busy: Boolean, erro
                         Text("Devices", Modifier.align(Alignment.Center), fontSize = 17.sp, fontWeight = FontWeight.Bold)
                     }
                 } else {
-                    Text("Devices", fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.48).sp)
+                    SettingsPaneTitle("Devices")
                 }
                 Text("Everywhere ${snapshot?.account?.name?.let { "${it}’s account" } ?: "your account"} is signed in. Signing a device out doesn’t delete anything from the account.",
                     fontSize = 14.sp, lineHeight = 20.sp, color = Palette.secondary)

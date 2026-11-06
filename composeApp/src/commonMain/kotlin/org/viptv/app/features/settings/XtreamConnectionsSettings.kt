@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -74,8 +75,10 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
     val open: (XtreamFormMode, XtreamConnection?) -> Unit = { next, connection -> editing = connection; mode = next }
     val closeForm = { if (!busy) { mode = null; editing = null } }
     val sheet = !LocalPointerHover.current && compact
-    FocusLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = if (compact) 16.dp else 32.dp,
-        end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
+    val pane = settingsPanePadding(compact)
+    FocusLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = pane.calculateStartPadding(LocalLayoutDirection.current),
+        top = if (compact) 0.dp else pane.calculateTopPadding(), end = pane.calculateEndPadding(LocalLayoutDirection.current),
+        bottom = pane.calculateBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             if (compact) Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
@@ -83,7 +86,7 @@ internal fun XtreamConnectionsSettings(connections: List<XtreamConnection>?, def
                 Text(xtreamConnectionsSection, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 back?.let { BackControl(it, desktop = true) }
-                Text(xtreamConnectionsSection, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                SettingsPaneTitle(xtreamConnectionsSection)
             }
         }
         item {

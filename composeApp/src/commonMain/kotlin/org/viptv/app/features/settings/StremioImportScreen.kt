@@ -75,7 +75,7 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
     back?.let { add("back") { BackControl(it, label = "Back to settings", desktop = !compact) } }
     add("title") {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Import from Stremio", fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.48).sp)
+            SettingsPaneTitle("Import from Stremio")
             Text("Import into: $name", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Text("Preview first. Nothing is saved until you confirm the import.", fontSize = 14.sp, color = Palette.secondary)
         }
@@ -304,10 +304,11 @@ internal fun StremioImportScreen(session: StremioImportSession?, profileName: St
         }
     }
 
-    val padding = if (compact) 16.dp else 0.dp
+    val padding = settingsPaneHorizontalPadding(compact, fallback = if (compact) 16.dp else 0.dp)
+    val bottomPadding = settingsPaneVerticalPadding(compact, fallback = if (compact) 16.dp else 32.dp)
     Column(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), list,
-            contentPadding = PaddingValues(start = padding, end = padding, top = padding, bottom = if (compact) 16.dp else 32.dp),
+            contentPadding = PaddingValues(start = padding, end = padding, top = padding, bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             items(entries, key = { it.key }) { entry -> Box(Modifier.widthIn(max = contentWidth).fillMaxWidth()) { entry.content() } }
         }

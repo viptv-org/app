@@ -155,11 +155,9 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
         Text("Choose a profile to edit it.", Modifier.padding(32.dp), color = Palette.secondary)
         return
     }
-    val horizontal = if (layout == SettingsLayout.Phone) 16.dp else 32.dp
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = horizontal, vertical = 8.dp).pageBottomClearance(),
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(layout == SettingsLayout.Phone)).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (layout != SettingsLayout.Phone) Text("Profile", Modifier.padding(top = 16.dp), fontSize = 26.sp,
-            fontWeight = FontWeight.Bold)
+        if (layout != SettingsLayout.Phone) SettingsPaneTitle("Profile")
         Surface(shape = RoundedCornerShape(14.dp), color = Palette.surface) {
             Column {
                 ProfileRow("Name", value = values.profile.name, enabled = !busy) { dialogs.name = true }

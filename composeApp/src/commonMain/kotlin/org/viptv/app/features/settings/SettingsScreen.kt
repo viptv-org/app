@@ -115,6 +115,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             }
         }
         val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
+        val paneStyle = if (!compact && !webAccount) layout.paneStyle() else null
+        CompositionLocalProvider(LocalSettingsPaneStyle provides paneStyle) {
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = pageGutter(television = false, tablet = false, browser = browser, maxWidth), vertical = 32.dp) else Modifier)) {
             if (webAccount) {
                 AccountSettingsSidebar(section ?: SettingsRow.Addons.key, profile, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }); Spacer(Modifier.width(48.dp))
@@ -142,14 +144,14 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         deleteAccount(cancel)
                     }
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back, title = "Source integrations") {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance()) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance()) {
                             phoneSourceIntegrations.invoke()
                         }
                     }
                     section == xtreamConnectionsSection && xtreamConnections != null -> xtreamConnections(compact, if (compact) back else null)
                     section == "VOD matches" && vodMatches != null -> SettingsDetailContent(compact, back, title = "VOD matches") { vodMatches(compact) }
                     section == "Gateways" && phoneGateways != null -> SettingsDetailContent(compact, back, title = "Playback gateways") {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact))) {
                             phoneGateways.invoke()
                         }
                     }
@@ -167,6 +169,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     }
                 }
             }
+        }
         }
         if (leaving) SettingsLeaveDialog(local, compact, busy, error, { leaving = false }, leave)
     }
