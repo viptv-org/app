@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.*
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.MutationSpinner
@@ -76,8 +76,7 @@ internal fun TvLivePreview(channel: LiveChannel, program: LiveProgram?, now: Int
         .background(Color(0xFF212124)).onFocusChanged { focused = it.isFocused }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = watch)) {
         AsyncImage(program?.artwork ?: channel.card.landscape ?: channel.card.poster, channel.card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(90.dp * scale)
-            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .65f)))))
+        Box(Modifier.matchParentSize().background(Scrim.tvLivePreview))
         Row(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp * scale, bottom = 14.dp * scale),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
             Icon(Lucide.Play, null, Modifier.size(24.dp * scale))
