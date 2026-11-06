@@ -33,22 +33,25 @@ fun ProfilesScreen(
     else if (desktop) DesktopProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
     else
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(if (managing) "Manage profiles" else "Who’s watching?", style = MaterialTheme.typography.headlineLarge)
+        Text(if (managing) "Manage profiles" else "Who's watching?", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(44.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(28.dp), contentPadding = PaddingValues(24.dp)) {
             items(profiles, key = { it.id }) { profile ->
                 Column(Modifier.pointerClickable(enabled = !busy) { if (managing) edit(profile.id) else select(profile.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
                     ProfileAvatar(profile, 112.dp, 16.dp)
-                    Spacer(Modifier.height(14.dp)); Text(profile.name, color = Palette.secondary)
-                    if (profile.locked && !managing) Text("Locked", style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.height(14.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        if (profile.locked && !managing) LockMark()
+                        Text(profile.name, color = Palette.secondary)
+                    }
                 }
             }
             if (local && profiles.size < 12) item {
                 Column(Modifier.pointerClickable(enabled = !busy) { adding = true }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp)) }
+                        Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp)) }
                     }
-                    Spacer(Modifier.height(14.dp)); Text("Add profile", color = Palette.secondary)
+                    Spacer(Modifier.height(14.dp)); Text("Add a profile", color = Palette.secondary)
                 }
             }
         }
@@ -60,7 +63,7 @@ fun ProfilesScreen(
     if (adding) {
         val nameFocus = remember { FocusRequester() }
         LaunchedEffect(Unit) { withFrameNanos { }; runCatching { nameFocus.requestFocus() } }
-        AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add profile") },
+        AlertDialog(onDismissRequest = { adding = false }, title = { Text("Add a profile") },
             text = { AppTextField(name, { name = it }, label = "Name", modifier = Modifier.focusRequester(nameFocus), onEscape = { adding = false }) },
             confirmButton = { TextButton(onClick = { create(name); adding = false; name = "" }, enabled = name.isNotBlank() && !busy) { Text("Add") } },
             dismissButton = { TextButton(onClick = { adding = false }) { Text("Cancel") } })

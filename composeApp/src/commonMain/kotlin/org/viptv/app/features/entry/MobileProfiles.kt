@@ -40,11 +40,11 @@ internal fun MobileProfiles(
         Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp)) {
             back?.let { goBack -> BackControl(goBack, Modifier.align(Alignment.CenterStart)) }
             if (local) TextButton(onClick = if (managing) done else manage, modifier = Modifier.align(Alignment.CenterEnd), enabled = !busy) {
-                Text(if (managing) "Done" else "Edit", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(if (managing) "Done" else "Manage profiles", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(Modifier.height(40.dp))
-        Text(if (managing) "Manage profiles" else "Who’s watching?", Modifier.fillMaxWidth(),
+        Text(if (managing) "Manage profiles" else "Who's watching?", Modifier.fillMaxWidth(),
             fontSize = 28.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         error?.let { Text(it, Modifier.fillMaxWidth().padding(top = 8.dp, start = 24.dp, end = 24.dp),
             color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center) }
@@ -83,9 +83,9 @@ private fun AddProfileTile(busy: Boolean, add: () -> Unit) {
     Column(Modifier.fillMaxWidth().pointerClickable(enabled = !busy, onClick = add), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(120.dp).clip(RoundedCornerShape(22.dp))
             .border(BorderStroke(2.dp, Color.White.copy(alpha = 0.14f)), RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-            androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = Palette.secondary)
+            androidx.compose.material3.Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp), tint = Palette.secondary)
         }
         Spacer(Modifier.height(10.dp))
-        Text("Add profile", color = Palette.secondary, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text("Add a profile", color = Palette.secondary, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
     }
 }

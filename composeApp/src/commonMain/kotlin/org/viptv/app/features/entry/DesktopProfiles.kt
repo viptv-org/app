@@ -37,7 +37,7 @@ internal fun DesktopProfiles(
         val side = maxOf(0.dp, (maxWidth - width) / 2)
         Column(Modifier.fillMaxSize().padding(top = if (maxHeight >= 640.dp) 150.dp else 80.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (managing) "Manage profiles" else "Who’s watching?", fontSize = 30.sp,
+            Text(if (managing) "Manage profiles" else "Who's watching?", fontSize = 30.sp,
                 fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(32.dp))
             LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = side),
@@ -87,9 +87,9 @@ private fun DesktopAddProfileTile(busy: Boolean, add: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(148.dp).padding(4.dp).border(2.dp, Color.White.copy(alpha = .14f),
             RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-            androidx.compose.material3.Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp), tint = Palette.secondary)
+            androidx.compose.material3.Icon(Lucide.Plus, "Add a profile", Modifier.size(40.dp), tint = Palette.secondary)
         }
         Spacer(Modifier.height(8.dp))
-        Text("Add profile", color = Palette.secondary, fontSize = 15.sp)
+        Text("Add a profile", color = Palette.secondary, fontSize = 15.sp)
     }
 }
