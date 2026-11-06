@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.crash.CrashFacts
@@ -107,7 +108,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     completionSeen=false
     progressSavedAt=TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, playbackFailure = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
@@ -152,7 +153,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
     completionSeen = false
     progressSavedAt = TimeSource.Monotonic.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
-    updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
+    updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, playbackFailure = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
@@ -245,8 +246,8 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         saveProgress(true)
     }
     if (fact is PlayerFact.Tracks) noticeMissingAudio(fact.options)
-    if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_UNDECODABLE, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
-    if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(FALLBACK_REASON_FAILED) }
+    if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Undecodable, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
+    if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Failed) }
     watchPlaybackStall(fact)
 }
 
@@ -277,7 +278,7 @@ private fun ApplicationController.armPlaybackStall(positionMillis: Long) {
         if ((lastProgress?.positionMillis ?: positionMillis) != positionMillis) return@launch
         playbackDiagnostics?.invoke("playback_stalled position_ms=$positionMillis window_ms=$PLAYBACK_STALL_WINDOW_MILLIS")
         sourceChoice = SourceChoice.None
-        startFailed(FALLBACK_REASON_FAILED)
+        startFailed(PlaybackFailure.Failed)
     }
 }
 

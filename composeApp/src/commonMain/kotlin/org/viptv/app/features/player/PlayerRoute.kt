@@ -11,6 +11,7 @@ import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.seasonNumber
+import org.viptv.engine.wire.SourceCandidate
 
 @Composable
 internal fun PlayerRoute(state: ApplicationState, controller: ApplicationController, television: Boolean,
@@ -50,8 +51,12 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         audioNotice = state.audioNotice,
         nextSource = if (state.bestMatch != null) controller::playNextSource else null,
         openingSource = state.openingSource,
-        fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
+        fullscreen = fullscreen, toggleFullscreen = toggleFullscreen,
+        failure = state.playbackFailure, failedSource = state.playingSource?.failureName())
 }
+
+internal fun SourceCandidate.failureName(): String =
+    listOfNotNull(providerLabel(), qualityLabel()).joinToString(" ").ifBlank { provider_id }
 
 internal fun playerEpisodes(current: Card?, loaded: List<Card>): List<Card> {
     val coordinates = current?.identity?.episode ?: return emptyList()

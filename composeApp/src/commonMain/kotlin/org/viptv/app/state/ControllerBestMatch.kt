@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.RankedSources
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.engine.wire.SourceCandidate
 
@@ -11,13 +12,14 @@ internal fun ApplicationController.startBestMatch(ranked: RankedSources, target:
     openSource(target, forceGateway = false, positionMillis = null)
 }
 
-internal fun ApplicationController.startFailed(reason: String, dolbyVision: Boolean = false) {
+internal fun ApplicationController.startFailed(cause: PlaybackFailure, dolbyVision: Boolean = false) {
     startDeadlineJob?.cancel(); startDeadlineJob = null
+    val reason = cause.reason
     val failure = "$reason. Choose another source."
     val session = mutable.value.bestMatch
     val playing = session?.playingId
     if (session == null || playing == null || firstFrameSeen || session.exhausted) {
-        updateState { it.copy(error = failure) }
+        updateState { it.copy(error = failure, playbackFailure = cause) }
         return
     }
     val after = session.failed(playing, dolbyVision)
@@ -25,7 +27,7 @@ internal fun ApplicationController.startFailed(reason: String, dolbyVision: Bool
     if (next == null || after.attempts >= BEST_MATCH_ATTEMPT_LIMIT) { exhaustFallback(after); return }
     val notice = BestMatchFallback(reason, next)
     updateState { it.copy(bestMatch = after.copy(attempts = after.attempts + 1, playingId = next.id),
-        fallbackNotice = notice, error = failure) }
+        fallbackNotice = notice, error = failure, playbackFailure = cause) }
     fallbackJob?.cancel()
     fallbackJob = scope.launch {
         delay(bestMatchNoticeMillis)
@@ -59,7 +61,7 @@ internal fun ApplicationController.armStartDeadline(input: org.viptv.app.player.
     if (mutable.value.bestMatch == null || source.delivery == "torrent") return
     startDeadlineJob = scope.launch {
         delay(startDeadlineMillis)
-        if (mutable.value.playback === input && !firstFrameSeen) startFailed(FALLBACK_REASON_TIMEOUT)
+        if (mutable.value.playback === input && !firstFrameSeen) startFailed(PlaybackFailure.Timeout)
     }
 }
 
@@ -82,7 +84,7 @@ private fun ApplicationController.exhaustFallback(session: BestMatchSession) {
     releaseRemotePlayback()
     updateState { it.copy(bestMatch = session.copy(exhausted = true), fallbackNotice = null, audioNotice = null,
         playback = null, playbackSegments = emptyList(), playingSource = null, openingSource = null, paused = false,
-        presentation = null, screen = Screen.Sources, error = null) }
+        presentation = null, screen = Screen.Sources, error = null, playbackFailure = null) }
     lastProgress = null
     firstFrameSeen = false
 }
