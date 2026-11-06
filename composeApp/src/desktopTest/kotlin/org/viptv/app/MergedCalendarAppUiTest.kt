@@ -63,6 +63,40 @@ class MergedCalendarAppUiTest {
         assertFalse(nodes.any { marked(it) || text(it) == "Your shows" })
     }
 
+    @Test fun phoneRowsDrawTheFactsAndTheStatusCopyMdRecords() = rowFacts(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvRowsDrawTheFactsAndTheStatusCopyMdRecords() = rowFacts(television = true, width = 1920, height = 1080, name = "tv")
+
+    private fun rowFacts(television: Boolean, width: Int, height: Int, name: String) = factsPage(television, width, height) { s ->
+        s.until("the read's rows") { s.controller.state.value.calendarEntries.size == 2 && !s.controller.state.value.busy }
+        s.frames(20)
+        fun rowOf(title: String): String {
+            val rows = s.nodes().filter { text(it).contains(title) && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(rows.isNotEmpty(), "$name: no $title row; texts=" + s.nodes().map(::text).filter(String::isNotBlank))
+            return text(rows.minBy { it.boundsInRoot.width * it.boundsInRoot.height })
+        }
+        val clock = Regex("^\\d{1,2}:\\d{2} (AM|PM) ")
+        // The phone pill and the TV word sit in different places, so compare the facts a row draws, not their order.
+        fun facts(line: String) = line.replaceFirst(clock, "").split(" ").filter(String::isNotBlank).sorted().joinToString(" ")
+        fun assertRow(title: String, expected: String) {
+            val row = rowOf(title)
+            assertTrue(clock.containsMatchIn(row), "$name: the row keeps its time: $row")
+            assertEquals(facts(expected), facts(row), "$name: $title draws copy.md's facts and nothing else")
+        }
+        assertRow("Slow Horses", "Slow Horses S5 E3 · Chapter 3 Your show Out now")
+        s.chooseShows("All")
+        s.until("the public row") { s.nodes().any { text(it).contains("Public premiere") } }
+        assertRow("Public premiere", "Public premiere S1 E1 · Pilot in 1h 20m")
+    }
+
+    private fun factsPage(television: Boolean, width: Int, height: Int, check: (Scene) -> Unit) = scene(
+        MergedCalendarWire.page(listOf(
+            MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, date = MergedCalendarWire.today(3), poster = art("poster3.jpg")),
+            MergedCalendarWire.public("public-1", "Public premiere", source = "public", date = MergedCalendarWire.today(22), poster = art("poster5.jpg"))),
+            listOf("library", "public"), null), television, width, height) { s ->
+        if (!television && width < 640) s.showToday()
+        check(s)
+    }
+
     private fun returns(television: Boolean, width: Int, height: Int, name: String) = scene(mergedPage, television, width, height) { s ->
         if (!television && width < 640) s.showToday()
         s.until("the merged rows") { s.nodes().any { text(it).contains("Slow Horses") } }

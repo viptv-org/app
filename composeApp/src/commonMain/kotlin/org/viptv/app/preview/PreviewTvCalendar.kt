@@ -10,9 +10,8 @@ internal object PreviewTvCalendar {
     } + listOf(CalendarDay("21", "T", "21", "Tue 21", "October 21"), CalendarDay("22", "W", "22", "Wed 22", "October 22"))
     val entries = PreviewCalendar.entries.map { entry -> when (entry.id) {
         "naruto" -> entry.copy(card = entry.card.copy(title = "Naruto Shippûden", identity = MediaIdentity("tv-calendar-naruto", "series", emptyList()),
-            poster = Res.getUri("files/ui-preview/history4.jpg"), landscape = Res.getUri("files/ui-preview/history4.jpg")), status = "Aired",
+            poster = Res.getUri("files/ui-preview/history4.jpg"), landscape = Res.getUri("files/ui-preview/history4.jpg")),
             description = "Episode 501 aired at 6:00 AM. It’s on your Watching list — 480 of 500 watched.")
-        "ministry" -> entry.copy(status = "Aired")
         else -> entry
     } }
     val actions = mapOf("naruto" to TvCalendarAction("Watch E481", entries.first().card.copy(
