@@ -38,7 +38,7 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
     val target = requester ?: fallback
     // Without the clamp the geometric search jumps from the last row to the sidebar's last item.
     val column = rememberTvColumnItem(target)
-    Row(Modifier.fillMaxWidth().heightIn(min = rowHeight.dp * scale).then(column.position).focusRequester(target)
+    Box(Modifier.fillMaxWidth().heightIn(min = rowHeight.dp * scale).then(column.position).focusRequester(target)
         .focusProperties {
             if (left != null) this.left = left
             column.constrain(this)
@@ -51,19 +51,27 @@ internal fun TvSettingsRow(label: String, subtitle: String? = null, scale: Float
         }
         .background(if (focused) Palette.text else Color(0xFF191919), RoundedCornerShape(14.dp * scale))
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = activate, shape = RoundedCornerShape(14.dp * scale))
-        .padding(horizontal = 28.dp * scale), verticalAlignment = Alignment.CenterVertically) {
-        leading?.let { Icon(it, null, Modifier.size(28.dp * scale), labelColor ?: color); Spacer(Modifier.width(24.dp * scale)) }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
-            Text(label, color = labelColor ?: color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
-            subtitle?.let { Text(it, color = if (focused) Color(0xFF4A4945) else Palette.secondary,
-                fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium) }
-        }
-        if (pending) MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = color)
-        else if (checked != null) TvSettingsSwitch(checked, scale)
-        if (!pending && value != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
-            Text(value, color = if (focused) Color(0xFF4A4945) else Palette.secondary, fontSize = (24 * scale).sp,
-                lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
-            Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), if (focused) Palette.background else Palette.secondary)
+        .padding(horizontal = 28.dp * scale), contentAlignment = Alignment.CenterStart) {
+        // The value drops under the label instead of squeezing it below one word at a larger font scale.
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(6.dp * scale), itemVerticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                leading?.let { Icon(it, null, Modifier.size(28.dp * scale), labelColor ?: color); Spacer(Modifier.width(24.dp * scale)) }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp * scale)) {
+                    Text(label, color = labelColor ?: color, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+                    subtitle?.let { Text(it, color = if (focused) Color(0xFF4A4945) else Palette.secondary,
+                        fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, fontWeight = FontWeight.Medium) }
+                }
+            }
+            when {
+                pending -> MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = color)
+                checked != null -> TvSettingsSwitch(checked, scale)
+                value != null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+                    Text(value, color = if (focused) Color(0xFF4A4945) else Palette.secondary, fontSize = (24 * scale).sp,
+                        lineHeight = (30 * scale).sp, fontWeight = FontWeight.Medium)
+                    Icon(Lucide.ChevronRight, null, Modifier.size(24.dp * scale), if (focused) Palette.background else Palette.secondary)
+                }
+            }
         }
     }
 }

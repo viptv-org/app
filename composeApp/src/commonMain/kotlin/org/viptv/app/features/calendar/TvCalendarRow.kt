@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.textColumnWidth
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -25,7 +26,7 @@ internal fun TvCalendarRow(entry: CalendarEntry, scale: Float, selected: Boolean
         background = Color.White.copy(alpha = .06f), cornerRadius = 18.dp * scale, arrangement = Arrangement.Start,
         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { color ->
         val secondary = if (color == Palette.background) Color(0xFF4A4945) else Palette.secondary
-        Text(entry.time, Modifier.width(120.dp * scale), color = color, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp,
+        Text(entry.time, Modifier.width(textColumnWidth(120.dp * scale)), color = color, fontSize = (28 * scale).sp, lineHeight = (34 * scale).sp,
             fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.width(28.dp * scale))
         AsyncImage(entry.card.poster ?: entry.card.landscape, entry.card.title, Modifier.size(72.dp * scale, 108.dp * scale)

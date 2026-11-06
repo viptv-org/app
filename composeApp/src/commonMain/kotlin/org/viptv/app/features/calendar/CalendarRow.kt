@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.textColumnWidth
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
@@ -37,7 +38,7 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
         .padding(horizontal = if (phone) 12.dp else 28.dp * scale, vertical = if (phone) 10.dp else 12.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 28.dp * scale)) {
-            Text(entry.time, Modifier.width(if (phone) 62.dp else 132.dp * scale), fontSize = (if (phone) 12f else 26 * scale).sp,
+            Text(entry.time, Modifier.width(textColumnWidth(if (phone) 62.dp else 132.dp * scale)), fontSize = (if (phone) 12f else 26 * scale).sp,
                 fontWeight = FontWeight.SemiBold, color = color)
             val art = entry.card.poster ?: entry.card.landscape
             if (art != null) AsyncImage(art, entry.card.title, Modifier.width(if (phone) 36.dp else 72.dp * scale).aspectRatio(2f / 3)
