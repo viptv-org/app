@@ -87,7 +87,7 @@ internal fun TvDialogPanel(scale: Float, title: String, stops: List<TvDialogStop
                         body()
                     }
                     FlowRow(Modifier.fillMaxWidth().padding(start = (48 * scale).dp, end = (48 * scale).dp, top = (36 * scale).dp,
-                        bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp, Alignment.CenterHorizontally),
+                        bottom = (48 * scale).dp), horizontalArrangement = Arrangement.spacedBy((16 * scale).dp, Alignment.Start),
                         verticalArrangement = Arrangement.spacedBy((16 * scale).dp), content = actions)
                 }
             }
