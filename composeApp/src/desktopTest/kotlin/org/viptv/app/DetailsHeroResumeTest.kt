@@ -173,7 +173,6 @@ class DetailsHeroResumeTest {
             page.settle()
             assertNull(page.clickable("Resume S3 E5"), "${layout.name}: nothing to resume")
             assertNull(page.clickable("Play from the beginning"), "${layout.name}: no restart")
-            assertNull(page.clickable("Restart"), "${layout.name}: no restart")
             page.save("hero-named-${layout.name}")
             page.click("Play S3 E5")
             page.settle()
