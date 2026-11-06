@@ -8,7 +8,31 @@ fun ApplicationController.selectProfile(id: String) {
         updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, leavePinFrom = null, error = null) }
         return
     }
+    if (householdSwitchNeedsPin(id)) {
+        updateState { next -> next.copy(householdPinFor = id, error = null, errorCode = null) }
+        return
+    }
     run { openProfile(id) }
+}
+
+private fun ApplicationController.householdSwitchNeedsPin(id: String): Boolean {
+    val state = mutable.value
+    val parent = state.profileManagement?.parent ?: return false
+    return connection != null && parent.restricted && parent.pin_configured && id != state.selectedProfile
+}
+
+fun ApplicationController.submitHouseholdSwitch(pin: String) {
+    val target = mutable.value.householdPinFor ?: return
+    if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
+    run {
+        requireNotNull(connection).unlockParent(pin)
+        updateState { it.copy(householdPinFor = null) }
+        openProfile(target)
+    }
+}
+
+fun ApplicationController.cancelHouseholdSwitch() {
+    updateState { it.copy(householdPinFor = null, error = null, errorCode = null) }
 }
 
 fun ApplicationController.submitProfilePin(pin: String) = run {
@@ -59,6 +83,11 @@ private suspend fun ApplicationController.switchRemoteProfile(id: String, pin: S
                 return null
             }
             failure.code == "leave_pin_invalid" -> throw LocalFailure("That PIN was not accepted. Try again.")
+            failure.code == "parent_required" -> {
+                if (mutable.value.screen != Screen.Profiles) throw failure
+                updateState { next -> next.copy(householdPinFor = id, error = null, errorCode = null) }
+                return null
+            }
             failure.status == 429 -> throw LocalFailure("Too many PIN attempts. Try again in five minutes.")
             else -> throw failure
         }

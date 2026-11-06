@@ -71,7 +71,7 @@ class KidsPolicyReadoutTest {
         for (layout in listOf(SettingsLayout.Phone, SettingsLayout.Tablet, SettingsLayout.Desktop)) {
             val saved = mutableStateOf(0L)
             val scene = scene(if (layout == SettingsLayout.Phone) 390 else 1280, 900) {
-                ProfileSettingsPage(locked(readable = false), false, null, saved.value, actions(saved), layout)
+                ProfileSettingsPage(locked(readable = false), false, null, saved.value, null, actions(saved), layout)
             }
             try {
                 render(scene)
@@ -93,7 +93,7 @@ class KidsPolicyReadoutTest {
         val saved = mutableStateOf(0L)
         val scene = ImageComposeScene(1920, 1080, Density(1f)) {
             ViptvTheme(true) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                TvProfileSettingsPage(locked(readable = false), false, null, saved.value, actions(saved), 1f,
+                TvProfileSettingsPage(locked(readable = false), false, null, saved.value, null, actions(saved), 1f,
                     FocusRequester(), FocusRequester()) { calls += "parental controls" }
             } }
         }
