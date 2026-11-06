@@ -49,7 +49,7 @@ class VodMatchesTest {
         withTimeout(5_000) { state.first(predicate) }.also { check(predicate(it)) { "unexpected state after $what" } }
 
     @Test fun providerTypeAndSearchChangesSendTheFilteredRequest() = runBlocking<Unit> {
-        val requests = mutableListOf<Url>()
+        val requests = EngineRequests<Url>()
         val controller = controller(this) { request ->
             when (request.url.encodedPath) {
                 "/api/iptv/connections" -> respond(providers, headers = headers)
@@ -99,8 +99,8 @@ class VodMatchesTest {
     }
 
     @Test fun overridingAMatchSendsThePutOnceAndUpdatesTheRowInPlace() = runBlocking<Unit> {
-        val writes = mutableListOf<JsonObject>()
-        val listRequests = mutableListOf<Url>()
+        val writes = EngineRequests<JsonObject>()
+        val listRequests = EngineRequests<Url>()
         val controller = controller(this) { request ->
             when {
                 request.url.encodedPath == "/api/iptv/connections" -> respond(providers, headers = headers)
@@ -148,7 +148,7 @@ class VodMatchesTest {
 
     @Test fun emptyResultsAndHostFailuresLeaveThePageWithAnExplicitState() = runBlocking<Unit> {
         var failing = false
-        val matches = mutableListOf<Url>()
+        val matches = EngineRequests<Url>()
         val controller = controller(this) { request ->
             when {
                 request.url.encodedPath == "/api/iptv/connections" -> respond(providers, headers = headers)

@@ -52,7 +52,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         slateProvider = state.playingSource?.presentation?.provider_name?.takeIf { it.isNotBlank() },
         configureSource = controller::openPlayerAddons,
         nextSource = if (state.bestMatch != null) controller::playNextSource else null,
-        openingSource = state.openingSource,
+        startup = state.startup,
         fullscreen = fullscreen, toggleFullscreen = toggleFullscreen,
         failure = state.playbackFailure, failedSource = state.playingSource?.failureName())
 }

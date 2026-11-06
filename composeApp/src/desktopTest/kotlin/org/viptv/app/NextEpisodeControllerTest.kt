@@ -158,7 +158,7 @@ class NextEpisodeControllerTest {
     }
 
     @Test fun theEndRecordsTheEpisodeWatchedAndMovingOnDoesNotOverwriteIt() = runBlocking<Unit> {
-        val saved = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
+        val saved = EngineRequests<JsonObject>()
         val json = headersOf(HttpHeaders.ContentType, "application/json")
         val client = HttpClient(MockEngine { request ->
             when {

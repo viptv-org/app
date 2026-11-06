@@ -61,6 +61,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private var opened = false
     private var mediaTransitions = 0
     private var lastBuffered: List<BufferedRange>? = null
+    private var lastStartup: Float? = null
     private var timelineReports = 0
     private val window = Timeline.Window()
     private val listener = object : Player.Listener {
@@ -149,6 +150,13 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         if (input.live) return
         val buffered = input.mediaBuffered(listOf(BufferedRange(player.currentPosition, player.bufferedPosition)), windowOffsetMillis()).ranges
         if (buffered != lastBuffered) { lastBuffered = buffered; emit(PlayerFact.Buffered(buffered)) }
+        if (!presented) startup()
+    }
+    // Media3's DefaultLoadControl starts playback once this much sits ahead of the playhead.
+    private fun startup() {
+        val ahead = (player.bufferedPosition - player.currentPosition).coerceAtLeast(0)
+        val fraction = (ahead.toFloat() / MEDIA3_START_BUFFER_MS).coerceIn(0f, 1f)
+        if (fraction != lastStartup) { lastStartup = fraction; emit(PlayerFact.Startup(fraction)) }
     }
     private fun sampleSlate() {
         if (slateFailures >= SLATE_SAMPLE_FAILURE_LIMIT || slateSampling || !player.playWhenReady || player.playbackState != Player.STATE_READY) return
@@ -242,3 +250,4 @@ private val media3DecodeFailureCodes = setOf(
 internal fun media3DecodeFailure(error: PlaybackException): Boolean = error.errorCode in media3DecodeFailureCodes
 
 private const val LOCAL_TORRENT_READ_TIMEOUT_MS = 60_000
+private const val MEDIA3_START_BUFFER_MS = 2_500f

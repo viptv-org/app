@@ -23,6 +23,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val freshness: Freshness = Freshness(),
     internal val backend: BackendHealth = BackendHealth(freshness.time),
     internal val bestMatchNoticeMillis: Long = 2_000L,
+    internal val bestMatchGraceMillis: Long = BEST_MATCH_GRACE_MILLIS,
+    internal val bestMatchCapMillis: Long = BEST_MATCH_CAP_MILLIS,
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
@@ -107,6 +109,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var stremioImport: StremioImportSession? = null
     internal var restartRequested = false
     internal var firstFrameSeen = false
+    internal var startupBuffered: Float? = null
     internal var fallbackJob: Job? = null
     internal var startDeadlineJob: Job? = null
     internal var playbackStall: Job? = null
@@ -129,6 +132,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var addonOperation: Job? = null
     internal val mutationJobs = mutableMapOf<MutationTarget, Job>()
     internal val mutationRetries = mutableMapOf<MutationTarget, MutationRetry>()
+    internal var householdPinAction: (suspend () -> Unit)? = null
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
@@ -188,7 +192,10 @@ private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
 // A write built from a snapshot drops whatever another coroutine published in between, so every state change publishes atomically.
 internal fun ApplicationController.updateState(change: (ApplicationState) -> ApplicationState) {
     mutable.update { before ->
-        val after = change(before)
+        val changed = change(before)
+        val startup = startupProgress(changed.startup, changed.startupSignals(startupBuffered))
+        val after = if (startup == changed.startup) changed else changed.copy(startup = startup)
+        if (startup == null) startupBuffered = null
         CrashFacts.lastScreen = after.screen.name
         if (before.playback == null && after.playback != null) {
             // A native crash between playback start and a clean stop has no stack: this marker attributes it to the source opening.

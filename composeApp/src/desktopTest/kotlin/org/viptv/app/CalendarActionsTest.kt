@@ -34,7 +34,7 @@ class CalendarActionsTest {
         try{c.calendarFilter(CalendarFilter.All);assertEquals(CalendarFilter.All,c.state.value.calendarFilter);assertEquals(0,calls);c.calendarFilter(CalendarFilter.All);assertEquals(0,calls);c.calendarFilter(CalendarFilter.YourShows);assertEquals(CalendarFilter.YourShows,c.state.value.calendarFilter);assertEquals(0,calls)}finally{r.close()}
     }
     @Test fun resolvesOnlyActualScheduledCardUsingSeasonOffsetBeforeStartingSources()=runBlocking<Unit>{
-        val target=episode("actual-provider-id");val offsets=mutableListOf<String?>();var requested:String?=null
+        val target=episode("actual-provider-id");val offsets=EngineRequests<String?>();var requested:String?=null
         val client=HttpClient(MockEngine{request->
             val response=when{
                 request.url.encodedPath.startsWith("/api/meta/")->{offsets+=request.url.parameters["offset"];codec.encodeToString(if(offsets.size==1)DetailSnapshot(parent,episodes=listOf(episode("earlier",1,1)),next_cursor="17",seasons=listOf(EpisodeSeason(2,2,55)))else DetailSnapshot(parent,episodes=listOf(target),next_cursor=null))}
@@ -56,7 +56,7 @@ class CalendarActionsTest {
         }
     }
     @Test fun categoryAndWeekRequestsRetainCoordinatesAnd422IsUnavailable()=runBlocking<Unit>{
-        val requests=mutableListOf<String>()
+        val requests=EngineRequests<String>()
         val client=HttpClient(MockEngine{request->requests+=request.url.toString();if(request.url.parameters["type"]=="movie")respond("{}",HttpStatusCode.UnprocessableEntity,headersOf(HttpHeaders.ContentType,"application/json"))else respond("{\"entries\":[],\"complete\":true}",headers=headersOf(HttpHeaders.ContentType,"application/json"))}){configureTransport()}
         val(c,r)=controller(client,this)
         try{c.calendarCategory("anime");c.job?.join();assertTrue(requests.last().contains("type=anime"));val first=requests.last();c.calendarWeek(1);c.job?.join();assertEquals(1,c.state.value.calendarWeek);assertNotEquals(first,requests.last());c.calendarCategory("movie");c.job?.join();assertFalse(c.state.value.calendarAvailable);assertNull(c.state.value.error);assertTrue(c.state.value.calendarEntries.isEmpty());assertEquals(3,requests.size)}finally{r.close()}

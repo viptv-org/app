@@ -80,7 +80,7 @@ class ParentControlsTest {
     }
 
     @Test fun editingCurrentProfileReplacesCachedAdultContentWithAuthoritativeBootstrap() = runBlocking {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += request.url.encodedPath
             val response = if (request.method == HttpMethod.Put) {
@@ -351,7 +351,7 @@ class ParentControlsTest {
     }
 
     @Test fun aLockedSessionNeverShowsOrWritesPolicyDefaultsForAProfileItCannotRead() = runBlocking<Unit> {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         var unlocked = false
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             requests += "${request.method.value} ${request.url.encodedPath}"

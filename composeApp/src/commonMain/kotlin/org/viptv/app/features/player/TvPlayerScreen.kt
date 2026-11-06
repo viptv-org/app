@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
 import org.viptv.app.theme.LocalFitToScreen
+import org.viptv.app.state.StartupProgress
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.LocalActivationKeys
@@ -38,7 +40,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     canvasColor: Color = Color.Black, openSettings: (() -> Unit)? = null, autoplayNext: Boolean = false, reduceMotion: Boolean = false,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
     slateProvider: String? = null, configureSource: (() -> Unit)? = null,
-    failure: PlaybackFailure? = null, failedSource: String? = null) {
+    failure: PlaybackFailure? = null, failedSource: String? = null, startup: StartupProgress? = null) {
     val state = remember(playbackKey) { TvPlayerState(input, initialFacts, scene) }
     val activationKeys = LocalActivationKeys.current
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
@@ -145,7 +147,11 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                     primary = retry?.let { retryAction(extras.fallbackLabel, it) },
                     choose = chooseSources?.let(::chooseSourceAction),
                     back = close)
-            state.buffering && !state.hasPresented -> TvPlayerBuffer(title, extras, scale)
+            state.buffering && !state.hasPresented ->
+                if (startup != null) StartupProgressScreen(startup, title,
+                    artWidth = 640.dp * scale, artMaxHeight = 420.dp * scale,
+                    titleSize = (44 * scale).sp, statusSize = (24 * scale).sp, reduceMotion = reduceMotion)
+                else TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
                 // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
                 { if (state.showNext) { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) } }, state::keepWatching, extras.creditsLabel,

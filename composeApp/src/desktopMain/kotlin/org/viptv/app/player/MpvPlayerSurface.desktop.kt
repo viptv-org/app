@@ -206,6 +206,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         LaunchedEffect(state, candidates) {
             if (state.error != null) latestObserve(PlayerFact.Failed)
             else if (opened && transport.accept(state.status)) latestObserve(PlayerFact.Status(state.status))
+            if (opened) state.startupFill?.let { latestObserve(PlayerFact.Startup(it)) }
             if (opened) latestObserve(input.mediaProgress(state.positionMs, state.durationMs))
             latestObserve(PlayerFact.Properties(state.volume, state.speed, state.subtitleScale))
             latestObserve(PlayerFact.Tracks(PlaybackTracks(state.audio,

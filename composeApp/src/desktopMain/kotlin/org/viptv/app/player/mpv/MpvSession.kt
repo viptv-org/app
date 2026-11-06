@@ -17,7 +17,7 @@ internal data class MpvState(
     val audio: List<PlaybackTrack> = emptyList(), val subtitles: List<PlaybackTrack> = emptyList(),
     val width: Int = 0, val height: Int = 0, val hwdec: String = "no", val dropped: Long = 0,
     val sourceFps: Double = 0.0, val buffering: Boolean = false, val error: Int? = null, val transfer: String? = null,
-    val bitrate: Long? = null,
+    val bitrate: Long? = null, val startupFill: Float? = null,
 )
 
 internal fun mpvSubtitlesOn(audio: List<PlaybackTrack>, preferences: ProfilePreferences): Boolean =
@@ -132,7 +132,8 @@ internal class MpvSession(input: PlaybackInput) {
             ((number("volume") ?: 100.0) / 100).toFloat(), number("speed") ?: 1.0, (number("sub-scale") ?: 1.0).toFloat(),
             list("audio"), list("sub"), number("video-params/w")?.toInt() ?: 0, number("video-params/h")?.toInt() ?: 0,
             text("hwdec-current") ?: "no", number("frame-drop-count")?.toLong() ?: 0, number("container-fps") ?: 0.0, buffering, error,
-            text("video-params/gamma"), number("video-bitrate")?.toLong())
+            text("video-params/gamma"), number("video-bitrate")?.toLong(),
+            number("cache-buffering-state")?.let { (it / 100).toFloat().coerceIn(0f, 1f) })
     }
     suspend fun command(vararg args: String) = withContext(dispatcher) {
         check(!closing.get()); require(args.none { '\u0000' in it })

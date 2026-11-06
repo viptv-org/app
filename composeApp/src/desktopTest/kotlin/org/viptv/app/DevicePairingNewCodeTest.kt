@@ -12,7 +12,7 @@ import kotlin.test.*
 
 class DevicePairingNewCodeTest {
     private class FakeServer(private val approved: Boolean = false) {
-        val bodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
+        val bodies = EngineRequests<JsonObject>()
         fun connection(origin: String, store: RemoteSessionStore) = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             val (body, status) = when (request.url.encodedPath) {
                 "/api/auth/device/code" -> {

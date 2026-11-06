@@ -3,6 +3,7 @@ package org.viptv.app.state
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
@@ -154,8 +155,11 @@ fun ApplicationController.loadTrendingSearches() {
 fun ApplicationController.search(term: String, retry: Boolean = false) {
     if (!retry && term == lastSearchedTerm) return
     val unchanged = term == mutable.value.searchTerm
-    if (!unchanged) updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
-    if (!(retry && unchanged)) updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
+    if (!unchanged) updateState { state ->
+        val keepShown = term.isNotBlank()
+        state.copy(searchFocusResults = false, pendingDetailSeason = null, searchTerm = term,
+            results = if (keepShown) state.results else emptyList(), searchRows = if (keepShown) state.searchRows else emptyList())
+    }
     rememberNavigation()
     run {
         val operation = generation
@@ -186,7 +190,7 @@ private suspend fun ApplicationController.searchRemote(remote: RemoteConnection,
         remote.searchStreamResults(term) { event ->
             if (!session()) return@searchStreamResults
             when (event) {
-                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows, results = emptyList()) }
+                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows) }
                 is SearchStreamEvent.Row -> updateState { state ->
                     val rows = state.searchRows.map { if (it.id == event.row.id) event.row else it }
                     state.copy(searchRows = rows, results = rows.flatMap { it.cards })
@@ -481,74 +485,54 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val remote = connection
         val context = rankingContext(seriesMemoryOf(profile, card), capability)
         val preferences = mutable.value.preferences?.preferences
-        val heightPreference = preferences?.max_quality_height
-        val heightDevice = context.device.maxHeight
-        val cap = when {
-            heightPreference == null -> heightDevice
-            heightDevice == null -> heightPreference
-            else -> minOf(heightPreference, heightDevice)
-        }
+        var started = false
         coroutineScope {
-            var started = false
-            var openingId: String? = null
-            var graceDeadline = 0L
-
-            fun targetFor(ranked: RankedSources): SourceCandidate? {
-                val remembered = reuse?.let { ranked.matchingSource(it) }
-                if (remembered != null || reuse != null) return remembered
-                val autoplay = startPlayback || preferences?.source_selection == "best"
-                return if (autoplay) ranked.autoplayTarget() else null
+            fun begin(ranked: RankedSources, target: SourceCandidate, keepDiscovery: Boolean) {
+                if (started) return
+                started = true
+                if (keepDiscovery) openNow(target, ranked) else startBestMatch(ranked, target)
             }
 
-            fun consider(ranked: RankedSources) {
-                if (generation != operation || sourcesScrolled) return
-                val target = targetFor(ranked) ?: return
-                if (reuse != null || startPlayback) {
-                    if (started) return
-                    started = true
-                    startBestMatch(ranked, target)
-                    return
-                }
-                when {
-                    !started -> {
-                        started = true
-                        openingId = target.id
-                        graceDeadline = clockMillis() + PLAY_FIRST_GRACE_MILLIS
-                        openNow(target, ranked)
-                    }
-                    clockMillis() < graceDeadline && mutable.value.playback == null && target.id != openingId -> {
-                        val current = ranked.rows.firstOrNull { it.id == openingId } ?: return
-                        if (!target.clearlyBetterThan(current, cap)) return
-                        openingId = target.id
-                        openNow(target, ranked)
-                    }
-                }
-            }
-
+            val starts = Channel<RankedSources>(Channel.CONFLATED)
             val ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
                 show = { ranked ->
                     if (generation != operation) return@ProgressiveSourceRanking
                     updateState { state ->
-                        val session = state.bestMatch?.takeIf { started }?.copy(ranked = ranked.rows)
-                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups, bestMatch = session)
+                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups,
+                            bestMatch = state.bestMatch?.copy(ranked = ranked.rows))
                     }
-                    consider(ranked)
+                    when {
+                        reuse != null || startPlayback -> ranked.rememberedOrBestMatch(reuse)?.let { begin(ranked, it, keepDiscovery = false) }
+                        preferences?.source_selection == "best" -> starts.trySend(ranked)
+                    }
                 })
-            val observed: (SourcesOutcome) -> Unit = { outcome ->
-                if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
+            val startJob = launch {
+                val decided = BestMatchStart(bestMatchGraceMillis, bestMatchCapMillis).await(starts) {
+                    sourcesScrolled || ranking.failed || generation != operation ||
+                        mutable.value.openingSource != null || mutable.value.playback != null
+                } ?: return@launch
+                if (generation == operation && !sourcesScrolled) begin(decided.ranked, decided.source, keepDiscovery = true)
+            }
+            try {
+                val observed: (SourcesOutcome) -> Unit = { outcome ->
+                    if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
+                    ranking.arrived(outcome.candidates)
+                }
+                val outcome = try {
+                    device?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
+                } catch (deadline: TimeoutCancellationException) {
+                    ranking.finish(); throw deadline
+                }
                 ranking.arrived(outcome.candidates)
+                ranking.finish()
+                if (generation != operation) return@coroutineScope
+                updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
+                if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
+            } finally {
+                starts.close()
+                withContext(NonCancellable) { startJob.join() }
             }
-            val outcome = try {
-                device?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
-            } catch (deadline: TimeoutCancellationException) {
-                ranking.finish(); throw deadline
-            }
-            ranking.arrived(outcome.candidates)
-            ranking.finish()
-            if (generation != operation) return@coroutineScope
-            updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
-            if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
         }
     } catch (_: TimeoutCancellationException) {
         if (reuse != null) updateState { it.copy(screen = Screen.Sources) }
@@ -562,6 +546,9 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         throw error
     } finally { if (generation == operation) updateState { it.copy(findingSources = false) } }
 }
+
+private fun RankedSources.rememberedOrBestMatch(reuse: RememberedSource?): SourceCandidate? =
+    if (reuse != null) matchingSource(reuse) else autoplayTarget()
 
 internal fun ApplicationController.markSourcesScrolled() { sourcesScrolled = true }
 

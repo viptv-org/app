@@ -27,7 +27,7 @@ class DevicePairingDenialUiTest {
     private class FakeServer {
         val codes = AtomicInteger(); val polls = AtomicInteger(); val pollsAfterDenial = AtomicInteger()
         val denied = AtomicBoolean()
-        val codeBodies = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
+        val codeBodies = EngineRequests<JsonObject>()
         fun connection(origin: String, store: RemoteSessionStore) = RemoteConnection(origin, store, HttpClient(MockEngine { request ->
             val (body, status) = when (request.url.encodedPath) {
                 "/api/auth/device/code" -> {
