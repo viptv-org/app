@@ -89,7 +89,8 @@ class NoticeToastTest {
         }
         try {
             val frame = frames(shown, 20)
-            assertEquals(0, dismissed, "it stays while the viewer can still reach it")
+            Thread.sleep(800)
+            assertEquals(0, dismissed, "the toast counts the scene's frames, not the wall clock")
             shown.renderUntil(from = frame, what = "the notice's own clock to run out") { dismissed == 1 }
             assertEquals(1, dismissed, "the toast dismisses itself once its clock is up")
         } finally { shown.close() }

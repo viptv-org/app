@@ -42,7 +42,7 @@ internal class TvNoticeFocus {
 internal fun NoticeToast(notice: AppNotice, television: Boolean, phone: Boolean, aboveNav: Boolean,
     undo: () -> Unit, dismiss: () -> Unit, focus: TvNoticeFocus? = null,
     durationMillis: Long = noticeMillis(notice)) {
-    // Counts scene time, not dispatcher time: the toast's test drives frames and never waits out its clock.
+    // Counts scene time: delay() runs on the dispatcher's clock, not the frames the toast is drawn in.
     LaunchedEffect(notice.serial) {
         var remaining = durationMillis * 1_000_000L
         var last = withFrameNanos { it }
