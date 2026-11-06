@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.viptv.app.connection.RankedSources
@@ -14,7 +15,7 @@ internal class ProgressiveSourceRanking(
     private val arrivals = Channel<List<SourceCandidate>>(Channel.CONFLATED)
     private var submitted: List<String> = emptyList()
     private var shown = RankedSources(emptyList())
-    internal var failed = false
+    @Volatile internal var failed = false
         private set
 
     private val worker = scope.launch {
