@@ -25,7 +25,7 @@ import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
-import org.viptv.app.components.kindLabel
+import org.viptv.app.components.heroMetadataParts
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.Scrim
@@ -81,13 +81,7 @@ private fun DesktopTitleArt(card: Card) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DesktopMetaLine(card: Card) {
-    val metadata = card.metadata
-    val parts = listOfNotNull(
-        card.kindLabel(),
-        metadata?.year?.toString(),
-        metadata?.genres?.takeIf { it.isNotEmpty() }?.joinToString(", "),
-        metadata?.rating?.let { rating -> "IMDb ${kotlin.math.round(rating * 10) / 10.0}" },
-    )
+    val parts = card.heroMetadataParts()
     FlowRow(Modifier.wrapContentWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)) {
         parts.forEachIndexed { index, part ->
