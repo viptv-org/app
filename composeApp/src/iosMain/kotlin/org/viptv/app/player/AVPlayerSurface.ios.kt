@@ -24,17 +24,18 @@ actual fun PlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boolean, m
     val lifetime = remember(player) { AVPlayerLifetime() }
     var captionScale by remember { mutableStateOf(input.preferences.subtitle_font_scale.toFloat().takeIf { it.isFinite() }?.coerceIn(.5f, 2f) ?: 1f) }
     val latestObserve by rememberUpdatedState(observe)
+    val controller = remember { AVPlayerViewController() }
 
     UIKitView(
         modifier = modifier,
         factory = {
-            AVPlayerViewController().apply {
+            controller.apply {
                 this.player = player
                 showsPlaybackControls = false
-                videoGravity = AVLayerVideoGravityResizeAspect
+                videoGravity = fillVideoGravity(fill)
             }.view
         },
-        update = { },
+        update = { controller.videoGravity = fillVideoGravity(fill) },
     )
 
     DisposableEffect(player) {
