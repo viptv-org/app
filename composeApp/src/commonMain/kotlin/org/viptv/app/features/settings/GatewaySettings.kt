@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.viptv.app.components.Button
-import org.viptv.app.components.InlineMutationError
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.GATEWAY_CHECK_ACTION
@@ -128,9 +128,7 @@ private fun GatewayCard(gateway: Gateway, checked: GatewayCheck?, busy: Boolean,
                     }
                     TextButton(grants, enabled = !busy) { Text("Access", color = Palette.secondary) }
                 }
-                mutations.failure(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION))?.let { message ->
-                    InlineMutationError(message, retry = { mutations.retry(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION)) })
-                }
+                MutationFailure(gatewayTarget(gateway.id, GATEWAY_ENABLE_ACTION))
             }
         }
     }

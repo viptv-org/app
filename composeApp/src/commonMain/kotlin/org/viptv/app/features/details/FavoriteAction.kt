@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
 import org.viptv.engine.wire.Card
-import org.viptv.app.components.InlineMutationError
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.OutlinedButton
@@ -26,6 +26,6 @@ internal fun FavoriteAction(card: Card, saved: Boolean, save: (Card) -> Unit) {
             Spacer(Modifier.width(8.dp))
             Text(if (pending) "Saving…" else saveActionLabel(saved))
         }
-        mutations.failure(target)?.let { InlineMutationError(it, retry = { mutations.retry(target) }, Modifier.padding(top = 6.dp)) }
+        MutationFailure(target, Modifier.padding(top = 6.dp))
     }
 }

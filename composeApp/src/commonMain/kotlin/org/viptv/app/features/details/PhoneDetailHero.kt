@@ -26,6 +26,7 @@ import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionLabel
 import org.viptv.app.components.TitleLogo
@@ -98,22 +99,23 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                 }
             }
             DetailSourceSummary(sourcePreview, open = { chooseSource(resume ?: card) })
+            val mutations = LocalPendingMutation.current
+            val mutationTarget = saveTarget(card)
+            val saveLabel = saveActionLabel(saved)
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
-                val mutations = LocalPendingMutation.current
-                val target = saveTarget(card)
-                val saveLabel = saveActionLabel(saved)
                 Column(Modifier.width(76.dp)
                     .pointerClickable(role = Role.Button) { save(card) }
                     .semantics { contentDescription = saveLabel }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
-                        if (mutations.isPending(target)) MutationSpinner(22.dp)
+                        if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp)
                         else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
                     }
-                    Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+                    Text(if (mutations.isPending(mutationTarget)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
+            MutationFailure(mutationTarget, Modifier.fillMaxWidth())
             card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
             card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->

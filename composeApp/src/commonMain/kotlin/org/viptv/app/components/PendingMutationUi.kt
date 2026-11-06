@@ -42,12 +42,21 @@ internal fun MutationSpinner(size: Dp, color: Color = Palette.text, strokeWidth:
 
 /** The inline error and Retry a failed write leaves beside the control it acted on. */
 @Composable
-internal fun InlineMutationError(message: String, retry: () -> Unit, modifier: Modifier = Modifier, scale: Float = 1f) {
+private fun InlineMutationError(message: String, retry: () -> Unit, modifier: Modifier = Modifier, scale: Float = 1f) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp * scale)) {
         Icon(Lucide.CircleAlert, null, Modifier.size(16.dp * scale), tint = Palette.danger)
         Text(message, Modifier.weight(1f, fill = false), color = Palette.danger, fontSize = (13 * scale).sp, lineHeight = (18 * scale).sp)
         TextButton(onClick = retry, contentPadding = PaddingValues(horizontal = 8.dp * scale)) {
             Text("Retry", color = Palette.text, fontSize = (13 * scale).sp, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+/** The failure line a surface draws beside the control it acted on, and nothing while its write is well. */
+@Composable
+internal fun MutationFailure(target: MutationTarget, modifier: Modifier = Modifier, scale: Float = 1f) {
+    val mutations = LocalPendingMutation.current
+    mutations.failure(target)?.let { message ->
+        InlineMutationError(message, retry = { mutations.retry(target) }, modifier = modifier, scale = scale)
     }
 }

@@ -40,6 +40,9 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
     saved: Boolean = false, downAction: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
     val pending = (extras.resume ?: card).isPlayPending()
+    val mutations = LocalPendingMutation.current
+    val mutationTarget = saveTarget(card)
+    val failure = mutations.failure(mutationTarget)
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
     Column(Modifier.fillMaxWidth().heightIn(min = 816.dp * scale).clipToBounds().padding(start = 96.dp * scale).onPreviewKeyEvent {
         if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown && downAction != null) {
@@ -88,13 +91,22 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         color = tint, trackColor = tint.copy(alpha = 0.2f)) }
                 }
             }
-            val mutations = LocalPendingMutation.current
-            val target = saveTarget(card)
-            TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
-                if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
+            if (failure != null) TvAction(Modifier.heightIn(min = 72.dp * scale), scale, ring = false,
+                activate = { mutations.retry(mutationTarget) }, contentPadding = PaddingValues(horizontal = 24.dp * scale),
+                arrangement = Arrangement.Start) { tint ->
+                Icon(Lucide.RotateCcw, null, Modifier.size(28.dp * scale), tint)
+                Spacer(Modifier.width(10.dp * scale))
+                Text("Retry", color = tint, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
+            } else TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
+                if (mutations.isPending(mutationTarget)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
             if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+        }
+        failure?.let {
+            Spacer(Modifier.height(14.dp * scale))
+            Text(it, Modifier.width(800.dp * scale), color = Palette.danger,
+                fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
         }
     }
 }
