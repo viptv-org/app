@@ -30,7 +30,7 @@ internal fun TitleLogo(
     logoModifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
     logoAlignment: Alignment = Alignment.CenterStart,
-    logoKeepsItsShapeAtWidth: Boolean = false,
+    logoKeepsItsShape: Boolean = false,
     titleContent: @Composable BoxScope.() -> Unit,
 ) {
     val request = logo?.let { rememberLogoRequest(it) }
@@ -45,7 +45,7 @@ internal fun TitleLogo(
     Box(modifier.testTag(TITLE_LOGO_TAG), contentAlignment = contentAlignment) {
         Box(Modifier.graphicsLayer { alpha = textAlpha }) { titleContent() }
         if (request != null) {
-            val sized = if (logoKeepsItsShapeAtWidth && logoRatio != null) logoModifier.aspectRatio(logoRatio) else logoModifier
+            val sized = if (logoKeepsItsShape && logoRatio != null) logoModifier.aspectRatio(logoRatio) else logoModifier
             Image(painter, title, sized.graphicsLayer { alpha = logoAlpha }, contentScale = contentScale,
                 alignment = logoAlignment)
         }

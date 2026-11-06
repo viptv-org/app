@@ -74,8 +74,7 @@ internal fun StartupProgressScreen(
                                 startY = top, endY = top + band), Offset(0f, top), Size(size.width, band))
                         }
                     },
-                contentAlignment = Alignment.Center, logoModifier = Modifier.fillMaxWidth(), logoAlignment = Alignment.Center,
-                logoKeepsItsShapeAtWidth = true) {
+                contentAlignment = Alignment.Center, logoAlignment = Alignment.Center, logoKeepsItsShape = true) {
                 Text(title?.title.orEmpty(), Modifier.fillMaxWidth(), color = Palette.text, fontSize = titleSize,
                     lineHeight = if (titleSize.isSp) (titleSize.value * TitleLineHeight).sp else titleSize,
                     fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
