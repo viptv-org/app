@@ -42,16 +42,17 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
             Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
             Column(Modifier.fillMaxWidth().heightIn(min = 196.dp)
                 .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            LiveBadge(Modifier)
+            if (program == null || liveFraming(program, now) == LiveFraming.OnAir) LiveBadge(Modifier) else Spacer(Modifier.height(19.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = 12.sp, color = Palette.secondary)
                 (program?.title ?: channel.card.subtitle)?.let {
                     Text(it, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (program != null && now != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LinearProgressIndicator(progress = { liveProgress(program, now) }, modifier = Modifier.width(90.dp).height(3.dp),
-                        color = Palette.text, trackColor = Palette.raised)
-                    Text("${(program.end - now).coerceAtLeast(0)} min left", fontSize = 11.sp, color = Palette.secondary)
+                val status = program?.let { liveStatus(it, now) }
+                if (program != null && status != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (liveFraming(program, now) == LiveFraming.OnAir) LinearProgressIndicator(progress = { liveProgress(program, now) },
+                        modifier = Modifier.width(90.dp).height(3.dp), color = Palette.text, trackColor = Palette.raised)
+                    Text(status, fontSize = 11.sp, color = Palette.secondary)
                 }
             }
             }
@@ -67,7 +68,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     lineHeight = (if (television) 62 * scale else 34f).sp, fontWeight = FontWeight.Bold)
             }
             program?.let {
-                Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
+                Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}${liveRangeStatus(it, now)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
                 it.description.providerText()?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {

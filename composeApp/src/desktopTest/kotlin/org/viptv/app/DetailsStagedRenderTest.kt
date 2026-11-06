@@ -70,7 +70,7 @@ class DetailsStagedRenderTest {
         var sourcePreview by mutableStateOf<DetailSourcePreview?>(null)
         private var frame = 0L
         val width = if (television) 1920 else 390
-        val height = if (television) 1080 else 844
+        val height = if (television) 1080 else 880
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 DetailsScreen(detail, busy, error = null, back = {}, sources = {}, television = television, sourcePreview = sourcePreview)
