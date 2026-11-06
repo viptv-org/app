@@ -3,6 +3,11 @@ package org.viptv.app
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.features.player.PLAYER_SETTINGS_LINK
@@ -73,6 +78,51 @@ class AudioSubtitlesPanelUiTest {
                 assertFalse(shows(scene, "English · 5.1"), "The lone audio name must not list")
             } finally { scene.close() }
         }
+    }
+
+    @Test fun escapeClosesOnlyThePanelOnDesktopAndWeb() {
+        for ((width, height, phone) in listOf(Triple(1280, 800, false), Triple(1440, 900, false), Triple(390, 844, true))) {
+            for (focusRow in listOf(false, true)) {
+                val player = Player(width, height, phone)
+                try {
+                    player.frames()
+                    player.click(if (phone) "Audio & subtitles" else "Audio and subtitles")
+                    player.frames(20)
+                    assertTrue(player.panelOpen(), "$width×$height: the panel did not open")
+                    if (focusRow) player.focus("English")
+                    else assertEquals("Close track selection", player.focused(), "$width×$height: opening the panel must put keyboard focus inside it")
+                    player.key(Key.Escape)
+                    assertFalse(player.panelOpen(), "$width×$height: Escape left the panel open (focusRow=$focusRow)")
+                    assertEquals(0, player.closed, "$width×$height: Escape with the panel open closed the player (focusRow=$focusRow)")
+                    player.focus("Play")
+                    player.key(Key.Escape)
+                    assertEquals(1, player.closed, "$width×$height: Escape with the panel closed must close the player (focusRow=$focusRow)")
+                } finally { player.close() }
+            }
+        }
+    }
+
+    private inner class Player(val width: Int, val height: Int, private val phone: Boolean) {
+        var closed = 0
+        private val facts = kotlinx.coroutines.flow.MutableSharedFlow<PlayerFact>(replay = 1).apply {
+            tryEmit(PlayerFact.Tracks(PlaybackTracks(listOf(PlaybackTrack(1, "English · 5.1", true, "en")), subtitles(3, 5))))
+        }
+        val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
+            org.viptv.app.features.player.PlayerScreen(null, true, null, {}, {}, { closed++ }, title = title, preview = progress,
+                phone = phone, externalFacts = facts, openSettings = {})
+        } }
+        fun frames(count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
+        fun key(value: Key) {
+            scene.sendKeyEvent(KeyEvent(value, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(value, KeyEventType.KeyUp)); frames()
+        }
+        fun focus(value: String) {
+            assertNotNull(clickable(scene, value), "No focusable \"$value\"").config[SemanticsActions.RequestFocus].action!!.invoke(); frames()
+        }
+        fun focused() = nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
+            ?.let { node -> texts(node).firstOrNull() }
+        fun panelOpen() = nodes(scene).any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Audio and subtitles" }
+        fun click(value: String) = click(scene, value)
+        fun close() = scene.close()
     }
 
     @Test fun thePhoneSheetShowsTheInlineSettingsVertically() {

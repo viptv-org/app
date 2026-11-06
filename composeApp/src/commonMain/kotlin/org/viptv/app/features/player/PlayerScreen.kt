@@ -241,6 +241,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                     Key.Escape -> {
                         if (phone) latestPhoneBack()
+                        else if (showTracks) { showTracks = false; visible = true }
                         else if (fullscreen && toggleFullscreen != null) toggleFullscreen!!()
                         else if (phonePanel != null) dismissPanel()
                         else close()

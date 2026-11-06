@@ -15,8 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,8 +59,10 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
     var dialog by remember { mutableStateOf<PhonePreferenceField?>(null) }
     var draft by remember(preferences) { mutableStateOf(preferences) }
     val apply = { next: ProfilePreferences -> draft = next; onPreferences(next) }
+    val initial = remember { FocusRequester() }
     Popup(onDismissRequest = close, properties = PopupProperties(focusable = true)) {
-        BoxWithConstraints(Modifier.fillMaxSize().alpha(reveal)) {
+        BoxWithConstraints(Modifier.fillMaxSize().alpha(reveal)
+            .onPreviewKeyEvent { it.type == KeyEventType.KeyDown && it.key == Key.Escape && run { close(); true } }) {
             Box(Modifier.fillMaxSize().dismissScrim(close))
             val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.82f)
                 else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = bottomInset).widthIn(max = 680.dp).fillMaxWidth().heightIn(max = 460.dp)
@@ -64,7 +73,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 .padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    AccessibleIconButton(Lucide.X, "Close track selection", close, iconSize = 16.dp, wash = null)
+                    AccessibleIconButton(Lucide.X, "Close track selection", close, modifier = Modifier.focusRequester(initial), iconSize = 16.dp, wash = null)
                 }
                 if (phone) {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -80,6 +89,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 if (openSettings != null) PlaybackSettingsLink(openSettings)
             }
         }
+        LaunchedEffect(Unit) { withFrameNanos { }; initial.requestFocus() }
     }
     dialog?.let { field ->
         PhonePreferenceDialog(field, draft, busy = false, update = apply, close = { dialog = null })
