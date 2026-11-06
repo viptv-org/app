@@ -21,7 +21,7 @@ class PlayerOpeningIndicatorUiTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val title = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "addon:1", title = "Movie", badges = emptyList())
-    private val opening = startupProgress(null, StartupSignals(opening = true, openingStage = "Opening Torrentio 4K…"))
+    private val opening = startupProgress(null, StartupSignals(opening = true, sourceLabel = "Torrentio 4K"))
 
     @Test fun theStartupSurfaceDrawsTheStageLineAndClearsWithTheState() {
         val startup = mutableStateOf<StartupProgress?>(opening)

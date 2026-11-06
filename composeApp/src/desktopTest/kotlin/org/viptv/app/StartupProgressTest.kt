@@ -56,6 +56,13 @@ class StartupProgressTest {
         assertEquals("Buffering…", assertNotNull(startupProgress(null, StartupSignals(buffering = true))).status)
     }
 
+    @Test fun theOpeningStageNamesTheSourceUnlessTheRuntimeReportsItsOwnStage() {
+        assertEquals("Opening Torrentio 1080p…", assertNotNull(startupProgress(null,
+            StartupSignals(opening = true, sourceLabel = "Torrentio 1080p"))).status)
+        assertEquals("Fetching metadata…", assertNotNull(startupProgress(null,
+            StartupSignals(opening = true, sourceLabel = "Torrentio 1080p", openingStage = "Fetching metadata…"))).status)
+    }
+
     @Test fun aMeasuredShareIsClampedToTheStage() {
         val negative = assertNotNull(startupProgress(null, StartupSignals(buffering = true, bufferedFraction = -2f)))
         val over = assertNotNull(startupProgress(null, StartupSignals(buffering = true, bufferedFraction = 8f)))

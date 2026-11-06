@@ -12,6 +12,7 @@ internal data class StartupSignals(
     val sourcesArrived: Boolean = false,
     val opening: Boolean = false,
     val openingStage: String? = null,
+    val sourceLabel: String? = null,
     val buffering: Boolean = false,
     val bufferedFraction: Float? = null,
 ) {
@@ -28,6 +29,7 @@ internal fun ApplicationState.startupSignals(bufferedFraction: Float?): StartupS
     sourcesArrived = sources.isNotEmpty(),
     opening = openingSource != null && !(playback != null && presentation == null),
     openingStage = openingStage,
+    sourceLabel = openingSource?.label ?: playingSource?.label,
     buffering = playback != null && presentation == null,
     bufferedFraction = bufferedFraction,
 )
@@ -57,7 +59,7 @@ internal fun startupProgress(previous: StartupProgress?, signals: StartupSignals
         },
         status = when (stage) {
             StartupStage.Discovery -> if (signals.sourcesArrived) "Still checking sources" else "Finding sources"
-            StartupStage.Opening -> signals.openingStage ?: "Opening stream…"
+            StartupStage.Opening -> signals.openingStage ?: signals.sourceLabel?.let { "Opening $it…" } ?: "Opening stream…"
             StartupStage.Buffering -> "Buffering…"
         },
     )

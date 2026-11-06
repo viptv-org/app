@@ -331,7 +331,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)
                     else -> {
-                        if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp, reduceMotion = reduceMotion)
+                        if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp,
+                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion)
                         else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
