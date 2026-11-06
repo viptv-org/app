@@ -12,11 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.ListRemovalConfirmation
+import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.SegmentedControl
@@ -68,9 +69,8 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     val segmentEntry = remember { FocusRequester() }
     val selectedFilter = remember { FocusRequester() }
     val gridFocus = remember { FocusRequester() }
-    val removeFocus = remember { FocusRequester() }
     val action = remember { FocusRequester() }
-    // The bar below the grid acts on the card the viewer last stood on, so it survives the move onto the bar.
+    // Kept so a removal can hand the remote to the card that takes the removed one's place.
     var lastFocused by remember { mutableStateOf<Card?>(null) }
     var confirming by remember { mutableStateOf<Card?>(null) }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
@@ -87,7 +87,6 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     val continueCards = remember(section?.page?.cards) { section?.page?.cards.orEmpty().distinctBy(::cardLookupKey) }
     val shown = if (saved) visible else continueCards
     val columns = if (saved) LIBRARY_COLUMNS else CONTINUE_COLUMNS
-    val target = lastFocused?.takeIf { card -> shown.any { cardLookupKey(it) == cardLookupKey(card) } } ?: shown.firstOrNull()
     val grid = rememberLazyGridState()
     val restore = rememberPageRestore(if (saved) "library" else "continue")
     val anchored = restore.landing(shown.size) { cardLookupKey(shown[it]) }
@@ -97,6 +96,11 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     val moreAction = if (saved) more else section?.more
     val barBusy = if (saved) busy else section?.page?.busy ?: false
     val removeLabel = if (saved) REMOVE_LIBRARY_LABEL else REMOVE_CONTINUE_LABEL
+    val removeAction = if (saved) remove else section?.remove
+    // The design's My List options: a 700 ms hold on a card offers the title's removal, so no bar takes the grid's room.
+    val removal = remember(removeAction, removeLabel, saved) {
+        removeAction?.let { ListRemoval(removeLabel, continueWatching = !saved) { card -> confirming = card } }
+    }
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
@@ -118,7 +122,7 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     AutomaticPage(shown.size, barBusy, moreAction) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        CompositionLocalProvider(LocalTvScale provides scale) {
+        CompositionLocalProvider(LocalTvScale provides scale, LocalListRemoval provides removal) {
             Column(Modifier.fillMaxSize().focusGroup()
                 .padding(horizontal = 96.dp * scale).padding(top = 8.dp * scale)) {
                 SegmentedControl(MyListSegmentLabels, segmentIndex(segment), { index -> selectSegment(MyListSegment.entries[index]) },
@@ -188,27 +192,12 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
                             ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
-                    if (remove != null || section?.remove != null) TvRemovalBar(scale, target, removeLabel, removeFocus, { confirming = it })
                 }
             }
         }
     }
     confirming?.let { card ->
-        ListRemovalConfirmation(card, removeLabel,
-            confirm = { confirming = null; if (saved) remove?.invoke(card) else section?.remove?.invoke(card) }, dismiss = { confirming = null })
-    }
-}
-
-@Composable
-private fun TvRemovalBar(scale: Float, target: Card?, label: String, requester: FocusRequester, request: (Card) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
-            fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        TvAction(Modifier.heightIn(min = 64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
-            activate = { target?.let(request) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-            Text(label, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
-        }
+        ListRemovalConfirmation(card, removeLabel, confirm = { confirming = null; removeAction?.invoke(card) }, dismiss = { confirming = null })
     }
 }
 

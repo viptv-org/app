@@ -26,6 +26,8 @@ import org.viptv.app.theme.Palette
 import org.junit.Rule
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
@@ -33,16 +35,16 @@ class TvListRemovalFocusTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
-    @Test fun tvContinueWatchingReachesTheRemoveActionAndConfirmsIt() {
+    @Test fun tvContinueWatchingHoldsACardToReachTheRemoveActionAndConfirmsIt(): Unit = runBlocking {
         val removed = mutableListOf<Card>()
         Page {
             ContinueWatchingSegment(ContinueWatchingPage(listOf(continueCard(1), continueCard(2)), loaded = true), television = true,
                 play = {}, open = {}, more = null, retry = {}, home = {}, remove = { removed += it })
         }.use { page ->
             page.until("the first card") { page.focusedText()?.startsWith("Show 01") == true }
-            page.press(Key.DirectionDown)
-            assertEquals("Remove from Continue Watching", page.focusedText(), "Down leaves the grid for the remove action")
-            page.press(Key.DirectionCenter)
+            page.hold()
+            page.until("the title menu") { page.texts().any { it == "Remove from Continue Watching" } }
+            page.click("Remove from Continue Watching")
             page.until("the confirmation") { page.texts().any { it == "Remove from Continue Watching?" } }
             assertTrue(page.texts().any { it.contains("Watched history is preserved.") })
             page.click("Remove")
@@ -50,16 +52,16 @@ class TvListRemovalFocusTest {
         }
     }
 
-    @Test fun tvMyListReachesTheRemoveActionAndConfirmsIt() {
+    @Test fun tvMyListHoldsACardToReachTheRemoveActionAndConfirmsIt(): Unit = runBlocking {
         val removed = mutableListOf<Card>()
         Page {
             TvLibraryScreen(listOf(libraryCard(1), libraryCard(2)), available = true, open = {}, home = {},
                 remove = { removed += it })
         }.use { page ->
             page.focusCard("Show 01")
-            page.press(Key.DirectionDown)
-            assertEquals("Remove from My List", page.focusedText(), "Down leaves the grid for the remove action")
-            page.press(Key.DirectionCenter)
+            page.hold()
+            page.until("the title menu") { page.texts().any { it == "Remove from My List" } }
+            page.click("Remove from My List")
             page.until("the confirmation") { page.texts().any { it == "Remove from My List?" } }
             page.click("Remove")
             assertEquals(listOf(libraryCard(1)), removed)
@@ -82,7 +84,7 @@ class TvListRemovalFocusTest {
         }
     }
 
-    @Test fun theRemoveActionActsOnTheCardTheViewerStoodOn() {
+    @Test fun theRemoveActionActsOnTheCardTheViewerHeld(): Unit = runBlocking {
         val removed = mutableListOf<Card>()
         Page {
             ContinueWatchingSegment(ContinueWatchingPage((1..4).map { continueCard(it) }, loaded = true), television = true,
@@ -90,11 +92,13 @@ class TvListRemovalFocusTest {
         }.use { page ->
             page.until("the first card") { page.focusedText()?.startsWith("Show 01") == true }
             page.press(Key.DirectionRight, 2)
-            page.press(Key.DirectionDown)
-            page.press(Key.DirectionCenter)
+            assertEquals("Show 03", page.focusedText()?.take(7))
+            page.hold()
+            page.until("the title menu") { page.texts().any { it == "Remove from Continue Watching" } }
+            page.click("Remove from Continue Watching")
             page.until("the confirmation") { page.texts().any { it == "Remove from Continue Watching?" } }
             page.click("Remove")
-            assertEquals(listOf(continueCard(3)), removed, "the bar acts on the card the viewer left")
+            assertEquals(listOf(continueCard(3)), removed, "the held card is the one that leaves")
         }
     }
 
@@ -146,8 +150,22 @@ class TvListRemovalFocusTest {
             if (!consumed && direction != null) { focusManager!!.moveFocus(direction); frames() }
         }
 
+        // The design's My List options: 700 ms of OK on the focused card.
+        suspend fun hold() {
+            scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyDown))
+            repeat(45) { delay(20); frames(1) }
+            scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyUp))
+            frames()
+        }
+
+        private fun subtree(node: SemanticsNode): String = flatten(node).map(::text).filter { it.isNotBlank() }.joinToString(" ")
+
+        // The smallest control that reads as the label: a menu row and a card both carry their children's words.
         fun click(label: String) {
-            val node = nodes().firstOrNull { it.config.contains(SemanticsActions.OnClick) && text(it) == label }
+            val node = nodes().filter { it.config.contains(SemanticsActions.OnClick) }
+                .firstOrNull { text(it) == label }
+                ?: nodes().filter { it.config.contains(SemanticsActions.OnClick) && subtree(it).trim() == label }
+                    .minByOrNull { flatten(it).size }
             assertNotNull(node, "$label is on screen")
             node.config[SemanticsActions.OnClick].action?.invoke()
             frames()
