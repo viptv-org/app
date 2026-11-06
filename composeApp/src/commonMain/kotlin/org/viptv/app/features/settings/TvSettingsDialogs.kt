@@ -13,18 +13,19 @@ internal fun TvLeaveConfirmation(local: Boolean, scale: Float, confirm: () -> Un
         onConfirm = confirm, onDismiss = dismiss)
 }
 
-internal data class TvSettingsChoice(val title: String, val values: List<String>, val select: (String) -> Unit)
+// current is the label the row shows, so the list opens on the value already in use.
+internal data class TvSettingsChoice(val title: String, val values: List<String>, val current: String?, val select: (String) -> Unit)
 
 @Composable
 internal fun TvSettingsChoiceDialog(choice: TvSettingsChoice, scale: Float, dismiss: () -> Unit) {
     val stops = rememberTvDialogStops(choice.values.size + 1)
-    val first = stops.first()
-    TvDialogPanel(scale, choice.title, stops = stops, focus = first, dismiss = dismiss, actions = {
-        TvDialogAction(scale, "Cancel", stop = first) { dismiss() }
+    val checked = choice.values.indexOf(choice.current)
+    val cancel = stops.last()
+    TvDialogPanel(scale, choice.title, stops = stops, focus = stops.getOrElse(checked) { stops.first() }, dismiss = dismiss, actions = {
+        TvDialogAction(scale, "Cancel", stop = cancel) { dismiss() }
     }) {
         choice.values.forEachIndexed { index, value ->
-            TvDialogChip(value, selected = false, scale = scale, stop = stops[index + 1]) { choice.select(value); dismiss() }
-            Spacer(Modifier.height((12 * scale).dp))
+            TvDialogChoiceRow(value, selected = index == checked, scale = scale, stop = stops[index]) { choice.select(value); dismiss() }
         }
     }
 }
