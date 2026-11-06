@@ -53,12 +53,14 @@ class TextOverArtworkContrastTest {
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
     private val white = PreviewData.hero.copy(landscape = "https://artwork.test/white.jpg", poster = null, logo = null,
-        metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13"))
+        metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13",
+            cast = listOf("Lena Ortiz", "Marcus Reid", "Piper Chan")))
     private val home = PreviewData.home.copy(hero = white, featured = emptyList())
     private val tvHome = PreviewTvHome.home.copy(hero = white, featured = emptyList())
     private val detail = PreviewData.detail.copy(item = white)
     private val series = PreviewTvDetails.series.copy(item = white.copy(identity = MediaIdentity("detail-series", "series", emptyList())))
     private val metadata = listOf("2026", "1h 40m", "Action / Adventure", "★ 7.7")
+    private val starring = "Starring Lena Ortiz, Marcus Reid, Piper Chan"
     private val desktopMetadata = listOf("Movie", "2026", "Action, Adventure", "IMDb 7.7")
     private val description = "The Platt family bands together"
 
@@ -81,22 +83,22 @@ class TextOverArtworkContrastTest {
             copy = listOf("The End of Oak Street") + metadata + description, hero = metadata + description),
         Surface("TV Details", 1920, 1080, television = true,
             content = { TvDetailsScreen(series, busy = false, error = null, sources = {}, extras = PreviewTvDetails.seriesExtras) },
-            copy = listOf("The End of Oak Street", "Starring Evan Peters, Richard Jenkins, Niecy Nash") + metadata + description,
-            hero = metadata + description + "Starring Evan Peters"),
+            copy = listOf("The End of Oak Street", starring) + metadata + description,
+            hero = metadata + description + starring),
         Surface("phone Details", 393, 852, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
-            copy = listOf("The End of Oak Street", "Movie") + metadata, hero = emptyList()),
+            copy = listOf("The End of Oak Street", "Movie") + metadata + description + starring, hero = emptyList()),
         Surface("tablet Details", 1024, 900, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, tablet = true) },
-            copy = listOf("The End of Oak Street", "Movie") + metadata + description,
-            hero = listOf("The End of Oak Street", "Movie") + metadata + description),
+            copy = listOf("The End of Oak Street", "Movie") + metadata + description + starring,
+            hero = listOf("The End of Oak Street", "Movie") + metadata + description + starring),
         Surface("desktop Details", 1440, 900, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
-            copy = listOf("The End of Oak Street") + desktopMetadata + description,
-            hero = listOf("The End of Oak Street") + desktopMetadata + description),
+            copy = listOf("The End of Oak Street") + desktopMetadata + description + starring,
+            hero = listOf("The End of Oak Street") + desktopMetadata + description + starring),
         Surface("browser Details", 1280, 800, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, browser = true) },
-            copy = listOf("The End of Oak Street", "Add to My List"), hero = listOf("The End of Oak Street")),
+            copy = listOf("The End of Oak Street", "Add to My List", starring), hero = listOf("The End of Oak Street")),
     )
 
     @Test fun textOverArtworkKeepsFourAndAHalfToOne() = ui {

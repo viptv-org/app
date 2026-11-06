@@ -69,8 +69,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 maxLines = 3, overflow = TextOverflow.Ellipsis) }
         }
         Spacer(Modifier.height(13.dp * scale))
-        extras.cast?.let { Text("Starring $it", Modifier.width(800.dp * scale),
-            color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
+        HeroStarring(card, (22 * scale).sp, (30 * scale).sp, Modifier.width(800.dp * scale))
         Spacer(Modifier.height(32.dp * scale))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).heightIn(min = 72.dp * scale)

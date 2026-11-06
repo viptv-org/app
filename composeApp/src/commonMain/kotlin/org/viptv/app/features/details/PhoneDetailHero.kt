@@ -120,11 +120,7 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
             MutationFailure(mutationTarget, Modifier.fillMaxWidth())
             card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-            card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                Text("Starring ${cast.joinToString(", ")}", fontSize = 14.sp, lineHeight = 21.sp,
-                    color = Palette.secondary, maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-            }
+            HeroStarring(card, 14.sp, 21.sp)
         }
     }
 }
