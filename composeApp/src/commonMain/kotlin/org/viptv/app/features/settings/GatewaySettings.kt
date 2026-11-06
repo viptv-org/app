@@ -53,7 +53,7 @@ internal fun GatewaySettings(snapshot: GatewaySnapshot?, checks: Map<String, Gat
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (compact) TextButton(refresh, enabled = !busy) { Text("Refresh") }
             else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Playback gateways", style = MaterialTheme.typography.titleLarge)
+                SettingsPaneTitle("Playback gateways")
                 TextButton(refresh, enabled = !busy) { Text("Refresh") }
             }
         Text("Gateways transcode and deliver streams this device cannot play directly. Gateways are shared across the account.", color = Palette.secondary)
