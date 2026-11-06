@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.connection.Profile
@@ -74,8 +75,8 @@ private fun MobileProfileTile(profile: Profile, busy: Boolean, open: () -> Unit)
 }
 
 @Composable
-internal fun LockMark() {
-    androidx.compose.material3.Icon(com.composables.icons.lucide.Lucide.Lock, "Locked", Modifier.size(14.dp), tint = Palette.text)
+internal fun LockMark(tint: Color = Palette.text, size: Dp = 14.dp) {
+    androidx.compose.material3.Icon(com.composables.icons.lucide.Lucide.Lock, "Locked", Modifier.size(size), tint = tint)
 }
 
 @Composable

@@ -1,23 +1,14 @@
 package org.viptv.app.features.entry
 
 import org.viptv.app.components.AppTextField
-import org.viptv.app.components.FocusLazyRow as LazyRow
-import com.composables.icons.lucide.*
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
 import org.viptv.app.connection.Profile
-import org.viptv.app.theme.Palette
-import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.TextButton
 
 @Composable
@@ -31,32 +22,7 @@ fun ProfilesScreen(
     if (television) TvProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
     else if (compact) MobileProfiles(profiles, busy, error, local, managing, select, edit, manage, done, back = back) { adding = true }
     else if (desktop) DesktopProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
-    else
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(if (managing) "Manage profiles" else "Who’s watching?", style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(44.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(28.dp), contentPadding = PaddingValues(24.dp)) {
-            items(profiles, key = { it.id }) { profile ->
-                Column(Modifier.pointerClickable(enabled = !busy) { if (managing) edit(profile.id) else select(profile.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    ProfileAvatar(profile, 112.dp, 16.dp)
-                    Spacer(Modifier.height(14.dp)); Text(profile.name, color = Palette.secondary)
-                    if (profile.locked && !managing) Text("Locked", style = MaterialTheme.typography.labelSmall)
-                }
-            }
-            if (local && profiles.size < 12) item {
-                Column(Modifier.pointerClickable(enabled = !busy) { adding = true }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(Modifier.size(112.dp).clip(RoundedCornerShape(16.dp)), color = Palette.raised) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, "Add profile", Modifier.size(40.dp)) }
-                    }
-                    Spacer(Modifier.height(14.dp)); Text("Add profile", color = Palette.secondary)
-                }
-            }
-        }
-        if (local) TextButton(onClick = if (managing) done else manage, enabled = !busy) {
-            Text(if (managing) "Done" else "Manage profiles")
-        }
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-    }
+    else WideProfiles(profiles, busy, error, local, managing, select, edit, manage, done) { adding = true }
     if (adding) {
         val nameFocus = remember { FocusRequester() }
         LaunchedEffect(Unit) { withFrameNanos { }; runCatching { nameFocus.requestFocus() } }
