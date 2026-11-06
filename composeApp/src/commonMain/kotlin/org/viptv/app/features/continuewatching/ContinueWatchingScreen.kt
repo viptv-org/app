@@ -23,7 +23,9 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.ListRemoval
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.ListRemovalConfirmation
+import org.viptv.app.components.ListSkeletonTile
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.TextButton
@@ -88,13 +90,13 @@ internal fun ContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> 
                     }
                 }
                 when {
-                    page.loading -> items(columns * 3, contentType = { "continue:skeleton" }) {
-                        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).clip(RoundedCornerShape(8.dp)).background(Palette.surface))
+                    page.state == ListPageState.Loading -> items(columns * 3, contentType = { "continue:skeleton" }) {
+                        ListSkeletonTile(Modifier.fillMaxWidth().aspectRatio(16f / 9))
                     }
-                    !page.loaded && page.error != null -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    page.state == ListPageState.Failed -> item(span = { GridItemSpan(maxLineSpan) }) {
                         PageMessage("Continue Watching didn’t load", "Check the connection and try again.", "Try again", retry, phone)
                     }
-                    page.empty -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    page.state == ListPageState.Empty -> item(span = { GridItemSpan(maxLineSpan) }) {
                         PageMessage("Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, phone)
                     }
                     else -> {

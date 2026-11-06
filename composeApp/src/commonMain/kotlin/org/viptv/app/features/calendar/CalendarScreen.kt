@@ -25,13 +25,16 @@ import org.viptv.app.connection.calendarWindow
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.ReleaseRowSkeleton
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.format.providerText
 
@@ -77,6 +80,7 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
         val markedEntry = remember(visible, restore.lastKey) { visible.indexOfFirst { it.id == restore.lastKey } }
         val anchored = restore.anchor(visible.size) { visible[it].id }
         val gutter = pageGutter(television, tablet = false, browser, maxWidth)
+        val pageState = listPageState(entries.size, busy, error)
         Column(Modifier.fillMaxSize().padding(horizontal = gutter,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
@@ -89,14 +93,15 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                     if (index >= 0) { if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index) }
                 }
             }
-            if (entries.isEmpty() && error != null && !busy) {
-                CalendarFailure(error, retry)
+            if (pageState == ListPageState.Failed) {
+                CalendarFailure(error ?: "", retry)
                 return@Column
             }
             error?.let { Text(it, color = Palette.danger) }
             notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            if (entries.isEmpty() && !busy && error == null) {
+            if (pageState == ListPageState.Loading) ReleaseRowSkeleton(phone, Modifier.weight(1f))
+            else if (pageState == ListPageState.Empty) {
                 Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
                 TextButton(manage) { Text("Manage integrations") }
             } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
