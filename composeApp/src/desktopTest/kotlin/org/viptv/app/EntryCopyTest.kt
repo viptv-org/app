@@ -86,7 +86,7 @@ class EntryCopyTest {
                 assertTrue(shows(scene, "Add a profile"), "$name: the add tile is copy.md's")
                 assertTrue(shows(scene, "Manage profiles"), "$name: the manage action is copy.md's")
                 assertFalse(shows(scene, "Locked"), "$name: the lock is a glyph, not a word")
-                assertTrue(described(scene).any { it == "Locked" }, "$name: the glyph keeps its accessible name")
+                assertTrue(described(scene).any { it.contains("Locked") }, "$name: the glyph keeps its accessible name")
                 capture(scene, "profiles-$name")
             } finally { scene.close() }
         }

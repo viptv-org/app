@@ -17,13 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
@@ -43,6 +37,7 @@ import com.composables.icons.lucide.CloudOff
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Package
 import com.composables.icons.lucide.Volume2
+import org.viptv.app.components.dashedOutline
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
@@ -143,15 +138,4 @@ private fun SourceLanguageChip(text: String, color: Color, dashed: Boolean, font
 }
 
 private fun Modifier.chipOutline(color: Color, width: Dp, radius: Dp, dashed: Boolean): Modifier =
-    if (!dashed) this.border(width, color, RoundedCornerShape(radius))
-    else this.drawBehind {
-        val stroke = width.toPx()
-        val inset = stroke / 2f
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(inset, inset),
-            size = Size(size.width - stroke, size.height - stroke),
-            cornerRadius = CornerRadius((radius.toPx() - inset).coerceAtLeast(0f)),
-            style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), 0f)),
-        )
-    }
+    if (!dashed) this.border(width, color, RoundedCornerShape(radius)) else this.dashedOutline(color, width, radius)
