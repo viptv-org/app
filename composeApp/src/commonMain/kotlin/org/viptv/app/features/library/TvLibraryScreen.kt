@@ -105,6 +105,9 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     })
     if (!saved) LaunchedEffect(continueCards.isEmpty(), pageState) {
         if (continueCards.isEmpty() && pageState != ListPageState.Loading) claim(action)
+    } else LaunchedEffect(shown.isEmpty(), pageState) {
+        // An emptied My List leaves the remote on the segment that owns it.
+        if (shown.isEmpty() && pageState != ListPageState.Loading) claim(segmentEntry)
     }
     LaunchedEffect(shown) {
         val lost = lastFocused ?: return@LaunchedEffect

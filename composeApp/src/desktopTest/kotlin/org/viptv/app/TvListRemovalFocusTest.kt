@@ -18,7 +18,10 @@ import androidx.compose.ui.unit.Density
 import org.viptv.app.ListRemovalHost.Companion.continueCard
 import org.viptv.app.ListRemovalHost.Companion.libraryCard
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
+import org.viptv.app.connection.defaultLibraryQuery
 import org.viptv.app.features.library.TvLibraryScreen
+import org.viptv.engine.wire.Availability
+import org.viptv.engine.wire.LibrarySnapshot
 import org.viptv.app.theme.Palette
 import org.junit.Rule
 import org.viptv.app.theme.ViptvTheme
@@ -60,6 +63,22 @@ class TvListRemovalFocusTest {
             page.until("the confirmation") { page.texts().any { it == "Remove from My List?" } }
             page.click("Remove")
             assertEquals(listOf(libraryCard(1)), removed)
+        }
+    }
+
+    @Test fun anEmptiedMyListLeavesTheRemoteOnItsSegment() {
+        val empty = LibrarySnapshot(ListRemovalHost.scope, 1, defaultLibraryQuery(), emptyList(), complete = true,
+            availability = Availability.AVAILABLE)
+        Page {
+            TvLibraryScreen(emptyList(), available = true, open = {}, home = {}, snapshot = empty, remove = {})
+        }.use { page ->
+            page.until("the empty state") { page.texts().any { it.contains("Your list is empty.") } }
+            page.until("the remote on the My List segment") {
+                page.focusedText()?.contains("My List") == true || page.nodes().any { node ->
+                    node.config.getOrNull(SemanticsProperties.Focused) == true &&
+                        node.children.any { page.text(it).contains("My List") }
+                }
+            }
         }
     }
 

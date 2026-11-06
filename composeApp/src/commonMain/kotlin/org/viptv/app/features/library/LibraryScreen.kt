@@ -147,8 +147,8 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                                         else LibraryControls(filter, { filter = it }, sort, { sort = it })
                                         if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                                     } else {
-                                        val continueError = section?.page?.let { it.error?.takeIf { _ -> it.loaded } }
-                                        continueError?.let { Text(it, color = Palette.danger) }
+                                        val continuePage = section?.page
+                                        if (continuePage != null && continuePage.loaded) continuePage.error?.let { Text(it, color = Palette.danger) }
                                     }
                                 }
                                 if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
@@ -201,7 +201,7 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                         else ContinueWatchingSkeleton(continueColumns, continueGap)
                     } else if (pageState == ListPageState.Failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                         if (saved) LibraryFailure(error ?: "", retry)
-                        else ContinueWatchingMessage(CONTINUE_FAILED_TITLE, section?.page?.error.orEmpty(), "Try again", { section?.retry?.invoke() })
+                        else ContinueWatchingMessage(CONTINUE_FAILED_TITLE, CONTINUE_FAILED_BODY, "Try again", { section?.retry?.invoke() })
                     } else if (pageState == ListPageState.Empty) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                         if (saved) Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
@@ -225,6 +225,7 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
 }
 
 internal const val CONTINUE_FAILED_TITLE = "Continue Watching didn’t load"
+private const val CONTINUE_FAILED_BODY = "Check the connection and try again."
 internal const val CONTINUE_EMPTY_TITLE = "Nothing in progress"
 internal const val CONTINUE_EMPTY_BODY = "Titles you start watching appear here."
 
