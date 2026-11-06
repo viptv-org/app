@@ -5,6 +5,7 @@ package org.viptv.app.features.settings
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import org.viptv.app.components.FocusLazyRow as LazyRow
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,13 +47,23 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap()) {
+    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
+    initialAddonId: String? = null) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
     var wasSearching by remember { mutableStateOf(false) }
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = AddonFilter(query, provides).filtered(addons)
+    val listState = rememberLazyListState()
+    val targetRow = remember(shown, initialAddonId) { shown.indexOfFirst { it.id == initialAddonId } }
+    val targetFocus = remember(initialAddonId) { FocusRequester() }
+    LaunchedEffect(targetRow, shown) {
+        if (targetRow < 0) return@LaunchedEffect
+        listState.scrollToItem(targetRow)
+        withFrameNanos { }
+        runCatching { targetFocus.requestFocus() }
+    }
     val searchChip = remember { FocusRequester() }
     val clear = { query = ""; provides = null }
     // Leaving the keyboard returns the D-pad to the chip that opened it.
@@ -68,13 +79,16 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
             // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
             CompositionLocalProvider(LocalTvColumnFocus provides null) {
                 LazyColumn(Modifier.width(760.dp * scale).fillMaxHeight().tvRingRoom(tvRingReach(scale), horizontal = false),
+                    state = listState,
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
                         val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
+                        val target = addon.id == initialAddonId
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
                             .focusProperties { left = sidebar }
-                            .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
+                            .then(if (target) Modifier.focusRequester(targetFocus).border(2.dp * scale, Palette.accent, RoundedCornerShape(18.dp * scale))
+                                else if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
