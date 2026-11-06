@@ -48,15 +48,15 @@ class ProfilePageTest {
         Profile(id, name, null, locked = locked, canDelete = canDelete)
 
     private fun actions(saved: androidx.compose.runtime.MutableState<Long>) = ProfilePageActions(
-        rename = { name, pin -> calls += "rename:$name:$pin" },
-        avatar = { pick, _ -> calls += "avatar:${pick.style}:${pick.choice}" },
+        rename = { name, pin, household -> calls += "rename:$name:$pin:$household" },
+        avatar = { pick, _, household -> calls += "avatar:${pick.style}:${pick.choice}:$household" },
         kids = { enabled, pin -> calls += "kids:$enabled:$pin"; saved.value += 1 },
         maturity = { movie, series, unrated, pin -> calls += "maturity:$movie:$series:$unrated:$pin"; saved.value += 1 },
         approvedTitles = { calls += "approved titles" },
         lock = { old, next -> calls += "lock:$old:$next"; saved.value += 1 },
         parentalControls = { calls += "parental controls" },
         language = { calls += "language" },
-        delete = { pin -> calls += "delete:$pin"; saved.value += 1 })
+        delete = { pin, household -> calls += "delete:$pin:$household"; saved.value += 1 })
 
     private inner class Page(values: ProfilePageValues) : AutoCloseable {
         val saved = mutableStateOf(0L)
@@ -113,7 +113,7 @@ class ProfilePageTest {
             page.click("Name")
             page.type("Renamed")
             page.click("Save")
-            assertEquals(listOf("rename:Renamed:"), calls)
+            assertEquals(listOf("rename:Renamed::"), calls)
             assertTrue(page.shows("Renamed"), "a save that has not landed yet keeps the typed value in the field")
             page.saved.value = 1
             page.render()
@@ -208,6 +208,62 @@ class ProfilePageTest {
         }
     }
 
+    @Test fun aRestrictedProfileAsksForTheHouseholdPinBeforeSavingTheName() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13,
+            policy = parentKids(true, 13), householdPinConfigured = true, householdUnlocked = false,
+            householdRestricted = true)).use { page ->
+            page.render()
+            page.click("Name")
+            page.type("Renamed")
+            page.click("Save")
+            assertTrue(page.shows("Change this profile’s name"), "the name step hands over to the household PIN")
+            assertTrue(page.shows("Enter the household PIN to change this profile."))
+            page.type("4821")
+            page.click("Continue")
+            assertEquals(listOf("rename:Renamed::4821"), calls)
+        }
+    }
+
+    @Test fun aRestrictedProfileAsksForTheHouseholdPinBeforeDeleting() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13,
+            policy = parentKids(true, 13), householdPinConfigured = true, householdUnlocked = false,
+            householdRestricted = true)).use { page ->
+            page.render()
+            page.click("Delete profile")
+            page.nodes().filter { text(it) == "Delete profile" && it.config.contains(SemanticsActions.OnClick) }.last()
+                .config[SemanticsActions.OnClick].action!!.invoke()
+            page.render()
+            assertTrue(page.shows("Delete this profile"))
+            page.type("4821")
+            page.click("Continue")
+            assertEquals(listOf("delete::4821"), calls)
+        }
+    }
+
+    @Test fun aRestrictedProfileAsksForTheHouseholdPinBeforeTurningKidsOff() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 13,
+            policy = parentKids(true, 13), householdPinConfigured = true, householdUnlocked = false,
+            householdRestricted = true)).use { page ->
+            page.render()
+            page.click("Kids profile")
+            assertTrue(page.shows("Turn off Kids profile"))
+            page.type("4821")
+            page.click("Continue")
+            assertEquals(listOf("kids:false:4821"), calls)
+        }
+    }
+
+    @Test fun anUnrestrictedProfileNeverAsksForTheHouseholdPin() {
+        Page(ProfilePageValues(profile = profile(), local = false, kids = false,
+            policy = parentKids(false, 12), householdPinConfigured = true, householdUnlocked = false)).use { page ->
+            page.render()
+            page.click("Name")
+            page.type("Renamed")
+            page.click("Save")
+            assertEquals(listOf("rename:Renamed::"), calls, "an adult profile edits without the household PIN")
+        }
+    }
+
     @Test fun aKidsPolicyThePageCannotReadIsNeverDrawnAsAllRatingsOrADash() {
         Page(ProfilePageValues(profile = profile(), local = false, kids = true, maxAge = 10,
             householdPinConfigured = true, householdUnlocked = false, approvedTitles = null)).use { page ->
@@ -278,7 +334,7 @@ class ProfilePageTest {
             assertTrue(page.shows("Delete Viewer?"))
             assertTrue(page.shows("This permanently removes this profile’s watch history, favorites and preferences."))
             page.clickLast("Delete profile")
-            assertEquals(listOf("delete:"), calls)
+            assertEquals(listOf("delete::"), calls)
         }
     }
 

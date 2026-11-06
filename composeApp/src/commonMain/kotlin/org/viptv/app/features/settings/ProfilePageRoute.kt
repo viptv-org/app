@@ -41,14 +41,15 @@ internal fun profilePageValues(state: ApplicationState): ProfilePageValues? {
     return ProfilePageValues(profile = profile, local = state.localMode, kids = server?.kids == true,
         maxAge = policy?.max_age ?: server?.max_age, policy = policy,
         approvedTitles = state.profileApprovals, householdPinConfigured = parent?.pin_configured == true,
-        householdUnlocked = parent?.unlocked == true, audioLanguage = preferences?.preferred_audio_language,
+        householdUnlocked = parent?.unlocked == true, householdRestricted = parent?.restricted == true,
+        audioLanguage = preferences?.preferred_audio_language,
         subtitleLanguage = preferences?.preferred_subtitle_language, canDelete = profile.canDelete && state.profiles.size > 1)
 }
 
 internal fun profilePageActions(controller: ApplicationController, values: ProfilePageValues?,
     parentalControls: () -> Unit, language: () -> Unit) = ProfilePageActions(
-    rename = controller::saveProfileName,
-    avatar = { pick, pin -> controller.setSelectedProfileAvatar(pick.style, pick.choice, pin) },
+    rename = { name, pin, household -> controller.saveProfileName(name, pin, household) },
+    avatar = { pick, pin, household -> controller.setSelectedProfileAvatar(pick.style, pick.choice, pin, household) },
     kids = { enabled, pin -> values?.kidsPolicy()?.let { controller.saveProfileKids(it.copy(enabled = enabled), pin) } },
     maturity = { movie, series, unrated, pin -> values?.kidsPolicy()?.let { known -> controller.saveProfileKids(
         known.copy(enabled = true, movie_rating = movie, series_rating = series, allow_unrated = unrated), pin) } },
@@ -56,5 +57,5 @@ internal fun profilePageActions(controller: ApplicationController, values: Profi
     lock = controller::setSelectedProfilePin,
     parentalControls = parentalControls,
     language = language,
-    delete = controller::deleteSelectedProfile,
+    delete = { pin, household -> controller.deleteSelectedProfile(pin, household) },
 )

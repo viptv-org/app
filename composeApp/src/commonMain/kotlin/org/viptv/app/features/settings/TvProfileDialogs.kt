@@ -283,7 +283,7 @@ internal fun TvDeleteProfileDialog(name: String, pinRequired: Boolean, busy: Boo
 
 @Composable
 internal fun TvHouseholdPinDialog(title: String, busy: Boolean, failure: String?, dismiss: () -> Unit, submit: (String) -> Unit,
-    scale: Float) {
+    scale: Float, note: String = "Enter the household PIN to change this profile.") {
     var pin by remember { mutableStateOf("") }
     val stops = rememberTvDialogStops(3)
     val pinStop = stops.first()
@@ -294,8 +294,7 @@ internal fun TvHouseholdPinDialog(title: String, busy: Boolean, failure: String?
         TvDialogAction(scale, "Continue", continueStop, enabled = !busy && pin.length in 4..8) { submit(pin) }
         TvDialogAction(scale, "Cancel", cancelStop, enabled = !busy) { dismiss() }
     }) {
-        Text("Enter the household PIN to change this profile’s limits.", color = Palette.secondary,
-            fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
+        Text(note, color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (38 * scale).sp)
         Spacer(Modifier.height((24 * scale).dp))
         TvDialogField("Household PIN", pin, scale, !busy, pinStop, secret = true, onEscape = close) { pin = pinDigits(it) }
         TvFailure(failure, scale)
@@ -307,10 +306,21 @@ internal fun TvProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePag
     actions: ProfilePageActions, scale: Float) {
     val mutations = LocalPendingMutation.current
     if (dialogs.name) TvProfileNameDialog(values.profile.name, values.pinRequired, busy, error,
-        dismiss = { if (!busy) dialogs.name = false }, save = { name, pin -> actions.rename(name, pin) },
+        dismiss = { if (!busy) dialogs.name = false },
+        save = { name, pin ->
+            if (values.householdGated) {
+                dialogs.name = false
+                dialogs.requireHouseholdPin("Change this profile’s name") { actions.rename(name, pin, it) }
+            } else actions.rename(name, pin, "")
+        },
         pending = mutations.isPending(profileMutationTarget(PROFILE_RENAME)), scale = scale)
     if (dialogs.avatar) AvatarPicker(values.profile, busy, AvatarPickerLayout.Television, { if (!busy) dialogs.avatar = false },
-        choose = { pick, pin -> actions.avatar(pick, pin) })
+        choose = { pick, pin ->
+            if (values.householdGated) {
+                dialogs.avatar = false
+                dialogs.requireHouseholdPin("Change this profile’s avatar") { actions.avatar(pick, pin, it) }
+            } else actions.avatar(pick, pin, "")
+        })
     if (dialogs.lock) TvProfileLockDialog(values.profile, busy, scale, { if (!busy) dialogs.lock = false },
         setPin = { old, next -> actions.lock(old, next) }, pinAvailable = true)
     if (dialogs.maturity) values.policy?.let { policy ->
@@ -319,11 +329,14 @@ internal fun TvProfileDialogsContent(dialogs: ProfileDialogs, values: ProfilePag
             scale = scale)
     }
     if (dialogs.delete) TvDeleteProfileDialog(values.profile.name, values.pinRequired, busy, error,
-        dismiss = { if (!busy) dialogs.delete = false }, delete = { pin -> actions.delete(pin) },
+        dismiss = { if (!busy) dialogs.delete = false },
+        delete = { pin ->
+            if (values.householdGated) {
+                dialogs.delete = false
+                dialogs.requireHouseholdPin("Delete this profile") { actions.delete(pin, it) }
+            } else actions.delete(pin, "")
+        },
         pending = mutations.isPending(profileMutationTarget(PROFILE_DELETE)), scale = scale)
-    if (dialogs.kidsPin) TvHouseholdPinDialog("Turn on Kids profile", busy, error,
-        dismiss = { if (!busy) dialogs.kidsPin = false }, submit = { pin -> actions.kids(true, pin) }, scale = scale)
-    dialogs.maturityPin?.let { selection -> TvHouseholdPinDialog("Change the maturity limit", busy, error,
-        dismiss = { if (!busy) dialogs.maturityPin = null },
-        submit = { pin -> actions.maturity(selection.movie, selection.series, selection.unrated, pin) }, scale = scale) }
+    dialogs.householdPinTitle?.let { title -> TvHouseholdPinDialog(title, busy, error,
+        dismiss = { if (!busy) dialogs.clearHouseholdPin() }, submit = { pin -> dialogs.householdPinFor?.invoke(pin) }, scale = scale) }
 }
