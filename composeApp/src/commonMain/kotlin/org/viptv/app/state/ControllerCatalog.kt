@@ -20,7 +20,8 @@ fun ApplicationController.refresh() = run {
     val refreshed = if (profile != null && result.selected == profile && device != null)
         result.copy(home = device.refreshHome(profile)) else result
     currentCoroutineContext().ensureActive()
-    if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
+    if (refreshed.selected != profile) accept(refreshed, busy = true)
+    else if (mutable.value.screen == Screen.Home) refreshSnapshot(refreshed, busy = true)
     else {
         updateState { it.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap()) }
         adoptContinuation(refreshed.continuation)
