@@ -37,6 +37,7 @@ import org.viptv.app.components.ClampedText
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.TextButton
+import org.viptv.app.components.dismissScrim
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.rememberOverlayMotion
@@ -78,7 +79,7 @@ internal fun TvRemoteOverlay(
     val dismiss = { visible = false }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         RemoteKeepScreenOn(motion.presented)
-        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(RemoteScrim).pointerClickable { dismiss() })
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = motion.scrim }.background(RemoteScrim).dismissScrim { dismiss() })
         RemoteSheet(tv, controller, motion.container, visible, swipeMode, onSwipeModeChange, dismiss, onPairAgain, maxWidth)
     }
 }
