@@ -15,6 +15,7 @@ import org.viptv.app.components.TvAction
 import org.viptv.app.components.ClampedText
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
+import org.viptv.app.components.textColumnWidth
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -24,7 +25,7 @@ internal fun TvLiveChannelLabel(channel: LiveChannel, scale: Float, first: Focus
         .focusProperties { if (up != null) this.up = up }, scale, requester = first, activate = watch,
         background = Color.White.copy(alpha = .06f), cornerRadius = 10.dp * scale,
         contentPadding = PaddingValues(horizontal = 18.dp * scale), arrangement = Arrangement.Start) {
-        channel.number?.let { number -> Text(number, Modifier.width(34.dp * scale), fontSize = (22 * scale).sp,
+        channel.number?.let { number -> Text(number, Modifier.width(textColumnWidth(34.dp * scale)), fontSize = (22 * scale).sp,
             lineHeight = (26 * scale).sp, color = if (it == Palette.background) it else Palette.secondary, fontWeight = FontWeight.SemiBold) }
         Spacer(Modifier.width(16.dp * scale))
         ClampedText(channel.card.title, fontSize = (30 * scale).sp, lineHeight = (36 * scale).sp, letterSpacing = (-.6f * scale).sp, color = it,

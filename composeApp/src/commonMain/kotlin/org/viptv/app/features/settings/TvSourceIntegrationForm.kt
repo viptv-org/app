@@ -304,7 +304,7 @@ private fun TvSourceIntegrationCard(schema: SourceIntegrationSchema, scale: Floa
                         }
                     }
                 } else {
-                    TvAction(Modifier.heightIn(min = 60.dp * scale).width(240.dp * scale), scale, requester = requester,
+                    TvAction(Modifier.heightIn(min = 60.dp * scale).widthIn(min = 240.dp * scale), scale, requester = requester,
                         left = left, ring = false, enabled = enabled, keepFocus = true, activate = configure) { tint ->
                         Icon(Lucide.SlidersHorizontal, null, Modifier.size(24.dp * scale), tint = tint)
                         Spacer(Modifier.width(12.dp * scale))
