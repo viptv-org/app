@@ -19,12 +19,12 @@ internal fun LiveFilters(groups: Map<String, String>, group: String?, chooseGrou
     favoritesOnly: Boolean, favorites: (() -> Unit)?, reset: () -> Unit,
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier, gutter: Dp = 0.dp, bleed: Boolean = true, entry: FocusRequester? = null,
-    down: FocusRequester? = null) {
+    down: FocusRequester? = null, up: FocusRequester? = null) {
     val groupOptions = remember(groups) { groups.map { (id, label) -> SelectOption(id, label) } }
     val sourceOptions = remember(sources) { sources.map { (id, name) -> SelectOption(id, name) } }
     val hasSource = sourceChanged != null && sourceOptions.size > 1
     val chooseSource: (String) -> Unit = { id -> sourceChanged?.invoke(id) }
-    FilterBar(modifier, gutter, bleed, clear = if (group != null || favoritesOnly) ({ reset() }) else null, down = down) {
+    FilterBar(modifier, gutter, bleed, clear = if (group != null || favoritesOnly) ({ reset() }) else null, down = down, up = up) {
         if (groupOptions.isNotEmpty()) item(key = "group") {
             SearchableSelect("Group", groupOptions, listOfNotNull(group), { chooseGroup(it.firstOrNull()) },
                 anyLabel = AllGroups, anyTrailing = groups.size.toString(), searchPlaceholder = "Search groups", chipFocus = entry)
