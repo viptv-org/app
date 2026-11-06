@@ -10,7 +10,7 @@ import kotlin.math.ceil
 data class LiveProgram(val id: String, val title: String, val start: Int, val end: Int,
     val description: String? = null, val artwork: String? = null)
 data class LiveChannel(val card: Card, val number: String? = null, val category: String? = null,
-    val programs: List<LiveProgram> = emptyList(), val id: String = card.identity.id, val connectionId: String = card.provider_id, val groupId: String? = null, val favorite: Boolean = false, val favoritePending: Boolean = false) {
+    val programs: List<LiveProgram> = emptyList(), val id: String = card.identity.id, val connectionId: String = card.provider_id, val groupId: String? = null, val favorite: Boolean = false) {
     fun current(now: Int?) = now?.let { minute -> programs.firstOrNull { minute in it.start until it.end } }
     fun next(now: Int?) = now?.let { minute -> programs.firstOrNull { it.start > minute } }
 }

@@ -2,6 +2,7 @@ package org.viptv.app.state
 
 import androidx.compose.runtime.Immutable
 import org.viptv.app.connection.failsHardFilter
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.app.features.settings.languageChoices
 import org.viptv.engine.wire.SourceCandidate
@@ -45,6 +46,12 @@ internal fun failedSourcesNotice(count: Int): String =
 internal const val FALLBACK_REASON_FAILED = "This source could not play"
 internal const val FALLBACK_REASON_UNDECODABLE = "This device can’t decode this stream"
 internal const val FALLBACK_REASON_TIMEOUT = "This source did not start"
+
+internal val PlaybackFailure.reason: String get() = when (this) {
+    PlaybackFailure.Failed -> FALLBACK_REASON_FAILED
+    PlaybackFailure.Undecodable -> FALLBACK_REASON_UNDECODABLE
+    PlaybackFailure.Timeout -> FALLBACK_REASON_TIMEOUT
+}
 
 internal const val PLAY_FIRST_GRACE_MILLIS = 1_000L
 

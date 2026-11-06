@@ -40,7 +40,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
-import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.dismissScrim
 import org.viptv.app.components.requestFocusWhenPlaced
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
@@ -53,7 +53,7 @@ internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, sc
     val inset = if (television) 48.dp * scale else 24.dp
     Box(Modifier.fillMaxSize(), contentAlignment = if (television) Alignment.CenterEnd else Alignment.Center) {
         Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = if (television) .6f else .62f))
-            .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+            .dismissScrim(remember { MutableInteractionSource() }, dismiss))
         Column(Modifier.fillMaxWidth().padding(if (television) 0.dp else 24.dp)
             .widthIn(max = if (television) 820.dp * scale else 560.dp)
             .clip(RoundedCornerShape(if (television) 0.dp else 18.dp)).background(Palette.raised)

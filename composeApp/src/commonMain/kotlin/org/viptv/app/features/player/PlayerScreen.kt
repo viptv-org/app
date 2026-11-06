@@ -56,12 +56,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
     preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
-    fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
+    fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null,
+    failure: PlaybackFailure? = null, failedSource: String? = null) {
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
-            fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource)
+            fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource,
+            failure = failure, failedSource = failedSource)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
@@ -92,6 +94,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var audioError by remember(playbackKey) { mutableStateOf<Int?>(null) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
+    var undecodable by remember(playbackKey, input) { mutableStateOf(false) }
     var fill by remember(title?.identity) { mutableStateOf(false) }
     val toggleFill = { fill = !fill; interaction++; visible = true }
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
@@ -214,7 +217,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 else -> controlError = playbackControlErrorCopy
             }
             PlayerFact.Failed -> { buffering = false; failed = true }
-            PlayerFact.Undecodable -> { buffering = false; failed = true }
+            PlayerFact.Undecodable -> { buffering = false; failed = true; undecodable = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
@@ -243,7 +246,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
-                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked && !failed && error == null) { visible = !visible; interaction++ })
+                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                    enabled = !locked && !failed && error == null,
+                    onClickLabel = if (visible) "Hide controls" else "Show controls") { visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
@@ -318,7 +323,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 val failureStyle = if (phone) PhoneFailureStyle else DesktopFailureStyle
                 when {
                     stopped && fallback != null -> PlayerFallbackPage(fallback, stopFallback, failureStyle, controlInsets)
-                    stopped -> PlayerFailurePage(failureStyle, "This source stopped working", tvExtras.failureDescription ?: error, position,
+                    stopped -> PlayerFailurePage(failureStyle, "This source stopped working",
+                        failure = if (undecodable) PlaybackFailure.Undecodable else failure,
+                        source = failedSource, positionMillis = position, description = tvExtras.failureDescription,
                         primary = retry?.let { retryAction(tvExtras.fallbackLabel, it) },
                         choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)

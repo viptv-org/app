@@ -36,7 +36,7 @@ internal fun SourceCandidate.fallbackFacts(): String = listOfNotNull(
 @Composable
 internal fun PlayerFallbackPage(notice: PlayerFallbackNotice, stop: (() -> Unit)?, style: PlayerFailureStyle,
     insets: WindowInsets = WindowInsets(0, 0, 0, 0)) {
-    PlayerFailurePage(style, notice.message, listOfNotNull(notice.nextLabel, notice.nextFacts).joinToString(" \u00b7 "),
+    PlayerFailurePage(style, notice.message, description = listOfNotNull(notice.nextLabel, notice.nextFacts).joinToString(" \u00b7 "),
         primary = stop?.let { PlayerFailureAction("Stop", null, it) }, insets = insets)
 }
 

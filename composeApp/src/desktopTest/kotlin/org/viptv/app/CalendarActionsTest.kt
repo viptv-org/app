@@ -27,6 +27,12 @@ class CalendarActionsTest {
         val remote=RemoteConnection("https://fixture.example",client=client,browserMode=false)
         return ApplicationController(scope, store).also { it.connection=remote;it.mutable.value=ApplicationState(screen=Screen.Calendar,selectedProfile="one",preferences=PreferencesSnapshot()) } to remote
     }
+    @Test fun showsFilterIsStateAndNeedsNoRequest()=runBlocking<Unit>{
+        var calls=0
+        val client=HttpClient(MockEngine{calls++;respond("{\"entries\":[],\"complete\":true}",headers=headersOf(HttpHeaders.ContentType,"application/json"))}){configureTransport()}
+        val(c,r)=controller(client,this)
+        try{c.calendarFilter(CalendarFilter.All);assertEquals(CalendarFilter.All,c.state.value.calendarFilter);assertEquals(0,calls);c.calendarFilter(CalendarFilter.All);assertEquals(0,calls);c.calendarFilter(CalendarFilter.YourShows);assertEquals(CalendarFilter.YourShows,c.state.value.calendarFilter);assertEquals(0,calls)}finally{r.close()}
+    }
     @Test fun resolvesOnlyActualScheduledCardUsingSeasonOffsetBeforeStartingSources()=runBlocking<Unit>{
         val target=episode("actual-provider-id");val offsets=mutableListOf<String?>();var requested:String?=null
         val client=HttpClient(MockEngine{request->

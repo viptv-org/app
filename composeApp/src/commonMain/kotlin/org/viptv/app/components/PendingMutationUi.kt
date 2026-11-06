@@ -45,7 +45,7 @@ internal fun MutationSpinner(size: Dp, color: Color = Palette.text, strokeWidth:
 internal fun InlineMutationError(message: String, retry: () -> Unit, modifier: Modifier = Modifier, scale: Float = 1f) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp * scale)) {
         Icon(Lucide.CircleAlert, null, Modifier.size(16.dp * scale), tint = Palette.danger)
-        Text(message, color = Palette.danger, fontSize = (13 * scale).sp, lineHeight = (18 * scale).sp)
+        Text(message, Modifier.weight(1f, fill = false), color = Palette.danger, fontSize = (13 * scale).sp, lineHeight = (18 * scale).sp)
         TextButton(onClick = retry, contentPadding = PaddingValues(horizontal = 8.dp * scale)) {
             Text("Retry", color = Palette.text, fontSize = (13 * scale).sp, fontWeight = FontWeight.SemiBold)
         }

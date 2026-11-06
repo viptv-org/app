@@ -70,7 +70,7 @@ fun ApplicationController.deleteSelectedProfile(pin: String) = run {
     if (local != null) requireNotNull(local).deleteProfile(id, pin) else requireNotNull(connection).deleteProfile(id)
     val next = local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     progressJob?.cancel(); subtitleDiscovery?.cancel(); liveGuideJob?.cancel()
-    liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
+    cancelLiveFavoriteMutations()
     releaseRemotePlayback()?.join()
     accept(next, screen = Screen.Profiles)
     updateState { current -> current.copy(managingProfiles = true) }
