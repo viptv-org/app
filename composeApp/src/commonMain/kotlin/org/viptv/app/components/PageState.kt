@@ -2,7 +2,7 @@ package org.viptv.app.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -92,8 +92,7 @@ private fun PageStateActionButton(action: PageStateAction, layout: PageStateLayo
     }
     val phone = layout == PageStateLayout.Phone
     val ink = if (action.primary) Palette.background else Palette.text
-    // The pill keeps the block's height; the target around it is the tap minimum, which a fixed size outside the clickable would clip.
-    Box(Modifier.clickable(enabled = enabled, onClickLabel = action.label, onClick = action.activate).minimumTapTarget()) {
+    Box(Modifier.pointerClickable(enabled = enabled, onClickLabel = action.label, role = Role.Button, shape = RoundedCornerShape(12.dp), onClick = action.activate)) {
         Row(Modifier.height(if (phone) 44.dp else 38.dp)
             .background(if (action.primary) Palette.text else Color.Transparent, RoundedCornerShape(12.dp))
             .then(if (action.primary) Modifier else Modifier.border(1.dp, Palette.text.copy(alpha = .14f), RoundedCornerShape(12.dp)))
