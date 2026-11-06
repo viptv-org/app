@@ -15,7 +15,7 @@ class MyListWriteKeepsLoadedPagesTest {
     private fun card(number: Int) = Card(identity = MediaIdentity("tt%07d".format(number), "movie", emptyList()),
         provider_id = "library", title = "Movie %02d".format(number), badges = emptyList())
 
-    private class Host(var cards: List<Card>) : AutoCloseable {
+    private class Host(var cards: List<Card>, private val opaqueCursor: Boolean = false) : AutoCloseable {
         val reads = CopyOnWriteArrayList<String>()
         val deletes = CopyOnWriteArrayList<String>()
         private val store = object : RemoteSessionStore {
@@ -45,8 +45,8 @@ class MyListWriteKeepsLoadedPagesTest {
                     val end = offset + page.size
                     json(Json.encodeToString(LibrarySnapshot(Scope("viptv:remote", "account", "1", 1), 1,
                         defaultLibraryQuery().copy(offset = offset, limit = limit), page,
-                        next_cursor = end.takeIf { it < cards.size }?.toString(), complete = end >= cards.size,
-                        availability = Availability.AVAILABLE)))
+                        next_cursor = end.takeIf { it < cards.size }?.let { if (opaqueCursor) "page-$it" else "$it" },
+                        complete = end >= cards.size, availability = Availability.AVAILABLE)))
                 }
                 else -> respond("""{"error":"not in this fixture"}""", HttpStatusCode.NotFound)
             }
@@ -107,8 +107,7 @@ class MyListWriteKeepsLoadedPagesTest {
         }
     }
 
-    @Test fun aFilterChangeStartsFromTheFirstPageAgain() = runBlocking<Unit> {
-        val cards = (1..4).map(::card)
+    @Test fun aFilterChangeStartsFromTheFirstPageAgain() = runBlocking<Unit> {        val cards = (1..4).map(::card)
         Host(cards).use { host ->
             val controller = controller(host)
             controller.loadTwoPages()
@@ -118,6 +117,45 @@ class MyListWriteKeepsLoadedPagesTest {
 
             assertEquals(listOf("Movie 01", "Movie 02"), titles(controller), "a new query is a new list, not a merge")
             assertEquals("2", controller.state.value.libraryPage?.next_cursor)
+        }
+    }
+
+    @Test fun loadingMoreAfterARemovalAsksForTheRowRightAfterTheLoadedPages() = runBlocking<Unit> {
+        val cards = (1..6).map(::card)
+        Host(cards).use { host ->
+            val controller = controller(host)
+            controller.loadTwoPages()
+            assertEquals("4", controller.state.value.libraryPage?.next_cursor)
+
+            controller.removeFromMyList(cards[0])
+            controller.job?.join()
+
+            assertEquals("3", controller.state.value.libraryPage?.next_cursor, "the cursor moves back with the removed row")
+            controller.libraryMore()
+            until("the next page") { controller.state.value.libraryPage?.cards?.size == 5 && !controller.state.value.busy }
+            assertEquals(listOf("Movie 02", "Movie 03", "Movie 04", "Movie 05", "Movie 06"), titles(controller),
+                "the next page leaves no gap and repeats nothing")
+            assertNull(controller.state.value.libraryPage?.next_cursor, "the whole list is here")
+            assertEquals(listOf("0+2", "2+2", "0+100", "0+2", "3+2"), host.reads.toList())
+        }
+    }
+
+    @Test fun anOpaqueCursorIsReadFromTheLastLoadedPage() = runBlocking<Unit> {
+        val cards = (1..8).map(::card)
+        Host(cards, opaqueCursor = true).use { host ->
+            val controller = controller(host)
+            val query = defaultLibraryQuery().copy(limit = 2)
+            controller.mutable.value = controller.state.value.copy(libraryQuery = query,
+                libraryPage = LibrarySnapshot(Scope("viptv:remote", "account", "1", 1), 1, query.copy(offset = 2),
+                    cards.take(4), next_cursor = "page-4", complete = false, availability = Availability.AVAILABLE))
+
+            controller.removeFromMyList(cards[0])
+            controller.job?.join()
+
+            assertEquals(listOf("0+100", "0+2", "2+2"), host.reads.toList(),
+                "page 1, then the last loaded page for a cursor this code cannot move")
+            assertEquals(listOf("Movie 02", "Movie 03", "Movie 04", "Movie 05"), titles(controller))
+            assertEquals("page-4", controller.state.value.libraryPage?.next_cursor, "the cursor is the host's own")
         }
     }
 }
