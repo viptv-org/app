@@ -32,7 +32,7 @@ internal fun TvAddonManageDialog(addon: IntegrationConnection, enabled: Boolean,
         if (configurable) {
             TvDialogAction(scale, "Reconfigure", stops[stops.size - 2], enabled = !busy) { reconfigure() }
         }
-        TvDialogAction(scale, "Remove addon", removeStop, danger = true, enabled = !busy) { remove() }
+        TvDialogAction(scale, "Remove add-on", removeStop, danger = true, enabled = !busy) { remove() }
         TvDialogAction(scale, "Cancel", dismissStop, enabled = true) { dismiss() }
     }) {
         Text(addon.providesSummary().ifBlank { "This add-on is installed for this account." },

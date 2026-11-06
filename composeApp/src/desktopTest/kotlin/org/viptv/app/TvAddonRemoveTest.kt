@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.viptv.app.features.settings.TvAddonConfigureDialog
+import org.viptv.app.features.settings.TvDialogPanelTag
 import org.viptv.app.features.settings.TvAddonManageDialog
 import org.viptv.app.features.settings.TvAddonRemoveDialog
 import org.viptv.app.state.AddonConfigureRequest
@@ -27,17 +28,20 @@ class TvAddonRemoveTest {
 
     private val addon = IntegrationConnection("addon:7", "stremio", "1", null, "Torrentio", true, 1, listOf(Capability.DISCOVERY))
 
-    private class Scene(content: @Composable () -> Unit) : AutoCloseable {
+    private class Scene(width: Int = 1920, height: Int = 1080, density: Float = 1f, content: @Composable () -> Unit) : AutoCloseable {
         private var frame = 0L
-        private val scene = ImageComposeScene(1920, 1080, Density(1f)) {
+        private val scene = ImageComposeScene(width, height, Density(density)) {
             ViptvTheme(television = true) { Surface(Modifier.fillMaxSize(), color = Palette.background) { content() } }
         }
         fun frames(count: Int = 20) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }
         private fun label(node: SemanticsNode): String =
             (node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
                 node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ").trim()
-        fun clickable(name: String) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }
-            .first { label(it) == name && it.config.contains(SemanticsActions.OnClick) }
+        fun all(name: String) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }
+            .firstOrNull { label(it) == name }
+        fun clickable(name: String) = all(name)?.takeIf { it.config.contains(SemanticsActions.OnClick) } ?: error("no clickable $name")
+        fun tagged(tag: String) = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
+            .firstOrNull { it.config.getOrNull(SemanticsProperties.TestTag) == tag }
         fun capture(dir: String, name: String) {
             java.io.File(dir).mkdirs()
             scene.render(frame++ * 16_666_667L).use { image ->
@@ -51,7 +55,7 @@ class TvAddonRemoveTest {
         var removed = 0
         Scene { TvAddonManageDialog(addon, true, configurable = true, busy = false, scale = 1f, toggle = {}, reconfigure = {}, remove = { removed++ }, dismiss = {}) }.use { scene ->
             scene.frames()
-            assertTrue(scene.clickable("Remove addon").config[SemanticsActions.OnClick].action!!.invoke())
+            assertTrue(scene.clickable("Remove add-on").config[SemanticsActions.OnClick].action!!.invoke())
             assertEquals(1, removed, "Remove addon leaves the panel for the confirmation")
         }
     }
@@ -76,10 +80,35 @@ class TvAddonRemoveTest {
         }
     }
 
+    @Test fun everyManageActionStaysInsideThePanel(): Unit = runBlocking {
+        for (width in listOf(1920, 1280)) {
+            val scale = width / 1920f
+            val height = (1080 * scale).toInt()
+            Scene(width, height, scale) { TvAddonManageDialog(addon, true, configurable = true, busy = false, scale = scale, toggle = {}, reconfigure = {}, remove = {}, dismiss = {}) }.use { scene ->
+                scene.frames(20)
+                val panel = scene.tagged(TvDialogPanelTag) ?: error("no panel at $width")
+                for (action in listOf("Disable", "Reconfigure", "Remove add-on", "Cancel")) {
+                    val node = scene.all(action)
+                    assertNotNull(node, "$action missing at $width")
+                    val bounds = node.boundsInRoot
+                    assertTrue(bounds.left >= panel.boundsInRoot.left && bounds.right <= panel.boundsInRoot.right,
+                        "$action must stay inside the panel at $width: action $bounds panel ${panel.boundsInRoot}")
+                    assertTrue(bounds.bottom <= panel.boundsInRoot.bottom && bounds.top >= panel.boundsInRoot.top, "$action stays inside vertically at $width")
+                    assertTrue(bounds.height <= 74 * scale, "$action is one line at $width (${bounds.height})")
+                }
+            }
+        }
+    }
+
     @Test fun rendersForEvidence(): Unit = runBlocking {
         val dir = System.getenv("VIPTV_TV_REMOVE_CAPTURE_DIR") ?: return@runBlocking
         Scene { TvAddonManageDialog(addon, true, configurable = true, busy = false, scale = 1f, toggle = {}, reconfigure = {}, remove = {}, dismiss = {}) }
             .use { it.frames(20); it.capture(dir, "manage-tv-1920") }
+        val small = 1280f / 1920f
+        Scene(1280, 720, small) { TvAddonManageDialog(addon, true, configurable = true, busy = false, scale = small, toggle = {}, reconfigure = {}, remove = {}, dismiss = {}) }
+            .use { it.frames(20); it.capture(dir, "manage-tv-1280") }
+        Scene(1280, 720, small) { TvAddonRemoveDialog(addon, local = false, busy = false, pending = false, scale = small, confirm = {}, dismiss = {}) }
+            .use { it.frames(20); it.capture(dir, "remove-tv-1280") }
         Scene { TvAddonRemoveDialog(addon, local = false, busy = false, pending = false, scale = 1f, confirm = {}, dismiss = {}) }
             .use { it.frames(20); it.capture(dir, "remove-tv-1920") }
         Scene { TvAddonConfigureDialog(AddonConfigureRequest("addon:7", "Torrentio", "https://watch.example/api/addons/configure/ticket-1", 300), 1f, {}, {}) }
