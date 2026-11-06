@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,19 +30,23 @@ internal fun TitleLogo(
     logoModifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
     logoAlignment: Alignment = Alignment.CenterStart,
+    logoKeepsItsShape: Boolean = false,
     titleContent: @Composable BoxScope.() -> Unit,
 ) {
     val request = logo?.let { rememberLogoRequest(it) }
     val painter = rememberAsyncImagePainter(request)
     val state by painter.state.collectAsState()
     val ready = request != null && state is AsyncImagePainter.State.Success
+    val intrinsic = painter.intrinsicSize
+    val logoRatio = intrinsic.takeIf { it.width.isFinite() && it.width > 0f && it.height.isFinite() && it.height > 0f }?.let { it.width / it.height }
     val spec = motionSpec<Float>(tween(Motion.arrive, easing = Motion.standard))
     val textAlpha by animateFloatAsState(if (ready) 0f else 1f, spec, label = "TitleLogo text")
     val logoAlpha by animateFloatAsState(if (ready) 1f else 0f, spec, label = "TitleLogo logo")
     Box(modifier.testTag(TITLE_LOGO_TAG), contentAlignment = contentAlignment) {
         Box(Modifier.graphicsLayer { alpha = textAlpha }) { titleContent() }
         if (request != null) {
-            Image(painter, title, logoModifier.graphicsLayer { alpha = logoAlpha }, contentScale = contentScale,
+            val sized = if (logoKeepsItsShape && logoRatio != null) logoModifier.aspectRatio(logoRatio) else logoModifier
+            Image(painter, title, sized.graphicsLayer { alpha = logoAlpha }, contentScale = contentScale,
                 alignment = logoAlignment)
         }
     }

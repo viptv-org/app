@@ -3,6 +3,8 @@ package org.viptv.app.player.mpv
 import com.sun.jna.Pointer
 import com.sun.jna.ptr.PointerByReference
 import org.jetbrains.skia.*
+import org.viptv.app.player.SlateSampleHeight
+import org.viptv.app.player.SlateSampleWidth
 import java.util.concurrent.atomic.AtomicBoolean
 
 // Presenting through mpv's software render context is the default; the GL path composites Skiko's own
@@ -160,6 +162,22 @@ internal class MpvRenderer(private val session: MpvSession, private val host: Mp
         }
     }
 
+    // The presented picture at 32x18 gray: one scaled draw of the frame the UI already holds (~0.15 ms).
+    fun graySample(): ByteArray? {
+        if (sampleFailed) return null
+        return runCatching {
+            val source = image?.takeIf { !stopped.get() } ?: return null
+            val bitmap = sampleBitmap ?: Bitmap().apply {
+                allocPixels(ImageInfo(SlateSampleWidth, SlateSampleHeight, ColorType.GRAY_8, ColorAlphaType.OPAQUE))
+            }.also { sampleBitmap = it }
+            val pixmap = bitmap.peekPixels() ?: return null
+            check(source.scalePixels(pixmap, SamplingMode.LINEAR, true))
+            bitmap.readPixels()
+        }.getOrElse { sampleFailed = true; null }
+    }
+    private var sampleBitmap: Bitmap? = null
+    private var sampleFailed = false
+
     fun drawn() { if (renderPath != MpvRenderPath.Gl) context?.let { api.mpv_render_context_report_swap(it) } }
     fun destroy() {
         try {
@@ -170,6 +188,7 @@ internal class MpvRenderer(private val session: MpvSession, private val host: Mp
             glImages.clear()
             if (renderPath != MpvRenderPath.Gl) image?.close()
             image = null
+            sampleBitmap?.close(); sampleBitmap = null
         } finally { session.closeAfterRenderer() }
     }
 }

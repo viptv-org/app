@@ -209,11 +209,16 @@ fun ApplicationController.observePlaybackFor(input: PlaybackInput?, fact: Player
 }
 
 internal fun ApplicationController.observePlayback(fact: PlayerFact) {
+    if (fact is PlayerFact.Startup) {
+        if (fact.fraction != startupBuffered) { startupBuffered = fact.fraction; updateState { it } }
+        return
+    }
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
         updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
         mutable.value.selectedProfile?.let { profile ->
             rememberStartedSource(profile, mutable.value.sourceTitle, mutable.value.playingSource)
+            rememberProviderAffinity(profile)
         }
         startDeadlineJob?.cancel(); startDeadlineJob = null
         rememberSourceChoice()
