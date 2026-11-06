@@ -56,6 +56,8 @@ class ListPageStatesScanTest {
             assertTrue(text.contains("ContinueWatchingState("), "$screen draws the shared page state block")
             assertFalse(text.contains("page.error?.let"), "$screen prints the request's message once, as the block's body")
         }
+    }
+
     @Test fun homeTakesItsPageStateFromTheSameRuleAndBlock() {
         assertTrue(Regex("""\blistPageState\(""").containsMatchIn(source("features/home/HomeCopy.kt")),
             "Home's page state is the shared rule")
