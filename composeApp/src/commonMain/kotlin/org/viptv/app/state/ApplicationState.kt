@@ -66,7 +66,7 @@ data class ApplicationState(
     val profilesFromHome: Boolean = false,
     val selectedProfile: String? = null,
     val leavePinFrom: String? = null,
-    val householdPinFor: String? = null,
+    val householdPinTitle: String? = null,
     val home: HomeSnapshot? = null,
     val summaryCards: Map<String, Card> = emptyMap(),
     val homeRowBusy: Set<String> = emptySet(),
