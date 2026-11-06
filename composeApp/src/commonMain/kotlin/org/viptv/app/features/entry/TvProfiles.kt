@@ -40,6 +40,7 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
+        androidx.compose.runtime.CompositionLocalProvider(org.viptv.app.components.LocalTvScale provides scale) {
         val cardSize = 200.dp * scale
         val count = profiles.size + if (local) 1 else 0
         Text(if (managing) "Manage profiles" else "Who's watching?",
@@ -86,5 +87,6 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
             }
         }
         error?.let { Text(it, Modifier.align(Alignment.BottomCenter).padding(24.dp), color = Palette.danger) }
+    }
     }
 }

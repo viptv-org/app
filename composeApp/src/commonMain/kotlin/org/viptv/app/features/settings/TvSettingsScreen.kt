@@ -188,14 +188,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }
-        if (browserFallback) {
-            val close = remember { FocusRequester() }
-            AlertDialog(onDismissRequest = { browserFallback = false }, title = { Text("Open server dashboard") },
-                text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Open this address in a browser on your phone or computer.")
-                    dashboardAddress?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
-                } }, confirmButton = { TextButton({ browserFallback = false }, Modifier.focusRequester(close)) { Text("Close") } })
-            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { close.requestFocus() } }
+        if (browserFallback) TvNoticeDialog(scale, "Open server dashboard",
+            "Open this address in a browser on your phone or computer.", action = "Close",
+            onDismiss = { browserFallback = false }) {
+            dashboardAddress?.let { address -> SelectionContainer { Text(address, color = Palette.secondary,
+                fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp) } }
         }
     }
     }
