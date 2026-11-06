@@ -16,12 +16,14 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.connection.ProfileManagement
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.state.PARENT_PIN_TARGET
+import org.viptv.app.state.householdPinOwnerOnly
 import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, error: String?, notice: String?, saved: Long,
-    load: () -> Unit, unlock: (String) -> Unit, pin: (String, String) -> Unit, compact: Boolean = false) {
+    load: () -> Unit, unlock: (String) -> Unit, pin: (String, String) -> Unit, compact: Boolean = false,
+    canManage: Boolean = true) {
     var mode by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { mode = null }
@@ -36,6 +38,10 @@ internal fun HouseholdPinSettings(snapshot: ProfileManagement?, busy: Boolean, e
         notice?.let { Text(it, color = Palette.secondary) }
         when {
             snapshot == null -> if (!busy) OutlinedButton(load) { Text("Retry the household PIN") }
+            !canManage -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(if (configured) "A PIN is set." else "No PIN is set.", color = Palette.secondary)
+                Text(householdPinOwnerOnly, color = Palette.secondary)
+            }
             snapshot.parent.restricted && !snapshot.parent.unlocked -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Enter the parent PIN to manage this household.", color = Palette.secondary)
                 Button({ mode = "unlock" }, enabled = !busy && configured) { Text("Unlock parental controls") }
