@@ -8,16 +8,21 @@ import io.ktor.http.content.TextContent
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.settings.approvedTitlesValue
+import org.viptv.app.features.settings.maturityLimitValue
+import org.viptv.app.features.settings.profilePageActions
+import org.viptv.app.features.settings.profilePageValues
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
 internal fun parentFixture(kids: Boolean = false, unlocked: Boolean = true, configured: Boolean = true,
-    leavePin: Boolean = false): ProfileManagement {
+    leavePin: Boolean = false, restricted: Boolean = false): ProfileManagement {
     val yes = FeatureAvailability("Available")
     return ProfileManagement(listOf(ServerProfile("1", "Parent"), ServerProfile("2", "Child", kids = kids, max_age = 10)),
         ProfileCapabilities(yes, yes, yes, yes,
-            FeatureAvailability(if (leavePin) "Available" else "Unsupported"), yes), ParentAccess(configured, unlocked, false))
+            FeatureAvailability(if (leavePin) "Available" else "Unsupported"), yes),
+        ParentAccess(configured, unlocked, restricted))
 }
 
 internal val parentRatings = KidsRatings(
@@ -148,15 +153,15 @@ class ParentControlsTest {
         controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
         try {
             controller.refreshParentControls(); controller.job!!.join()
-            assertEquals(parentRatings, controller.state.value.parentControls.getValue("2").policy.ratings)
+            assertEquals(parentRatings, controller.state.value.parentControls.getValue("2").policy?.ratings)
             controller.changeKidsPolicy("2", KidsPolicy(true, 10, "PG-14")); controller.job?.join()
             assertContains(controller.state.value.mutations.failure(preferenceTarget(kidsPolicyTarget("2"))).orEmpty(), "movie rating limits")
             assertEquals(0, writes.size)
             controller.changeKidsPolicy("2", KidsPolicy(true, 10, "PG-13", "TV-14", true)); controller.job!!.join()
             assertEquals("/api/profiles/2/kids" to kidsBody(true, 10, "PG-13", "TV-14", true), writes.single())
             val saved = controller.state.value.parentControls.getValue("2").policy
-            assertEquals("PG-13", saved.movie_rating); assertEquals("TV-14", saved.series_rating)
-            assertTrue(saved.allow_unrated)
+            assertEquals("PG-13", saved?.movie_rating); assertEquals("TV-14", saved?.series_rating)
+            assertTrue(saved?.allow_unrated == true)
             assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
@@ -275,8 +280,8 @@ class ParentControlsTest {
         try {
             controller.refreshProfilePage(); controller.job!!.join()
             val policy = controller.state.value.parentControls.getValue("2").policy
-            assertEquals("PG-13", policy.movie_rating)
-            assertEquals("TV-14", policy.series_rating)
+            assertEquals("PG-13", policy?.movie_rating)
+            assertEquals("TV-14", policy?.series_rating)
             assertNull(controller.state.value.error)
         } finally { remote.close() }
     }
@@ -312,8 +317,80 @@ class ParentControlsTest {
             controller.saveProfileKids(KidsPolicy(true, 10, "R", "TV-MA", true, parentRatings), ""); controller.job!!.join()
             assertEquals("/api/profiles/2/kids" to kidsBody(true, 10, "R", "TV-MA", true), writes.single())
             val saved = controller.state.value.parentControls.getValue("2").policy
-            assertEquals("R", saved.movie_rating); assertEquals("TV-MA", saved.series_rating); assertTrue(saved.allow_unrated)
+            assertEquals("R", saved?.movie_rating); assertEquals("TV-MA", saved?.series_rating); assertTrue(saved?.allow_unrated == true)
             assertNull(controller.state.value.error)
+        } finally { remote.close() }
+    }
+
+    @Test fun aFailedPolicyReadLeavesTheLimitsUnknownInsteadOfTheProfilesDefaults() = runBlocking<Unit> {
+        var reads = 0
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            when {
+                request.url.encodedPath == "/api/profiles" ->
+                    respond(Json.encodeToString(parentFixture(kids = true)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                request.url.encodedPath == "/api/profiles/2/kids" && reads++ == 0 ->
+                    respond("{}", HttpStatusCode.ServiceUnavailable, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                request.url.encodedPath == "/api/profiles/2/kids" ->
+                    respond(Json.encodeToString(parentKids(true, 10, "PG-13", "TV-14")),
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                else -> respond(Json.encodeToString(parentKids(false, 12)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2")
+        try {
+            controller.refreshParentControls(); controller.job!!.join()
+            assertNull(controller.state.value.parentControls.getValue("2").policy,
+                "a policy the server did not return is not rebuilt from the profile's age")
+            controller.refreshParentControls(); controller.job!!.join()
+            val policy = controller.state.value.parentControls.getValue("2").policy
+            assertEquals("PG-13", policy?.movie_rating)
+            assertEquals("TV-14", policy?.series_rating)
+        } finally { remote.close() }
+    }
+
+    @Test fun aLockedSessionNeverShowsOrWritesPolicyDefaultsForAProfileItCannotRead() = runBlocking<Unit> {
+        val requests = mutableListOf<String>()
+        var unlocked = false
+        val remote = RemoteConnection("https://watch.example", store, client { request ->
+            requests += "${request.method.value} ${request.url.encodedPath}"
+            val json = headersOf(HttpHeaders.ContentType, "application/json")
+            when {
+                request.url.encodedPath == "/api/parent/unlock" -> { unlocked = true; respond("{}", headers = json) }
+                request.url.encodedPath == "/api/profiles" ->
+                    respond(Json.encodeToString(parentFixture(kids = true, unlocked = unlocked, restricted = true)), headers = json)
+                request.url.encodedPath == "/api/profiles/2/approvals" && !unlocked ->
+                    respond("{\"error\":\"Parent PIN required\",\"error_code\":\"parent_required\"}",
+                        HttpStatusCode.Forbidden, headers = json)
+                request.url.encodedPath == "/api/profiles/2/kids" && unlocked ->
+                    respond(Json.encodeToString(parentKids(true, 10, "PG-13", "TV-14")), headers = json)
+                request.url.encodedPath == "/api/profiles/2/kids" ->
+                    respond("{\"error\":\"Parent PIN required\",\"error_code\":\"parent_required\"}",
+                        HttpStatusCode.Forbidden, headers = json)
+                else -> respond("{}", headers = json)
+            }
+        }, browserMode = false)
+        val controller = ApplicationController(this, store)
+        controller.connection = remote
+        controller.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "2")
+        try {
+            controller.refreshProfilePage(); controller.job!!.join()
+            val locked = profilePageValues(controller.state.value) ?: fail("the page still knows the profile")
+            assertFalse(locked.limitsKnown, "the page cannot see the policy while the household PIN is locked")
+            assertNull(locked.kidsPolicy(), "no policy is built from the defaults the page never read")
+            assertEquals("Unavailable", maturityLimitValue(locked))
+            assertEquals("Unavailable", approvedTitlesValue(locked))
+            assertFalse(requests.contains("GET /api/profiles/2/kids"), "the gated policy is not requested")
+            val actions = profilePageActions(controller, locked, {}, {})
+            actions.maturity("R", "TV-MA", true, "")
+            actions.kids(false, "")
+            controller.job?.join()
+            assertTrue(requests.none { it.startsWith("PUT") }, "a page that read no limits writes none: $requests")
+            controller.unlockParentControls("4821"); controller.job!!.join()
+            val open = profilePageValues(controller.state.value) ?: fail("the page still knows the profile")
+            assertTrue(open.limitsKnown, "unlocking the household reads the real policy")
+            assertEquals("Movies up to PG-13 · Series up to TV-14", maturityLimitValue(open))
         } finally { remote.close() }
     }
 

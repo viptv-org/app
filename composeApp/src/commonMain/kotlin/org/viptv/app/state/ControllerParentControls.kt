@@ -148,7 +148,7 @@ internal suspend fun ApplicationController.loadParentControls(remote: RemoteConn
         val previous = current[profile.id]
         val policy = try { remote.kidsPolicy(profile.id) }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { previous?.policy ?: KidsPolicy(profile.kids, profile.max_age ?: 12) }
+        catch (_: Exception) { previous?.policy }
         val leavePin = if (!pins) null else try { remote.profilePin(profile.id).configured }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { previous?.leavePin }
