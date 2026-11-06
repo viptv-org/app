@@ -34,7 +34,8 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
-    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {}) {
+    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {},
+    nowMillis: Long = rememberCalendarClock().millis) {
     val choose = calendarOpener(open, openEntry)
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
@@ -87,7 +88,7 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
                     if (index == 0) date else null, preview, { focusedId = entry.id }, { restore.mark(entry.id, index); choose(entry) },
-                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
+                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index), nowMillis = nowMillis)
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message ->
@@ -96,11 +97,12 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                     else Text(message, color = Palette.danger)
                 }
             }
-            if (pageState == ListPageState.Empty) item {
+            if (pageState == ListPageState.Empty) item(key = "empty") {
+                val weekEmpty = entries.isEmpty()
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
+                    Text(if (!available) CALENDAR_UNAVAILABLE else if (weekEmpty) CALENDAR_EMPTY_WEEK else calendarEmptyDay(filter.takeIf { notice == null }),
                         color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-                    if (!available) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
+                    if (!available || weekEmpty) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
                         contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text(CALENDAR_MANAGE, color = it, fontSize = (24 * scale).sp) }
                 }
             }

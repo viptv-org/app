@@ -82,16 +82,18 @@ class HomeRecoveryUiTest {
         var error by mutableStateOf<String?>("Could not reach your server. Check the connection and try again.")
         var busy by mutableStateOf(false); var retried = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
-            HomeScreen(snapshot, true, {}, { retried++; busy = true }, busy = busy, error = error)
+            HomeScreen(snapshot, true, {}, { retried++; busy = true; error = null }, busy = busy, error = error)
         } }
         try {
             frames(scene)
-            assertEquals(true, action(scene, "Retry Home").config.getOrNull(SemanticsProperties.Focused))
-            assertTrue(nodes(scene).any { text(it) == error }); capture(scene, "tv-home-failure")
-            click(scene, "Retry Home"); frames(scene, 20)
-            assertEquals(1, retried); assertTrue(action(scene, "Refreshing Home…").config.contains(SemanticsProperties.Disabled))
+            assertEquals(true, action(scene, "Try again").config.getOrNull(SemanticsProperties.Focused))
+            assertEquals(1, nodes(scene).count { text(it) == error }, "the request's message is the block's body, once")
+            capture(scene, "tv-home-failure")
+            click(scene, "Try again"); frames(scene, 20)
+            assertEquals(1, retried)
+            assertFalse(nodes(scene).any { text(it) == "Try again" }, "a retry in flight draws the skeleton, not a disabled action")
             snapshot = home(); busy = false; error = null; frames(scene, 40)
-            assertFalse(nodes(scene).any { text(it) == "Could not load Home" })
+            assertFalse(nodes(scene).any { text(it) == "Couldn’t load Home" })
             assertEquals(true, action(scene, "Open settings").config.getOrNull(SemanticsProperties.Focused))
         } finally { scene.close() }
     }
@@ -103,39 +105,38 @@ class HomeRecoveryUiTest {
         } }
         try {
             frames(scene); click(scene, "Open settings"); assertEquals(Screen.Settings, destination)
-            assertTrue(nodes(scene).any { text(it) == "No catalogs configured" }); capture(scene, "tv-home-unconfigured")
+            assertTrue(nodes(scene).any { text(it) == "No catalogs are available." }); capture(scene, "tv-home-unconfigured")
             snapshot = home(listOf(row.copy(state = RowState.EMPTY, cards = emptyList()))); frames(scene, 20)
-            assertTrue(nodes(scene).any { text(it) == "Nothing to show yet" }); click(scene, "Retry Home"); assertEquals(1, retried)
-            assertFalse(nodes(scene).any { text(it) == "No catalogs configured" }); capture(scene, "tv-home-empty")
+            assertTrue(nodes(scene).any { text(it) == "No titles yet" }); click(scene, "Try again"); assertEquals(1, retried)
+            assertFalse(nodes(scene).any { text(it) == "No catalogs are available." }); capture(scene, "tv-home-empty")
         } finally { scene.close() }
     }
 
-    @Test fun phoneRefreshFailureRetainsCachedShelfAndOffersOneDisabledRetryWhileBusy() = onEdt {
-        var busy by mutableStateOf(false); var retried = 0
+    @Test fun phoneRefreshFailureRetainsCachedShelfWithNoPageState() = onEdt {
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            HomeScreen(home(listOf(row)), false, {}, { retried++; busy = true }, busy = busy, error = "Could not refresh these titles.")
-        } }
-        try {
-            frames(scene); assertTrue(nodes(scene).any { text(it) == "Your titles" })
-            assertTrue(nodes(scene).any { text(it) == "Could not refresh these titles." }); capture(scene, "phone-home-cached-error")
-            click(scene, "Retry Home"); frames(scene, 20); assertEquals(1, retried)
-            assertTrue(action(scene, "Refreshing Home…").config.contains(SemanticsProperties.Disabled))
-            assertTrue(nodes(scene).any { text(it) == "Your titles" })
-        } finally { scene.close() }
-    }
-
-    @Test fun cachedTvHomeKeepsItsHeroAndRetryVisible() = onEdt {
-        var retried = 0
-        val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
-            HomeScreen(home(listOf(row)).copy(hero = card), true, {}, { retried++ }, busy = false, error = "Could not refresh these titles.")
+            HomeScreen(home(listOf(row)), false, {}, {}, busy = false, error = "Could not refresh these titles.")
         } }
         try {
             frames(scene)
-            assertEquals(true, action(scene, "Retry Home").config.getOrNull(SemanticsProperties.Focused))
-            assertTrue(nodes(scene).any { text(it) == "Cached title" })
-            assertTrue(action(scene, "Retry Home").boundsInRoot.bottom < 306f, "Refresh notice must stay above the cached hero artwork")
-            assertTrue(action(scene, "Play").boundsInRoot.top > action(scene, "Retry Home").boundsInRoot.bottom)
-            capture(scene, "tv-home-cached-error"); click(scene, "Retry Home"); assertEquals(1, retried)
+            assertTrue(nodes(scene).any { text(it) == "Your titles" })
+            assertFalse(nodes(scene).any { text(it) == "Could not refresh these titles." }, "a refresh keeps the shown data with no error")
+            assertFalse(nodes(scene).any { text(it) == "Try again" })
+            capture(scene, "phone-home-cached-error")
+        } finally { scene.close() }
+    }
+
+    @Test fun cachedTvHomeKeepsItsHeroWithNoPageState() = onEdt {
+        val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(true) {
+            HomeScreen(home(listOf(row)).copy(hero = card), true, {}, {}, busy = false,
+                error = "Could not refresh these titles.")
+        } }
+        try {
+            frames(scene)
+            assertTrue(nodes(scene).any { text(it) == "Cached title" }, "the hero stays")
+            assertTrue(nodes(scene).any { text(it) == "Your titles" }, "the rows stay")
+            assertFalse(nodes(scene).any { text(it) == "Try again" }, "a failed refresh is not the page state")
+            assertFalse(nodes(scene).any { text(it) == "Could not refresh these titles." })
+            capture(scene, "tv-home-cached-error")
         } finally { scene.close() }
     }
 
@@ -146,9 +147,9 @@ class HomeRecoveryUiTest {
         } }
         try {
             frames(scene)
-            assertEquals(true, action(scene, "Retry Home").config.getOrNull(SemanticsProperties.Focused))
-            assertTrue(nodes(scene).any { text(it) == "Could not load Home" })
-            capture(scene, "tv-home-all-catalogs-failed"); click(scene, "Retry Home"); assertEquals(1, retried)
+            assertEquals(true, action(scene, "Try again").config.getOrNull(SemanticsProperties.Focused))
+            assertTrue(nodes(scene).any { text(it) == "Couldn’t load Home" })
+            capture(scene, "tv-home-all-catalogs-failed"); click(scene, "Try again"); assertEquals(1, retried)
         } finally { scene.close() }
     }
 
@@ -158,7 +159,7 @@ class HomeRecoveryUiTest {
             val scene = ImageComposeScene(if (tv) 1920 else 390, if (tv) 1080 else 844, Density(1f)) { ViptvTheme(tv) {
                 HomeScreen(null, tv, {}, { retried++ }, busy = false)
             } }
-            try { frames(scene); click(scene, "Retry Home"); assertEquals(1, retried) } finally { scene.close() }
+            try { frames(scene); click(scene, "Try again"); assertEquals(1, retried) } finally { scene.close() }
         }
     }
 
@@ -202,8 +203,8 @@ class HomeRecoveryUiTest {
             try {
                 frames(scene, 24)
                 assertFalse(labels(scene).contains("Empty row")); assertFalse(labels(scene).contains("Failed row"))
-                assertTrue(labels(scene).any { it == "Nothing to show yet" || it == "Could not load Home" }, "TV=$tv: ${labels(scene)}")
-                click(scene, "Retry Home"); assertEquals(1, retried)
+                assertTrue(labels(scene).any { it == "No titles yet" || it == "Couldn’t load Home" }, "TV=$tv: ${labels(scene)}")
+                click(scene, "Try again"); assertEquals(1, retried)
                 capture(scene, if (tv) "tv-home-hidden-rows" else "phone-home-hidden-rows")
             } finally { scene.close() }
         }

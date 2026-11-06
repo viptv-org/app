@@ -35,8 +35,10 @@ import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.LocalNextEpisodes
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.retryAfterFailure
 import org.viptv.app.components.TvMediaBadge
 import org.viptv.app.components.WATCHED_BADGE
@@ -51,6 +53,7 @@ import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.metadataParts
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
+import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.LocalShowRatings
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
@@ -110,7 +113,8 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
                 }
                 if (art.failed || still == null && landscapeArt !is LandscapeArt.Poster) CardNoArtFallback(card, scale, portrait, shape)
             }
-            states.artLabel?.let { label ->
+            if (states.artLabel == "LIVE") LiveBadge(Modifier.align(Alignment.TopStart).padding(10.dp * scale), scale, television = true)
+            else states.artLabel?.let { label ->
                 Text(label, Modifier.align(Alignment.TopStart).padding(10.dp * scale)
                     .background(states.artLabelFill, RoundedCornerShape(6.dp * scale))
                     .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
@@ -138,6 +142,7 @@ internal fun TvCatalogCard(card: Card, scale: Float, portrait: Boolean, modifier
         if (!portrait || focusedCaptions) Box(Modifier.fillMaxWidth().heightIn(min = 76.dp * scale)) {
             CardCaptions(card, states, focus, portrait, focusedCaptions, scale)
         }
+        MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 10.dp * scale), scale = scale * 1.7f, retry = false)
         if (menu && menuOpen) {
             Popup(onDismissRequest = { menuOpen = false }, popupPositionProvider = remember { TvCardMenuPosition() }, properties = PopupProperties(focusable = true)) {
                 CardMenu(card, saved, removal, actions,
@@ -183,7 +188,6 @@ private data class TvCardStates(
             val loud = label != null && isNewEpisodesBadge(label)
             val fill = when {
                 loud -> Palette.text
-                label == "LIVE" -> Color(0xFFE5484D)
                 else -> Color(0xFF0B0B0C).copy(alpha = .8f)
             }
             val ink = when {

@@ -67,7 +67,7 @@ private suspend fun ApplicationController.reloadContinueWatching(remote: RemoteC
     if (connection !== remote || mutable.value.selectedProfile != profile) return
     val current = mutable.value.continueWatching?.takeIf { it.profile == profile }
     updateState { next -> next.copy(continueWatching = current.refreshedBy(profile, page, limit),
-        continueWatchingPageError = null,
+        continueWatchingError = null, continueWatchingPageError = null,
         continueNext = next.continueNext.announced(page.entries)) }
 }
 
@@ -80,12 +80,19 @@ internal fun ContinueWatchingList?.refreshedBy(profile: String, page: Continuati
 internal fun ApplicationController.loadContinueWatching(navigation: Long = navigationGeneration) {
     val profile = mutable.value.selectedProfile ?: return
     if (mutable.value.continueWatching?.profile == profile) return
+    updateState { it.copy(continueWatchingError = null) }
     runPage {
-        val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
-        val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
-        updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
-            continueWatchingPageError = null,
-            continueNext = next.continueNext.announced(page.entries)) }
+        try {
+            val remote = connection ?: throw LocalFailure("Continue Watching is unavailable on this device.")
+            val page = readCurrentPage(navigation) { remote.continueWatching(profile, 0, CONTINUE_PAGE) } ?: return@runPage
+            updateState { next -> next.copy(continueWatching = null.refreshedBy(profile, page, CONTINUE_PAGE),
+                continueWatchingError = null, continueWatchingPageError = null,
+                continueNext = next.continueNext.announced(page.entries)) }
+        } catch (error: CancellationException) { throw error }
+        catch (error: Exception) {
+            if (mutable.value.selectedProfile == profile) updateState { it.copy(continueWatchingError = failureMessage(error)) }
+            throw error
+        }
     }
 }
 
@@ -114,18 +121,21 @@ fun ApplicationController.continueWatchingMore() {
 }
 
 internal fun ApplicationState.withContinueCardRemoved(card: Card): ApplicationState {
-    val list = continueWatching ?: return this
     val key = cardLookupKey(card)
-    val index = list.cards.indexOfFirst { cardLookupKey(it) == key }
-    if (index < 0) return this
+    val list = continueWatching?.takeIf { it.profile == selectedProfile }
+    val pageIndex = list?.cards?.indexOfFirst { cardLookupKey(it) == key } ?: -1
+    val rowIndex = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }?.cards?.indexOfFirst { cardLookupKey(it) == key } ?: -1
+    val profile = list?.profile ?: selectedProfile ?: return this
+    if (pageIndex < 0 && rowIndex < 0) return this
     return copy(
-        continueWatching = list.copy(cards = list.cards.filterIndexed { at, _ -> at != index }),
+        continueWatching = if (pageIndex < 0) continueWatching
+            else list?.let { shown -> shown.copy(cards = shown.cards.filterIndexed { at, _ -> at != pageIndex }) },
         home = home?.let { snapshot -> snapshot.copy(rows = snapshot.rows.map { row ->
             if (row.id != CONTINUE_ROW) row
             else row.copy(cards = row.cards.filterNot { cardLookupKey(it) == key }).let {
                 if (it.cards.isEmpty()) it.copy(state = RowState.EMPTY) else it
             } }) },
-        continueUndo = ContinueUndo(list.profile, card, index))
+        continueUndo = ContinueUndo(profile, card, if (pageIndex >= 0) pageIndex else rowIndex))
 }
 
 internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo, clearOffer: Boolean = true): ApplicationState {
@@ -145,7 +155,6 @@ internal fun ApplicationState.withContinueCardRestored(undo: ContinueUndo, clear
 fun ApplicationController.removeFromContinueWatching(card: Card) {
     val profile = mutable.value.selectedProfile ?: return
     val remote = connection ?: return
-    if (mutable.value.continueWatching?.profile != profile) return
     updateState { state ->
         val removed = state.withContinueCardRemoved(card)
         val offer = removed.continueUndo?.takeIf { cardLookupKey(it.card) == cardLookupKey(card) }

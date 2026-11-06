@@ -16,6 +16,9 @@ internal object Scrim {
     val tabletHeroWide = Brush.horizontalGradient(0f to ground(.93f), .5f to ground(.84f), .72f to Color.Transparent)
     val tabletHeroTall = Brush.verticalGradient(0f to Color.Transparent, .5f to Color.Transparent, .76f to ground(.84f), 1f to ground(.98f))
 
+    val phoneLivePreview = Brush.verticalGradient(0f to Color.Transparent, .34f to Color.Transparent, .52f to ground(.9f), 1f to ground(.97f))
+    val tvLivePreview = Brush.verticalGradient(0f to Color.Transparent, .58f to Color.Transparent, .82f to ground(.9f), 1f to ground(.97f))
+
     val pageBackdrop = Brush.verticalGradient(0f to ground(.3f), .55f to ground(.78f), 1f to Palette.background)
 
     val tvDetailWide = Brush.horizontalGradient(0f to ground(.95f), .46f to ground(.92f), .6f to ground(.55f), .8f to Color.Transparent)

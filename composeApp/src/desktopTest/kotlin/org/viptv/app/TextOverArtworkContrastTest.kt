@@ -38,21 +38,28 @@ import org.viptv.app.components.LocalHomeGenres
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.live.LiveChannel
+import org.viptv.app.features.live.LiveClock
+import org.viptv.app.features.live.LivePreview
+import org.viptv.app.features.live.LiveProgram
+import org.viptv.app.features.live.LocalLiveClock
+import org.viptv.app.features.live.TvLivePreview
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.PreviewTvDetails
 import org.viptv.app.preview.PreviewTvHome
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.CardMetadata
 import org.viptv.engine.wire.MediaIdentity
 
-// Every line drawn over artwork keeps 4.5:1 against the brightest frame, so the fixture behind the copy is flat white.
+// Every line drawn over artwork or over a component's own fill keeps 4.5:1, so the fixture behind the copy is flat white.
 class TextOverArtworkContrastTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    private val white = PreviewData.hero.copy(landscape = "https://artwork.test/white.jpg", poster = null, logo = null,
+    private val white = PreviewData.hero.copy(landscape = WhiteArtwork, poster = null, logo = null,
         metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13",
             cast = listOf("Lena Ortiz", "Marcus Reid", "Piper Chan")))
     private val home = PreviewData.home.copy(hero = white, featured = emptyList())
@@ -63,6 +70,9 @@ class TextOverArtworkContrastTest {
     private val starring = "Starring Lena Ortiz, Marcus Reid, Piper Chan"
     private val desktopMetadata = listOf("Movie", "2026", "1h 40m", "Action / Adventure", "★ 7.7")
     private val description = "The Platt family bands together"
+    private val program = LiveProgram("p1", "Evening News", 0, 30, description = "The evening bulletin", artwork = WhiteArtwork)
+    private val channel = LiveChannel(Card(MediaIdentity("live-white", "channel", emptyList()), provider_id = "preview", title = "BBC One HD",
+        landscape = WhiteArtwork, poster = null, badges = listOf("1080p")), number = "101", category = "News", programs = listOf(program))
 
     private class Surface(val name: String, val width: Int, val height: Int, val television: Boolean,
         val content: @Composable () -> Unit, val copy: List<String>, val hero: List<String>)
@@ -99,6 +109,14 @@ class TextOverArtworkContrastTest {
         Surface("browser Details", 1280, 800, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, browser = true) },
             copy = listOf("The End of Oak Street", "Add to My List", starring), hero = listOf("The End of Oak Street")),
+        Surface("phone Live", 393, 852, television = false,
+            content = { LivePreview(channel, program, now = 15, phone = true, television = false, scale = 1f, watch = {}, favourite = {}) },
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left"),
+            hero = listOf("LIVE", "101 · BBC One HD", "Evening News")),
+        Surface("TV Live", 1920, 1080, television = true,
+            content = { TvLivePreview(channel, program, now = 15, scale = 1f, favorite = null, watch = {}) },
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left", "OK to watch"),
+            hero = listOf("OK to watch")),
     )
 
     @Test fun textOverArtworkKeepsFourAndAHalfToOne() = ui {
@@ -134,7 +152,8 @@ class TextOverArtworkContrastTest {
 
         private val scene = ImageComposeScene(surface.width, surface.height, Density(1f)) {
             ViptvTheme(surface.television, pointer = !surface.television) {
-                CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {})) {
+                CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {}),
+                    LocalLiveClock provides LiveClock(originMillis = 0, nowMillis = 0)) {
                     Box(Modifier.fillMaxSize().background(Palette.background)) { surface.content() }
                 }
             }
@@ -211,6 +230,7 @@ class TextOverArtworkContrastTest {
 
     private companion object {
         const val White = 0xFFFFFFFF.toInt()
+        const val WhiteArtwork = "https://artwork.test/white.jpg"
         const val RingPixels = 3
         const val SettleFrames = 30
         val GroundLuminance = luminance(Palette.background.toArgb())

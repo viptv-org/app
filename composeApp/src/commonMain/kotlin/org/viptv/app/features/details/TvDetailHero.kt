@@ -23,7 +23,9 @@ import androidx.compose.material3.*
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.TvRetryAction
 import org.viptv.app.components.saveActionName
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TitleLogo
@@ -100,13 +102,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                     }
                 }
             }
-            if (failure != null) TvAction(Modifier.heightIn(min = 72.dp * scale), scale, ring = false,
-                activate = { mutations.retry(mutationTarget) }, contentPadding = PaddingValues(horizontal = 24.dp * scale),
-                arrangement = Arrangement.Start) { tint ->
-                Icon(Lucide.RotateCcw, null, Modifier.size(28.dp * scale), tint)
-                Spacer(Modifier.width(10.dp * scale))
-                Text("Retry", color = tint, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
-            } else TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
+            if (failure != null) TvRetryAction(mutationTarget, scale, Modifier.heightIn(min = 72.dp * scale)) else TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
                 if (mutations.isPending(mutationTarget)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
@@ -116,8 +112,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
         }
         failure?.let {
             Spacer(Modifier.height(14.dp * scale))
-            Text(it, Modifier.width(800.dp * scale), color = Palette.danger,
-                fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp)
+            MutationFailure(mutationTarget, Modifier.width(800.dp * scale), scale = scale * 1.7f, retry = false)
         }
     }
 }

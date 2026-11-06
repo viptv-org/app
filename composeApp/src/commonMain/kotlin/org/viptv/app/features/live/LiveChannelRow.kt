@@ -16,6 +16,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.AccessibleIconButton
+import org.viptv.app.components.favouriteStarPainter
 import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.state.liveFavoriteTarget
@@ -50,7 +51,7 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { ClampedText("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            favourite?.let { save -> AccessibleIconButton(Lucide.Star, favouriteActionLabel(channel.favorite), save,
+            favourite?.let { save -> AccessibleIconButton(favouriteStarPainter(channel.favorite), favouriteActionLabel(channel.favorite), save,
                 enabled = !pending, iconSize = 18.dp, tint = if (channel.favorite) Palette.accent else Palette.secondary, wash = null, pending = pending) }
         }
         MutationFailure(target, Modifier.padding(start = 76.dp, bottom = 8.dp))

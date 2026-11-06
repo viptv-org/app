@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SearchX
 import com.composables.icons.lucide.TriangleAlert
+import org.viptv.app.components.PageStateLayout
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.ListPageState
@@ -32,6 +33,10 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.connection.BrowseQuery
+import org.viptv.app.connection.catalogSource
+import org.viptv.app.connection.catalogTitle
+import org.viptv.app.connection.selectedCatalog
+import org.viptv.app.connection.selections
 import org.viptv.app.connection.DiscoveryControls
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.AddonFailure
@@ -47,6 +52,12 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val selected = remember(cards) { cards.distinctBy(::cardLookupKey) }
     val pageState = listPageState(selected.size, busy, error)
+    val facets = remember(controls, query) { browseFacets(controls, query, showType = false) }
+    val applied = remember(facets, query) { appliedChips(facets, query) }
+    val catalog = controls?.selectedCatalog(query)
+    val peers = controls?.catalogs.orEmpty()
+    val label = catalog?.catalogTitle(peers)
+    val source = catalog?.catalogSource(peers)
     val restore = rememberPageRestore("browse")
     val anchored = restore.landing(selected.size) { cardLookupKey(selected[it]) }
     val chromeFocus = remember { FocusRequester() }
@@ -68,13 +79,22 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
                     }
                 }
                 Spacer(Modifier.height(40.dp * scale))
-                if (pageState == ListPageState.Failed) {
-                    TvBrowseStatus(scale, Lucide.TriangleAlert, "Couldn’t load this catalog", error.orEmpty(),
-                        retry?.let { "Try again" to it }, chromeFocus)
-                } else if (pageState == ListPageState.Empty) {
-                    TvBrowseStatus(scale, Lucide.SearchX, "Nothing matches these filters",
-                        "Clear a filter or choose another catalog to see more titles.",
-                        "Clear all filters" to { applyQuery(clearedFilters(query)) }, chromeFocus)
+                if (pageState == ListPageState.Failed || pageState == ListPageState.Empty) {
+                    CatalogPageState(
+                        if (pageState == ListPageState.Failed) catalogFailureState(label, error, otherCatalog = false)
+                        else catalogEmptyState(label, source, catalogNoun(query.type),
+                            applied, otherCatalog = false),
+                        activate = { action ->
+                            when (action.kind) {
+                                CatalogActionKind.Retry -> (retry ?: { applyQuery(query) }).invoke()
+                                CatalogActionKind.ClearAll -> applyQuery(clearedFilters(query))
+                                CatalogActionKind.Remove -> action.chip?.let { chip ->
+                                    if (chip.multiple) multipleChanged(chip.id, query.selections(chip.id) - chip.value)
+                                    else filterChanged(chip.id, "")
+                                }
+                                CatalogActionKind.ChooseCatalog -> Unit
+                            }
+                        }, Modifier.weight(1f), layout = PageStateLayout.Tv, scale = scale, focus = chromeFocus)
                 } else {
                     if (pageState == ListPageState.Loading) {
                         TvBrowseLoading(scale)
@@ -117,24 +137,3 @@ internal fun TvBrowseScreen(cards: List<Card>, busy: Boolean, open: (Card) -> Un
     }
 }
 
-@Composable
-private fun TvBrowseStatus(scale: Float, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String,
-    message: String, action: Pair<String, () -> Unit>?, focus: FocusRequester) {
-    var attached by remember { mutableStateOf(false) }
-    // Key the focus claim on the label: the action lambda is a fresh instance per recomposition.
-    TvRequestedFocus(focus, action?.first, enabled = true)
-    Column(Modifier.fillMaxWidth().padding(top = 96.dp * scale), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
-        Icon(icon, null, Modifier.size(56.dp * scale), tint = Palette.secondary)
-        Text(title, fontSize = (36 * scale).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text(message, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (34 * scale).sp,
-            textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 900.dp * scale))
-        action?.let { (label, run) ->
-            TvAction(Modifier.heightIn(min = 72.dp * scale).width(320.dp * scale).then(if (!attached) Modifier.focusRequester(focus) else Modifier),
-                scale, primary = true, activate = run, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                Text(label, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
-            }
-            LaunchedEffect(Unit) { attached = true }
-        }
-    }
-}
