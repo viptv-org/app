@@ -40,7 +40,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         val requiredAudio = remember { RequiredAudioSelection(input.requiredAudioIndex) }
         val transport = remember { PlaybackTransportGate() }
         val slateDetector = remember { ErrorSlateDetector() }
-        var slateWarmed by remember { mutableStateOf(false) }
+        val slateWarm = remember { AtomicBoolean(false) }
         val candidates by input.providerSubtitles.collectAsState()
         val state by session.state.collectAsState()
         DisposableEffect(renderer) {
@@ -68,7 +68,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                 }
             }
             // The first scaled sample costs a one-time Skia setup; spend it on the opening frame, not at 2 s.
-            if (!slateWarmed && renderer.generation > 0) { slateWarmed = true; renderer.graySample() }
+            if (!slateWarm.get() && renderer.generation > 0 && slateWarm.compareAndSet(false, true)) renderer.graySample()
             val position = renderer.framePositionMs
             if (slateDetector.due(position) && state.status == "Playing") renderer.graySample()?.let { sample ->
                 val value = session.state.value

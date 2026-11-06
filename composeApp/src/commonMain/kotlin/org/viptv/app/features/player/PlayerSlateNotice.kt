@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -66,8 +67,9 @@ internal fun BoxScope.PlayerSlateNotice(provider: String?, phone: Boolean, inset
 // A television has no pointer: both actions are D-pad targets, and the notice never takes focus by itself.
 @Composable
 internal fun BoxScope.TvSlateNotice(provider: String?, scale: Float, configure: (() -> Unit)?, choose: (() -> Unit)?,
-    configureRequester: FocusRequester, chooseRequester: FocusRequester) {
+    configureRequester: FocusRequester, chooseRequester: FocusRequester, focusChanged: (Boolean) -> Unit = {}) {
     Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 264.dp * scale).widthIn(max = 1100.dp * scale)
+        .onFocusChanged { focusChanged(it.hasFocus) }
         .background(Color(0xFF111113).copy(alpha = .82f), RoundedCornerShape(12.dp * scale))
         .padding(horizontal = 28.dp * scale, vertical = 18.dp * scale)
         .semantics { liveRegion = LiveRegionMode.Polite }) {

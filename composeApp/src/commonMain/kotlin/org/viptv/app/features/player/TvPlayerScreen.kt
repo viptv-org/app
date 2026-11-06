@@ -61,10 +61,15 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     // A stream whose clock advances without a presented frame is a black screen this TV cannot decode; surface it instead of playing nothing.
     LaunchedEffect(state) { while (true) { delay(1000); if (state.checkFirstFrame()) observe(PlayerFact.Undecodable) } }
     var slateNotice by remember(playbackKey) { mutableStateOf(false) }
+    var slateFocused by remember { mutableStateOf(false) }
     val slateConfigure = remember { FocusRequester() }
     val slateChoose = remember { FocusRequester() }
     fun noteSlate(fact: PlayerFact) { if (fact is PlayerFact.ProbableErrorSlate) slateNotice = true }
-    LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false; withFrameNanos { }; root.requestFocus() } }
+    LaunchedEffect(slateNotice) {
+        if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false }
+        // Only take focus back when the notice had it; the viewer may be anywhere else.
+        if (slateFocused) { slateFocused = false; withFrameNanos { }; root.requestFocus() }
+    }
     LaunchedEffect(externalFacts, state) { externalFacts.collect { noteSlate(it); state.observe(it) } }
     LaunchedEffect(state.controlError) { state.controlError?.let { frameDelay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
@@ -172,7 +177,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             pendingAudio = state.pendingAudio, audioError = state.audioError)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         if (slateNotice && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes)
-            TvSlateNotice(slateProvider, scale, configureSource, chooseSources, slateConfigure, slateChoose)
+            TvSlateNotice(slateProvider, scale, configureSource, chooseSources, slateConfigure, slateChoose) { slateFocused = it }
         else audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }
 }
