@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +19,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.connection.CalendarClock
+import org.viptv.app.connection.calendarClock
+import org.viptv.app.connection.calendarWindow
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
@@ -46,27 +50,31 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     filterChanged: (CalendarFilter) -> Unit = {}, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false,
-    retry: () -> Unit = {}) {
+    retry: () -> Unit = {}, now: CalendarClock = rememberCalendarClock(), dayChanged: () -> Unit = {}) {
     val offered = calendarFilterOffered(entries, sources)
     val active = filter.takeIf { offered }
     val fallback = entries.fallsBackToAll(active)
     val shown = if (fallback) entries else entries.shown(filter, offered)
+    val rows = remember(shown, now.millis) { shown.airedAsOf(now.millis) }
+    LaunchedEffect(now.day, week, days) {
+        if (days.isNotEmpty() && days != calendarWindow(week * 7).days) dayChanged()
+    }
     val notice = if (fallback) CALENDAR_FALLBACK else null
     val emptyFilter = active.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
-    if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
+    if (television) { TvCalendarScreen(days, rows, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
         filter = active, filterChanged = filterChanged, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
     val choose = calendarOpener(open, openEntry)
-    val entrance = rememberListEntrance(shown.isNotEmpty())
-    var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
+    val entrance = rememberListEntrance(rows.isNotEmpty())
+    var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == CALENDAR_TODAY }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReducedMotion.current
-    var focused by remember(shown) { mutableStateOf(shown.firstOrNull()) }
+    var focused by remember(rows) { mutableStateOf(rows.firstOrNull()) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
-        val visible = if (phone) shown else shown.filter { it.day == selected }
+        val visible = if (phone) rows else rows.filter { it.day == selected }
         val lines = remember(days, visible) { visible.dayLines(days) }
         val markedLine = remember(lines, restore.lastKey) { lines.indexOfFirst { it.key() == restore.lastKey } }
         val markedEntry = remember(visible, restore.lastKey) { visible.indexOfFirst { it.id == restore.lastKey } }
@@ -78,8 +86,8 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
                 filter = active, filterChanged = filterChanged, gutter = gutter, phone = phone)
-            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
-                selected = day; focused = shown.firstOrNull { it.day == day }
+            if (days.isNotEmpty()) CalendarDates(days, rows, selected, phone, scale, gutter) { day ->
+                selected = day; focused = rows.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = lines.indexOfFirst { it is CalendarLine.Day && it.day.id == day }
                     if (index >= 0) { if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index) }
@@ -127,6 +135,15 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             }
         }
     }
+}
+
+private const val CALENDAR_TICK_MILLIS = 15_000L
+
+@Composable
+internal fun rememberCalendarClock(): CalendarClock {
+    var now by remember { mutableStateOf(calendarClock()) }
+    LaunchedEffect(Unit) { while (true) { delay(CALENDAR_TICK_MILLIS); now = calendarClock() } }
+    return now
 }
 
 @Composable
