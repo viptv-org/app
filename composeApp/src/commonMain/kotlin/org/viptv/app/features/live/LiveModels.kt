@@ -89,7 +89,6 @@ internal fun liveLength(program: LiveProgram) = "${program.end - program.start} 
 
 private fun liveRemaining(program: LiveProgram, now: Int) = "${(program.end - now).coerceAtLeast(0)} min left"
 
-// The phone preview's own line: the live countdown while on air, the start and the programme's length before it, "Ended" after.
 @androidx.compose.runtime.Composable
 internal fun liveStatus(program: LiveProgram, now: Int?): String? = when (liveFraming(program, now)) {
     LiveFraming.OnAir -> now?.let { liveRemaining(program, it) }
@@ -97,7 +96,6 @@ internal fun liveStatus(program: LiveProgram, now: Int?): String? = when (liveFr
     LiveFraming.Ended -> "Ended"
 }
 
-// TV and the desktop preview keep their start – end line and append the same clock state to it.
 @androidx.compose.runtime.Composable
 internal fun liveRangeStatus(program: LiveProgram, now: Int?): String = when (liveFraming(program, now)) {
     LiveFraming.OnAir -> now?.let { " · ${liveRemaining(program, it)}" } ?: ""
