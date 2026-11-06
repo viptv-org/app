@@ -34,7 +34,7 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
             TextButton(onClick = { open = true }, shape = RoundedCornerShape(if (phone) 10.dp else 8.dp),
                 colors = ButtonDefaults.textButtonColors(containerColor = Color.White.copy(alpha = .08f), contentColor = Palette.text),
                 contentPadding = PaddingValues(horizontal = if (phone) 14.dp else 12.dp),
-                modifier = Modifier.height(if (phone) 38.dp else 34.dp)) {
+                modifier = Modifier.heightIn(min = if (phone) 38.dp else 34.dp)) {
                 Text(if (selected.number == null && seasons.size == 1) "Episodes" else selected.label,
                     fontSize = if (phone) 15.sp else 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(6.dp))

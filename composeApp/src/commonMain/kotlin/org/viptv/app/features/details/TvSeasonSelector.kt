@@ -56,7 +56,7 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
                     is SeasonStripEntry.Season -> {
                         val season = entry.number
                         var focused by remember { mutableStateOf(false) }
-                        Box(Modifier.height(52.dp * scale)
+                        Box(Modifier.heightIn(min = 52.dp * scale)
                             .then(if (season == active) Modifier.focusRequester(seasonFocus) else Modifier)
                             .onFocusChanged { focused = it.isFocused; if (it.isFocused) entered() }
                             .onPreviewKeyEvent(keys).clip(RoundedCornerShape(26.dp * scale))
@@ -72,7 +72,7 @@ internal fun TvSeasonSelector(seasons: List<Long?>, active: Long?, scale: Float,
                     SeasonStripEntry.Jump -> {
                         val open = openJump ?: return@items
                         var focused by remember { mutableStateOf(false) }
-                        Box(Modifier.height(52.dp * scale)
+                        Box(Modifier.heightIn(min = 52.dp * scale)
                             .then(if (jumpFocus != null) Modifier.focusRequester(jumpFocus) else Modifier)
                             .onFocusChanged { focused = it.isFocused; if (it.isFocused) entered() }
                             .onPreviewKeyEvent(keys).clip(RoundedCornerShape(26.dp * scale))
