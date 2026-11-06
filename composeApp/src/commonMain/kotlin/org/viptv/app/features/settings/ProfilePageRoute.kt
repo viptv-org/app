@@ -12,7 +12,7 @@ internal fun ProfilePageRoute(state: ApplicationState, controller: ApplicationCo
     LaunchedEffect(state.selectedProfile, state.parentTitles) {
         if (state.selectedProfile != null && state.parentTitles == null) controller.refreshProfilePage()
     }
-    ProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved,
+    ProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved, controller::refreshProfilePage,
         profilePageActions(controller, values, parentalControls = { controller.showSettingsPage(SettingsPage("Parental controls")) },
             language = { controller.showSettingsPage(SettingsPage("Subtitles & audio")) }),
         layout)
@@ -25,7 +25,7 @@ internal fun TvProfilePageRoute(state: ApplicationState, controller: Application
     LaunchedEffect(state.selectedProfile, state.parentTitles) {
         if (state.selectedProfile != null && state.parentTitles == null) controller.refreshProfilePage()
     }
-    TvProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved,
+    TvProfileSettingsPage(values, state.busy, state.error, state.profilePageSaved, controller::refreshProfilePage,
         profilePageActions(controller, values, parentalControls = { openSection(TvSettingsSection.Parental) },
             language = { openSection(TvSettingsSection.Subtitles) }),
         scale, first, sidebar, openParental = { openSection(TvSettingsSection.Parental) })

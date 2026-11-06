@@ -71,7 +71,7 @@ class TvProfileDialogsTest {
                         television = true, initialSection = "Profile",
                         tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
                         tvProfilePage = { first, sidebar, scale, _ ->
-                            TvProfileSettingsPage(page, false, null, saved.value, actions(saved), scale, first, sidebar) { }
+                            TvProfileSettingsPage(page, false, null, saved.value, null, actions(saved), scale, first, sidebar) { }
                         })
                 }
             }

@@ -62,7 +62,7 @@ class ProfilePageTest {
         val saved = mutableStateOf(0L)
         val scene = ImageComposeScene(1000, 1400, Density(1f)) {
             ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-                ProfileSettingsPage(values, false, null, saved.value, actions(saved), SettingsLayout.Tablet)
+                ProfileSettingsPage(values, false, null, saved.value, null, actions(saved), SettingsLayout.Tablet)
             } }
         }
 
@@ -318,7 +318,7 @@ class ProfilePageTest {
             SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {}, null,
                 television = true, initialSection = "Profile", tvPreferences = TvSettingsPreferences(), changeTvPreferences = { _, _ -> },
                 tvProfilePage = { first, sidebar, scale, _ ->
-                    TvProfileSettingsPage(values, false, null, saved.value, actions(saved), scale, first, sidebar) { }
+                    TvProfileSettingsPage(values, false, null, saved.value, null, actions(saved), scale, first, sidebar) { }
                 })
         } }
         try {

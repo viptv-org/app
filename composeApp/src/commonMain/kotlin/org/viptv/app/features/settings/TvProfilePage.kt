@@ -10,11 +10,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
+import org.viptv.app.components.TvAction
 import org.viptv.app.theme.Palette
 
 @Composable
 internal fun TvProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, error: String?, saved: Long,
-    actions: ProfilePageActions, scale: Float, first: FocusRequester, sidebar: FocusRequester,
+    retry: (() -> Unit)?, actions: ProfilePageActions, scale: Float, first: FocusRequester, sidebar: FocusRequester,
     openParental: () -> Unit) {
     val dialogs = rememberProfileDialogs(values?.profile?.id.orEmpty(), saved)
     if (values == null) {
@@ -83,6 +84,10 @@ internal fun TvProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, er
         TvSettingsRow("Language", "Default audio and subtitles for this profile", scale,
             value = languageSummary(values.audioLanguage, values.subtitleLanguage), left = sidebar, requester = languageRow) { actions.language() }
         error?.let { Text(it, Modifier.padding(top = 16.dp * scale), color = Palette.danger, fontSize = (22 * scale).sp) }
+        if (error != null && retry != null) TvAction(Modifier.heightIn(min = 60.dp * scale), scale, left = sidebar,
+            enabled = !busy, keepFocus = true, activate = retry) { tint ->
+            Text("Retry", color = tint, fontSize = (22 * scale).sp, fontWeight = FontWeight.Bold)
+        }
         if (busy) Text("Saving…", Modifier.padding(top = 16.dp * scale), color = Palette.secondary, fontSize = (22 * scale).sp)
         if (values.canDelete) {
             Spacer(Modifier.height(40.dp * scale))

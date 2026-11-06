@@ -139,7 +139,7 @@ internal fun rememberProfileDialogs(profileId: String, saved: Long): ProfileDial
 
 @Composable
 internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, error: String?, saved: Long,
-    actions: ProfilePageActions, layout: SettingsLayout) {
+    retry: (() -> Unit)?, actions: ProfilePageActions, layout: SettingsLayout) {
     val dialogs = rememberProfileDialogs(values?.profile?.id.orEmpty(), saved)
     if (values == null) {
         Text("Choose a profile to edit it.", Modifier.padding(32.dp), color = Palette.secondary)
@@ -195,6 +195,7 @@ internal fun ProfileSettingsPage(values: ProfilePageValues?, busy: Boolean, erro
             }
         }
         error?.let { Text(it, Modifier.padding(top = 8.dp), color = Palette.danger) }
+        if (error != null && retry != null) TextButton(retry, enabled = !busy) { Text("Retry") }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (values.canDelete) {
             Spacer(Modifier.height(8.dp))
