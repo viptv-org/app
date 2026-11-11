@@ -15,6 +15,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class, InternalComposeUiApi::class)
 class SourceReuseNoticeUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun theManualOverrideAppearsAfterTheVisibleFrameBudgetAndInvokesItsAction() {
         val card = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "catalog", title = "Movie", badges = emptyList())
