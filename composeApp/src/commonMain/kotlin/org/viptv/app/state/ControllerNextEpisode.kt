@@ -94,8 +94,9 @@ fun ApplicationController.playEpisode(card: Card) {
     closePlayer()
     // A successor inherits the series' remembered source; otherwise the plain player pick keeps its ask or best-match flow.
     val remembered = reuseEnabled && state.selectedProfile?.let { sourceMemory.choice(it, card) } != null
-    if (state.screen == Screen.Player && remembered) playTitle(card)
-    else chooseSource(card, startPlayback = successor)
+    if (successor && !remembered) chooseSource(card, startPlayback = true)
+    else if (state.screen == Screen.Player) playTitle(card)
+    else chooseSource(card)
 }
 
 internal fun ApplicationController.cancelNextEpisode() {

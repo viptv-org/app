@@ -12,7 +12,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.SourceCandidate
 
-// Facts of a source that started, never its id or URL: both expire, so a remembered choice is re-resolved from a fresh discovery.
+// Only presentation.source_id is durable; candidate IDs and URLs expire.
 @Serializable
 internal data class RememberedSource(
     val provider_id: String,

@@ -496,17 +496,8 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val context = rankingContext(seriesMemoryOf(profile, card), capability).copy(providerAffinity = sourceMemory.affinity(profile),
             reuse = if (activeReuse != null) sourceMemory.context(profile, card) else SourceReuseContext())
         val preferences = mutable.value.preferences?.preferences
-        val heightPreference = preferences?.max_quality_height
-        val heightDevice = context.device.maxHeight
-        val cap = when {
-            heightPreference == null -> heightDevice
-            heightDevice == null -> heightPreference
-            else -> minOf(heightPreference, heightDevice)
-        }
         coroutineScope {
             var started = false
-            var openingId: String? = null
-            var graceDeadline = 0L
 
             fun targetFor(ranked: RankedSources): SourceCandidate? {
                 val remembered = activeReuse?.let { if (ranked.reuseSupported) ranked.reuseIds.firstOrNull()?.let { id -> ranked.rows.find { it.id == id } } else if (device != null) ranked.matchingSource(it) else null }
@@ -517,29 +508,13 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
 
             var discoveryComplete = false
             fun consider(ranked: RankedSources) {
-                if (generation != operation || sourcesScrolled || sourcesManualSelection || sourceMemory.revision != memoryRevision) return
-                if (activeReuse != null && ranked.reuseSupported && !ranked.reuseReady && !discoveryComplete) return
+                if (started || generation != operation || sourcesScrolled || sourcesManualSelection || sourceMemory.revision != memoryRevision) return
+                val ready = if (activeReuse != null) !ranked.reuseSupported || ranked.reuseReady
+                    else ranked.bestMatchFullyMatches
+                if (!ready && !discoveryComplete) return
                 val target = targetFor(ranked) ?: return
-                if (activeReuse != null || startPlayback) {
-                    if (started) return
-                    started = true
-                    startBestMatch(ranked, target, context.takeIf { activeReuse != null })
-                    return
-                }
-                when {
-                    !started -> {
-                        started = true
-                        openingId = target.id
-                        graceDeadline = clockMillis() + PLAY_FIRST_GRACE_MILLIS
-                        openNow(target, ranked)
-                    }
-                    clockMillis() < graceDeadline && mutable.value.playback == null && target.id != openingId -> {
-                        val current = ranked.rows.firstOrNull { it.id == openingId } ?: return
-                        if (!target.clearlyBetterThan(current, cap)) return
-                        openingId = target.id
-                        openNow(target, ranked)
-                    }
-                }
+                started = true
+                startBestMatch(ranked, target, context.takeIf { activeReuse != null })
             }
 
             var phase: String? = null

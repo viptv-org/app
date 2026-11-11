@@ -519,6 +519,17 @@ class NextEpisodePreparationTest {
         } finally { fixture.close(controller) }
     }
 
+    @Test fun anUnrememberedOtherEpisodeUsesTheProfilesOrdinaryBestMatchMode() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("best")), bestMatch = "best"))
+        try {
+            controller.playEpisode(episode(4)); advanceTimeBy(2_000); runCurrent()
+            assertEquals(Screen.Player, controller.state.value.screen)
+            assertEquals("best", controller.state.value.playingSource?.id)
+            controller.closePlayer()
+        } finally { fixture.close(controller) }
+    }
+
     @Test fun anUnrememberedEpisodeBeyondTheResolvedSuccessorStillAsks() = runTest {
         val fixture = LocalSetupFixture()
         val controller = controller(local = localDevice(fixture, listOf(row("best")), bestMatch = "best"))

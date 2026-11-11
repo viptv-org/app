@@ -30,7 +30,6 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
     pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None) {
-    sourceOpenJob?.cancel(); sourceOpenJob = null
     updateState { next -> next.copy(playingSource = source, openingSource = source) }
     run {
         try { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
@@ -38,25 +37,6 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
         catch (error: Exception) {
             if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen) startFailed(PlaybackFailure.Failed)
             else throw error
-        }
-    }
-}
-
-// Detached from run so discovery keeps ranking while this one opens; a manual pick or a better source cancels it.
-internal fun ApplicationController.openNow(source: SourceCandidate, ranked: RankedSources) {
-    val tried = (mutable.value.bestMatch?.tried.orEmpty() + source.id).distinct()
-    updateState { next -> next.copy(bestMatch = BestMatchSession(ranked.rows, tried = tried, playingId = source.id),
-        fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
-    sourceOpenJob?.cancel()
-    val operation = generation
-    sourceOpenJob = scope.launch {
-        try {
-            openSourceNow(source, forceGateway = false, positionMillis = null, pausedAfterOpen = false, choice = SourceChoice.None, keepFinding = true)
-        } catch (error: CancellationException) { throw error }
-        catch (error: Exception) {
-            if (generation != operation) return@launch
-            sourceChoice = SourceChoice.None
-            updateState { next -> next.copy(error = failureMessage(error), errorCode = (error as? RemoteFailure)?.code, openingSource = null) }
         }
     }
 }
@@ -304,7 +284,6 @@ internal fun ApplicationController.cancelPlaybackStall() {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
-    sourceOpenJob?.cancel(); sourceOpenJob = null
     playbackSegmentsJob?.cancel()
     startDeadlineJob?.cancel(); startDeadlineJob = null
     clearBestMatchSession()
