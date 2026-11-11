@@ -104,6 +104,35 @@ class RememberedSourcePlaybackTest {
         } finally { harness.close() }
     }
 
+    @Test fun aConfirmedSelectedAudioTrackIsRememberedInsteadOfAllAdvertisedLanguages() = runBlocking<Unit> {
+        val harness = Harness()
+        try {
+            val source = row("bilingual", languages = listOf("en", "fr"))
+            harness.controller.sourceMemory.setAcross("default", true)
+            harness.play(episode(1, 1), source)
+            settle(harness.controller)
+            harness.controller.observePlayback(org.viptv.app.player.PlayerFact.Tracks(org.viptv.app.player.PlaybackTracks(
+                audio = listOf(org.viptv.app.player.PlaybackTrack(0, "English", true, "en"),
+                    org.viptv.app.player.PlaybackTrack(1, "French", false, "fr")))))
+            harness.firstFrame()
+            assertEquals(listOf("en"), harness.controller.sourceMemory.entry("default", episode(1, 2))?.languages)
+            assertEquals(listOf("en"), harness.controller.sourceMemory.choice("default", otherEpisode(1, 1))?.languages)
+        } finally { harness.close() }
+    }
+
+    @Test fun showingTheManualPickerCancelsThePendingAutomaticStart() = runBlocking<Unit> {
+        val harness = Harness { listOf(row("a-next", languages = listOf("en"))) }
+        try {
+            remember(harness)
+            harness.controller.playTitle(episode(1, 2))
+            harness.controller.showMatchingSources()
+            settle(harness.controller)
+            assertTrue(harness.opened.isEmpty())
+            assertEquals(Screen.Sources, harness.controller.state.value.screen)
+            assertEquals(listOf("a-next"), harness.controller.state.value.sources.map { it.id })
+        } finally { harness.close() }
+    }
+
     @Test fun noMatchingLanguageOpensThePickerInsteadOfSwitchingAudio() = runBlocking<Unit> {
         val harness = Harness { listOf(row("a", provider = "addon:a", languages = listOf("ja")), row("b", provider = "addon:b", languages = listOf("ja"))) }
         val controller = harness.controller
@@ -127,6 +156,21 @@ class RememberedSourcePlaybackTest {
             settle(controller)
             controller.observePlaybackFor(controller.state.value.playback, PlayerFact.Failed)
             assertEquals(RememberedSource("addon:a", listOf("en")), controller.sourceMemory.entry("default", episode(1, 1)))
+        } finally { harness.close() }
+    }
+
+    @Test fun anOlderEpisodePickedFromThePlayerUsesTheRememberedSeriesChoice() = runBlocking<Unit> {
+        val harness = Harness { listOf(row("fresh", "addon:a", listOf("en"))) }
+        try {
+            remember(harness)
+            harness.controller.updateState { it.copy(screen = Screen.Player,
+                playback = PlaybackInput("current", "https://media.example/current", profileId = "default"),
+                sourceTitle = episode(1, 3), nextEpisode = episode(1, 4),
+                detail = DetailSnapshot(series, episodes = (1L..4L).map { episode(1, it) })) }
+            harness.controller.playEpisode(episode(1, 1))
+            settle(harness.controller)
+            assertEquals(Screen.Player, harness.controller.state.value.screen)
+            assertEquals("fresh", harness.controller.state.value.playingSource?.id)
         } finally { harness.close() }
     }
 

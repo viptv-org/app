@@ -193,9 +193,17 @@ open class RemoteConnection(
         return bootstrap()
     }
 
+    internal var preferredSourceDiscoverySupported = false
+    internal var sourceReuseSupported = false
+    internal var providerAffinitySupported = true
+    internal val reuseAudioLanguages = mutableMapOf<String, String?>()
+
     suspend fun bootstrap(): Bootstrap {
         val value = call("/api/bootstrap").jsonObject
         return withWorker {
+            preferredSourceDiscoverySupported = value["preferred_source_discovery_supported"]?.jsonPrimitive?.booleanOrNull == true
+            reuseAudioLanguages.clear()
+            providerAffinitySupported = true
             requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
                 ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
             val identity = value.getValue("identity").jsonObject

@@ -38,7 +38,7 @@ private data class LocalProfileCard(val id: String, val name: String, val locked
     val avatar_style: String? = null, val avatar_choice: Int? = null)
 
 internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_core.SecretStore = platformSecrets(),
-    internal val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection {
+    internal val client: io.ktor.client.HttpClient = platformClient()) : LocalConnection, PreferredSourceDiscovery {
     internal val engine = LocalEngine(path, secrets)
     internal val json = Json { ignoreUnknownKeys = true }
     private val pendingHomes=ConcurrentHashMap<String,String>()
@@ -146,6 +146,8 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
     override suspend fun detail(profile: String, card: Card, offset: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, 24)
     override suspend fun detailPage(profile: String, card: Card, offset: Int, limit: Int): DetailSnapshot = fetchDetailPage(profile, card, offset, limit)
 
+    override suspend fun discoverSources(profile: String, card: Card, context: RankingContext, publish: (SourcesOutcome) -> Unit): SourcesOutcome = fetchMergedLocalSources(profile, card, publish, context)
+
     override suspend fun sources(profile: String, card: Card, publish: (SourcesOutcome) -> Unit): SourcesOutcome = fetchMergedLocalSources(profile, card, publish)
 
     override suspend fun subtitles(profile: String, card: Card): org.viptv.engine.wire.SubtitleSnapshot = fetchLocalSubtitles(profile, card)
@@ -153,6 +155,7 @@ internal open class NativeLocalConnection(path: String, secrets: uniffi.viptv_co
     override suspend fun subtitleContent(id: String, input: PlaybackInput): ByteArray = fetchLocalSubtitleContent(id, input)
 
     override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources = withContext(Dispatchers.IO) {
+        if (sources.size > SOURCE_RANKING_BATCH_SIZE) return@withContext rankSourcesBatched(sources) { rankSources(profile, it, context) }
         val response = json.parseToJsonElement(engine.rankSourcesWithContext(profile, json.encodeToString(sources),
             rankingContextJson(context).toString())).jsonObject
         rankedSourcesResponse(response, sources)

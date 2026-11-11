@@ -23,8 +23,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val freshness: Freshness = Freshness(),
     internal val backend: BackendHealth = BackendHealth(freshness.time),
     internal val bestMatchNoticeMillis: Long = 2_000L,
-    internal val bestMatchGraceMillis: Long = BEST_MATCH_GRACE_MILLIS,
-    internal val bestMatchCapMillis: Long = BEST_MATCH_CAP_MILLIS,
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
@@ -92,7 +90,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var nextEpisodePreparationRenewal: Job? = null
     internal var nextEpisodePreparedLease: org.viptv.app.connection.PreparedPlaybackLease? = null
     internal var nextSourcePreparer: NextSourcePreparer = NextSourcePreparer.Device
-    internal var nextEpisodeDeliveryPreparer: NextEpisodeDeliveryPreparer = NextEpisodeDeliveryPreparer.Server
+    internal var nextEpisodeDeliveryPreparer: NextEpisodeDeliveryPreparer = NextEpisodeDeliveryPreparer.SourceOnly
     internal var clockMillis: () -> Long = ::epochMillis
     internal var capability: suspend () -> DeviceCapability = { deviceCapability() }
     internal var playbackSeasonJob: Job? = null
@@ -102,6 +100,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var sourcePreviewSession: DetailSourcePreviewSession? = null
     internal var sourcesScrolled = false
     internal var sourcesStartPlayback = false
+    internal var sourcesManualSelection = false
     internal var pairingJob: Job? = null
     internal var vodMatchesJob: Job? = null
     internal var vodMatchesRequest = 0L
@@ -116,7 +115,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var playbackStall: Job? = null
     internal var playbackStallPosition = 0L
     internal var playbackWaiting = false
-    internal var sourceOpenJob: Job? = null
     internal var sourceChoice = SourceChoice.None
     internal var sourceMemory = SourceMemory.book()
     internal var frameAcknowledgment: Job? = null

@@ -3,7 +3,6 @@ package org.viptv.app.state
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
@@ -286,22 +285,34 @@ internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card)
     return if (marked == episodes) this else copy(episodes = marked)
 }
 
-fun ApplicationController.playTitle(card: Card) {
+fun ApplicationController.playTitle(card: Card) = playTitle(card, manualSelection = false)
+
+private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean) {
     if (card.unnumberedEpisode()) {
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
     if (!beginPendingPlayback(card)) return
+    cancelSourceDetail()
+    sourcesManualSelection = manualSelection
     val navigation = navigationGeneration
     val before = mutable.value
     val origin = before.screen.takeUnless { it in listOf(Screen.Details, Screen.Sources, Screen.Player) }
         ?: before.detailReturnScreen
     val keptDetail = before.detail?.takeIf { !before.detailShell && sameLookupIdentity(it.item.identity, card.parent_identity ?: card.identity) }
-    val remembered = if (before.preferences.rememberedSourceReuseEnabled())
-        before.selectedProfile?.let { sourceMemory.entry(it, card) } else null
+    val remembered = if (!manualSelection && before.preferences.rememberedSourceReuseEnabled())
+        before.selectedProfile?.let { sourceMemory.choice(it, card) } else null
     releaseRemotePlayback()
     updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null, detailShell = false) }
-    openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null)
+    openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null, manualSelection = manualSelection)
+    if (keptDetail != null) {
+        val target = try { sourceTarget(card, keptDetail) } catch (error: LocalFailure) {
+            updateState { it.copy(error = error.message, findingSources = false, pendingAction = null) }; return
+        }
+        updateState { it.copy(sourceTitle = target) }
+        run { discoverSources(target, remembered) }
+        return
+    }
     if (card.identity.episode != null && card.metadata_origin != null) {
         loadSourceDetail(card, navigation, remembered)
         run { discoverSources(card, remembered) }
@@ -410,7 +421,7 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long,
         when {
             mutable.value.screen == Screen.Player -> { loadNextEpisode(); loadPlaybackSeason() }
             card.metadata_origin != detail.item.metadata_origin && (mutable.value.screen == Screen.Sources || reuse != null) -> {
-                openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle, quiet = reuse != null)
+                openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle, quiet = reuse != null, manualSelection = sourcesManualSelection)
                 // The controller's run, not the scope function: it cancels the job and sets `busy`.
                 this@loadSourceDetail.run { discoverSources(target, reuse) }
             }
@@ -450,7 +461,7 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
     // A title-level series must never reach stream providers as S0E0.
     if (card.identity.kind == "series" && card.identity.episode == null) {
         val detail = mutable.value.detail?.takeIf { !mutable.value.detailShell && it.item.identity == card.identity && it.item.provider_id == card.provider_id && it.item.metadata_origin == card.metadata_origin }
-        if (detail == null) { playTitle(card); return }
+        if (detail == null) { playTitle(card, manualSelection = !startPlayback); return }
         val target = try { sourceTarget(card, detail) } catch (error: LocalFailure) {
             updateState { it.copy(error = error.message) }; return
         }
@@ -460,15 +471,16 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
     cancelSourceDetail()
     releaseRemotePlayback()
     val preview = if (startPlayback) null else adoptDetailSourcePreview(card)
-    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen, startPlayback = startPlayback, seed = preview)
+    openSources(card, returnTo = if (mutable.value.detail != null) Screen.Details else mutable.value.screen, startPlayback = startPlayback, seed = preview, manualSelection = !startPlayback)
     if (preview == null) run { discoverSources(card) }
 }
 
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false, quiet: Boolean = false,
-    seed: DetailSourcePreview? = null) {
+    seed: DetailSourcePreview? = null, manualSelection: Boolean = false) {
     sourcesScrolled = false
     clearBestMatchSession()
     sourcesStartPlayback = startPlayback
+    sourcesManualSelection = manualSelection || quiet && sourcesManualSelection
     updateState { it.copy(screen = if (quiet) it.screen else Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
         sources = seed?.rows.orEmpty(), sourceProducers = seed?.producers.orEmpty(), sourceGroups = seed?.groups ?: SourceGroups(),
         torrentOnlySources = seed?.torrentOnly ?: 0, findingSources = seed?.settled != true, navForward = emptyList(),
@@ -477,62 +489,71 @@ private fun ApplicationController.openSources(card: Card, returnTo: Screen, play
 
 private suspend fun ApplicationController.discoverSources(card: Card, reuse: RememberedSource? = null) {
     val startPlayback = sourcesStartPlayback
+    val memoryRevision = sourceMemory.revision
     val operation = generation
     try {
         if (mutable.value.preferences == null) loadPreferences()
+        val activeReuse = reuse.takeIf { mutable.value.preferences.rememberedSourceReuseEnabled() }
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val context = rankingContext(seriesMemoryOf(profile, card), sourceMemory.affinity(profile), capability)
+        val context = rankingContext(seriesMemoryOf(profile, card), sourceMemory.affinity(profile), capability).copy(
+            reuse = if (activeReuse != null) sourceMemory.context(profile, card) else SourceReuseContext())
         val preferences = mutable.value.preferences?.preferences
-        var started = false
         coroutineScope {
-            fun begin(ranked: RankedSources, target: SourceCandidate, keepDiscovery: Boolean) {
-                if (started) return
-                started = true
-                if (keepDiscovery) openNow(target, ranked) else startBestMatch(ranked, target)
+            var started = false
+
+            fun targetFor(ranked: RankedSources): SourceCandidate? {
+                val remembered = activeReuse?.let { if (ranked.reuseSupported) ranked.reuseIds.firstOrNull()?.let { id -> ranked.rows.find { it.id == id } } else if (device != null) ranked.matchingSource(it) else null }
+                if (remembered != null || activeReuse != null) return remembered
+                val autoplay = startPlayback || !sourcesManualSelection && preferences?.source_selection == "best"
+                return if (autoplay) ranked.autoplayTarget() else null
             }
 
-            val starts = Channel<RankedSources>(Channel.CONFLATED)
-            val ranking = ProgressiveSourceRanking(this,
-                rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
+            var discoveryComplete = false
+            fun consider(ranked: RankedSources) {
+                if (started || generation != operation || sourcesScrolled || sourcesManualSelection || sourceMemory.revision != memoryRevision) return
+                val ready = if (activeReuse != null) !ranked.reuseSupported || ranked.reuseReady
+                    else ranked.bestMatchFullyMatches
+                if (!ready && !discoveryComplete) return
+                val target = targetFor(ranked) ?: return
+                started = true
+                startBestMatch(ranked, target, context.takeIf { activeReuse != null })
+            }
+
+            var phase: String? = null
+            lateinit var ranking: ProgressiveSourceRanking
+            ranking = ProgressiveSourceRanking(this,
+                rank = { rows -> (device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context)).copy(discoveryPhase = phase) },
                 show = { ranked ->
                     if (generation != operation) return@ProgressiveSourceRanking
                     updateState { state ->
-                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups,
-                            bestMatch = state.bestMatch?.copy(ranked = ranked.rows))
+                        val session = state.bestMatch?.takeIf { started }?.let { current ->
+                            val allowed = if (current.reuseContext != null && ranked.reuseSupported) ranked.reuseIds else ranked.automaticIds
+                            current.copy(ranked = ranked.rows.filter { allowed == null || it.id in allowed }, reuseAudioLanguages = ranked.reuseAudioLanguages)
+                        }
+                        state.copy(sources = ranked.rows, sourceGroups = ranked.groups, bestMatch = session)
                     }
-                    when {
-                        reuse != null || startPlayback -> ranked.rememberedOrBestMatch(reuse)?.let { begin(ranked, it, keepDiscovery = false) }
-                        preferences?.source_selection == "best" -> starts.trySend(ranked)
-                    }
+                    if (!ranking.failed) consider(ranked)
                 })
-            val startJob = launch {
-                val decided = BestMatchStart(bestMatchGraceMillis, bestMatchCapMillis).await(starts) {
-                    sourcesScrolled || ranking.failed || generation != operation ||
-                        mutable.value.openingSource != null || mutable.value.playback != null
-                } ?: return@launch
-                if (generation == operation && !sourcesScrolled) begin(decided.ranked, decided.source, keepDiscovery = true)
-            }
-            try {
-                val observed: (SourcesOutcome) -> Unit = { outcome ->
-                    if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
-                    ranking.arrived(outcome.candidates)
-                }
-                val outcome = try {
-                    device?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
-                } catch (deadline: TimeoutCancellationException) {
-                    ranking.finish(); throw deadline
-                }
+            val observed: (SourcesOutcome) -> Unit = { outcome ->
+                phase = outcome.discoveryPhase ?: phase
+                if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
                 ranking.arrived(outcome.candidates)
-                ranking.finish()
-                if (generation != operation) return@coroutineScope
-                updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
-                if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
-            } finally {
-                starts.close()
-                withContext(NonCancellable) { startJob.join() }
             }
+            val outcome = try {
+                device?.discoverSources(profile, card, context, observed) ?: requireNotNull(remote).sources(card, context.reuse, context.device, publish = observed)
+            } catch (deadline: TimeoutCancellationException) {
+                ranking.finish(); throw deadline
+            }
+            phase = outcome.discoveryPhase ?: phase
+            ranking.arrived(outcome.candidates)
+            val finalRanking = ranking.finish()?.copy(discoveryPhase = phase)
+            discoveryComplete = true
+            finalRanking?.let(::consider)
+            if (generation != operation) return@coroutineScope
+            updateState { it.copy(torrentOnlySources = outcome.torrentOnlyProviders, sourceProducers = producersLabelled(outcome.producers)) }
+            if (reuse != null && !started) updateState { it.copy(screen = Screen.Sources) }
         }
     } catch (_: TimeoutCancellationException) {
         if (reuse != null) updateState { it.copy(screen = Screen.Sources) }
@@ -546,9 +567,6 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         throw error
     } finally { if (generation == operation) updateState { it.copy(findingSources = false) } }
 }
-
-private fun RankedSources.rememberedOrBestMatch(reuse: RememberedSource?): SourceCandidate? =
-    if (reuse != null) matchingSource(reuse) else autoplayTarget()
 
 internal fun ApplicationController.markSourcesScrolled() { sourcesScrolled = true }
 
@@ -642,4 +660,11 @@ internal fun ApplicationController.beginDetails() {
             navBack = navBack, navForward = emptyList(), playTapTitle = null, detailFailure = null, detailRetryable = true,
             screen = Screen.Details, detail = null, detailShell = false, detailFocus = null, calendarEpisode = null)
     }
+}
+
+fun ApplicationController.showMatchingSources() {
+    if (!mutable.value.findingSources || mutable.value.sourceTitle == null) return
+    sourcesScrolled = true
+    sourcesManualSelection = true
+    updateState { it.copy(screen = Screen.Sources) }
 }

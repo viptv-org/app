@@ -50,7 +50,7 @@ import org.viptv.app.components.rememberEnterLeaveMotion
 @Composable
 internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, closeFocusOnOpen: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), playFromStart: ((Card) -> Unit)? = null) {
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), playFromStart: ((Card) -> Unit)? = null, chooseSource: (Card) -> Unit = play) {
     var dismissing by remember(detail?.item?.let { it.provider_id to it.identity }) { mutableStateOf(false) }
     val requestDismiss = { if (!dismissing) dismissing = true }
     InitialBrowserEscape(requestDismiss)
@@ -115,8 +115,8 @@ internal fun BrowserDetailsDialog(detail: DetailSnapshot?, busy: Boolean, error:
                                         } }
                                         items(season.episodes, key = ::episodeKey) { episode ->
                                             val shown = resume.shown(episode)
-                                            if (compact) DetailEpisodeCard(shown, true, { play(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
-                                            else DesktopEpisodeRow(shown, { play(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                            if (compact) DetailEpisodeCard(shown, true, { chooseSource(episode) }, Modifier.padding(horizontal = gutter, vertical = 12.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                            else DesktopEpisodeRow(shown, { chooseSource(episode) }, browser = true, modifier = Modifier.padding(horizontal = 32.dp), comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                                         }
                                     }
                                     if (pageError != null) item(key = "page-failure") {

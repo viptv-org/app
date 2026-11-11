@@ -30,26 +30,13 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
     pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None) {
-    sourceOpenJob?.cancel(); sourceOpenJob = null
     updateState { next -> next.copy(playingSource = source, openingSource = source) }
-    run { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
-}
-
-// Detached from run so discovery keeps ranking while this one opens; a manual pick or a better source cancels it.
-internal fun ApplicationController.openNow(source: SourceCandidate, ranked: RankedSources) {
-    val tried = (mutable.value.bestMatch?.tried.orEmpty() + source.id).distinct()
-    updateState { next -> next.copy(bestMatch = BestMatchSession(ranked.rows, tried = tried, playingId = source.id),
-        fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
-    sourceOpenJob?.cancel()
-    val operation = generation
-    sourceOpenJob = scope.launch {
-        try {
-            openSourceNow(source, forceGateway = false, positionMillis = null, pausedAfterOpen = false, choice = SourceChoice.None, keepFinding = true)
-        } catch (error: CancellationException) { throw error }
+    run {
+        try { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
+        catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (generation != operation) return@launch
-            sourceChoice = SourceChoice.None
-            updateState { next -> next.copy(error = failureMessage(error), errorCode = (error as? RemoteFailure)?.code, openingSource = null) }
+            if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen) startFailed(PlaybackFailure.Failed)
+            else throw error
         }
     }
 }
@@ -59,6 +46,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     progressJob?.join()
     val stopping = releaseRemotePlayback()
     this.sourceChoice = choice
+    firstFrameSeen = false
     updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = if (keepFinding) next.findingSources else false) }
     stopping?.join()
     val store = local
@@ -66,7 +54,10 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val profile = requireNotNull(mutable.value.selectedProfile)
     val title = mutable.value.sourceTitle
     if (mutable.value.preferences == null) loadPreferences()
-    val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
+    val profilePreferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
+    val reuseAudio = mutable.value.bestMatch?.reuseAudioLanguages?.get(source.id)
+    val preferences = if (choice == SourceChoice.None && reuseAudio != null) profilePreferences.copy(preferred_audio_language = reuseAudio) else profilePreferences
+    if (choice == SourceChoice.Manual) remote?.reuseAudioLanguages?.remove(source.id)
     val lease = if (store == null) try {
         leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
     } finally { updateState { next -> next.copy(openingStage = null) } } else null
@@ -92,6 +83,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
             if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
             else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
         })
+    input.selectedAudioLanguage = opened.selectedAudioLanguage
     remotePlayback = lease
     CrashFacts.playbackAttempt = playbackAttempt(source, when {
         store != null -> "direct"
@@ -250,7 +242,10 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         if (mutable.value.nextEpisode == null) loadNextEpisode(force = true)
         saveProgress(true)
     }
-    if (fact is PlayerFact.Tracks) noticeMissingAudio(fact.options)
+    if (fact is PlayerFact.Tracks) {
+        fact.options.audio.firstOrNull { it.selected }?.language?.let { mutable.value.playback?.selectedAudioLanguage = it }
+        noticeMissingAudio(fact.options)
+    }
     if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Undecodable, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
     if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Failed) }
     watchPlaybackStall(fact)
@@ -294,7 +289,6 @@ internal fun ApplicationController.cancelPlaybackStall() {
 
 fun ApplicationController.closePlayer() {
     job?.cancel()
-    sourceOpenJob?.cancel(); sourceOpenJob = null
     playbackSegmentsJob?.cancel()
     startDeadlineJob?.cancel(); startDeadlineJob = null
     clearBestMatchSession()

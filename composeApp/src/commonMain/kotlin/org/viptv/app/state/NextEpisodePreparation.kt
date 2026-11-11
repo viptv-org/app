@@ -10,6 +10,7 @@ import org.viptv.engine.wire.Scope
 import org.viptv.engine.wire.SourceCandidate
 
 internal const val NEXT_EPISODE_PREPARE_WITHIN_MILLIS = 180_000L
+internal const val NEXT_PREPARED_SOURCE_TTL_MILLIS = 900_000L
 
 enum class NextEpisodePreparationStatus { Preparing, Ready, Unavailable }
 
@@ -20,6 +21,8 @@ data class NextEpisodePreparation(
     val status: NextEpisodePreparationStatus,
     val source: SourceCandidate? = null,
     val ranked: RankedSources? = null,
+    val preparedAtMillis: Long? = null,
+    val rankingContext: org.viptv.app.connection.RankingContext? = null,
 )
 
 internal data class NextEpisodePreparationKey(
@@ -30,6 +33,7 @@ internal data class NextEpisodePreparationKey(
     val remote: RemoteConnection?,
     val local: LocalConnection?,
     val homeScope: Scope?,
+    val memoryRevision: Long = 0,
 )
 
 internal fun nextEpisodePreparationDue(positionMillis: Long, durationMillis: Long?): Boolean {
@@ -40,7 +44,6 @@ internal fun nextEpisodePreparationDue(positionMillis: Long, durationMillis: Lon
 
 internal fun ApplicationState.nextEpisodePreparationTarget(): Card? {
     if (screen != Screen.Player || nextEpisodeLoading) return null
-    if (preferences?.preferences?.remembered_source_reuse == false) return null
     val playing = playback ?: return null
     val profile = selectedProfile ?: return null
     if (playing.live || playing.profileId != profile) return null
@@ -52,5 +55,5 @@ internal fun ApplicationState.nextEpisodePreparationTarget(): Card? {
 internal fun ApplicationController.preparationKeyFor(card: Card, state: ApplicationState = mutable.value): NextEpisodePreparationKey {
     val snapshot = state.preferences
     return NextEpisodePreparationKey(cardLookupKey(card), state.selectedProfile.orEmpty(), snapshot?.revision ?: 0,
-        snapshot?.preferences?.source_selection.orEmpty(), connection, local, state.home?.scope?.owner())
+        snapshot?.preferences?.source_selection.orEmpty(), connection, local, state.home?.scope?.owner(), sourceMemory.revision)
 }

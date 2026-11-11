@@ -17,7 +17,8 @@ import org.viptv.app.components.TextButton
 
 @Composable
 internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
-    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
+    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null, profileId: String? = null) {
+    val sourceMemory = remember { org.viptv.app.state.SourceMemory.book() }
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     var dialog by remember(section) { mutableStateOf<PhonePreferenceField?>(null) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
@@ -49,6 +50,10 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
                         PhonePreferenceDivider()
                         PhonePreferenceSwitchRow(rememberedSourceRow, rememberedSourceDescription, value.remembered_source_reuse) {
                             draft = draft?.copy(remembered_source_reuse = it)
+                        }
+                        profileId?.let { profile ->
+                            PhonePreferenceDivider()
+                            PhonePreferenceSwitchRow(crossTitleSourceRow, crossTitleSourceDescription, sourceMemory.across(profile)) { sourceMemory.setAcross(profile, it) }
                         }
                     }
                     Text("Sources", Modifier.padding(horizontal = 4.dp), color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

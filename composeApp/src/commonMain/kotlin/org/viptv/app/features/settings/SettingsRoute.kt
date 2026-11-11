@@ -127,9 +127,9 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         preferencesError = state.preferencesError, retryPreferences = controller::refreshPreferences,
         sectionPreferences = { section, compact ->
             if (compact && !browser) PhoneProfilePreferences(section, state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback, state.selectedProfile)
             else ProfilePreferencesSettings(section, state.preferences, state.busy, state.preferencesError ?: state.error,
-                controller::refreshPreferences, controller::updatePreferences, devicePlayback)
+                controller::refreshPreferences, controller::updatePreferences, devicePlayback, state.selectedProfile)
         },
         devices = if (!state.localMode && accountSession) ({ compact, back -> AccountDevicesScreen(state.accountDevices, state.busy, state.error,
             controller::refreshAccountDevices, controller::signOutDevice, controller::signOutAllDevices, compact, if (compact) back else null,

@@ -87,13 +87,16 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
 fun ApplicationController.playEpisode(card: Card) {
     if (startPreparedNextEpisode(card)) return
     val state = mutable.value
-    val successor = state.screen == Screen.Player && state.playback != null && state.sourceTitle?.let { validNextEpisode(it, card) } == true
+    val successor = state.screen == Screen.Player && state.playback != null &&
+        state.nextEpisode?.let { cardLookupKey(it) == cardLookupKey(card) } == true &&
+        state.sourceTitle?.let { validNextEpisode(it, card) } == true
     val reuseEnabled = state.preferences.rememberedSourceReuseEnabled()
     closePlayer()
     // A successor inherits the series' remembered source; otherwise the plain player pick keeps its ask or best-match flow.
-    val remembered = reuseEnabled && state.selectedProfile?.let { sourceMemory.entry(it, card) } != null
-    if (successor && remembered) playTitle(card)
-    else chooseSource(card, startPlayback = successor && reuseEnabled)
+    val remembered = reuseEnabled && state.selectedProfile?.let { sourceMemory.choice(it, card) } != null
+    if (successor && !remembered) chooseSource(card, startPlayback = true)
+    else if (state.screen == Screen.Player) playTitle(card)
+    else chooseSource(card)
 }
 
 internal fun ApplicationController.cancelNextEpisode() {
