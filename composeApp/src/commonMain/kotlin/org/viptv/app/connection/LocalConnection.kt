@@ -64,7 +64,7 @@ expect fun localConnection(databasePath: String): LocalConnection
 class LocalFailure(message: String) : Exception(message)
 
 data class SourcesOutcome(val candidates: List<SourceCandidate> = emptyList(), val torrentOnlyProviders: Int = 0,
-    val producers: List<SourceProducerOutcome> = emptyList())
+    val producers: List<SourceProducerOutcome> = emptyList(), val discoveryPhase: String? = null)
 
 const val SOURCE_FORMAT_UNSUPPORTED = "source_format_unsupported"
 const val SOURCE_PRODUCER_UNREACHABLE = "producer_unreachable"

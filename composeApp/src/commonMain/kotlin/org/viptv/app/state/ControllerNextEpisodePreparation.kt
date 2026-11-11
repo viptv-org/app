@@ -27,13 +27,15 @@ internal fun interface NextSourcePreparer {
     companion object {
         val Device = NextSourcePreparer { remote, local, profile, card, remembered, context ->
             val ranked = coroutineScope {
+                var phase: String? = null
                 val ranking = ProgressiveSourceRanking(this,
-                    rank = { rows -> local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
+                    rank = { rows -> (local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context)).copy(discoveryPhase = phase) },
                     show = {})
-                val observed: (SourcesOutcome) -> Unit = { ranking.arrived(it.candidates) }
+                val observed: (SourcesOutcome) -> Unit = { phase = it.discoveryPhase ?: phase; ranking.arrived(it.candidates) }
                 val outcome = local?.discoverSources(profile, card, context, observed) ?: requireNotNull(remote).sources(card, context.reuse, context.device, publish = observed)
+                phase = outcome.discoveryPhase ?: phase
                 ranking.arrived(outcome.candidates)
-                ranking.finish()
+                ranking.finish()?.copy(discoveryPhase = phase)
             }
             val matched = ranked ?: return@NextSourcePreparer null
             // A remembered choice decides alone: a row in another audio never stands in for it, so Next asks like the unprepared path does.

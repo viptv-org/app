@@ -11,8 +11,10 @@ internal fun ApplicationController.startBestMatch(ranked: RankedSources, target:
     val ids = if (reuse != null) ranked.reuseIds.toSet()
         else ranked.automaticIds?.toSet()
     val rows = ranked.rows.filter { ids == null || it.id in ids }
+    val canExpand = local is PreferredSourceDiscovery || connection?.preferredSourceDiscoverySupported == true
     updateState { it.copy(bestMatch = BestMatchSession(rows, tried = listOf(target.id), playingId = target.id,
-        reuseContext = reuse, reuseAudioLanguages = ranked.reuseAudioLanguages), fallbackNotice = null, audioNotice = null) }
+        reuseContext = reuse, reuseAudioLanguages = ranked.reuseAudioLanguages,
+        expanded = ranked.discoveryPhase != "preferred" || !canExpand), fallbackNotice = null, audioNotice = null) }
     openSource(target, forceGateway = false, positionMillis = null)
 }
 
@@ -27,10 +29,10 @@ internal fun ApplicationController.startFailed(cause: PlaybackFailure, dolbyVisi
         return
     }
     val after = session.failed(playing, dolbyVision)
-    if (after.reuseContext != null && !after.expanded && after.attempts < BEST_MATCH_ATTEMPT_LIMIT) {
+    val next = after.nextTarget()
+    if (next == null && after.reuseContext != null && !after.expanded && after.attempts < BEST_MATCH_ATTEMPT_LIMIT) {
         expandRememberedSources(after); return
     }
-    val next = after.nextTarget()
     if (next == null || after.attempts >= BEST_MATCH_ATTEMPT_LIMIT) { exhaustFallback(after); return }
     val notice = BestMatchFallback(reason, next)
     updateState { it.copy(bestMatch = after.copy(attempts = after.attempts + 1, playingId = next.id),

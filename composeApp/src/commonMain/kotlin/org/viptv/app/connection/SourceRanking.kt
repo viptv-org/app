@@ -18,7 +18,7 @@ data class SourceGroups(val bestMatches: List<String> = emptyList(), val bestMat
 @Immutable
 data class RankedSources(val rows: List<SourceCandidate>, val groups: SourceGroups = SourceGroups(), val bestMatchFullyMatches: Boolean = false,
     val reuseSupported: Boolean = false, val reuseIds: List<String> = emptyList(), val reuseReady: Boolean = false,
-    val automaticIds: List<String>? = null, val reuseAudioLanguages: Map<String, String> = emptyMap(), val reusePreferred: Boolean = false)
+    val automaticIds: List<String>? = null, val reuseAudioLanguages: Map<String, String> = emptyMap(), val reusePreferred: Boolean = false, val discoveryPhase: String? = null)
 
 internal fun SourceCandidate.failsHardFilter(): Boolean = release_type == "cam" || three_d ||
     (delivery == "torrent" && seeders?.let { it < 5 } == true)

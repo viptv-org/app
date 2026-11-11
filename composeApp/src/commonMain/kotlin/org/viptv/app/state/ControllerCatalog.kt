@@ -542,8 +542,9 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                 }
             }
 
+            var phase: String? = null
             val ranking = ProgressiveSourceRanking(this,
-                rank = { rows -> device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
+                rank = { rows -> (device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context)).copy(discoveryPhase = phase) },
                 show = { ranked ->
                     if (generation != operation) return@ProgressiveSourceRanking
                     updateState { state ->
@@ -556,6 +557,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                     consider(ranked)
                 })
             val observed: (SourcesOutcome) -> Unit = { outcome ->
+                phase = outcome.discoveryPhase ?: phase
                 if (generation == operation) updateState { it.copy(sourceProducers = producersLabelled(outcome.producers)) }
                 ranking.arrived(outcome.candidates)
             }
@@ -564,8 +566,9 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
             } catch (deadline: TimeoutCancellationException) {
                 ranking.finish(); throw deadline
             }
+            phase = outcome.discoveryPhase ?: phase
             ranking.arrived(outcome.candidates)
-            val finalRanking = ranking.finish()
+            val finalRanking = ranking.finish()?.copy(discoveryPhase = phase)
             discoveryComplete = true
             finalRanking?.let(::consider)
             if (generation != operation) return@coroutineScope

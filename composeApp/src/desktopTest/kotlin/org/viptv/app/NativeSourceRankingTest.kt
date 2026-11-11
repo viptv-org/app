@@ -64,6 +64,7 @@ class NativeSourceRankingTest {
             fixture.requested.clear()
             val context = RankingContext(reuse = SourceReuseContext(title = SourceReuseMemory(clean.provider_id)))
             val outcome = fixture.local.discoverSources("default", card, context)
+            assertEquals("preferred", outcome.discoveryPhase)
             assertEquals(listOf("good.example"), fixture.requested)
             assertEquals(listOf("Clean.720p.mkv"), outcome.candidates.map { it.label })
             assertTrue(fixture.local.rankSources("default", outcome.candidates, context).reuseReady)
@@ -77,6 +78,7 @@ class NativeSourceRankingTest {
             fixture.requested.clear()
             val context = RankingContext(reuse = SourceReuseContext(title = SourceReuseMemory(clean.provider_id, listOf("en"))))
             val outcome = fixture.local.discoverSources("default", card, context)
+            assertEquals("fallback", outcome.discoveryPhase)
             assertEquals(listOf("good.example", "cam.example"), fixture.requested)
             assertFalse(fixture.local.rankSources("default", outcome.candidates, context).reuseReady)
         }

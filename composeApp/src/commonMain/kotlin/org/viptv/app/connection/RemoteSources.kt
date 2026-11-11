@@ -35,8 +35,10 @@ internal suspend fun RemoteConnection.sources(card: Card, reuse: SourceReuseCont
         val found = linkedMapOf<String, SourceCandidate>()
         val producers = linkedMapOf<String, SourceProducerOutcome>()
         var after = 0
+        var phase: String? = null
         while (true) {
             val page = call("/api/streams/$job?after=$after&wait_ms=10000").jsonObject
+            if (preferredSourceDiscoverySupported) phase = page["phase"]?.jsonPrimitive?.contentOrNull?.takeIf { it == "preferred" || it == "fallback" }
             val events = page.getValue("events").jsonArray
             events.forEach { raw ->
                 val event = raw.jsonObject
@@ -61,11 +63,11 @@ internal suspend fun RemoteConnection.sources(card: Card, reuse: SourceReuseCont
                 }
             }
             after += events.size
-            if (events.isNotEmpty()) publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList()))
+            if (events.isNotEmpty()) publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase))
             if (page["done"]?.jsonPrimitive?.boolean == true) { completed = true; break }
             if (events.isEmpty()) delay(500)
         }
-        SourcesOutcome(found.values.toList(), producers = producers.values.toList())
+        SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase)
     } finally {
         if (!completed) withContext(NonCancellable) {
             withTimeoutOrNull(2000) { try { call("/api/streams/$job", HttpMethod.Delete) }

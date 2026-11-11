@@ -25,14 +25,14 @@ class RemoteSourceReuseTest {
             if (request.method == HttpMethod.Post) {
                 requests += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                 respond("""{"id":"job"}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
-            } else respond("""{"events":[],"done":true}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            } else respond("""{"events":[],"done":true,"phase":"preferred"}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val connection = RemoteConnection("https://watch.example", store, client, browserMode = false)
         try {
-            connection.sources(card, reuse = memory)
+            assertNull(connection.sources(card, reuse = memory).discoveryPhase)
             assertFalse("remembered_source" in requests.single())
             connection.preferredSourceDiscoverySupported = true
-            connection.sources(card, reuse = memory, device = DeviceCapability(maxHeight = 1080), excludePreferred = true)
+            assertEquals("preferred", connection.sources(card, reuse = memory, device = DeviceCapability(maxHeight = 1080), excludePreferred = true).discoveryPhase)
             val request = requests.last()
             assertEquals("supplier-id", request.getValue("remembered_source").jsonObject["source_id"]?.jsonPrimitive?.content)
             assertEquals(1080, request["device_max_height"]?.jsonPrimitive?.int)

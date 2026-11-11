@@ -35,7 +35,8 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
     }
     var jobId: String? = null
     val found = linkedMapOf<String, SourceCandidate>()
-    fun published() = SourcesOutcome(found.values.toList(), producers = producers.values.toList())
+    var phase: String? = null
+    fun published() = SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase)
     try {
         val completed = withTimeoutOrNull(45_000) {
             val started = withContext(Dispatchers.IO) {
@@ -53,12 +54,14 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
                 val page = withContext(Dispatchers.IO) {
                     json.decodeFromString<IntegrationSourcePage>(engine.pollIntegrationSources(profile, requireNotNull(jobId), after.toULong()))
                 }
+                val phaseChanged = phase != page.phase
+                phase = page.phase
                 if (page.phase == "fallback") fallback()
                 page.events.forEach { event ->
                     event.sources.forEach { found[it.id] = it }
                     after = maxOf(after, event.seq)
                 }
-                if (page.events.isNotEmpty()) publish(published())
+                if (page.events.isNotEmpty() || phaseChanged) publish(published())
                 if (page.done) {
                     if (page.error_code != null && found.isEmpty()) throw LocalFailure("Source integration could not complete this title.")
                     break

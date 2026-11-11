@@ -27,7 +27,7 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
                 try {
                     fetchLocalSources(profile, prepared, preferredProvider = provider, publish = { outcome ->
                         val ranked = rankSources(profile, outcome.candidates, context)
-                        if (ranked.reuseReady && ranked.reusePreferred) { preferred = outcome; throw PreferredSourceFound() }
+                        if (ranked.reuseReady && ranked.reusePreferred) { preferred = outcome.copy(discoveryPhase = "preferred"); throw PreferredSourceFound() }
                     })
                 } catch (_: PreferredSourceFound) { }
             }
@@ -43,11 +43,13 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
     val gate = Mutex()
     val found = linkedMapOf<String, SourceCandidate>()
     val producers = linkedMapOf<String, SourceProducerOutcome>()
+    var phase: String? = null
     suspend fun append(outcome: SourcesOutcome) = gate.withLock {
         currentCoroutineContext().ensureActive()
+        phase = outcome.discoveryPhase ?: phase
         outcome.candidates.forEach { found[it.id] = it }
         outcome.producers.forEach { producers[it.providerId] = it }
-        publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList()))
+        publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase))
     }
     var stremioFailed = false
     var integrationFailed = false
@@ -55,6 +57,7 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
     val stremio = async {
         try {
             if (!fallback.await()) return@async
+            gate.withLock { phase = "fallback" }
             val outcome = fetchLocalSources(profile, prepared, preferredProvider = null, excludedProvider = excludedAddon, publish = ::append)
             torrentOnly += outcome.torrentOnly
             append(SourcesOutcome(producers = outcome.producers))
@@ -74,7 +77,7 @@ internal suspend fun NativeLocalConnection.fetchMergedLocalSources(profile: Stri
         throw LocalFailure(if (integrationFailed && !stremioFailed)
             "VIPTV Sources could not run. Check its TMDB key in Settings, then try again."
         else "Could not load sources. Check the configured providers and try again.")
-    SourcesOutcome(found.values.toList(), if (found.isEmpty()) torrentOnly else 0, producers.values.toList())
+    SourcesOutcome(found.values.toList(), if (found.isEmpty()) torrentOnly else 0, producers.values.toList(), phase ?: "fallback")
 }
 
 private class PreferredSourceFound : Exception()
