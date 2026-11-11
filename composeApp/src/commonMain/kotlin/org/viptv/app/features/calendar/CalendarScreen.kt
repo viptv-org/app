@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,80 +19,87 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.connection.CalendarClock
+import org.viptv.app.connection.calendarClock
+import org.viptv.app.connection.calendarWindow
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
-import org.viptv.app.components.TextButton
+import org.viptv.app.components.ReleaseRowSkeleton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.listItemEntrance
+import org.viptv.app.components.listPageState
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.format.providerText
-
-internal const val CALENDAR_UNAVAILABLE = "The calendar needs series in My List or a Simkl connection."
-
-internal fun calendarEmptyDay(filter: CalendarFilter?) =
-    if (filter == CalendarFilter.YourShows) "None of your shows air this day." else "No releases for this day."
 
 @Composable
 fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, television: Boolean,
     open: (Card) -> Unit, manage: () -> Unit, available: Boolean = true, busy: Boolean = false, error: String? = null,
-    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
+    type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, filter: CalendarFilter = CALENDAR_DEFAULT_FILTER,
+    filterChanged: (CalendarFilter) -> Unit = {}, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watch: ((CalendarEntry) -> Unit)? = null,
     sources: Set<CalendarSource>? = null, openEntry: ((CalendarEntry) -> Unit)? = null, browser: Boolean = false,
-    retry: () -> Unit = {}) {
-    var chosen by remember { mutableStateOf(CALENDAR_DEFAULT_FILTER) }
+    retry: () -> Unit = {}, now: CalendarClock = rememberCalendarClock(), dayChanged: () -> Unit = {}) {
     val offered = calendarFilterOffered(entries, sources)
-    val filter = chosen.takeIf { offered }
-    val fallback = entries.fallsBackToAll(filter)
-    val shown = if (fallback) entries else entries.shown(chosen, offered)
+    val active = filter.takeIf { offered }
+    val fallback = entries.fallsBackToAll(active)
+    val shown = if (fallback) entries else entries.shown(filter, offered)
+    val rows = remember(shown, now.millis) { shown.airedAsOf(now.millis) }
+    LaunchedEffect(now.day, week, days) {
+        if (days.isNotEmpty() && days != calendarWindow(week * 7).days) dayChanged()
+    }
     val notice = if (fallback) CALENDAR_FALLBACK else null
-    val emptyFilter = filter.takeUnless { fallback }
+    val emptyFilter = active.takeUnless { fallback }
     val restore = rememberPageRestore("calendar")
-    if (television) { TvCalendarScreen(days, shown, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
-        filter = filter, filterChanged = { chosen = it }, openEntry = openEntry, notice = notice, restore = restore, retry = retry); return }
+    if (television) { TvCalendarScreen(days, rows, open, manage, available = available, busy = busy, error = error, type = type, week = week, controls = controls, categoryChanged = categoryChanged, weekChanged = weekChanged, watchRelease = watch,
+        filter = active, filterChanged = filterChanged, openEntry = openEntry, notice = notice, restore = restore, retry = retry,
+        nowMillis = now.millis); return }
     val choose = calendarOpener(open, openEntry)
-    val entrance = rememberListEntrance(shown.isNotEmpty())
-    var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id) }
+    val entrance = rememberListEntrance(rows.isNotEmpty())
+    var selected by rememberSaveable(days) { mutableStateOf(days.firstOrNull { it.label == CALENDAR_TODAY }?.id ?: days.firstOrNull()?.id) }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReducedMotion.current
-    var focused by remember(shown) { mutableStateOf(shown.firstOrNull()) }
+    var focused by remember(rows) { mutableStateOf(rows.firstOrNull()) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp && !television
         val scale = if (television) maxWidth / 1920.dp else if (phone) 1f else 0.65f
-        val visible = if (phone) shown else shown.filter { it.day == selected }
+        val visible = if (phone) rows else rows.filter { it.day == selected }
         val lines = remember(days, visible) { visible.dayLines(days) }
         val markedLine = remember(lines, restore.lastKey) { lines.indexOfFirst { it.key() == restore.lastKey } }
         val markedEntry = remember(visible, restore.lastKey) { visible.indexOfFirst { it.id == restore.lastKey } }
         val anchored = restore.anchor(visible.size) { visible[it].id }
         val gutter = pageGutter(television, tablet = false, browser, maxWidth)
+        val pageState = listPageState(entries.size, busy, error)
         Column(Modifier.fillMaxSize().padding(horizontal = gutter,
             vertical = if (phone) 8.dp else if (television) 8.dp * scale else 16.dp * scale), verticalArrangement = Arrangement.spacedBy(if (phone) 24.dp else 44.dp * scale)) {
             if (!phone && !television) Text("Calendar", fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
             if (controls) CalendarControls(type,week,false,scale,categoryChanged,weekChanged, range = days.takeIf{it.isNotEmpty()}?.let{"${it.first().fullDate} – ${it.last().fullDate}"},
-                filter = filter, filterChanged = { chosen = it }, gutter = gutter, phone = phone)
-            if (days.isNotEmpty()) CalendarDates(days, shown, selected, phone, scale, gutter) { day ->
-                selected = day; focused = shown.firstOrNull { it.day == day }
+                filter = active, filterChanged = filterChanged, gutter = gutter, phone = phone)
+            if (days.isNotEmpty()) CalendarDates(days, rows, selected, phone, scale, gutter) { day ->
+                selected = day; focused = rows.firstOrNull { it.day == day }
                 if (phone) scope.launch {
                     val index = lines.indexOfFirst { it is CalendarLine.Day && it.day.id == day }
                     if (index >= 0) { if (reduceMotion) list.scrollToItem(index) else list.animateScrollToItem(index) }
                 }
             }
-            if (entries.isEmpty() && error != null && !busy) {
-                CalendarFailure(error, retry)
+            if (pageState == ListPageState.Failed) {
+                CalendarFailure(error ?: "", retry)
                 return@Column
             }
             error?.let { Text(it, color = Palette.danger) }
             notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            if (entries.isEmpty() && !busy && error == null) {
-                Text(if (available) "Nothing is scheduled in these dates." else CALENDAR_UNAVAILABLE, color = Palette.secondary)
-                TextButton(manage) { Text("Manage integrations") }
-            } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
+            if (pageState == ListPageState.Loading) ReleaseRowSkeleton(phone, Modifier.weight(1f))
+            else if (pageState == ListPageState.Empty) CalendarStatus(available, manage, Modifier.weight(1f),
+                pageStateLayout(television = false, compact = phone), enabled = !busy)
+            else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 PageRestore(list, restore, target = { (if (phone) markedLine else markedEntry).takeIf { it >= 0 } })
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 18.dp * scale)) {
@@ -103,11 +111,11 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
                             }
                             is CalendarLine.Empty -> Text(calendarEmptyDay(emptyFilter), color = Palette.secondary, fontSize = 13.sp)
                             is CalendarLine.Entry -> CalendarReleaseRow(line.entry, true, scale, watch, { focused = line.entry },
-                                { restore.mark(line.entry.id, index); choose(line.entry) }, Modifier.listItemEntrance(index, entrance.animate))
+                                { restore.mark(line.entry.id, index); choose(line.entry) }, Modifier.listItemEntrance(index, entrance.animate), now.millis)
                         }
                     } else itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                         CalendarReleaseRow(entry, false, scale, watch, { focused = entry }, { restore.mark(entry.id, index); choose(entry) },
-                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index).listItemEntrance(index, entrance.animate))
+                            Modifier.pageAnchor(restore, entry.id, index, target = anchored == index).listItemEntrance(index, entrance.animate), now.millis)
                     }
                     if(!phone&&visible.isEmpty()&&!busy&&error==null)item{Text(calendarEmptyDay(emptyFilter),color=Palette.secondary)}
                 }
@@ -124,18 +132,28 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
     }
 }
 
+private const val CALENDAR_TICK_MILLIS = 15_000L
+
 @Composable
-private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit, modifier: Modifier = Modifier) {
-    CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch)
+internal fun rememberCalendarClock(): CalendarClock {
+    var now by remember { mutableStateOf(calendarClock()) }
+    LaunchedEffect(Unit) { while (true) { delay(CALENDAR_TICK_MILLIS); now = calendarClock() } }
+    return now
+}
+
+@Composable
+private fun CalendarReleaseRow(entry: CalendarEntry, phone: Boolean, scale: Float, watch: ((CalendarEntry)->Unit)?, focus:()->Unit, open:()->Unit,
+    modifier: Modifier = Modifier, nowMillis: Long) {
+    CalendarRow(entry, phone, false, if(phone)1f else scale, focus, open, modifier, watch = watch, nowMillis = nowMillis)
 }
 
 @Composable
 private fun CalendarFailure(reason: String, retry: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 64.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Couldn’t load the calendar", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(CALENDAR_FAILED_TITLE, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
         Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }
+            colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text(CALENDAR_RETRY) }
     }
 }

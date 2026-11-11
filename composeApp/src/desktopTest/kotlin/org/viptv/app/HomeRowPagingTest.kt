@@ -38,7 +38,7 @@ class HomeRowPagingTest {
 
     @Test fun pagesOnceInOrderWithoutDuplicatesOrSkips() = runBlocking {
         val total = 48
-        val requested = mutableListOf<Int>()
+        val requested = EngineRequests<Int>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/discover", request.url.encodedPath)
             assertEquals("movie", request.url.parameters["type"])

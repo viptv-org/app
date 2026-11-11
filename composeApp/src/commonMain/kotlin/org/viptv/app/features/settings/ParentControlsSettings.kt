@@ -30,9 +30,9 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
     var leavePinFor by remember { mutableStateOf<ServerProfile?>(null) }
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(saved) { unlocking = false; editing = null; leavePinFor = null }
-    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = androidx.compose.foundation.layout.PaddingValues(if (compact) 16.dp else 32.dp)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance(),
+    org.viptv.app.components.TvFocusScroll(horizontal = false, contentPadding = settingsPanePadding(compact)) { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance(),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        if (!compact) Text("Parental controls", style = MaterialTheme.typography.headlineMedium)
+        if (!compact) SettingsPaneTitle("Parental controls")
         Text("The household PIN is required to leave a restricted profile or manage settings from it. Each profile has its own age limit.", color = Palette.secondary)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         error?.let {
@@ -56,7 +56,7 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
                         Text(kidsSummary(profile, current?.policy), color = Palette.secondary)
                         if (snapshot.profilePinAvailable) Text(leavePinSummary(current?.leavePin), color = Palette.secondary)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton({ editing = profile }, enabled = !busy) { Text("Edit restrictions") }
+                            OutlinedButton({ editing = profile }, enabled = !busy && current?.policy != null) { Text("Edit restrictions") }
                             if (snapshot.profilePinAvailable) TextButton({ leavePinFor = profile }, enabled = !busy) {
                                 Text(if (current?.leavePin != false) "Change leave PIN" else "Set leave PIN")
                             }
@@ -73,13 +73,13 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
         mutations.failure(pinTarget) ?: error,
         dismiss = { if (!busy) unlocking = false }, submit = { current, _ -> unlock(current) },
         pending = mutations.isPending(pinTarget))
-    editing?.let { profile ->
+    editing?.let { profile -> controls[profile.id]?.policy?.let { known ->
         val target = preferenceTarget(kidsPolicyTarget(profile.id))
-        KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
+        KidsPolicyDialog(profile, known,
             snapshot?.parent?.pin_configured == true, busy, mutations.failure(target) ?: error,
             dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) },
             pending = mutations.isPending(target))
-    }
+    } }
     leavePinFor?.let { profile ->
         val target = preferenceTarget(leavePinTarget(profile.id))
         LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
@@ -88,19 +88,16 @@ internal fun ParentControlsSettings(snapshot: ProfileManagement?, controls: Map<
     }
 }
 
-internal fun fallbackPolicy(profile: ServerProfile) = KidsPolicy(profile.kids, profile.max_age ?: 12)
-
 internal fun kidsSummary(profile: ServerProfile, policy: KidsPolicy?): String {
     if (!profile.kids) return "Kids restrictions off"
-    val age = policy?.max_age ?: profile.max_age
-    val movies = policy?.movie_rating?.let { "movies $it" }
-    val series = policy?.series_rating?.let { "series $it" }
+    val known = policy ?: return "Kids profile · limits unavailable"
+    val movies = known.movie_rating?.let { "movies $it" }
+    val series = known.series_rating?.let { "series $it" }
     return when {
         movies != null && series != null -> "Kids profile · $movies · $series"
-        movies != null -> "Kids profile · $movies · other titles up to age ${age ?: "unavailable"}"
-        series != null -> "Kids profile · $series · other titles up to age ${age ?: "unavailable"}"
-        age != null -> "Kids profile · up to age $age"
-        else -> "Kids profile · age limit unavailable"
+        movies != null -> "Kids profile · $movies · other titles up to age ${known.max_age}"
+        series != null -> "Kids profile · $series · other titles up to age ${known.max_age}"
+        else -> "Kids profile · up to age ${known.max_age}"
     }
 }
 

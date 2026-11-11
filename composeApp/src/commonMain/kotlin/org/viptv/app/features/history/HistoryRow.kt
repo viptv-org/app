@@ -23,9 +23,14 @@ import com.composables.icons.lucide.Lucide
 import org.viptv.app.components.DropdownMenuItem
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.TextButton
+import org.viptv.app.features.settings.TvDialogAction
+import org.viptv.app.features.settings.TvDialogField
+import org.viptv.app.features.settings.TvDialogPanel
+import org.viptv.app.features.settings.rememberTvDialogStop
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.connection.HistoryCorrection
 import org.viptv.app.connection.HistoryDisplay
+import org.viptv.app.components.artworkBesideText
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -38,7 +43,7 @@ internal fun HistoryRow(display: HistoryDisplay, phone: Boolean, open: (Card) ->
     val progress = display.progressFraction()
     Row(modifier.fillMaxWidth().pointerClickable(shape = RectangleShape) { open(card) }.padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(if (phone) 136.dp else 160.dp).aspectRatio(16f / 9)
+        Box(Modifier.width(if (phone) artworkBesideText(136.dp) else 160.dp).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(8.dp)).background(Palette.raised)) {
             AsyncImage(card.landscape ?: card.poster, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             if (progress > 0.0) LinearProgressIndicator(progress = { progress.toFloat().coerceIn(0f, 1f) },
@@ -76,11 +81,26 @@ internal fun HistoryRow(display: HistoryDisplay, phone: Boolean, open: (Card) ->
 }
 
 @Composable
-internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDismiss: () -> Unit, onSave: (Long) -> Unit) {
+internal fun ResumePositionDialog(initialSeconds: Long, duration: Double, onDismiss: () -> Unit, onSave: (Long) -> Unit,
+    television: Boolean = false, scale: Float = 1f) {
     var text by remember { mutableStateOf(initialSeconds.coerceAtLeast(0).toString()) }
     val maxSeconds = duration.toLong().coerceAtLeast(0)
     val value = text.toLongOrNull()
     val valid = value != null && value in 0..(if (maxSeconds > 0) maxSeconds else Long.MAX_VALUE)
+    if (television) {
+        val field = rememberTvDialogStop()
+        val save = rememberTvDialogStop()
+        TvDialogPanel(scale, "Resume at (seconds)", stops = listOf(field, save), focus = field, dismiss = onDismiss, actions = {
+            TvDialogAction(scale, "Cancel") { onDismiss() }
+            TvDialogAction(scale, "Save position", stop = save, enabled = valid) { value?.let(onSave) }
+        }) {
+            TvDialogField("Resume at (seconds)", text, scale, enabled = true, stop = field, invalid = !valid,
+                change = { next -> text = next.filter(Char::isDigit).take(9) })
+            if (maxSeconds > 0) Text("Up to $maxSeconds seconds.", Modifier.padding(top = (12 * scale).dp),
+                color = Palette.secondary, fontSize = (22 * scale).sp)
+        }
+        return
+    }
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Resume at (seconds)") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

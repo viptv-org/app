@@ -1,7 +1,7 @@
 package org.viptv.app.features.entry
 
 import org.viptv.app.components.FocusLazyRow as LazyRow
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.layout.*
@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -21,6 +22,7 @@ import com.composables.icons.lucide.*
 import org.viptv.app.connection.Profile
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.dashedOutline
 
 @Composable
 internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, local: Boolean, managing: Boolean,
@@ -38,9 +40,10 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
+        androidx.compose.runtime.CompositionLocalProvider(org.viptv.app.components.LocalTvScale provides scale) {
         val cardSize = 200.dp * scale
-        val count = profiles.size + if (local && profiles.size < 12) 1 else 0
-        Text(if (managing) "Manage profiles" else "Who’s watching?",
+        val count = profiles.size + if (local) 1 else 0
+        Text(if (managing) "Manage profiles" else "Who's watching?",
             Modifier.align(Alignment.TopCenter).padding(top = 220.dp * scale),
             fontSize = (56 * scale).sp, letterSpacing = (-1.12f * scale).sp, lineHeight = (64.4f * scale).sp, fontWeight = FontWeight.Bold)
         LazyRow(Modifier.align(Alignment.TopCenter).padding(top = 380.dp * scale)
@@ -58,15 +61,19 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
                     ProfileAvatar(profile, cardSize, 28.dp * scale)
                 }
             }
-            if (local && profiles.size < 12) item {
+            if (local) item {
+                val canAdd = !busy && profiles.size < ProfileLimit
                 val tile = remember { FocusRequester() }
                 DisposableEffect(tile) { onDispose { if (leftTile === tile) leftTile = null } }
-                TvProfileItem("Add profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
+                TvProfileItem("Add a profile", false, cardSize, scale, (if (profiles.isEmpty()) Modifier.focusRequester(first).onGloballyPositioned { firstPlaced = true } else Modifier)
                     .focusRequester(tile).focusProperties { down = manageFocus }
                     .onFocusChanged { if (it.isFocused) leftTile = tile }
-                    .then(tvProfileArrival("add", profiles.size, scale, arrivals)), !busy, add) {
-                    Surface(Modifier.size(cardSize).border(2.dp * scale, Color.White.copy(alpha = .18f), RoundedCornerShape(28.dp * scale)), shape = RoundedCornerShape(28.dp * scale), color = Color.White.copy(alpha = .08f)) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Lucide.Plus, null, Modifier.size(64.dp * scale), tint = Palette.secondary) }
+                    .then(tvProfileArrival("add", profiles.size, scale, arrivals)), canAdd, add) {
+                    Box(Modifier.size(cardSize).clip(RoundedCornerShape(28.dp * scale))
+                        .background(Color.White.copy(alpha = .08f), RoundedCornerShape(28.dp * scale))
+                        .dashedOutline(Color.White.copy(alpha = if (canAdd) .22f else .10f), 2.dp * scale, 28.dp * scale),
+                        contentAlignment = Alignment.Center) {
+                        Icon(Lucide.Plus, null, Modifier.size(64.dp * scale), tint = if (canAdd) Palette.secondary else Palette.tertiary)
                     }
                 }
             }
@@ -80,5 +87,6 @@ internal fun TvProfiles(profiles: List<Profile>, busy: Boolean, error: String?, 
             }
         }
         error?.let { Text(it, Modifier.align(Alignment.BottomCenter).padding(24.dp), color = Palette.danger) }
+    }
     }
 }

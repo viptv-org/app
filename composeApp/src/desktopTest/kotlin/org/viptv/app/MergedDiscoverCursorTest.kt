@@ -15,7 +15,7 @@ import kotlin.test.*
 class MergedDiscoverCursorTest {
     private class Fixture : AutoCloseable {
         private val directory = Files.createTempDirectory("viptv-merged-discover-")
-        val requests = java.util.Collections.synchronizedList(mutableListOf<Pair<String, Int>>())
+        val requests = EngineRequests<Pair<String, Int>>()
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private val client = HttpClient(MockEngine { request ->
             val host = request.url.host

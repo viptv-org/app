@@ -12,7 +12,7 @@ fun ApplicationController.refreshParentControls() = run {
             val profile = mutable.value.selectedProfile
             val snapshot = remote.bootstrap()
             if (connection === remote && generation == operation && mutable.value.selectedProfile == profile)
-                accept(snapshot, if (mutable.value.screen == Screen.Settings) Screen.Settings else Screen.Home, busy = true)
+                refreshSnapshot(snapshot, busy = true)
             snapshot.profileManagement ?: remote.profileManagement()
         } else remote.profileManagement()
     }
@@ -50,6 +50,37 @@ fun ApplicationController.changeParentPin(current: String, next: String) {
 
 internal const val PARENT_PIN_TARGET = "Household PIN"
 
+internal const val householdPinOwnerOnly = "Only the account owner can change household settings."
+
+internal fun ApplicationController.householdWritesGated(): Boolean {
+    val parent = mutable.value.profileManagement?.parent ?: return false
+    return connection != null && parent.restricted && parent.pin_configured && !parent.unlocked
+}
+
+internal fun ApplicationController.askHouseholdPin(title: String, write: suspend () -> Unit) {
+    householdPinAction = write
+    updateState { it.copy(householdPinTitle = title, error = null, errorCode = null) }
+}
+
+fun ApplicationController.submitHouseholdPin(pin: String) {
+    val write = householdPinAction ?: return
+    if (!validParentPin(pin)) throw LocalFailure("Enter a PIN with 4 to 8 digits.")
+    run {
+        val remote = connection ?: throw LocalFailure("Connect to your account to change this profile.")
+        remote.unlockParent(pin)
+        val management = remote.profileManagement()
+        householdPinAction = null
+        updateState { it.copy(householdPinTitle = null, profileManagement = management,
+            parentSettings = management, profiles = management.cards()) }
+        write()
+    }
+}
+
+fun ApplicationController.cancelHouseholdPin() {
+    householdPinAction = null
+    updateState { it.copy(householdPinTitle = null, error = null, errorCode = null) }
+}
+
 fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) {
     val before = mutable.value
     mutate(preferenceTarget(kidsPolicyTarget(profile)),
@@ -78,7 +109,7 @@ fun ApplicationController.changeKidsPolicy(profile: String, policy: KidsPolicy) 
             if (mutable.value.selectedProfile == profile) {
                 val snapshot = remote.bootstrap()
                 if (connection === remote && generation == operation && mutable.value.selectedProfile == profile)
-                    accept(snapshot, if (mutable.value.screen == Screen.Settings) Screen.Settings else Screen.Home, busy = true)
+                    refreshSnapshot(snapshot, busy = true)
                 snapshot.profileManagement ?: remote.profileManagement()
             } else remote.profileManagement()
         }
@@ -133,7 +164,9 @@ private suspend fun ApplicationController.parentRequest(notice: String? = null, 
             else mutable.value.parentSettings
         if (connection === remote && generation == owner) updateState { next -> next.copy(parentSettingsNotice = null,
             parentSettings = refreshed) }
-        if (failure.status == 403) throw LocalFailure(forbidden)
+        if (failure.status == 403) {
+            throw LocalFailure(if (failure.code == "owner_required") householdPinOwnerOnly else forbidden)
+        }
         if (failure.status == 409) throw LocalFailure("These settings changed. Check the current profile restrictions and try again.")
         throw failure
     }
@@ -148,7 +181,7 @@ internal suspend fun ApplicationController.loadParentControls(remote: RemoteConn
         val previous = current[profile.id]
         val policy = try { remote.kidsPolicy(profile.id) }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { previous?.policy ?: KidsPolicy(profile.kids, profile.max_age ?: 12) }
+        catch (_: Exception) { previous?.policy }
         val leavePin = if (!pins) null else try { remote.profilePin(profile.id).configured }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { previous?.leavePin }
@@ -163,10 +196,9 @@ internal suspend fun ApplicationController.invalidatePolicyContent() {
     liveGuideJob?.cancelAndJoin(); liveGuideJob = null
     cancelDetailPaging()
     val current = mutable.value
-    mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = current.selectedProfile,
+    mutable.value = current.keepShell().copy(screen = Screen.Settings, selectedProfile = current.selectedProfile,
         profiles = current.profiles, profileManagement = current.profileManagement,
         parentSettings = current.parentSettings, parentControls = current.parentControls,
         parentTitles = current.parentTitles, parentSettingsSaved = current.parentSettingsSaved,
-        settingsPage = current.settingsPage, busy = true, policyRefreshNeeded = true,
-        manageAccount = current.manageAccount, accountOwner = current.accountOwner, accountRole = current.accountRole)
+        busy = true, policyRefreshNeeded = true, catalogDropped = true)
 }

@@ -62,7 +62,9 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, controls: Ma
                 current.profiles.forEach { profile ->
                     val profileControls = controls[profile.id]
                     TvSettingsRow(profile.name, subtitle = kidsSummary(profile, profileControls?.policy),
-                        scale = scale, left = sidebar, value = "Edit") { editing = profile }
+                        scale = scale, left = sidebar, value = "Edit") {
+                        if (profileControls?.policy == null) load() else editing = profile
+                    }
                     if (profile.kids) TvSettingsRow("Approved and blocked titles",
                         subtitle = "Allow or block individual titles for ${profile.name}.",
                         scale = scale, left = sidebar) { titles(profile.id) }
@@ -76,19 +78,19 @@ internal fun TvParentControlsSettings(snapshot: ProfileManagement?, controls: Ma
     }
     val mutations = LocalPendingMutation.current
     val pinTarget = preferenceTarget(PARENT_PIN_TARGET)
-    pinMode?.let { mode -> ParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, mutations.failure(pinTarget) ?: error,
+    pinMode?.let { mode -> TvParentPinDialog(mode, snapshot?.parent?.pin_configured == true, busy, mutations.failure(pinTarget) ?: error,
         dismiss = { if (!busy) pinMode = null }, submit = { current, next -> if (mode == "unlock") unlock(current) else pin(current, next) },
-        pending = mutations.isPending(pinTarget)) }
-    editing?.let { profile ->
+        pending = mutations.isPending(pinTarget), scale = scale) }
+    editing?.let { profile -> controls[profile.id]?.policy?.let { known ->
         val target = preferenceTarget(kidsPolicyTarget(profile.id))
-        KidsPolicyDialog(profile, controls[profile.id]?.policy ?: fallbackPolicy(profile),
+        TvKidsPolicyDialog(profile, known,
             snapshot?.parent?.pin_configured == true, busy, mutations.failure(target) ?: error,
-            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }, pending = mutations.isPending(target))
-    }
+            dismiss = { if (!busy) editing = null }, save = { policy(profile.id, it) }, pending = mutations.isPending(target), scale = scale)
+    } }
     leavePinFor?.let { profile ->
         val target = preferenceTarget(leavePinTarget(profile.id))
-        LeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
+        TvLeavePinDialog(profile.name, controls[profile.id]?.leavePin != false, busy, mutations.failure(target) ?: error,
             dismiss = { if (!busy) leavePinFor = null }, submit = { current, next -> leavePin(profile.id, current, next) },
-            pending = mutations.isPending(target))
+            pending = mutations.isPending(target), scale = scale)
     }
 }

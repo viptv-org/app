@@ -35,32 +35,53 @@ import org.jetbrains.skia.Bitmap
 import org.junit.Rule
 import org.viptv.app.components.HomeGenrePicker
 import org.viptv.app.components.LocalHomeGenres
+import org.viptv.app.connection.AccountAccess
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.details.TvDetailsScreen
 import org.viptv.app.features.home.HomeScreen
+import org.viptv.app.features.live.LiveChannel
+import org.viptv.app.features.live.LiveClock
+import org.viptv.app.features.live.LiveEyebrow
+import org.viptv.app.features.live.LiveNoSourceBody
+import org.viptv.app.features.live.LiveNoSourceHeadline
+import org.viptv.app.features.live.LiveNoSourcePage
+import org.viptv.app.features.live.LivePreview
+import org.viptv.app.features.live.LiveProgram
+import org.viptv.app.features.live.LocalLiveClock
+import org.viptv.app.features.live.LocalLiveEmptyArt
+import org.viptv.app.features.live.TvLivePreview
 import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.PreviewTvDetails
 import org.viptv.app.preview.PreviewTvHome
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
+import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.CardMetadata
 import org.viptv.engine.wire.MediaIdentity
 
-// Every line drawn over artwork keeps 4.5:1 against the brightest frame, so the fixture behind the copy is flat white.
+// Every line drawn over artwork or over a component's own fill keeps 4.5:1, so the fixture behind the copy is flat white.
 class TextOverArtworkContrastTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private fun ui(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    private val white = PreviewData.hero.copy(landscape = "https://artwork.test/white.jpg", poster = null, logo = null,
-        metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13"))
+    private val white = PreviewData.hero.copy(landscape = WhiteArtwork, poster = null, logo = null,
+        metadata = CardMetadata(year = 2026, runtime_minutes = 100, genres = listOf("Action", "Adventure"), rating = 7.7, certification = "PG-13",
+            cast = listOf("Lena Ortiz", "Marcus Reid", "Piper Chan")))
     private val home = PreviewData.home.copy(hero = white, featured = emptyList())
     private val tvHome = PreviewTvHome.home.copy(hero = white, featured = emptyList())
     private val detail = PreviewData.detail.copy(item = white)
     private val series = PreviewTvDetails.series.copy(item = white.copy(identity = MediaIdentity("detail-series", "series", emptyList())))
     private val metadata = listOf("2026", "1h 40m", "Action / Adventure", "★ 7.7")
-    private val desktopMetadata = listOf("Movie", "2026", "Action, Adventure", "IMDb 7.7")
+    private val starring = "Starring Lena Ortiz, Marcus Reid, Piper Chan"
+    private val desktopMetadata = listOf("Movie", "2026", "1h 40m", "Action / Adventure", "★ 7.7")
     private val description = "The Platt family bands together"
+    private val owner = AccountAccess("owner", manageAccount = true)
+    private val emptyLiveCopy = listOf(LiveEyebrow, LiveNoSourceHeadline, LiveNoSourceBody, "Set up live TV", "Add-ons")
+    private val emptyLiveOverArt = emptyLiveCopy - "Set up live TV"
+    private val program = LiveProgram("p1", "Evening News", 0, 30, description = "The evening bulletin", artwork = WhiteArtwork)
+    private val channel = LiveChannel(Card(MediaIdentity("live-white", "channel", emptyList()), provider_id = "preview", title = "BBC One HD",
+        landscape = WhiteArtwork, poster = null, badges = listOf("1080p")), number = "101", category = "News", programs = listOf(program))
 
     private class Surface(val name: String, val width: Int, val height: Int, val television: Boolean,
         val content: @Composable () -> Unit, val copy: List<String>, val hero: List<String>)
@@ -81,22 +102,39 @@ class TextOverArtworkContrastTest {
             copy = listOf("The End of Oak Street") + metadata + description, hero = metadata + description),
         Surface("TV Details", 1920, 1080, television = true,
             content = { TvDetailsScreen(series, busy = false, error = null, sources = {}, extras = PreviewTvDetails.seriesExtras) },
-            copy = listOf("The End of Oak Street", "Starring Evan Peters, Richard Jenkins, Niecy Nash") + metadata + description,
-            hero = metadata + description + "Starring Evan Peters"),
+            copy = listOf("The End of Oak Street", starring) + metadata + description,
+            hero = metadata + description + starring),
         Surface("phone Details", 393, 852, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
-            copy = listOf("The End of Oak Street", "Movie") + metadata, hero = emptyList()),
+            copy = listOf("The End of Oak Street", "Movie") + metadata + description + starring, hero = emptyList()),
         Surface("tablet Details", 1024, 900, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, tablet = true) },
-            copy = listOf("The End of Oak Street", "Movie") + metadata + description,
-            hero = listOf("The End of Oak Street", "Movie") + metadata + description),
+            copy = listOf("The End of Oak Street", "Movie") + metadata + description + starring,
+            hero = listOf("The End of Oak Street", "Movie") + metadata + description + starring),
         Surface("desktop Details", 1440, 900, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}) },
-            copy = listOf("The End of Oak Street") + desktopMetadata + description,
-            hero = listOf("The End of Oak Street") + desktopMetadata + description),
+            copy = listOf("The End of Oak Street") + desktopMetadata + description + starring,
+            hero = listOf("The End of Oak Street") + desktopMetadata + description + starring),
         Surface("browser Details", 1280, 800, television = false,
             content = { DetailsScreen(detail, busy = false, error = null, back = {}, sources = {}, browser = true) },
-            copy = listOf("The End of Oak Street", "Add to My List"), hero = listOf("The End of Oak Street")),
+            copy = listOf("The End of Oak Street", "Add to My List", starring), hero = listOf("The End of Oak Street")),
+        Surface("phone Live", 393, 852, television = false,
+            content = { LivePreview(channel, program, now = 15, phone = true, television = false, scale = 1f, watch = {}, favourite = {}) },
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left"),
+            hero = listOf("LIVE", "101 · BBC One HD", "Evening News")),
+        Surface("TV Live", 1920, 1080, television = true,
+            content = { TvLivePreview(channel, program, now = 15, scale = 1f, favorite = null, watch = {}) },
+            copy = listOf("LIVE", "101 · BBC One HD", "Evening News", "15 min left", "OK to watch"),
+            hero = listOf("OK to watch")),
+        Surface("phone Live empty", 393, 852, television = false,
+            content = { LiveNoSourcePage(false, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyList()),
+        Surface("desktop Live empty", 1280, 800, television = false,
+            content = { LiveNoSourcePage(false, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyLiveOverArt),
+        Surface("TV Live empty", 1920, 1080, television = true,
+            content = { LiveNoSourcePage(true, owner, false, false, {}, {}, {}, {}) },
+            copy = emptyLiveCopy, hero = emptyLiveOverArt),
     )
 
     @Test fun textOverArtworkKeepsFourAndAHalfToOne() = ui {
@@ -117,7 +155,8 @@ class TextOverArtworkContrastTest {
                         low += "${surface.name} draws \"${line.text}\" at ${"%.2f".format(line.contrast)}:1 " +
                             "(${"#%06X".format(line.ink and 0xFFFFFF)} on ${"#%06X".format(line.background and 0xFFFFFF)})"
                     }
-                    println("CONTRAST ${surface.name}: ${overArtwork.size} lines over artwork, worst ${"%.2f".format(overArtwork.minOf { it.contrast })}:1")
+                    val worst = overArtwork.minOfOrNull { it.contrast }
+                    println("CONTRAST ${surface.name}: ${overArtwork.size} lines over artwork, worst ${worst?.let { "%.2f".format(it) } ?: "none"}:1")
                 }
             }
             assertTrue(missing.isEmpty(), missing.joinToString("\n"))
@@ -132,7 +171,8 @@ class TextOverArtworkContrastTest {
 
         private val scene = ImageComposeScene(surface.width, surface.height, Density(1f)) {
             ViptvTheme(surface.television, pointer = !surface.television) {
-                CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {})) {
+                CompositionLocalProvider(LocalHomeGenres provides HomeGenrePicker(PreviewData.genres, {}),
+                    LocalLiveClock provides LiveClock(originMillis = 0, nowMillis = 0), LocalLiveEmptyArt provides WhiteArtwork) {
                     Box(Modifier.fillMaxSize().background(Palette.background)) { surface.content() }
                 }
             }
@@ -209,6 +249,7 @@ class TextOverArtworkContrastTest {
 
     private companion object {
         const val White = 0xFFFFFFFF.toInt()
+        const val WhiteArtwork = "https://artwork.test/white.jpg"
         const val RingPixels = 3
         const val SettleFrames = 30
         val GroundLuminance = luminance(Palette.background.toArgb())

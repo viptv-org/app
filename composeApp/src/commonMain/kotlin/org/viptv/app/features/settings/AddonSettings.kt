@@ -3,6 +3,7 @@ package org.viptv.app.features.settings
 import org.viptv.app.components.FocusLazyColumn as LazyColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -10,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +35,9 @@ import org.viptv.app.components.IconButton
 internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, enabledAddonIds: Set<String>, busy: Boolean,
     error: String?, sessionNotice: String?, install: (String) -> Unit, toggle: (String, Boolean) -> Unit,
     remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
-    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null, logos: Map<String, String> = emptyMap()) {
+    installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null, logos: Map<String, String> = emptyMap(),
+    initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
+    configureFailure: Pair<String, String>? = null, retryConfigure: () -> Unit = {}) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
     var submission by remember { mutableStateOf<Any?>(null) }
@@ -64,43 +69,62 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     val filter = AddonFilter(query, provides)
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = filter.filtered(addons)
+    val listState = rememberLazyListState()
+    val targetRow = remember(shown, initialAddonId) { shown.indexOfFirst { it.id == initialAddonId } }
+    val targetFocus = remember(initialAddonId) { FocusRequester() }
+    LaunchedEffect(targetRow) { if (targetRow >= 0) listState.scrollToItem(targetRow + 1) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
-        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), contentPadding = PaddingValues(start = if (compact) 16.dp else 32.dp,
-            end = if (compact) 16.dp else 32.dp, bottom = if (compact) 16.dp else 32.dp),
+        val pane = settingsPanePadding(compact)
+        LazyColumn(Modifier.widthIn(max = 824.dp).fillMaxSize(), state = listState, contentPadding = PaddingValues(start = pane.calculateStartPadding(LocalLayoutDirection.current),
+            top = if (compact) 0.dp else pane.calculateTopPadding(), end = pane.calculateEndPadding(LocalLayoutDirection.current),
+            bottom = pane.calculateBottomPadding()),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            item {
-                if (compact) Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) {
-                    back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
-                    Text("Add-ons", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    back?.let { BackControl(it, desktop = true) }
-                    Text("Add-ons", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            // One item, so the row list starts at index 1 and a row's position is its own index plus one.
+            item(key = "header") {
+                Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                    if (compact) Box(Modifier.fillMaxWidth().heightIn(min = 56.dp), contentAlignment = Alignment.Center) {
+                        back?.let { BackControl(it, Modifier.align(Alignment.CenterStart)) }
+                        Text("Add-ons", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        back?.let { BackControl(it, desktop = true) }
+                        SettingsPaneTitle("Add-ons")
+                    }
+                    Text(if (local) "Add-ons find the movies, series and channels you watch. Installed add-ons are shared by profiles on this device; switches apply to the current profile."
+                        else "Add-ons find the movies, series and channels you watch. Installed add-ons belong to this account; switches apply to the current profile.",
+                        fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary)
+                    sessionNotice?.let { Text(it, color = Palette.danger) }
+                    if (!managementAvailable) Text("Add-on management is not available on this connection.", color = Palette.secondary)
+                    if (compact && managementAvailable) {
+                        Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                            shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
+                            Icon(Lucide.Plus, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Add an add-on", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    if (!compact && managementAvailable) AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) })
+                    if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                    error?.let { Text(it, color = Palette.danger) }
+                    configureFailure?.let { (_, message) ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(message, color = Palette.danger, modifier = Modifier.weight(1f, fill = false))
+                            TextButton(retryConfigure) { Text("Try again") }
+                        }
+                    }
+                    if (addons.isNotEmpty()) {
+                        AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
+                    }
+                    if (addons.isNotEmpty() && !compact) Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    if (addons.isEmpty() && !busy) Text("No add-ons installed.", color = Palette.secondary)
+                    if (addons.isNotEmpty() && shown.isEmpty()) Text("No add-ons match.", color = Palette.secondary)
                 }
             }
-            item { Text(if (local) "Add-ons find the movies, series and channels you watch. Installed add-ons are shared by profiles on this device; switches apply to the current profile."
-                else "Add-ons find the movies, series and channels you watch. Installed add-ons belong to this account; switches apply to the current profile.",
-                fontSize = 14.sp, lineHeight = 21.sp, color = Palette.secondary) }
-            sessionNotice?.let { item { Text(it, color = Palette.danger) } }
-            if (!managementAvailable) item { Text("Add-on management is not available on this connection.", color = Palette.secondary) }
-            if (compact && managementAvailable) item {
-                Button(onClick = { installing = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
-                    shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
-                    Icon(Lucide.Plus, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Add an add-on", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            if (!compact && managementAvailable) item { AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) }) }
-            if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
-            error?.let { item { Text(it, color = Palette.danger) } }
-            if (addons.isNotEmpty()) item {
-                AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
-            }
-            if (addons.isNotEmpty() && !compact) item { Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) }
-            if (addons.isEmpty() && !busy) item { Text("No add-ons installed.", color = Palette.secondary) }
-            if (addons.isNotEmpty() && shown.isEmpty()) item { Text("No add-ons match.", color = Palette.secondary) }
             items(shown, key = { it.id }) { addon ->
                 AddonSettingsRow(addon, addon.id in enabledAddonIds, busy, managementAvailable,
-                    { toggle(addon.id, it) }, { removing = addon }, logos[addon.id])
+                    { toggle(addon.id, it) }, { removing = addon }, logos[addon.id],
+                    highlighted = addon.id == initialAddonId,
+                    focusRequester = targetFocus.takeIf { addon.id == initialAddonId },
+                    configurable = addon.id in configurableAddons,
+                    reconfigure = { configure(addon.id) })
             }
         }
         PhoneSheet(visible = installing, title = "Add an add-on", dismiss = closeInstall,

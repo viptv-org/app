@@ -13,12 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LocalTvScale
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.PageStateLayout
 import org.viptv.app.components.PageRestoreState
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
 import org.viptv.app.theme.Palette
@@ -32,13 +35,15 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
     type: String = CALENDAR_DEFAULT_TYPE, week: Int = 0, controls: Boolean = false,
     categoryChanged: (String) -> Unit = {}, weekChanged: (Int) -> Unit = {}, watchRelease: ((CalendarEntry) -> Unit)? = null,
     filter: CalendarFilter? = null, filterChanged: (CalendarFilter) -> Unit = {}, openEntry: ((CalendarEntry) -> Unit)? = null,
-    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {}) {
+    notice: String? = null, restore: PageRestoreState = rememberPageRestore("calendar"), retry: () -> Unit = {},
+    nowMillis: Long = rememberCalendarClock().millis) {
     val choose = calendarOpener(open, openEntry)
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
     val activeDay = chosen?.takeIf { id -> days.any { it.id == id } }
-        ?: days.firstOrNull { it.label == "Today" }?.id ?: days.firstOrNull()?.id
+        ?: days.firstOrNull { it.label == CALENDAR_TODAY }?.id ?: days.firstOrNull()?.id
     val byDay = remember(entries) { entries.groupBy { it.day } }
     val visible = byDay[activeDay].orEmpty()
+    val pageState = listPageState(visible.size, busy, error)
     val byId = remember(visible) { visible.associateBy { it.id } }
     var focusedId by remember { mutableStateOf<String?>(null) }
     val focused = byId[focusedId] ?: visible.firstOrNull()
@@ -77,29 +82,28 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
                 }
             }
         }
-        LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
+        val pageFocus = remember { FocusRequester() }
+        if (pageState == ListPageState.Empty && entries.isEmpty())
+            CalendarStatus(available, manage, Modifier.fillMaxSize(), PageStateLayout.Tv, scale, pageFocus, enabled = !busy)
+        else LazyColumn(Modifier.offset(96.dp * scale, contentY).width(1100.dp * scale)
             .height((pageHeight - contentY - 48.dp * scale).coerceAtLeast(0.dp)).tvRingRoom(tvRingReach(scale), horizontal = false), state = rows,
             contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
             notice?.let { message -> item(key = "notice") { Text(message, color = Palette.secondary, fontSize = (24 * scale).sp) } }
             itemsIndexed(visible, key = { _, entry -> entry.id }) { index, entry ->
                 TvCalendarRow(entry, scale, focused?.id == entry.id, rowFocus.getOrPut(entry.id) { FocusRequester() },
                     if (index == 0) date else null, preview, { focusedId = entry.id }, { restore.mark(entry.id, index); choose(entry) },
-                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index))
+                    modifier = Modifier.pageAnchor(restore, entry.id, index, target = anchored == index), nowMillis = nowMillis)
             }
             if (busy) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent) }
             error?.let { message ->
                 item {
-                    if (visible.isEmpty()) TvCalendarFailure(message, retry, scale)
+                    if (pageState == ListPageState.Failed) TvCalendarFailure(message, retry, scale)
                     else Text(message, color = Palette.danger)
                 }
             }
-            if (visible.isEmpty() && !busy && error == null) item {
-                Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-                    Text(if (!available) CALENDAR_UNAVAILABLE else calendarEmptyDay(filter.takeIf { notice == null }),
-                        color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
-                    if (!available) TvAction(Modifier.heightIn(min = 64.dp * scale), scale, activate = manage,
-                        contentPadding = PaddingValues(horizontal = 24.dp * scale)) { Text("Manage integrations", color = it, fontSize = (24 * scale).sp) }
-                }
+            if (pageState == ListPageState.Empty) item(key = "empty") {
+                Text(calendarEmptyDay(filter.takeIf { notice == null }), color = Palette.secondary,
+                    fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
             }
         }
         focused?.let { entry ->
@@ -114,11 +118,11 @@ internal fun TvCalendarScreen(days: List<CalendarDay>, entries: List<CalendarEnt
 @Composable
 private fun TvCalendarFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        Text("Couldn’t load the calendar", fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        Text(CALENDAR_FAILED_TITLE, fontSize = (32 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-            Text("Try again", color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(CALENDAR_RETRY, color = it, fontSize = (24 * scale).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }
     }
 }

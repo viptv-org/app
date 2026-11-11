@@ -10,7 +10,7 @@ import kotlin.math.ceil
 data class LiveProgram(val id: String, val title: String, val start: Int, val end: Int,
     val description: String? = null, val artwork: String? = null)
 data class LiveChannel(val card: Card, val number: String? = null, val category: String? = null,
-    val programs: List<LiveProgram> = emptyList(), val id: String = card.identity.id, val connectionId: String = card.provider_id, val groupId: String? = null, val favorite: Boolean = false, val favoritePending: Boolean = false) {
+    val programs: List<LiveProgram> = emptyList(), val id: String = card.identity.id, val connectionId: String = card.provider_id, val groupId: String? = null, val favorite: Boolean = false) {
     fun current(now: Int?) = now?.let { minute -> programs.firstOrNull { minute in it.start until it.end } }
     fun next(now: Int?) = now?.let { minute -> programs.firstOrNull { it.start > minute } }
 }
@@ -76,3 +76,31 @@ internal fun liveTime(minutes: Int, period: Boolean = false): String {
 }
 internal fun liveProgress(program: LiveProgram?, now: Int?) =
     if (program != null && now != null && program.end > program.start) ((now - program.start).toFloat() / (program.end - program.start)).coerceIn(0f, 1f) else 0f
+
+internal enum class LiveFraming { OnAir, Upcoming, Ended }
+
+internal fun liveFraming(program: LiveProgram, now: Int?): LiveFraming = when {
+    now == null || now in program.start until program.end -> LiveFraming.OnAir
+    now < program.start -> LiveFraming.Upcoming
+    else -> LiveFraming.Ended
+}
+
+internal fun liveLength(program: LiveProgram) = "${program.end - program.start} min"
+
+internal fun favouriteActionLabel(saved: Boolean) = if (saved) "Remove favourite channel" else "Favourite channel"
+
+private fun liveRemaining(program: LiveProgram, now: Int) = "${(program.end - now).coerceAtLeast(0)} min left"
+
+@androidx.compose.runtime.Composable
+internal fun liveStatus(program: LiveProgram, now: Int?): String? = when (liveFraming(program, now)) {
+    LiveFraming.OnAir -> now?.let { liveRemaining(program, it) }
+    LiveFraming.Upcoming -> "Starts at ${liveTime(program.start)} · ${liveLength(program)}"
+    LiveFraming.Ended -> "Ended"
+}
+
+@androidx.compose.runtime.Composable
+internal fun liveRangeStatus(program: LiveProgram, now: Int?): String = when (liveFraming(program, now)) {
+    LiveFraming.OnAir -> now?.let { " · ${liveRemaining(program, it)}" } ?: ""
+    LiveFraming.Upcoming -> " · ${liveLength(program)}"
+    LiveFraming.Ended -> " · Ended"
+}

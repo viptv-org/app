@@ -38,8 +38,8 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
     val pending = mutations.isPending(target)
     val failure = mutations.failure(target)
     org.viptv.app.components.TvFocusScroll(horizontal = false) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            Text(section, style = MaterialTheme.typography.headlineSmall)
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact = false, fallback = 24.dp)).pageBottomClearance(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            SettingsPaneTitle(section)
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             (failure ?: error)?.let { Text(it, color = Palette.danger) }
             val value = draft

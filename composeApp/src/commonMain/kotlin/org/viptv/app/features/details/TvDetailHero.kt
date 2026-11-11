@@ -1,9 +1,13 @@
 package org.viptv.app.features.details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.progressSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -19,7 +23,9 @@ import androidx.compose.material3.*
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
+import org.viptv.app.components.TvRetryAction
 import org.viptv.app.components.saveActionName
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TitleLogo
@@ -36,10 +42,13 @@ import org.viptv.engine.wire.Card
 @Composable
 @Suppress("UNUSED_PARAMETER")
 internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play: () -> Unit,
-    save: () -> Unit, trailer: () -> Unit, restart: () -> Unit, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
+    save: () -> Unit, trailer: () -> Unit, restart: (() -> Unit)?, first: FocusRequester, down: FocusRequester?, requestInitialFocus: Boolean,
     saved: Boolean = false, downAction: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val series = card.identity.kind == "series"
     val pending = (extras.resume ?: card).isPlayPending()
+    val mutations = LocalPendingMutation.current
+    val mutationTarget = saveTarget(card)
+    val failure = mutations.failure(mutationTarget)
     org.viptv.app.components.TvRequestedFocus(first, card.identity, requestInitialFocus)
     Column(Modifier.fillMaxWidth().heightIn(min = 816.dp * scale).clipToBounds().padding(start = 96.dp * scale).onPreviewKeyEvent {
         if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown && downAction != null) {
@@ -66,8 +75,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 maxLines = 3, overflow = TextOverflow.Ellipsis) }
         }
         Spacer(Modifier.height(13.dp * scale))
-        extras.cast?.let { Text("Starring $it", Modifier.width(800.dp * scale),
-            color = Palette.secondary, fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp) }
+        HeroStarring(card, (22 * scale).sp, (30 * scale).sp, Modifier.width(800.dp * scale))
         Spacer(Modifier.height(32.dp * scale))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width((if (extras.resume != null) 420 else 260).dp * scale).heightIn(min = 72.dp * scale)
@@ -75,7 +83,7 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                 .focusProperties { if (down != null) this.down = down; left = FocusRequester.Cancel },
                 scale = scale, primary = true, ring = false, requester = first, activate = play,
                 contentPadding = PaddingValues(horizontal = 28.dp * scale), arrangement = Arrangement.Start) { tint ->
-                Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxWidth().heightIn(min = 72.dp * scale)) {
                     Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
                         if (pending) PendingActionSpinner(Modifier.size(24.dp * scale), size = 24.dp * scale, strokeWidth = 3.dp * scale, color = tint)
                         else Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(24.dp * scale), tint)
@@ -83,18 +91,28 @@ internal fun TvDetailHero(card: Card, extras: TvDetailExtras, scale: Float, play
                         Text(extras.resumeLabel ?: "Play", color = tint, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
                         extras.remaining?.let { Spacer(Modifier.width(54.dp * scale)); Text(it, color = tint.copy(alpha = 0.7f), fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold) }
                     }
-                    extras.resume?.progress?.takeIf { resuming(extras.resume) }?.let { progress -> LinearProgressIndicator(progress = { progress.toFloat() },
-                        modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 12.dp * scale).fillMaxWidth().height(4.dp * scale),
-                        color = tint, trackColor = tint.copy(alpha = 0.2f)) }
+                    extras.resume?.progress?.takeIf { resuming(extras.resume) }?.let { progress ->
+                        // Drawn, not a Material indicator: that one inflates its box to 24 and draws through the label.
+                        Box(Modifier.align(Alignment.BottomStart).padding(bottom = 10.dp * scale).fillMaxWidth().height(4.dp * scale)
+                            .clip(RoundedCornerShape(2.dp * scale)).background(tint.copy(alpha = 0.2f))
+                            .progressSemantics(progress.toFloat().coerceIn(0f, 1f))) {
+                            Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight()
+                                .clip(RoundedCornerShape(2.dp * scale)).background(tint))
+                        }
+                    }
                 }
             }
-            val mutations = LocalPendingMutation.current
-            val target = saveTarget(card)
-            TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
-                if (mutations.isPending(target)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
+            if (failure != null) TvRetryAction(mutationTarget, scale, Modifier.heightIn(min = 72.dp * scale)) else TvAction(Modifier.size(72.dp * scale).saveActionName(saved), scale, round = true, ring = false, activate = save) {
+                if (mutations.isPending(mutationTarget)) MutationSpinner(30.dp, scale = scale, strokeWidth = 3.dp)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(30.dp * scale), it)
             }
-            if (resuming(extras.resume)) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) { Icon(Lucide.RotateCcw, "Restart", Modifier.size(30.dp * scale), it) }
+            if (restartTarget(card, extras.resume) != null && restart != null) TvAction(Modifier.size(72.dp * scale), scale, round = true, ring = false, activate = restart) {
+                Icon(Lucide.RotateCcw, RESTART_LABEL, Modifier.size(30.dp * scale), it)
+            }
+        }
+        failure?.let {
+            Spacer(Modifier.height(14.dp * scale))
+            MutationFailure(mutationTarget, Modifier.width(800.dp * scale), scale = scale * 1.7f, retry = false)
         }
     }
 }

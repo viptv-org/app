@@ -22,9 +22,10 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionName
-import org.viptv.app.components.kindLabel
+import org.viptv.app.components.heroMetadataParts
 import org.viptv.app.components.presentationBadges
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.Scrim
@@ -32,7 +33,6 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.Button
 import org.viptv.app.state.saveTarget
-import org.viptv.app.components.TextButton
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.TitleLogo
 import org.viptv.app.features.home.BufferedArtwork
@@ -57,6 +57,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
                 DesktopMetaLine(card)
                 card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = (15 * 1.45).sp, color = Palette.body,
                     maxLines = 3, overflow = TextOverflow.Ellipsis) }
+                HeroStarring(card, 14.sp, 20.sp)
                 DesktopHeroActions(card, resumeEpisode, play, save, saved, playFromStart, chooseSource, sourceLabel)
             }
             art?.let { url ->
@@ -80,13 +81,7 @@ private fun DesktopTitleArt(card: Card) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DesktopMetaLine(card: Card) {
-    val metadata = card.metadata
-    val parts = listOfNotNull(
-        card.kindLabel(),
-        metadata?.year?.toString(),
-        metadata?.genres?.takeIf { it.isNotEmpty() }?.joinToString(", "),
-        metadata?.rating?.let { rating -> "IMDb ${kotlin.math.round(rating * 10) / 10.0}" },
-    )
+    val parts = card.heroMetadataParts()
     FlowRow(Modifier.wrapContentWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)) {
         parts.forEachIndexed { index, part ->
@@ -113,6 +108,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
     val partway = resuming(resumeCard)
     val remaining = if (partway) remainingMinutes(resumeCard ?: card) else null
     val pending = (resumeCard ?: card).isPlayPending()
+    val mutations = LocalPendingMutation.current
+    val mutationTarget = saveTarget(card)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Box {
@@ -141,17 +138,12 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
             }
             IconButton(onClick = { save(card) }, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(22.dp))
                 .background(Color.White.copy(alpha = 0.12f)).saveActionName(saved)) {
-                val target = saveTarget(card)
-                val mutations = LocalPendingMutation.current
-                if (mutations.isPending(target)) MutationSpinner(22.dp, scale = 1f)
+                if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp, scale = 1f)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
             }
-            if (partway && playFromStart != null) {
-                TextButton(onClick = { playFromStart(resumeCard ?: card) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                    Text("Play from the beginning", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
+            HeroRestart(card, resumeEpisode, playFromStart)
         }
+        MutationFailure(mutationTarget)
         Row(Modifier.heightIn(min = 36.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.12f))
             .pointerClickable(shape = RoundedCornerShape(10.dp)) { chooseSource(resumeCard ?: card) }.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

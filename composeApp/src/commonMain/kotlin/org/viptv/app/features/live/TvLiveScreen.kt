@@ -37,10 +37,15 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
+    val favorite = remember { FocusRequester() }; val watchTile = remember { FocusRequester() }
     val empty = remember { FocusRequester() }; val integrationsFocus = remember { FocusRequester() }
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
     val chipsOnly = spread.showsChannelRows()
     val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
+    // The preview sits above the chips, so Up out of the guide and the chips has to name it: the page group sends every entry to the first cell and the chips' Down comes back there.
+    val previewEntry = if (channel == null) null else if (favoriteChanged != null) favorite else watchTile
+    val upFromPage = chip.takeIf { hasFilters } ?: previewEntry
+    val downFromPreview = chip.takeIf { hasFilters } ?: first.takeIf { visible.isNotEmpty() }
     LaunchedEffect(activeCategory, favoritesOnly, channels) {
         category = activeCategory
         channel = visible.find { it.card.provider_id == channel?.card?.provider_id && it.card.identity == channel?.card?.identity }
@@ -58,7 +63,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         val pageHeight = maxHeight
         val density = androidx.compose.ui.platform.LocalDensity.current
         // The preview grows with the system font scale, so the chips and the guide start below it instead of over it.
-        val chipsTop = maxOf(380.dp * scale, with(density) { previewHeight.toDp() } + 12.dp * scale)
+        val chipsTop = maxOf(380.dp * scale, TvLivePreviewTop * scale + with(density) { previewHeight.toDp() } + 12.dp * scale)
         val guideTop = maxOf(460.dp * scale, chipsTop + 80.dp * scale)
         if (chipsOnly) {
             Box(Modifier.fillMaxSize().focusProperties { onEnter = { when {
@@ -81,24 +86,31 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
             return@BoxWithConstraints
         }
         // The chip row stays outside the group below: that group's onEnter lands on the guide, and any focus request into it counts as an entry, so a chip inside could never take the remote's focus.
-        // onEnter also catches the restore's focus request; only a first visit sends it to the guide's first cell.
-        Box(Modifier.fillMaxSize().focusProperties { onEnter = { if (!returning) { if (visible.isNotEmpty()) first.requestFocus() else if (hasFilters) chip.requestFocus() } } }.focusGroup()) {
+        // onEnter also catches the restore's focus request; only a first visit sends it to the guide's first cell, and only an entry from below lands on the preview.
+        Box(Modifier.fillMaxSize().focusProperties { onEnter = {
+            when {
+                requestedFocusDirection == FocusDirection.Up -> previewEntry?.requestFocus()
+                returning -> Unit
+                visible.isNotEmpty() -> first.requestFocus()
+                hasFilters -> chip.requestFocus()
+            }
+        } }.focusGroup()) {
             channel?.let { TvLivePreview(it, program ?: it.current(now), now, scale, favorite = favoriteChanged?.let { action -> { action(it) } },
-                onHeight = { previewHeight = it }) { watch(it) } }
+                favoriteFocus = favorite, watchFocus = watchTile, down = downFromPreview, onHeight = { previewHeight = it }) { watch(it) } }
             Box(Modifier.offset(96.dp * scale, guideTop).width(1728.dp * scale)
                 .height((pageHeight - guideTop - 50.dp * scale).coerceAtLeast(0.dp))) {
                 if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
                     category = AllGroups; groupChanged?.invoke(null)
                 } else if (hasGuide) {
                     LiveGuide(visible, start!!, now, true, scale,
-                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, chip.takeIf { hasFilters }, more = more, busy = busy, restore = restore, pageError = pageError)
+                    { selected, selectedProgram -> channel = selected; program = selectedProgram; guideRequested(selected) }, watch, first, upFromPage, more = more, busy = busy, restore = restore, pageError = pageError)
                 }
                 else {
                     PageRestore(channelList, restore, claimOnEntry = true, target = { restore.landing(visible.size) { visible[it].key() } })
                     LazyColumn(Modifier.tvRingRoom(tvRingReach(scale), horizontal = false), state = channelList,
                         contentPadding = PaddingValues(vertical = tvRingReach(scale)), verticalArrangement = Arrangement.spacedBy(8.dp * scale)) {
                         itemsIndexed(visible, key = { _, item -> item.key() }) { index, item ->
-                            TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) chip.takeIf { hasFilters } else null,
+                            TvLiveChannelRow(item, now, scale, if (index == 0) first else null, if (index == 0) upFromPage else null,
                                 { channel = item; program = item.current(now); guideRequested(item) }, { restore.mark(item.key(), index); watch(item) },
                                 modifier = Modifier.pageAnchor(restore, item.key(), index, target = anchored == index))
                         }
@@ -117,7 +129,7 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
             CompositionLocalProvider(LocalTvScale provides scale) {
                 LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
                     favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
-                    sources, selectedSource, sourceChanged, entry = chip, down = first)
+                    sources, selectedSource, sourceChanged, entry = chip, down = first, up = previewEntry)
             }
         }
     }

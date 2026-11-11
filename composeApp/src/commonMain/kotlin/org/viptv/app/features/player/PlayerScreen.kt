@@ -21,18 +21,18 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.ProfilePreferences
 import com.composables.icons.lucide.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.viptv.app.player.*
+import org.viptv.app.state.StartupProgress
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.SourceCandidate
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -43,6 +43,7 @@ import org.viptv.app.components.BackControl
 import org.viptv.app.components.IconButton
 import org.viptv.app.components.Motion
 import org.viptv.app.components.motionSpec
+import org.viptv.app.components.frameDelay
 
 @Composable
 fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
@@ -53,8 +54,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     controlInsets: WindowInsets = WindowInsets.safeDrawing,
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
-    autoplayNext: Boolean = false, reduceMotion: Boolean = false, openingSource: SourceCandidate? = null,
+    autoplayNext: Boolean = false, reduceMotion: Boolean = false, startup: StartupProgress? = null,
     fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    slateProvider: String? = null, configureSource: (() -> Unit)? = null,
     preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null,
     failure: PlaybackFailure? = null, failedSource: String? = null) {
@@ -63,12 +65,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
             fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource,
-            failure = failure, failedSource = failedSource)
+            slateProvider = slateProvider, configureSource = configureSource,
+            failure = failure, failedSource = failedSource, startup = startup)
         return
     }
     val commands = remember(playbackKey) { MutableSharedFlow<PlayerCommand>(extraBufferCapacity = 16) }
     var playerSizePx by remember { mutableStateOf(IntSize.Zero) }
     var timelineTopPx by remember { mutableStateOf(Float.NaN) }
+    var chromeTopPx by remember { mutableStateOf(Float.NaN) }
     var position by remember(playbackKey) { mutableStateOf(input?.let { it.positionMillis + it.timelineOffsetMillis } ?: preview?.positionMillis ?: 0) }
     var duration by remember(playbackKey) { mutableStateOf(input?.durationMillis ?: preview?.durationMillis) }
     var buffered by remember(playbackKey) { mutableStateOf(emptyList<BufferedRange>()) }
@@ -88,10 +92,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var subtitleSize by remember { mutableStateOf(1f) }
     var speed by remember { mutableStateOf(1.0) }
     var controlError by remember(playbackKey) { mutableStateOf<String?>(null) }
+    var controlsFocused by remember { mutableStateOf(false) }
     var pendingSubtitle by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
     var subtitleError by remember(playbackKey) { mutableStateOf<SubtitleSelection?>(null) }
     var pendingAudio by remember(playbackKey) { mutableStateOf<Int?>(null) }
     var audioError by remember(playbackKey) { mutableStateOf<Int?>(null) }
+    var slateNotice by remember(playbackKey) { mutableStateOf(false) }
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var undecodable by remember(playbackKey, input) { mutableStateOf(false) }
@@ -160,7 +166,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(paused) { if (paused) visible = true }
     LaunchedEffect(visible, paused, interaction, buffering, phonePanel, showTracks, failed) {
         // Hiding before the first interaction swallows the click that reaches for the transport.
-        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { delay(5000); visible = false }
+        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { frameDelay(controlsAutoHideMillis); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
     fun chooseSubtitle(id: Int?) {
@@ -205,6 +211,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     position = fact.positionMillis; seekTarget = null
                 }
             }
+            is PlayerFact.Startup -> Unit
             is PlayerFact.Status -> {
                 buffering = !failed && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
@@ -216,15 +223,19 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 fact.control == PlaybackControl.Track && pendingAudio != null -> { audioError = pendingAudio; pendingAudio = null }
                 else -> controlError = playbackControlErrorCopy
             }
+            PlayerFact.ProbableErrorSlate -> slateNotice = true
             PlayerFact.Failed -> { buffering = false; failed = true }
             PlayerFact.Undecodable -> { buffering = false; failed = true; undecodable = true }
         }
     }
     LaunchedEffect(externalFacts, playbackKey) { externalFacts.collect(::applyFact) }
-    LaunchedEffect(controlError) { if (controlError != null) { delay(playbackControlErrorVisibleMillis); controlError = null } }
+    LaunchedEffect(controlError) { if (controlError != null) { frameDelay(playbackControlErrorVisibleMillis); controlError = null } }
+    LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
+    val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
+        with(LocalDensity.current) { (playerSizePx.height - chromeTopPx).toDp() } else 0.dp
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
@@ -235,18 +246,22 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                     Key.Escape -> {
                         if (phone) latestPhoneBack()
+                        else if (showTracks) { showTracks = false; visible = true }
                         else if (fullscreen && toggleFullscreen != null) toggleFullscreen!!()
                         else if (phonePanel != null) dismissPanel()
                         else close()
                         true
                     }
-                    Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.Spacebar -> if (activationKeys && !controlsFocused) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
                     Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
                     Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (!visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
-                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, enabled = !locked && !failed && error == null) { visible = !visible; interaction++ })
+                Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                    enabled = !locked && !failed && error == null,
+                    onClickLabel = if (visible) "Hide controls" else "Show controls") { visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
@@ -254,7 +269,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null),
                     modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
                     exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
-                Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize().onFocusChanged { controlsFocused = it.hasFocus }) {
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f),
                         0.25f to Color.Transparent, 0.75f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f))))
                     Row(Modifier.align(Alignment.TopStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(24.dp), verticalAlignment = Alignment.CenterVertically,
@@ -265,10 +280,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                             title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
                         }
                     }
-                    if (phone) Box(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal))) {
+                    if (phone) Box(Modifier.align(Alignment.TopCenter).fillMaxHeight().padding(bottom = chromeHeight).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)),
+                        contentAlignment = Alignment.Center) {
                         PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
                     }
-                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
+                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .onGloballyPositioned { chromeTopPx = it.positionInRoot().y }
+                        .windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
                         val gutter = if (!phone && maxWidth < CompactButtonsBelow) 12.dp else 24.dp
                         Column(Modifier.fillMaxWidth().padding(horizontal = gutter, vertical = 12.dp)) {
                             Box(Modifier.onGloballyPositioned { timelineTopPx = it.positionInRoot().y }) {
@@ -328,18 +346,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         choose = chooseSources?.let(::chooseSourceAction),
                         back = close, title = title, insets = controlInsets)
                     else -> {
-                        val opening = openingSource
-                        if (opening != null) {
-                            Column(Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(Modifier.size(40.dp), color = Palette.text)
-                                Text("Opening ${opening.label}…", Modifier.padding(top = 16.dp), color = Palette.text, fontSize = 14.sp)
-                            }
-                        } else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                        if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp,
+                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion)
+                        else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }
-                if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
+                if (!stopped && slateNotice && phonePanel == null && !showTracks)
+                    PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
+                else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
                     PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
             }

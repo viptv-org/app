@@ -68,7 +68,7 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
     nextEpisodePreparationJob = scope.launch {
         val remembered = if (mutable.value.preferences.rememberedSourceReuseEnabled())
             sourceMemory.choice(key.profile, card) else null
-        val context = rankingContext(seriesMemoryOf(key.profile, card), capability).copy(providerAffinity = sourceMemory.affinity(key.profile),
+        val context = rankingContext(seriesMemoryOf(key.profile, card), sourceMemory.affinity(key.profile), capability).copy(
             reuse = if (remembered != null) sourceMemory.context(key.profile, card) else SourceReuseContext())
         val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) {
             nextSourcePreparer.prepare(remote, device, key.profile, card, remembered, context) } }

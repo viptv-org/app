@@ -18,9 +18,11 @@ internal data class CalendarPage(val entries: List<CalendarRelease>, val next_cu
     val sources: List<String>? = null, val refresh_after_millis: Long? = null)
 internal data class CalendarRead(val entries: List<CalendarEntry>, val sources: Set<CalendarSource>?, val refreshAfterMillis: Long?)
 internal data class CalendarWindow(val start: String, val end: String, val days: List<CalendarDay>)
-internal data class CalendarLabel(val day: String, val time: String, val aired: Boolean)
+internal data class CalendarLabel(val day: String, val time: String, val aired: Boolean, val airMillis: Long?)
+data class CalendarClock(val day: String, val millis: Long)
 internal expect fun calendarWindow(offsetDays: Int = 0): CalendarWindow
 internal expect fun calendarLabel(date: String): CalendarLabel?
+internal expect fun calendarClock(): CalendarClock
 
 internal suspend fun RemoteConnection.calendar(window: CalendarWindow, type: String = "series",
     onPage: (List<CalendarEntry>) -> Unit = {}): CalendarRead {
@@ -42,7 +44,7 @@ internal suspend fun RemoteConnection.calendar(window: CalendarWindow, type: Str
             val coordinates = release.episode?.let { e -> release.season?.let { "S$it E$e" } ?: "Episode $e" }
             CalendarEntry(release.id, label.day, label.time, release.card,
                 subtitle = listOfNotNull(coordinates, release.episode_title).joinToString(" · ").takeIf { it.isNotBlank() },
-                aired = label.aired, description = release.card.description, season = release.season?.toLong(), episode = release.episode?.toLong(), releaseDate = release.date,
+                aired = label.aired, airMillis = label.airMillis, description = release.card.description, season = release.season?.toLong(), episode = release.episode?.toLong(), releaseDate = release.date,
                 source = CalendarSource.of(release.source), episodeCard = release.libraryEpisode())
         } }
         onPage(entries.toList())

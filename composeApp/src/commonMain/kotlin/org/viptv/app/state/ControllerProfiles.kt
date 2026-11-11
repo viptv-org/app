@@ -8,6 +8,10 @@ fun ApplicationController.selectProfile(id: String) {
         updateState { next -> next.copy(screen = Screen.ProfilePin, profileToOpen = id, leavePinFrom = null, error = null) }
         return
     }
+    if (id != mutable.value.selectedProfile && householdWritesGated()) {
+        askHouseholdPin("Switch profile") { openProfile(id) }
+        return
+    }
     run { openProfile(id) }
 }
 
@@ -59,6 +63,11 @@ private suspend fun ApplicationController.switchRemoteProfile(id: String, pin: S
                 return null
             }
             failure.code == "leave_pin_invalid" -> throw LocalFailure("That PIN was not accepted. Try again.")
+            failure.code == "parent_required" -> {
+                if (mutable.value.screen != Screen.Profiles) throw failure
+                askHouseholdPin("Switch profile") { openProfile(id) }
+                return null
+            }
             failure.status == 429 -> throw LocalFailure("Too many PIN attempts. Try again in five minutes.")
             else -> throw failure
         }
@@ -73,33 +82,53 @@ fun ApplicationController.stopManagingProfiles() { updateState { next -> next.co
 
 fun ApplicationController.editProfile(id: String) { updateState { next -> next.copy(screen=Screen.ProfileEdit,profileToEdit=id,error=null) } }
 
-fun ApplicationController.createProfile(name: String) = profileMutation(PROFILE_CREATE) {
+fun ApplicationController.createProfile(name: String, householdPin: String = ""): Unit = profileMutation(PROFILE_CREATE) {
+    if (local == null && householdPin.isEmpty() && householdWritesGated()) {
+        askHouseholdPin("Add a profile") { createProfile(name) }
+        return@profileMutation
+    }
+    unlockHousehold(connection, householdPin)
     if (local != null) requireNotNull(local).createProfile(name) else requireNotNull(connection).createProfile(name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,error=null) }
 }
 
-fun ApplicationController.renameProfile(name: String, pin: String) = profileMutation(PROFILE_RENAME) {
+fun ApplicationController.renameProfile(name: String, pin: String, householdPin: String = ""): Unit = profileMutation(PROFILE_RENAME) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+    if (local == null && householdPin.isEmpty() && householdWritesGated()) {
+        askHouseholdPin("Change this profile’s name") { renameProfile(name, pin) }
+        return@profileMutation
+    }
+    unlockHousehold(connection, householdPin)
     if (local != null) requireNotNull(local).renameProfile(id,name,pin) else requireNotNull(connection).renameProfile(id,name)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement,screen=Screen.Profiles,managingProfiles=true) }
 }
 
-fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String) = profileMutation(PROFILE_AVATAR) {
+fun ApplicationController.setProfileAvatar(style: String, choice: Int, pin: String, householdPin: String = ""): Unit = profileMutation(PROFILE_AVATAR) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+    if (local == null && householdPin.isEmpty() && householdWritesGated()) {
+        askHouseholdPin("Change this profile’s avatar") { setProfileAvatar(style, choice, pin) }
+        return@profileMutation
+    }
+    unlockHousehold(connection, householdPin)
     if (local != null) requireNotNull(local).setProfileAvatar(id,style,choice,pin) else requireNotNull(connection).setProfileAvatar(id,style,choice)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     updateState { current -> current.copy(profiles=next.profiles, profileManagement=next.profileManagement) }
 }
 
-fun ApplicationController.deleteProfile(pin: String) = profileMutation(PROFILE_DELETE) {
+fun ApplicationController.deleteProfile(pin: String, householdPin: String = ""): Unit = profileMutation(PROFILE_DELETE) {
     val id=mutable.value.profileToEdit ?: throw LocalFailure("Choose a profile first.")
+    if (local == null && householdPin.isEmpty() && householdWritesGated()) {
+        askHouseholdPin("Delete this profile") { deleteProfile(pin) }
+        return@profileMutation
+    }
+    unlockHousehold(connection, householdPin)
     if (local != null) requireNotNull(local).deleteProfile(id,pin) else requireNotNull(connection).deleteProfile(id)
     val next=local?.bootstrap() ?: requireNotNull(connection).bootstrap()
     if (mutable.value.selectedProfile == id) {
         progressJob?.cancel(); subtitleDiscovery?.cancel(); liveGuideJob?.cancel()
-        liveFavoriteJobs.values.forEach { it.cancel() }; liveFavoriteJobs.clear()
+        cancelLiveFavoriteMutations()
         releaseRemotePlayback()?.join()
         accept(next, screen = Screen.Profiles)
         updateState { next -> next.copy(managingProfiles = true) }

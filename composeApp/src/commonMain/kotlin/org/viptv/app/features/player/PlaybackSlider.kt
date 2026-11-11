@@ -14,7 +14,7 @@ import androidx.compose.ui.semantics.contentDescription
 import org.viptv.app.player.BufferedRange
 import org.viptv.app.theme.Palette
 
-private val TrackHeight = 3.dp
+internal val PlaybackTrackHeight = 3.dp
 private val ThumbSize = 12.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,13 +30,13 @@ internal fun PlaybackSlider(value: Float, change: (Float) -> Unit, modifier: Mod
     Slider(value, change, modifier.semantics { contentDescription = description }, enabled = enabled, onValueChangeFinished = finish, colors = colors,
         thumb = { Box(Modifier.size(ThumbSize).background(Color.White, CircleShape)) },
         track = { state ->
-            Box(Modifier.fillMaxWidth().height(TrackHeight)) {
+            Box(Modifier.fillMaxWidth().height(PlaybackTrackHeight)) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     // Buffered media sits under the played fill and under the skip markers.
                     if (bands.isEmpty() && segments.isEmpty()) SliderDefaults.Track(state, Modifier.fillMaxSize(), colors = colors, enabled = enabled,
                         thumbTrackGapSize = 0.dp, drawStopIndicator = null)
                     else {
-                        TimelineBarSpan(0f, 1f, colors.inactiveTrackColor, RoundedCornerShape(TrackHeight / 2))
+                        TimelineBarSpan(0f, 1f, colors.inactiveTrackColor, RoundedCornerShape(PlaybackTrackHeight / 2))
                         bands.forEach { (start, end) -> TimelineBarSpan(start, end, Color.White.copy(alpha = 0.5f)) }
                         TimelineBarSpan(0f, state.coercedValueAsFraction, accentColor)
                         segments.forEach { segment -> TimelineBarSpan(segment.startFraction, segment.endFraction, segment.color, RoundedCornerShape(2.dp)) }

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +28,7 @@ import org.viptv.app.components.PageRestore
 import org.viptv.app.components.ScrollEdge
 import org.viptv.app.components.ScrollEdgeFade
 import org.viptv.app.components.ServerMessages
+import org.viptv.app.components.overlaysContent
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.theme.Palette
@@ -34,7 +36,10 @@ import org.viptv.engine.wire.Card
 import org.viptv.app.components.Button
 import org.viptv.app.components.Surface
 import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
+import org.viptv.app.components.PosterSkeleton
+import org.viptv.app.components.listPageState
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.rememberListEntrance
 
@@ -64,7 +69,8 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
     val anchored = restore.anchor(gridCards.size) { cardLookupKey(gridCards[it]) }
     val scrolled = remember(grid) { derivedStateOf { grid.canScrollBackward } }.value
     val empty = libraryEmptyState(snapshot, query, available)
-    val failed = error != null && visible.isEmpty() && !busy
+    val pageState = listPageState(visible.size, busy, error,
+        answered = snapshot != null && (!busy || snapshot.query.sameList(query)))
     var pinned by remember { mutableIntStateOf(0) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val phone = maxWidth < 640.dp
@@ -88,13 +94,12 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                             fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = FontWeight.Bold)
                     }
                     stickyHeader(LIBRARY_CONTROLS_KEY, contentType = LIBRARY_CONTROLS_KEY) {
-                        Column(Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().semantics { overlaysContent = Unit }) {
                             Column(Modifier.fillMaxWidth().onSizeChanged { pinned = it.height }.blockTouchesBelow().background(Palette.background).padding(bottom = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
                                 if (snapshot != null) LibraryFilterBar(snapshot, query, changeQuery)
                                 else LibraryControls(filter, { filter = it }, sort, { sort = it })
-                                if (busy && gridCards.isEmpty()) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                                if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
+                                if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let { Text(it, color = if (error != null) Palette.danger else Palette.secondary) }
                             }
                             if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                         }
@@ -128,9 +133,11 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
                     }
                 }
             }
-            if (failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+            if (pageState == ListPageState.Loading) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp)) {
+                PosterSkeleton(phone, gap = if (phone) 10.dp else 12.dp)
+            } else if (pageState == ListPageState.Failed) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 LibraryFailure(error ?: "", retry)
-            } else if (visible.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+            } else if (pageState == ListPageState.Empty) Box(Modifier.weight(1f).fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Surface(shape = RoundedCornerShape(20.dp), color = Palette.raised) {
                         Icon(Lucide.Bookmark, null, Modifier.padding(20.dp).size(32.dp), tint = Palette.secondary)
@@ -152,7 +159,7 @@ fun LibraryScreen(cards: List<Card>, available: Boolean, television: Boolean, op
 private fun LibraryFailure(reason: String, retry: () -> Unit) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Couldn’t load My List", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(MY_LIST_FAILED_TITLE, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = 14.sp, lineHeight = 20.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Button(onClick = retry, shape = RoundedCornerShape(12.dp), modifier = Modifier.height(46.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) { Text("Try again") }

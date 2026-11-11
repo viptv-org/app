@@ -8,6 +8,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.viptv.app.connection.*
+import org.viptv.app.features.calendar.CalendarFilter
 import org.viptv.app.state.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
@@ -26,7 +27,7 @@ class BackRestoresListStateTest {
 
     private fun cards() = (1..3).joinToString(",") { card("browse-$it", "Browse $it") }
 
-    private fun client(requests: MutableList<String>) = HttpClient(MockEngine { request ->
+    private fun client(requests: EngineRequests<String>) = HttpClient(MockEngine { request ->
         val path = request.url.encodedPath
         requests += path
         val body = when {
@@ -67,8 +68,9 @@ class BackRestoresListStateTest {
             arrange = { it.libraryQuery(org.viptv.app.connection.defaultLibraryQuery().copy(show = "unwatched")) },
             assert = { assertEquals("unwatched", it.libraryQuery.show, "My List restores its show filter") }),
         Case("Calendar", Screen.Calendar, listOf("/api/calendar"),
-            arrange = { it.calendarCategory("series") },
-            assert = { assertEquals("series", it.calendarType, "Calendar restores its chip") }),
+            arrange = { it.calendarCategory("series"); it.calendarFilter(CalendarFilter.All) },
+            assert = { assertEquals("series", it.calendarType, "Calendar restores its chip");
+                assertEquals(CalendarFilter.All, it.calendarFilter, "Calendar restores the Shows filter") }),
         Case("Search", Screen.Search, emptyList(),
             arrange = { it.mutable.value = it.state.value.copy(searchTerm = "monster"); it.searchFilters(setOf("Movies")) },
             assert = { assertEquals("monster", it.searchTerm); assertEquals(setOf("Movies"), it.searchFilters, "Search restores its filters") }),
@@ -76,7 +78,7 @@ class BackRestoresListStateTest {
 
     @Test fun everyFilterScreenRestoresItsFiltersAndDoesNotReload() = runBlocking<Unit> {
         for (case in cases) {
-            val requests = mutableListOf<String>()
+            val requests = EngineRequests<String>()
             val store = MemoryStore()
             val controller = ApplicationController(this, store, remoteFactory = { origin, storage ->
                 RemoteConnection(origin, storage, client(requests), browserMode = false)

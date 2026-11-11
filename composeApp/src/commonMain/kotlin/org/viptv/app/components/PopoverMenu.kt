@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -27,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -45,8 +47,6 @@ internal val PopoverMenuWidth = 260.dp
 
 internal val Hairline = Color.White.copy(alpha = .07f)
 
-private val PopoverShape = RoundedCornerShape(16.dp)
-
 @Composable
 internal fun PopoverMenu(
     expanded: Boolean,
@@ -54,6 +54,9 @@ internal fun PopoverMenu(
     modifier: Modifier = Modifier,
     wash: Color? = null,
     paneTitle: String? = null,
+    scale: Float = 1f,
+    width: Dp? = null,
+    television: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val motion = rememberEnterLeaveMotion(expanded,
@@ -61,24 +64,29 @@ internal fun PopoverMenu(
         leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
     if (!motion.presented) return
     val density = LocalDensity.current
-    val washBrush = wash?.let { with(density) { Brush.verticalGradient(listOf(it.copy(alpha = .24f), Color.Transparent), endY = 88.dp.toPx()) } }
+    val metrics = MenuMetrics(television, scale)
+    val menuShape = RoundedCornerShape(metrics.menuRadius)
+    val washBrush = wash?.let { with(density) { Brush.verticalGradient(listOf(it.copy(alpha = .24f), Color.Transparent), endY = (88 * scale).dp.toPx()) } }
+    // A closing menu keeps drawing its exit but must not hold the keyboard: the control it opened from owns the next Back.
     Popup(onDismissRequest = onDismissRequest,
         popupPositionProvider = remember(density) { PopoverMenuPosition(density) },
-        properties = PopupProperties(focusable = true)) {
-        Column(modifier.width(PopoverMenuWidth)
+        properties = PopupProperties(focusable = expanded)) {
+        CompositionLocalProvider(LocalMenuMetrics provides metrics) {
+        Column(modifier.width(width?.times(scale) ?: metrics.width)
             .graphicsLayer {
                 alpha = motion.progress
                 val s = 0.98f + 0.02f * motion.progress
                 scaleX = s; scaleY = s
-                shape = PopoverShape
-                shadowElevation = 20.dp.toPx()
+                shape = menuShape
+                shadowElevation = metrics.shadow.toPx()
             }
-            .clip(PopoverShape)
+            .clip(menuShape)
             .background(Palette.surface)
-            .then(if (washBrush == null) Modifier else Modifier.background(washBrush, PopoverShape))
-            .border(1.dp, Hairline, PopoverShape)
+            .then(if (washBrush == null) Modifier else Modifier.background(washBrush, menuShape))
+            .border(1.dp, Hairline, menuShape)
             .then(if (paneTitle == null) Modifier else Modifier.semantics { this.paneTitle = paneTitle })) {
             content()
+        }
         }
     }
 }
@@ -105,24 +113,31 @@ private class PopoverMenuPosition(private val density: Density) : PopupPositionP
 }
 
 @Composable
-internal fun PopoverMenuItem(label: String, icon: ImageVector? = null, onClick: () -> Unit) {
+internal fun PopoverMenuItem(label: String, icon: ImageVector? = null,
+    requester: FocusRequester? = null, onClick: () -> Unit) {
+    val metrics = LocalMenuMetrics.current
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val pressed by interaction.collectIsPressedAsState()
     val active = interaction.pointerHovered() || focused || pressed
     val fill by animateColorAsState(if (active) Palette.raised else Color.Transparent, responseSpec(), label = "Popover row fill")
-    Box(Modifier.padding(horizontal = 6.dp).fillMaxWidth().heightIn(min = 44.dp).pressScale(interaction, Motion.row).clip(RoundedCornerShape(10.dp)).background(fill)
-        .pointerClickable(interaction, indication = null, role = Role.Button, onClick = onClick, shape = RoundedCornerShape(10.dp), hover = null)) {
-        Row(Modifier.align(Alignment.CenterStart).padding(horizontal = 10.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (icon != null) Icon(icon, null, Modifier.size(18.dp).testTag(PopoverMenuItemIconTag), tint = if (active) Palette.text else Palette.secondary)
-            Text(label, color = Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val shape = RoundedCornerShape(metrics.rowRadius)
+    Box(Modifier.padding(horizontal = metrics.outerPadding).fillMaxWidth().heightIn(min = metrics.rowMinHeight).pressScale(interaction, Motion.row).clip(shape).background(fill)
+        .then(if (requester == null) Modifier else requester.requestFocusWhenPlaced())
+        .pointerClickable(interaction, indication = null, role = Role.Button, onClick = onClick, shape = shape, hover = null)) {
+        Row(Modifier.align(Alignment.CenterStart).padding(horizontal = metrics.rowPaddingH, vertical = metrics.rowPaddingV),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(metrics.iconGap)) {
+            if (icon != null) Icon(icon, null, Modifier.size(metrics.iconSize).testTag(PopoverMenuItemIconTag), tint = if (active) Palette.text else Palette.secondary)
+            Text(label, color = Palette.text, fontSize = metrics.textSize, lineHeight = metrics.lineHeight,
+                fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        FocusOutline(focused, 10.dp, 2.dp, Modifier.matchParentSize())
+        if (metrics.television) Modifier.tvFocusOutline(focused, metrics.rowRadius, metrics.scale, darkGap = metrics.focusGap, width = metrics.focusRing)
+        else FocusOutline(focused, metrics.rowRadius, 2.dp, Modifier.matchParentSize())
     }
 }
 
 @Composable
 internal fun PopoverMenuDivider() {
-    Box(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().height(1.dp).background(Hairline))
+    val metrics = LocalMenuMetrics.current
+    Box(Modifier.padding(horizontal = metrics.dividerHorizontal, vertical = metrics.dividerVertical).fillMaxWidth().height(1.dp).background(Hairline))
 }

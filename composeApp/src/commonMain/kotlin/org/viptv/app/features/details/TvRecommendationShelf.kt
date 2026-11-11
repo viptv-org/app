@@ -16,13 +16,13 @@ import org.viptv.app.features.home.MediaCard
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun TvRecommendationShelf(cards: List<Card>, scale: Float, open: (Card) -> Unit, focused: () -> Unit, up: () -> Unit = {}) {
+internal fun TvRecommendationShelf(parent: Card, cards: List<Card>, scale: Float, open: (Card) -> Unit, focused: () -> Unit, up: () -> Unit = {}) {
     val visible = cards.distinctBy { Triple(it.provider_id, it.identity.kind, it.identity.id) }
-    val rows = rememberLazyListState()
+    val rows = rememberDetailListState(parent)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
 
     Column(Modifier.padding(top = 20.dp * scale), verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
-        Text("More Like This", Modifier.padding(start = 96.dp * scale), fontSize = (30 * scale).sp,
+        Text(RELATED_HEADING, Modifier.padding(start = 96.dp * scale), fontSize = (30 * scale).sp,
             lineHeight = (36 * scale).sp, letterSpacing = (-0.3f * scale).sp, fontWeight = FontWeight.SemiBold)
 
         LazyRow(state = rows, modifier = Modifier.focusRestorer().focusGroup().onPreviewKeyEvent {

@@ -27,7 +27,7 @@ internal data class SourceMemoryRecord(
     val across: Set<String> = emptySet(),
     val crossTitle: Map<String, RememberedSource> = emptyMap(),
     val lastManual: Map<String, RememberedSource> = emptyMap(),
-    val lastStartedProvider: Map<String, String> = emptyMap(),
+    val affinity: Map<String, String> = emptyMap(),
 )
 
 internal interface SourceMemoryStore {
@@ -82,14 +82,6 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
     var revision: Long = 0
         private set
 
-    fun affinity(profile: String): String? = record.lastStartedProvider[profile]
-
-    fun started(profile: String, source: SourceCandidate) {
-        if (!source.provider_id.durableSourceText() || affinity(profile) == source.provider_id) return
-        record = record.copy(lastStartedProvider = (record.lastStartedProvider - profile + (profile to source.provider_id)).entries.takeLastEntries(32))
-        persist()
-    }
-
     fun across(profile: String): Boolean = profile in record.across
 
     fun setAcross(profile: String, enabled: Boolean) {
@@ -136,6 +128,20 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
         persist()
     }
 
+    // One provider per profile: the last start that reached a presented frame, manual or automatic.
+    fun affinity(profile: String): String? = record.affinity[profile]
+
+    fun rememberAffinity(profile: String, providerId: String) {
+        val provider = providerId.trim().takeIf { it.isNotEmpty() && it.length <= MAX_AFFINITY_LENGTH && it.none(Char::isISOControl) }
+            ?: return
+        if (record.affinity[profile] == provider) return
+        val merged = record.affinity - profile + (profile to provider)
+        val affinity = if (merged.size <= MAX_PROFILES) merged
+            else merged.entries.drop(merged.size - MAX_PROFILES).associate { it.key to it.value }
+        record = record.copy(affinity = affinity)
+        persist()
+    }
+
     fun forget(profile: String, card: Card) {
         val key = sourceMemoryKey(profile, card)
         if (key !in record.entries) return
@@ -147,6 +153,8 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
         const val MAX_RECORD_LENGTH = 8_000
         const val MAX_ENTRIES = 200
         const val MAX_LANGUAGES = 8
+        const val MAX_PROFILES = 16
+        const val MAX_AFFINITY_LENGTH = 128
     }
 }
 
@@ -172,6 +180,11 @@ internal val rememberedKinds = setOf("movie", "series")
 internal fun PreferencesSnapshot?.rememberedSourceReuseEnabled(): Boolean =
     this?.preferences?.remembered_source_reuse != false
 
+internal fun ApplicationController.rememberProviderAffinity(profile: String) {
+    val provider = mutable.value.playingSource?.provider_id ?: return
+    sourceMemory.rememberAffinity(profile, provider)
+}
+
 internal fun ApplicationController.rememberSourceChoice() {
     val choice = sourceChoice
     sourceChoice = SourceChoice.None
@@ -188,5 +201,3 @@ internal fun ApplicationController.rememberSourceChoice() {
 internal fun RememberedSource.wire() = org.viptv.app.connection.SourceReuseMemory(provider_id, languages, provider_name, source_id)
 
 private fun String.durableSourceText(): Boolean = isNotBlank() && length <= 256 && !contains("://") && none { it.isISOControl() }
-
-private fun <K, V> Set<Map.Entry<K, V>>.takeLastEntries(limit: Int): Map<K, V> = toList().takeLast(limit).associate { it.key to it.value }

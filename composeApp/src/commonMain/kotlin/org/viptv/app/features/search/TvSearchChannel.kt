@@ -28,14 +28,16 @@ import org.viptv.app.resources.Res
 import org.viptv.app.resources.bricolage
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
+import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.pointerClickable
 
 @Composable
-internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false) {
+internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onFocus: () -> Unit = {}, last: Boolean = false,
+    modifier: Modifier = Modifier) {
     var focused by remember { mutableStateOf(false) }
     val frame by animateFloatAsState(if (focused) 1f else 0f, tween(120), label = "Channel focus")
     val shape = RoundedCornerShape(10.dp * scale)
-    Column(Modifier.width(356.dp * scale)
+    Column(modifier.width(356.dp * scale)
         .focusProperties { if (last) right = androidx.compose.ui.focus.FocusRequester.Cancel }
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus() }
         .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { open(card) }) {
@@ -47,13 +49,7 @@ internal fun TvSearchChannel(card: Card, scale: Float, open: (Card) -> Unit, onF
                     fontFamily = FontFamily(Font(Res.font.bricolage, FontWeight.ExtraBold)), fontWeight = FontWeight.ExtraBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Box(Modifier.align(Alignment.TopStart).padding(12.dp * scale)) {
-                Box(Modifier.heightIn(min = 28.dp * scale).background(Color(0xFFE5484D), RoundedCornerShape(6.dp * scale))
-                    .padding(horizontal = 9.dp * scale), contentAlignment = Alignment.Center) {
-                    Text("LIVE", fontSize = (17 * scale).sp, lineHeight = (21 * scale).sp, letterSpacing = (1.02f * scale).sp,
-                        fontWeight = FontWeight.ExtraBold, color = Color.White)
-                }
-            }
+            LiveBadge(Modifier.align(Alignment.TopStart).padding(12.dp * scale), scale, television = true)
             if (frame > 0f) Box(Modifier.matchParentSize().border(3.dp * scale, Color.White.copy(alpha = frame), shape))
         }
         Text(card.title, Modifier.padding(top = 12.dp * scale), fontSize = (22 * scale).sp, lineHeight = (26 * scale).sp,

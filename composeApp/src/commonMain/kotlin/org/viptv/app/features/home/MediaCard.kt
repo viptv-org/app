@@ -25,11 +25,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -58,8 +53,6 @@ import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.ArtWatchedBadge
@@ -81,6 +74,7 @@ import org.viptv.app.components.hoverFill
 import org.viptv.app.components.motionSpec
 import org.viptv.app.components.rememberEnterLeaveMotion
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.components.LocalListRemoval
@@ -93,6 +87,9 @@ import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.tvHold
+import org.viptv.app.components.frameDelay
+import org.viptv.app.components.holdMenu
+import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.features.search.searchMatchHighlight
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
@@ -145,19 +142,19 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val saved = actions?.isSaved?.invoke(card) == true
     val activate = select ?: actions?.play ?: open
     // The preview survives the 12 dp gap, so the pointer can reach its own buttons.
-    LaunchedEffect(desktop, hovered) { if (desktop && hovered) { delay(450); previewOpen = true } }
+    LaunchedEffect(desktop, hovered) { if (desktop && hovered) { frameDelay(450); previewOpen = true } }
     LaunchedEffect(desktop, hovered, previewHovered, menuAt) {
         if (desktop && previewOpen && menuAt == null && !hovered && !previewHovered) {
-            delay(180)
+            frameDelay(180)
             if (!hovered && !previewHovered) previewOpen = false
         }
     }
     Column(modifier.width(width.dp).hoverable(hover)
-        .cardContextClick(desktop || removal != null) { previewOpen = false; menuAt = it; menuOpen = true }
+        .secondaryClickMenu(desktop || removal != null) { previewOpen = false; menuAt = it; menuOpen = true }
         .tvHold(enabled = television && menu, onHold = { previewOpen = false; menuOpen = true })
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }
-        .cardHoldMenu(LocalCardOverflow.current && menu) { previewOpen = false; menuAt = it; menuOpen = true }) {
+        .holdMenu(LocalCardOverflow.current && menu) { previewOpen = false; menuAt = it; menuOpen = true }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(press, Motion.card)
             .clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             if (width > 0) {
@@ -216,6 +213,8 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
+        // The card is the only thing left when a save from its preview or menu fails: the menu and preview close on the press.
+        MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 6.dp), scale = labelScale.coerceAtLeast(1f), retry = !television)
         if (menu) {
             val present: @Composable () -> Unit = {
                 CardMenu(card, saved, removal, actions,
@@ -223,7 +222,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     onPlay = { menuOpen = false; activate(card) },
                     onInfo = { menuOpen = false; open(card) },
                     onToggleSave = actions?.let { { menuOpen = false; it.toggleSave(card) } },
-                    visible = menuOpen, onClosed = { menuAt = null }, scale = scale)
+                    visible = menuOpen, onClosed = { menuAt = null }, scale = scale, television = television)
             }
             menuAt?.let { at ->
                 Popup(popupPositionProvider = CardMenuPosition(at),
@@ -296,52 +295,6 @@ private fun CardHoverRing(radius: Dp, modifier: Modifier) {
 }
 
 private val OnAccent = Color(0xFF15130F)
-
-@Composable
-private fun Modifier.cardContextClick(enabled: Boolean, onClick: (IntOffset) -> Unit): Modifier {
-    val current = rememberUpdatedState(onClick)
-    if (!enabled) return this
-    return pointerInput(Unit) {
-        awaitPointerEventScope {
-            while (true) {
-                val event = awaitPointerEvent()
-                if (event.type != PointerEventType.Press || !event.buttons.isSecondaryPressed) continue
-                val change = event.changes.firstOrNull() ?: continue
-                current.value(IntOffset(change.position.x.roundToInt(), change.position.y.roundToInt()))
-                change.consume()
-            }
-        }
-    }
-}
-
-// Inner to the click, so the hold sees the press first and consumes the release it belongs to.
-@Composable
-private fun Modifier.cardHoldMenu(enabled: Boolean, onHold: (IntOffset) -> Unit): Modifier {
-    val current = rememberUpdatedState(onHold)
-    if (!enabled) return this
-    return pointerInput(Unit) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            val at = down.position
-            val lifted = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                var up = false
-                while (!up) {
-                    val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
-                    up = change == null || !change.pressed || (change.position - at).getDistance() > viewConfiguration.touchSlop
-                }
-                true
-            }
-            if (lifted != null) return@awaitEachGesture
-            current.value(IntOffset(at.x.roundToInt(), at.y.roundToInt()))
-            var pressed = true
-            while (pressed) {
-                val event = awaitPointerEvent()
-                event.changes.forEach { it.consume() }
-                pressed = event.changes.any { it.pressed }
-            }
-        }
-    }
-}
 
 private class CardPreviewPosition(private val gapPx: Int) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,

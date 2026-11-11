@@ -87,6 +87,28 @@ class SourceMemoryTest {
             provider_id = "addon:1", title = "Newest", badges = emptyList())))
     }
 
+    @Test fun theProviderAffinitySurvivesARestartAndStaysPerProfile() {
+        val store = Store()
+        SourceMemoryBook(store).rememberAffinity("default", "addon:7")
+        val restarted = SourceMemoryBook(store)
+        assertEquals("addon:7", restarted.affinity("default"))
+        assertNull(restarted.affinity("guest"))
+        restarted.rememberAffinity("default", "debrid:tb")
+        assertEquals("debrid:tb", SourceMemoryBook(store).affinity("default"), "The latest presented start wins")
+        assertEquals("debrid:tb", restarted.affinity("default"))
+    }
+
+    @Test fun providerAffinityStaysBoundedAndIgnoresInvalidProviders() {
+        val store = Store()
+        val book = SourceMemoryBook(store)
+        for (invalid in listOf("", "  ", "addon\n7", "a".repeat(SourceMemoryBook.MAX_AFFINITY_LENGTH + 1))) book.rememberAffinity("default", invalid)
+        assertNull(book.affinity("default"))
+        (1..SourceMemoryBook.MAX_PROFILES + 4).forEach { index -> book.rememberAffinity("profile$index", "addon:$index") }
+        val restarted = SourceMemoryBook(store)
+        assertNull(restarted.affinity("profile1"), "The oldest profile entry is dropped")
+        assertEquals("addon:${SourceMemoryBook.MAX_PROFILES + 4}", restarted.affinity("profile${SourceMemoryBook.MAX_PROFILES + 4}"))
+    }
+
     @Test fun anUnreadableRecordStartsEmpty() {
         assertEquals(SourceMemoryRecord(), decodeSourceMemory("{not json"))
         assertEquals(SourceMemoryRecord(), decodeSourceMemory(null))

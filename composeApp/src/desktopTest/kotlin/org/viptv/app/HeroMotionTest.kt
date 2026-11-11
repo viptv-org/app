@@ -16,6 +16,7 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.testTag
@@ -85,18 +86,31 @@ class HeroMotionTest {
             node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it.startsWith("Featured ") && it.contains(" of ") } == true
         }?.boundsInRoot
 
-        fun dotWidths(): List<Int> {
+        fun dotSizes(): List<Size> {
             val row = dots() ?: return emptyList()
             val pixels = image()
-            val background = Palette.background.toArgb()
-            val widths = mutableListOf<Int>()
-            var run = 0
+            val sizes = mutableListOf<Size>()
+            var start = -1
             for (x in row.left.toInt() until (row.left + 112f).toInt()) {
-                if (distance(pixels.getColor(x, row.center.y.toInt()), background) > 6) run++ else { if (run > 0) widths += run; run = 0 }
+                if (drawn(pixels, x, row.center.y.toInt())) { if (start < 0) start = x }
+                else if (start >= 0) { sizes += extent(pixels, start, x - 1, row); start = -1 }
             }
-            if (run > 0) widths += run
-            return widths
+            if (start >= 0) sizes += extent(pixels, start, row.left.toInt() + 111, row)
+            return sizes
         }
+
+        fun dotWidths(): List<Int> = dotSizes().map { it.width.toInt() }
+
+        private fun extent(pixels: Bitmap, from: Int, to: Int, row: Rect): Size {
+            val x = (from + to) / 2
+            var top = row.center.y.toInt()
+            var bottom = top
+            while (drawn(pixels, x, top - 1)) top--
+            while (drawn(pixels, x, bottom + 1)) bottom++
+            return Size(to - from + 1f, (bottom - top + 1).toFloat())
+        }
+
+        private fun drawn(pixels: Bitmap, x: Int, y: Int) = distance(pixels.getColor(x, y), Palette.background.toArgb()) > 6
 
         fun colour(rect: Rect): Int = image().getColor(rect.center.x.toInt(), rect.center.y.toInt())
 
@@ -230,19 +244,19 @@ class HeroMotionTest {
         val shell = desktopShell(card, index)
         try {
             shell.frames(40)
-            assertEquals(listOf(48, 16, 16), shell.dotWidths(), "the featured slide's dot is the pill")
+            assertEquals(listOf(Size(18f, 6f), Size(6f, 6f), Size(6f, 6f)), shell.dotSizes(), "the featured slide's dot is the 18 × 6 pill, the others 6 × 6 dots")
 
             index.value = 1
             var grew = false
             for (step in 1..14) {
                 shell.frames(1)
                 val widths = shell.dotWidths()
-                if (widths.size == 3 && widths[0] in 15..17 && widths[1] in 19..45 && widths[2] in 15..17) grew = true
+                if (widths.size == 3 && widths[0] in 5..7 && widths[1] in 7..18 && widths[2] in 5..7) grew = true
             }
             assertTrue(grew, "the incoming dot grows from a dot to its pill while the others stay dots")
 
             shell.frames(30)
-            assertEquals(listOf(16, 48, 16), shell.dotWidths(), "the grown dot settles as the pill")
+            assertEquals(listOf(6, 18, 6), shell.dotWidths(), "the grown dot settles as the pill")
         } finally { shell.close() }
     }
 
@@ -261,7 +275,7 @@ class HeroMotionTest {
             val labels = shell.labels()
             assertFalse(labels.contains(first.title), "reduce motion drops the outgoing copy in the same frame: $labels")
             assertTrue(labels.contains(second.title))
-            assertEquals(listOf(16, 48, 16), shell.dotWidths(), "the dot still reports the next slide")
+            assertEquals(listOf(6, 18, 6), shell.dotWidths(), "the dot still reports the next slide")
             assertEquals(summary, shell.tagged(HERO_SUMMARY_TAG).boundsInRoot, "the hero keeps its footprint")
             assertEquals(artwork, shell.tagged(HERO_ARTWORK_TAG).boundsInRoot, "the artwork keeps its frame")
             assertEquals(rows, shell.tagged(ROW_TAG).boundsInRoot, "the rows below the hero never move")
@@ -278,6 +292,7 @@ class HeroMotionTest {
                 val dots = shell.dots()
                 assertNotNull(dots, "$where: the hero draws its carousel dots")
                 assertTrue(shell.labels().contains(first.title), "$where: the featured slide owns the hero")
+                assertEquals(listOf(Size(18f, 6f), Size(6f, 6f), Size(6f, 6f)), shell.dotSizes(), "$where: an 18 × 6 pill and 6 × 6 dots")
                 val play = shell.clickable("Play").boundsInRoot
 
                 card.value = second; index.value = 1
@@ -302,10 +317,10 @@ class HeroMotionTest {
         val still = indicatorsShell(selected, animated = false)
         try {
             still.frames(3)
-            assertEquals(listOf(48, 16, 16), still.dotWidths())
+            assertEquals(listOf(18, 6, 6), still.dotWidths())
             selected.value = 1
             still.frames(2)
-            assertEquals(listOf(16, 48, 16), still.dotWidths(), "TV's dots swap in one frame")
+            assertEquals(listOf(6, 18, 6), still.dotWidths(), "TV's dots swap in one frame")
         } finally { still.close() }
 
         val moving = mutableIntStateOf(0)
@@ -314,7 +329,7 @@ class HeroMotionTest {
             animated.frames(3)
             moving.value = 1
             animated.frames(1)
-            assertEquals(listOf(16, 16, 16), animated.dotWidths(), "the incoming dot starts as a dot before it grows")
+            assertEquals(listOf(6, 6, 6), animated.dotWidths(), "the incoming dot starts as a dot before it grows")
         } finally { animated.close() }
     }
 

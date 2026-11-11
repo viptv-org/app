@@ -11,9 +11,8 @@ import androidx.compose.ui.unit.dp
 import org.viptv.app.components.Brand
 import org.viptv.app.components.CredentialFields
 import org.viptv.app.components.CredentialForm
+import org.viptv.app.components.CredentialRules
 import org.viptv.app.components.TextButton
-import org.viptv.app.connection.validAccountUsername
-import org.viptv.app.connection.validNewPassword
 import org.viptv.app.theme.Palette
 
 @Composable
@@ -24,9 +23,9 @@ internal fun BrowserAccountForm(recovering: Boolean, busy: Boolean, error: Strin
     var code by remember(recovering) { mutableStateOf("") }
     var password by remember(recovering) { mutableStateOf("") }
     var confirmation by remember(recovering) { mutableStateOf("") }
-    val mismatched = confirmation.isNotEmpty() && confirmation != password
-    val valid = validAccountUsername(username) && validNewPassword(password) && password == confirmation &&
-        if (recovering) code.trim().isNotEmpty() && code.length <= 256 else name.trim().isNotEmpty() && name.trim().encodeToByteArray().size <= 80
+    val valid = CredentialRules.username(username).valid && CredentialRules.password(password).valid &&
+        CredentialRules.confirmation(password, confirmation).valid &&
+        if (recovering) CredentialRules.recoveryCode(code).valid else CredentialRules.displayName(name).valid
     Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = 420.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Brand()
@@ -35,8 +34,8 @@ internal fun BrowserAccountForm(recovering: Boolean, busy: Boolean, error: Strin
                 else "Create an account on this server. You’ll receive a recovery code to keep somewhere safe.", color = Palette.secondary)
             key(recovering) {
                 CredentialForm(
-                    fields = if (recovering) CredentialFields.recover(username, code, password, confirmation, if (mismatched) "Passwords do not match." else null)
-                        else CredentialFields.register(username, name, password, confirmation, if (mismatched) "Passwords do not match." else null),
+                    fields = if (recovering) CredentialFields.recover(username, code, password, confirmation)
+                        else CredentialFields.register(username, name, password, confirmation),
                     submitLabel = if (recovering) "Recover account" else "Create account",
                     valid = valid,
                     busy = busy,

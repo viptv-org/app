@@ -55,6 +55,25 @@ class CalendarHeaderFitUiTest {
         }
     }
 
+    @Test fun theWeekRangeFitsThePhoneBarAtPhoneWidths() {
+        val range = "October 1 – October 7"
+        for (width in listOf(320, 390)) {
+            val scene = ImageComposeScene(width, 800, Density(1f)) {
+                ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    CalendarScreen(days(current = true), emptyList(), television = false, open = {}, manage = {}, controls = true)
+                } }
+            }
+            try {
+                frames(scene)
+                val label = unmerged(scene).single { text(it) == range }
+                assertTrue(label.boundsInRoot.left >= -1f, "$width px: the week range starts off the left edge at ${label.boundsInRoot.left}")
+                assertTrue(label.boundsInRoot.right <= width + 1f, "$width px: the week range ends off the right edge at ${label.boundsInRoot.right}")
+                val layout = layout(label)
+                assertTrue(layout.size.width + 0.5f >= layout.getLineRight(layout.lineCount - 1), "$width px: the week range is truncated")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun aWideHeaderKeepsTheFullWeekdayNames() {
         val scene = ImageComposeScene(1024, 900, Density(1f)) {
             ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {

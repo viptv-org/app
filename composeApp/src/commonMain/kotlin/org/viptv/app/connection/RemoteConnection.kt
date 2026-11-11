@@ -419,11 +419,19 @@ open class RemoteConnection(
             status == 404 && code == "metadata_not_found" -> "This title is no longer available."
             status == 404 && code == "title_needs_search" -> "Search for this title to open it."
             status == 401 -> "Sign in to continue."
-            status == 403 -> "This action is not available for this profile."
+            status == 403 -> forbiddenMessage(code)
             status == 429 -> tooManyRequestsMessage(response, code)
             clientUpdateRequired -> ServerMessages.UPDATE_APP
             else -> ServerMessages.human(serverError(text), "The server could not complete this request.")
         }, code, text)
+    }
+
+    private fun forbiddenMessage(code: String?): String = when (code) {
+        "parent_required" -> "Enter the household PIN to change this profile."
+        "parent_pin_invalid" -> "Incorrect PIN. Try again."
+        "owner_required" -> "Only the account owner can change household settings."
+        "account_session_required" -> "Manage this from a signed-in phone, computer or the web dashboard."
+        else -> "This action is not available for this profile."
     }
 
     private fun errorCode(body: String?): String? = body?.let {

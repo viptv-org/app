@@ -2,19 +2,21 @@ package org.viptv.app
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.*
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BestMatchesDiscoveryTest {
     private val movie = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "fixture", title = "Movie", badges = emptyList())
     private fun row(id: String, height: Long, releaseType: String? = null) =
         SourceCandidate(id, "addon:$id", "Source $id", quality_height = height, release_type = releaseType)
 
     private class Discovery(fixture: LocalSetupFixture, val firstBatch: List<SourceCandidate>, val secondBatch: List<SourceCandidate>,
-        private val rankingFails: Boolean = false, private val fullyMatches: (Int) -> Boolean = { false }) {
+        private val rankingFails: (Int) -> Boolean = { false }, private val fullyMatches: (Int) -> Boolean = { false }) {
         val firstRanked = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val rankingCalls = mutableListOf<List<String>>()
@@ -28,7 +30,7 @@ class BestMatchesDiscoveryTest {
             }
             override suspend fun rankSources(profile: String, sources: List<SourceCandidate>, context: RankingContext): RankedSources {
                 rankingCalls += sources.map { it.id }
-                if (rankingFails && rankingCalls.size > 1) throw LocalFailure("ranking unavailable")
+                if (rankingFails(rankingCalls.size)) throw LocalFailure("ranking unavailable")
                 val ranked = sources.sortedWith(compareBy<SourceCandidate> { it.release_type == "cam" }.thenByDescending { it.quality_height })
                 return RankedSources(ranked, interimSourceGroups(ranked), bestMatchFullyMatches = fullyMatches(rankingCalls.size))
                     .also { if (rankingCalls.size == 1) firstRanked.complete(Unit) }
@@ -37,12 +39,14 @@ class BestMatchesDiscoveryTest {
         }
     }
 
-    private fun discover(selection: String, discovery: (LocalSetupFixture) -> Discovery, manual: Boolean = false, check: suspend (ApplicationController, Discovery) -> Unit) = runBlocking<Unit> {
+    private fun discover(selection: String, discovery: (LocalSetupFixture) -> Discovery, manual: Boolean = false, remembered: SourceCandidate? = null, check: suspend (ApplicationController, Discovery) -> Unit) = runTest {
         val fixture = LocalSetupFixture()
         val fake = discovery(fixture)
-        val controller = fixture.controller { fake.device }; controller.local = fake.device
+        val controller = fixture.controller(backgroundScope) { fake.device }; controller.local = fake.device
+        controller.capability = { DeviceCapability() }
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = selection)))
+        remembered?.let { controller.sourceMemory.remember("default", movie, it) }
         try { if (manual) controller.chooseSource(movie) else controller.playTitle(movie); check(controller, fake) }
         finally { fake.release.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
@@ -84,8 +88,17 @@ class BestMatchesDiscoveryTest {
         assertFalse(controller.state.value.findingSources)
     }
 
+    @Test fun anInitialRankingFailureCannotStartEvenARememberedSource() = discover("best", {
+        Discovery(it, listOf(row("a", 720)), listOf(row("later", 1080)), rankingFails = { true }, fullyMatches = { true })
+    }, remembered = row("a", 720)) { controller, fake ->
+        fake.release.complete(Unit); settle(controller)
+        assertTrue(fake.opened.isEmpty())
+        assertEquals(SourceGroups(), controller.state.value.sourceGroups)
+        assertEquals(Screen.Sources, controller.state.value.screen)
+    }
+
     @Test fun aFailedRankingPreservesAvailableRowsAndPreventsAutomaticPlayback() = discover("best", {
-        Discovery(it, listOf(row("a", 720), row("b", 1080)), listOf(row("best", 2160)), rankingFails = true)
+        Discovery(it, listOf(row("a", 720), row("b", 1080)), listOf(row("best", 2160)), rankingFails = { it > 1 })
     }) { controller, fake ->
         withTimeout(5000) { fake.firstRanked.await() }
         fake.release.complete(Unit); settle(controller)

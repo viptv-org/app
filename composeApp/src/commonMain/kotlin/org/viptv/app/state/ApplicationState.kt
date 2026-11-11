@@ -17,6 +17,10 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.connection.HistoryDisplay
 import org.viptv.app.crash.CrashReport
 
+// One Reconfigure request: the link while it is being fetched, the QR/address once the server answered, or the failure.
+data class AddonConfigureRequest(val addon: String, val name: String, val link: String? = null,
+    val expiresInSeconds: Long = 300L, val failure: String? = null)
+
 enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
     ContinueWatching }
 data class ApplicationState(
@@ -27,6 +31,9 @@ data class ApplicationState(
     val navBack: List<BackEntry> = emptyList(),
     val navForward: List<BackEntry> = emptyList(),
     val settingsEntrySection: String? = null,
+    val settingsAddonTarget: String? = null,
+    val configurableAddons: Set<String> = emptySet(),
+    val addonConfigure: AddonConfigureRequest? = null,
     val settingsPage: SettingsPage? = null,
     val settingsReturnsToPlayer: Boolean = false,
     val busy: Boolean = false,
@@ -61,17 +68,23 @@ data class ApplicationState(
     val profilePageSaved: Long = 0,
     val linkedServicesProfile: String? = null,
     val policyRefreshNeeded: Boolean = false,
+    val catalogDropped: Boolean = false,
     val managingProfiles: Boolean = false,
     val profilesFromHome: Boolean = false,
     val selectedProfile: String? = null,
     val leavePinFrom: String? = null,
+    val householdPinTitle: String? = null,
     val home: HomeSnapshot? = null,
     val summaryCards: Map<String, Card> = emptyMap(),
     val homeRowBusy: Set<String> = emptySet(),
     val homeRowErrors: Map<String, String> = emptyMap(),
     val continueWatching: ContinueWatchingList? = null,
+    // The page's own first load; an unrelated action's failure stays in `error` and never becomes this page state.
+    val continueWatchingError: String? = null,
     val continueWatchingPageError: String? = null,
     val continueUndo: ContinueUndo? = null,
+    val myListUndo: MyListUndo? = null,
+    val notice: AppNotice? = null,
     val continueNext: NextEpisodes = NextEpisodes.Empty,
     val results: List<Card> = emptyList(),
     val searchRows: List<SearchResultRow> = emptyList(),
@@ -98,11 +111,11 @@ data class ApplicationState(
     val liveFavoritesAvailable: Boolean = false,
     val liveFavoritesCanRetry: Boolean = false,
     val liveFavoriteError: String? = null,
-    val liveFavoritePending: Set<String> = emptySet(),
     val liveFavoritesOnly: Boolean = false,
     val liveSetupReturnFocus: Boolean = false,
     val calendarType: String = org.viptv.app.features.calendar.CALENDAR_DEFAULT_TYPE,
     val calendarWeek: Int = 0,
+    val calendarFilter: org.viptv.app.features.calendar.CalendarFilter = org.viptv.app.features.calendar.CALENDAR_DEFAULT_FILTER,
     val calendarAvailable: Boolean = true,
     val calendarDays: List<org.viptv.app.features.calendar.CalendarDay> = emptyList(),
     val calendarEntries: List<org.viptv.app.features.calendar.CalendarEntry> = emptyList(),
@@ -160,6 +173,7 @@ data class ApplicationState(
     val fallbackNotice: BestMatchFallback? = null,
     val audioNotice: String? = null,
     val openingStage: String? = null,
+    val startup: StartupProgress? = null,
     val playback: PlaybackInput? = null,
     val playbackFailure: PlaybackFailure? = null,
     val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
@@ -172,6 +186,28 @@ data class ApplicationState(
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
     val pendingCrashReport: CrashReport? = null,
+)
+
+// A page that drops the catalog it cached keeps what belongs to the session: where Back goes, the settings page,
+// the account reads, the add-ons, the preferences and the writes in flight.
+internal fun ApplicationState.keepShell(): ApplicationState = ApplicationState(
+    navBack = navBack, navForward = navForward,
+    settingsEntrySection = settingsEntrySection, settingsAddonTarget = settingsAddonTarget, settingsPage = settingsPage, settingsReturnsToPlayer = settingsReturnsToPlayer,
+    configurableAddons = configurableAddons, addonConfigure = addonConfigure,
+    mutations = mutations,
+    accountIdentity = accountIdentity, accountDevices = accountDevices, devicesRetryable = devicesRetryable,
+    passwordChangeNotice = passwordChangeNotice, sessionNotice = sessionNotice,
+    localMode = localMode,
+    manageAccount = manageAccount, accountOwner = accountOwner, accountRole = accountRole, accountAccess = accountAccess,
+    simkl = simkl, linkedServicesProfile = linkedServicesProfile,
+    addons = addons, addonLogos = addonLogos, enabledAddonIds = enabledAddonIds, plugins = plugins,
+    preferences = preferences, preferencesError = preferencesError, browsingConfiguration = browsingConfiguration,
+    sourceIntegrations = sourceIntegrations, sourceIntegrationError = sourceIntegrationError,
+    xtreamConnections = xtreamConnections, xtreamDefaultLive = xtreamDefaultLive, xtreamNotice = xtreamNotice,
+    gateways = gateways, gatewaysError = gatewaysError, gatewayChecks = gatewayChecks, gatewayGrants = gatewayGrants,
+    updateRequired = updateRequired, backendUnreachableSince = backendUnreachableSince,
+    backendRetrySeconds = backendRetrySeconds, backendBannerDismissed = backendBannerDismissed,
+    pendingCrashReport = pendingCrashReport,
 )
 
 internal val ApplicationState.animeAvailable: Boolean

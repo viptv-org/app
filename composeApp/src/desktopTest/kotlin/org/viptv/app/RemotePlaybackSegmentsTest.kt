@@ -31,7 +31,7 @@ class RemotePlaybackSegmentsTest {
     }
 
     @Test fun segmentsAreReadOnceFromThePlaybackAndKeepTheirKinds() = runBlocking {
-        val calls = mutableListOf<String>()
+        val calls = EngineRequests<String>()
         val connection = connection(calls) {
             HttpStatusCode.OK to """{"segments":[{"kind":"intro","start_ms":310571,"end_ms":400571},""" +
                 """{"kind":"credits","start_ms":1290000,"end_ms":1380000}]}"""

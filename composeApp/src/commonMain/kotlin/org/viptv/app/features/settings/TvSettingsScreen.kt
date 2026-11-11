@@ -37,13 +37,17 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     gatewaysRequested: (() -> Unit)? = null,
     dashboardAddress: String? = null, preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    maturity: String? = null, pinAvailable: Boolean = true, devicePlayback: DevicePlaybackState? = null,
+    devicePlayback: DevicePlaybackState? = null,
     profilePage: (@Composable (FocusRequester, FocusRequester, Float, (TvSettingsSection) -> Unit) -> Unit)? = null,
     profileTitles: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     tvDevices: (@Composable (FocusRequester, FocusRequester, Float, () -> Unit) -> Unit)? = null,
     xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     addonsManageable: Boolean = true,
+    addonTarget: String? = null,
+    configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissAddonConfigure: () -> Unit = {},
+    removeAddon: (String) -> Unit = {},
     addonLogos: Map<String, String> = emptyMap()) {
     var section by remember { mutableStateOf(initialSection) }
     var leaving by remember { mutableStateOf(initialLeave) }
@@ -108,7 +112,9 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             // Add-ons and the approved-titles page own a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
-                    { installing = true }, placeholderQr, manage = addonsManageable, logos = addonLogos)
+                    { installing = true }, placeholderQr, manage = addonsManageable, logos = addonLogos,
+                    initialAddonId = addonTarget, configurableAddons = configurableAddons, configure = configureAddon,
+                    addonConfigure = addonConfigure, dismissConfigure = dismissAddonConfigure, remove = removeAddon)
             }
             else if (section == TvSettingsSection.Parental && parental != null && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 parental(first, sidebar, scale)
@@ -132,12 +138,12 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     TvSettingsSection.Playback -> {
                         val active = requireNotNull(change)
                         TvPlaybackSettings(profile?.name, requireNotNull(prefs), scale, first, sidebar, active,
-                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly, devicePlayback, profile?.id)
+                            { title, values, current, select -> choice = TvSettingsChoice(title, values, current, select) }, actualPreferencesOnly, devicePlayback, profile?.id)
                     }
                     TvSettingsSection.Subtitles -> {
                         val active = requireNotNull(change)
                         TvSubtitleSettings(requireNotNull(prefs), scale, first, sidebar, active,
-                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly)
+                            { title, values, current, select -> choice = TvSettingsChoice(title, values, current, select) }, actualPreferencesOnly)
                     }
                     TvSettingsSection.Addons -> { } // handled above: the add-on list scrolls itself
                     TvSettingsSection.Sources -> if (sourceIntegrations != null) sourceIntegrations(first, sidebar, scale) else {
@@ -151,8 +157,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                         Spacer(Modifier.height(24.dp * scale))
                         Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
                     }
-                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else
-                        TvParentalSettings(profile, maturity, pinAvailable, scale, first, sidebar, profiles)
+                    TvSettingsSection.Parental -> if (parental != null) parental(first, sidebar, scale) else {
+                        Text("Parental controls", fontSize = (40 * scale).sp)
+                        Spacer(Modifier.height(24.dp * scale))
+                        Text("Unavailable on this connection.", color = Palette.secondary, fontSize = (22 * scale).sp)
+                    }
                     TvSettingsSection.Account -> if (devicesPage && tvDevices != null) tvDevices(first, sidebar, scale) { devicesPage = false }
                         else TvSettingsAccount(local, account, scale, first, sidebar, { leaving = true }, openAccount,
                             openDevices = if (tvDevices != null && !local) ({ devicesPage = true }) else null,
@@ -160,7 +169,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     TvSettingsSection.Display -> {
                         val display = LocalTvDisplayState.current ?: rememberTvDisplayState()
                         TvDisplaySettings(display.value, scale, first, sidebar,
-                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, display::change)
+                            { title, values, current, select -> choice = TvSettingsChoice(title, values, current, select) }, display::change)
                     }
                     TvSettingsSection.About -> TvAboutSettings(local, dashboardAddress, profile?.name, addons.size, enabled.size,
                         error, notice, scale, first, sidebar, openDashboard = accountDashboard)
@@ -179,14 +188,11 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
         }
         if (leaving) TvLeaveConfirmation(local, scale, { leaving = false; leave() }, { leaving = false })
         choice?.let { TvSettingsChoiceDialog(it, scale) { choice = null } }
-        if (browserFallback) {
-            val close = remember { FocusRequester() }
-            AlertDialog(onDismissRequest = { browserFallback = false }, title = { Text("Open server dashboard") },
-                text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Open this address in a browser on your phone or computer.")
-                    dashboardAddress?.let { SelectionContainer { Text(it, color = Palette.secondary) } }
-                } }, confirmButton = { TextButton({ browserFallback = false }, Modifier.focusRequester(close)) { Text("Close") } })
-            LaunchedEffect(Unit) { withFrameNanos { }; runCatching { close.requestFocus() } }
+        if (browserFallback) TvNoticeDialog(scale, "Open server dashboard",
+            "Open this address in a browser on your phone or computer.", action = "Close",
+            onDismiss = { browserFallback = false }) {
+            dashboardAddress?.let { address -> SelectionContainer { Text(address, color = Palette.secondary,
+                fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp) } }
         }
     }
     }

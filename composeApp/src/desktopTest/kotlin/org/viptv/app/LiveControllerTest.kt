@@ -33,11 +33,11 @@ class LiveControllerTest {
             it.connection = remote
             it.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "1", livePage = LivePage(channels = listOf(channel("one"), channel("two")), groups = emptyList(), connections = emptyList(), complete = true, availability = Availability.AVAILABLE), liveFavoritesAvailable = true)
         }
-        fun close() { controller.job?.cancel(); controller.liveGuideJob?.cancel(); controller.liveFavoriteJobs.values.toList().forEach { it.cancel() }; remote.close() }
+        fun close() { controller.job?.cancel(); controller.liveGuideJob?.cancel(); controller.cancelLiveFavoriteMutations(); remote.close() }
     }
 
     @Test fun favoriteToggleIsDeduplicatedUsesProfileRoutesAndDoesNotEnterVodLibrary() = runTest {
-        val finish = CompletableDeferred<Unit>(); val writes = mutableListOf<HttpMethod>()
+        val finish = CompletableDeferred<Unit>(); val writes = EngineRequests<HttpMethod>()
         val f = Fixture(this, testScheduler) { request ->
             assertEquals("/api/profiles/1/live/one/favorite", request.url.encodedPath)
             writes += request.method
@@ -45,13 +45,41 @@ class LiveControllerTest {
         }
         try {
             f.controller.toggleLiveFavorite("one"); f.controller.toggleLiveFavorite("one")
-            runCurrent(); assertEquals(listOf(HttpMethod.Put), writes); assertEquals(setOf("one"), f.controller.state.value.liveFavoritePending)
+            runCurrent()
+            assertEquals(listOf(HttpMethod.Put), writes)
+            assertTrue(f.controller.state.value.mutations.isPending(liveFavoriteTarget("one")))
+            assertTrue(f.controller.state.value.isLiveFavorite("one"), "the star flips in the frame of the press")
             finish.complete(Unit); advanceUntilIdle()
-            assertEquals(setOf("one"), f.controller.state.value.liveFavorites); assertTrue(f.controller.state.value.liveFavoritePending.isEmpty())
+            assertEquals(setOf("one"), f.controller.state.value.liveFavorites)
+            assertFalse(f.controller.state.value.mutations.isPending(liveFavoriteTarget("one")))
             assertTrue(f.controller.state.value.library.isEmpty())
-            f.controller.toggleLiveFavorite("one"); advanceUntilIdle()
+            f.controller.toggleLiveFavorite("one"); runCurrent()
+            assertFalse(f.controller.state.value.isLiveFavorite("one"), "the second press flips it back at once")
+            advanceUntilIdle()
             assertEquals(listOf(HttpMethod.Put, HttpMethod.Delete), writes); assertTrue(f.controller.state.value.liveFavorites.isEmpty())
         } finally { finish.complete(Unit); f.close() }
+    }
+
+    @Test fun aFailedFavoriteRevertsInPlaceAndRetriesTheSameWrite() = runTest {
+        var fail = true; val writes = EngineRequests<String>()
+        val f = Fixture(this, testScheduler) { request ->
+            writes += request.method.value
+            if (fail) { fail = false; throw java.io.IOException("The write did not answer") } else """{"channel_ids":["one"]}"""
+        }
+        try {
+            f.controller.toggleLiveFavorite("one")
+            assertTrue(f.controller.state.value.isLiveFavorite("one"), "the star flips in the frame of the press")
+            advanceUntilIdle()
+            assertFalse(f.controller.state.value.isLiveFavorite("one"), "a rejected write puts the star back")
+            assertNotNull(f.controller.state.value.mutations.failure(liveFavoriteTarget("one")))
+            assertFalse(f.controller.state.value.mutations.isPending(liveFavoriteTarget("one")))
+            f.controller.retryMutation(liveFavoriteTarget("one"))
+            assertTrue(f.controller.state.value.isLiveFavorite("one"), "the retry publishes the same prediction")
+            advanceUntilIdle()
+            assertEquals(listOf("PUT", "PUT"), writes)
+            assertEquals(setOf("one"), f.controller.state.value.liveFavorites)
+            assertNull(f.controller.state.value.mutations.failure(liveFavoriteTarget("one")))
+        } finally { f.close() }
     }
 
     @Test fun siblingMutationResponsesCannotUndoEachOtherWhenSnapshotsArriveOutOfOrder() = runTest {
@@ -62,7 +90,8 @@ class LiveControllerTest {
         }
         try {
             f.controller.toggleLiveFavorite("one"); f.controller.toggleLiveFavorite("two"); runCurrent()
-            second.complete(Unit); runCurrent(); assertEquals(setOf("two"), f.controller.state.value.liveFavorites)
+            assertEquals(setOf("one", "two"), f.controller.state.value.liveFavorites)
+            second.complete(Unit); runCurrent(); assertEquals(setOf("one", "two"), f.controller.state.value.liveFavorites)
             first.complete(Unit); advanceUntilIdle(); assertEquals(setOf("one", "two"), f.controller.state.value.liveFavorites)
         } finally { first.complete(Unit); second.complete(Unit); f.close() }
     }
@@ -74,7 +103,7 @@ class LiveControllerTest {
             f.controller.toggleLiveFavorite("one"); runCurrent()
             f.controller.mutable.value = ApplicationState(screen = Screen.Live, selectedProfile = "2", liveFavorites = setOf("other"))
             finish.complete(Unit); advanceUntilIdle()
-            assertEquals(setOf("other"), f.controller.state.value.liveFavorites); assertTrue(f.controller.state.value.liveFavoritePending.isEmpty())
+            assertEquals(setOf("other"), f.controller.state.value.liveFavorites); assertTrue(f.controller.state.value.mutations.entries.isEmpty())
         } finally { finish.complete(Unit); f.close() }
     }
 
@@ -106,7 +135,7 @@ class LiveControllerTest {
     }
 
     @Test fun favoritesFilterAutomaticallyTraversesEmptyFilteredPagesWithoutManualLoadMore() = runTest {
-        val offsets = mutableListOf<String>()
+        val offsets = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["two"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide("two", false)
@@ -137,7 +166,7 @@ class LiveControllerTest {
         } finally { f.close() }
     }
     @Test fun sparseFavoritePaginationContinuesAcrossPagesWithNoNewVisibleMatches() = runTest {
-        val offsets = mutableListOf<String>()
+        val offsets = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["one","four"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide("one", false)
@@ -161,7 +190,7 @@ class LiveControllerTest {
         groups = emptyList(), connections = connections(), next_cursor = next, complete = next == null, availability = Availability.AVAILABLE))
 
     @Test fun advertisedHostConnectionsSelectTheFeedAndResetItsGuideAndPaging() = runTest {
-        val queries = mutableListOf<Parameters>()
+        val queries = EngineRequests<Parameters>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["one"]}"""
             request.url.encodedPath.endsWith("/guide") -> guide(if (request.url.encodedPath.contains("/one/")) "one" else "three", false)
@@ -181,7 +210,7 @@ class LiveControllerTest {
     }
 
     @Test fun favoritesFromAnotherFeedScanOnlySelectedFeedAndNeverExposeItsChannels() = runTest {
-        val feeds = mutableListOf<String>()
+        val feeds = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {
             request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":["from-other-feed"]}"""
             else -> { val feed = request.url.parameters["connection_id"] ?: "m3u:1"; feeds += feed

@@ -1,8 +1,15 @@
 package org.viptv.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -12,17 +19,38 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Rule
-import org.viptv.app.components.BottomBarHeight
+import org.viptv.app.components.ListEndFooter
 import org.viptv.app.components.LocalBottomBarFades
 import org.viptv.app.components.LocalBottomClearance
+import org.viptv.app.components.OverlaysContentKey
 import org.viptv.app.components.bottomBarClearance
+import org.viptv.app.features.calendar.CalendarEntry
+import org.viptv.app.features.calendar.CalendarRow
+import org.viptv.app.features.details.DetailEpisodeCard
+import org.viptv.app.features.details.DetailSeason
+import org.viptv.app.features.details.DetailSeasonPicker
+import org.viptv.app.features.details.EpisodeWatchedPill
+import org.viptv.app.features.details.FavoriteAction
+import org.viptv.app.features.live.LiveChannel
+import org.viptv.app.features.live.LiveChannelRow
+import org.viptv.app.features.live.LiveProgram
+import org.viptv.app.features.player.PlayerScreen
+import org.viptv.app.features.player.TvPlaybackExtras
+import org.viptv.app.player.PlayerFact
+import org.viptv.app.preview.PreviewData
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
+import org.viptv.app.theme.Palette
+import org.viptv.app.theme.ViptvTheme
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.EpisodeCoordinates
+import org.viptv.engine.wire.MediaIdentity
 
 /**
  * Every page, on the size its own platform draws it at, at 1.0x, 1.3x and 2.0x system font scale:
@@ -41,6 +69,11 @@ class PageFontScaleUiTest {
 
     private val scales = listOf(1f, 1.3f, 2f)
 
+    private companion object {
+        const val SCROLL_STEPS = 12
+        const val SCROLL_FRACTION = 0.85f
+    }
+
     @Test fun noPageClipsOrOverlapsItsTextAtAnyFontScale() {
         val filter = System.getenv("VIPTV_FONT_SCALE_PAGES")?.split(",")?.filter { it.isNotBlank() }?.toSet()
         val failures = mutableMapOf<String, List<String>>()
@@ -52,6 +85,7 @@ class PageFontScaleUiTest {
         })
     }
 
+    // A page is checked at the top and then screenful by screenful to its end: text below the fold is only composed once it scrolls in.
     private fun problems(page: Page, scale: Float): List<String> {
         val scene = ImageComposeScene(page.width, page.height, Density(1f, scale)) {
             CompositionLocalProvider(LocalBottomClearance provides if (page.bottomBar) bottomBarClearance() else 0.dp,
@@ -61,26 +95,69 @@ class PageFontScaleUiTest {
         }
         return try {
             settle(scene)
-            val texts = textNodes(scene)
-            val where = "${page.width}x${page.height}"
-            val clipped = texts.mapNotNull { (label, node) ->
-                val layout = layout(node) ?: return@mapNotNull null
-                val paragraph = layout.multiParagraph
-                val tooTall = paragraph.height > layout.size.height + 1f
-                if (!tooTall) null
-                else "$where: '$label' needs ${paragraph.height.toInt()}px and gets ${layout.size.height.toInt()}px"
+            val found = LinkedHashSet<String>()
+            var scrolled = -1f
+            repeat(SCROLL_STEPS) {
+                found += check(scene, page.width, page.height)
+                val at = scrollOffset(scene)
+                if (at <= scrolled) return@repeat
+                scrolled = at
+                scrollByScreenful(scene)
+                settle(scene)
             }
-            val barTop = page.height - BottomBarHeight.value
-            val overlaps = texts.flatMapIndexed { index, (label, node) ->
-                texts.drop(index + 1).mapNotNull { (other, otherNode) ->
-                    val hit = overlap(node.boundsInRoot, otherNode.boundsInRoot)
-                    // The phone bar floats over the page: scrolled content under it is hidden, not overlapping.
-                    if (hit <= 0f || page.bottomBar && (node.boundsInRoot.bottom > barTop || otherNode.boundsInRoot.bottom > barTop)) null
-                    else "$where: '$label' overlaps '$other' by ${hit.toInt()}px²"
-                }
-            }
-            clipped + overlaps
+            found.toList()
         } finally { scene.close() }
+    }
+
+    private fun check(scene: ImageComposeScene, width: Int, height: Int): List<String> {
+        val texts = textNodes(scene)
+        val where = "${width}x${height}"
+        val clipped = texts.mapNotNull { text ->
+            val layout = layout(text.node) ?: return@mapNotNull null
+            val paragraph = layout.multiParagraph
+            val tooTall = paragraph.height > layout.size.height + 1f
+            if (!tooTall) null
+            else "$where: '${text.label}' needs ${paragraph.height.toInt()}px and gets ${layout.size.height.toInt()}px"
+        }
+        // A line break inside a word means the column is narrower than its text at this scale.
+        val broken = texts.mapNotNull { text ->
+            val layout = layout(text.node) ?: return@mapNotNull null
+            val content = layout.layoutInput.text.text
+            (1 until layout.lineCount).firstOrNull { line ->
+                val split = layout.getLineEnd(line - 1)
+                split in 1 until content.length && content[split - 1].isLetterOrDigit() && content[split].isLetterOrDigit()
+            }?.let { line -> "$where: '${text.label}' breaks mid-word at line $line" }
+        }
+        val visible = texts.filter { visible(it.node) && !it.overlaid }
+        val overlaps = visible.flatMapIndexed { index, text ->
+            visible.drop(index + 1).mapNotNull { other ->
+                val hit = overlap(text.node.boundsInRoot, other.node.boundsInRoot)
+                if (hit <= 0f) null
+                else "$where: '${text.label}' ${text.node.boundsInRoot} overlaps '${other.label}' ${other.node.boundsInRoot} by ${hit.toInt()}px²"
+            }
+        }
+        return clipped + broken + overlaps
+    }
+
+    private fun scroller(scene: ImageComposeScene): SemanticsNode? = scene.semanticsOwners
+        .flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
+        .filter { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+        .maxByOrNull { it.boundsInRoot.height }
+
+    private fun scrollOffset(scene: ImageComposeScene): Float =
+        scroller(scene)?.config?.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.value() ?: 0f
+
+    private fun scrollByScreenful(scene: ImageComposeScene) {
+        val node = scroller(scene) ?: return
+        val step = (node.boundsInRoot.height * SCROLL_FRACTION).coerceAtLeast(200f)
+        node.config.getOrNull(SemanticsActions.ScrollBy)?.action?.invoke(0f, step)
+    }
+
+    // Partly scrolled out text is clipped by its scroller, so its box says nothing about what it covers.
+    private fun visible(node: SemanticsNode): Boolean {
+        val layout = layout(node) ?: return false
+        val bounds = node.boundsInRoot
+        return abs(bounds.width - layout.size.width) <= 1f && abs(bounds.height - layout.size.height) <= 1f
     }
 
     private fun overlap(a: Rect, b: Rect): Float {
@@ -91,17 +168,25 @@ class PageFontScaleUiTest {
     private fun settle(scene: ImageComposeScene) {
         var previous = ""
         scene.renderUntil(timeout = 10.seconds, what = "the page to settle") {
-            val signature = textNodes(scene).joinToString("|") { (label, node) -> "$label@${node.boundsInRoot}" }
+            val signature = textNodes(scene).joinToString("|") { text -> "${text.label}@${text.node.boundsInRoot}" }
             val settled = signature.isNotEmpty() && signature == previous
             previous = signature
             settled
         }
     }
 
-    private fun textNodes(scene: ImageComposeScene): List<Pair<String, SemanticsNode>> = scene.semanticsOwners
-        .flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
-        .filter { it.config.contains(SemanticsActions.GetTextLayoutResult) }
-        .mapNotNull { node -> label(node).takeIf { it.isNotBlank() }?.let { it to node } }
+    private class TextNode(val label: String, val node: SemanticsNode, val overlaid: Boolean)
+
+    private fun textNodes(scene: ImageComposeScene): List<TextNode> = scene.semanticsOwners.flatMap { owner ->
+        fun walk(node: SemanticsNode, overlaid: Boolean): List<TextNode> {
+            val covered = overlaid || node.config.contains(OverlaysContentKey)
+            val own = if (node.config.contains(SemanticsActions.GetTextLayoutResult)) {
+                label(node).takeIf { it.isNotBlank() }?.let { listOf(TextNode(it, node, covered)) }.orEmpty()
+            } else emptyList()
+            return own + node.children.flatMap { walk(it, covered) }
+        }
+        walk(owner.rootSemanticsNode, overlaid = false)
+    }
 
     private fun layout(node: SemanticsNode): TextLayoutResult? {
         val results = mutableListOf<TextLayoutResult>()
@@ -111,6 +196,121 @@ class PageFontScaleUiTest {
 
     private fun label(node: SemanticsNode): String =
         node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+
+    // A narrow phone is where the tools row runs out of room: 320 × 640, not just the 390 × 844 reference frame.
+    @Test fun thePhonePlayerKeepsItsBandsAndItsWordsAtLargerFontScales() {
+        val failures = mutableMapOf<String, List<String>>()
+        for ((width, height) in listOf(390 to 844, 320 to 640)) for (scale in scales) {
+            val scene = ImageComposeScene(width, height, Density(1f, scale)) { ViptvTheme(false) {
+                Box(Modifier.fillMaxSize()) {
+                    PlayerScreen(null, true, null, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
+                        tvExtras = TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams"),
+                        playEpisode = {}, chooseSources = {})
+                }
+            } }
+            try {
+                settle(scene)
+                val found = check(scene, width, height) + transportClearOfTheChrome(scene, width)
+                if (found.isNotEmpty()) failures["phone player ${width}×${height} @${scale}x"] = found
+            } finally { scene.close() }
+        }
+        assertTrue(failures.isEmpty(), failures.entries.joinToString("\n") { (where, found) ->
+            "$where: ${found.size} problems: " + found.take(3).joinToString("; ")
+        })
+    }
+
+    private fun transportClearOfTheChrome(scene: ImageComposeScene, width: Int): List<String> {
+        val all = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = true) }
+        val transport = all.filter { node ->
+            node.config.getOrNull(SemanticsProperties.ContentDescription)
+                ?.any { it in listOf("Play", "Pause", "Back 10 seconds", "Forward 10 seconds") } == true
+        }
+        if (transport.size < 2) return listOf("the phone transport was not drawn")
+        val chrome = all.filter { node ->
+            (node.config.contains(SemanticsActions.OnClick) || node.config.contains(SemanticsActions.GetTextLayoutResult)) &&
+                node.boundsInRoot.width < width - 1f &&
+                transport.none { it.boundsInRoot.contains(node.boundsInRoot.center) }
+        }
+        return chrome.mapNotNull { node ->
+            val hit = transport.maxOf { overlap(it.boundsInRoot, node.boundsInRoot) }
+            if (hit <= 0f) null else "${label(node).ifBlank { node.config.toString() }} at ${node.boundsInRoot} meets the transport"
+        }
+    }
+
+    // The components #866 names, driven directly so a page that hides them below the fold or behind a modal still gets checked.
+    @Test fun everyPhoneComponentClipsNothingAtLargerFontScales() {
+        val failures = mutableMapOf<String, List<String>>()
+        for (component in components()) for (scale in scales) {
+            componentProblems(component, scale).takeIf { it.isNotEmpty() }?.let { failures["${component.name} @${scale}x"] = it }
+        }
+        assertTrue(failures.isEmpty(), failures.entries.joinToString("\n") { (where, found) ->
+            "$where: ${found.size} problems: " + found.take(3).joinToString("; ")
+        })
+    }
+
+    private data class Component(val name: String, val width: Int, val height: Int, val content: @Composable () -> Unit)
+
+    private fun components(): List<Component> = listOf(
+        Component("save action", 390, 400) {
+            Column(Modifier.padding(16.dp)) { FavoriteAction(detailCard(), saved = false, save = {}) }
+        },
+        Component("calendar release row", 390, 400) {
+            Column(Modifier.padding(16.dp)) {
+                CalendarRow(calendarEntry(), phone = true, television = false, scale = 1f, focus = {}, open = {}, watch = {})
+            }
+        },
+        Component("live channel row", 390, 400) {
+            Column(Modifier.padding(16.dp)) {
+                LiveChannelRow(liveChannel(), now = 30, watch = {}, favourite = null)
+            }
+        },
+        Component("list end", 390, 300) {
+            Column(Modifier.padding(16.dp)) { ListEndFooter(ended = true) }
+        },
+        Component("season picker", 390, 300) {
+            Column(Modifier.padding(16.dp)) {
+                val season = DetailSeason(1, listOf(episodeCard()))
+                DetailSeasonPicker(listOf(season), season, phone = true, choose = {})
+            }
+        },
+        Component("episode card", 390, 400) {
+            Column(Modifier.padding(16.dp)) { DetailEpisodeCard(episodeCard(), phone = true, play = {}) }
+        },
+        Component("watched pill", 390, 300) {
+            Column(Modifier.padding(16.dp)) { EpisodeWatchedPill(television = false) }
+        },
+    )
+
+    private fun componentProblems(component: Component, scale: Float): List<String> {
+        val scene = ImageComposeScene(component.width, component.height, Density(1f, scale)) {
+            ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) { component.content() } }
+        }
+        return try {
+            settle(scene)
+            check(scene, component.width, component.height)
+        } finally { scene.close() }
+    }
+
+    private fun detailCard() = Card(MediaIdentity("tt1000001", "movie", emptyList()), provider_id = "addon:1",
+        title = "A title with a long enough name to take room", badges = listOf("4K", "HDR"))
+
+    private fun calendarEntry(): CalendarEntry {
+        val parent = Card(MediaIdentity("simkl:tv:21", "series", emptyList()), provider_id = "simkl",
+            title = "Scheduled series", badges = emptyList())
+        return CalendarEntry("one", "one", "12:00 PM", parent, subtitle = "S2 E3 · [Episode title] · Prime Video", aired = true)
+    }
+
+    private fun liveChannel() = LiveChannel(Card(MediaIdentity("channel-one", "live", emptyList()), provider_id = "m3u:1",
+        title = "Channel One", badges = listOf("LIVE")), id = "one", connectionId = "m3u:1",
+        programs = listOf(LiveProgram("now", "[Football Pre-game]", 0, 30, description = "[Local and national headlines, weather and sports.]"),
+            LiveProgram("next", "[Quiz Night]", 30, 60)))
+
+    private fun episodeCard(): Card {
+        val show = Card(MediaIdentity("tt1000002", "series", emptyList()), provider_id = "addon:1", title = "Fixture series",
+            badges = emptyList())
+        return show.copy(identity = MediaIdentity("tt1000002:1:1", "series", emptyList(), EpisodeCoordinates("aired", 1, 1)),
+            parent_identity = show.identity, title = "Episode One", subtitle = "52m · Watched", progress = 1.0)
+    }
 
     private fun tvPages() = listOf(
         Page("tv-home", Screen.Home, "Home", 1920, 1080, television = true),
@@ -185,5 +385,27 @@ class PageFontScaleUiTest {
         Page("desktop-profiles", Screen.Profiles, "Profiles", 1280, 800, desktop = true),
     )
 
-    private fun pages(): List<Page> = tvPages() + phonePages() + desktopPages()
+    // A tablet is the touch layout that is neither phone nor desktop chrome: UiPreview draws it from the width alone.
+    private fun tabletPages(): List<Page> = listOf(
+        Triple("home", Screen.Home, "Home"),
+        Triple("movies", Screen.Movies, "Movies"),
+        Triple("search", Screen.Search, "Search"),
+        Triple("library", Screen.Library, "Library"),
+        Triple("library-long", Screen.Library, "Long"),
+        Triple("history", Screen.History, "History"),
+        Triple("calendar", Screen.Calendar, "Calendar"),
+        Triple("live", Screen.Live, "Live"),
+        Triple("title-movie", Screen.Details, "Movie"),
+        Triple("title-series", Screen.Details, "Series"),
+        Triple("sources", Screen.Sources, "Sources"),
+        Triple("settings", Screen.Settings, "Playback"),
+        Triple("settings-addons", Screen.Settings, "Addons"),
+        Triple("profiles", Screen.Profiles, "Profiles"),
+    ).flatMap { (name, screen, variant) ->
+        listOf(1024 to 768, 1280 to 800).map { (width, height) ->
+            Page("tablet-$name-${width}w", screen, variant, width, height)
+        }
+    }
+
+    private fun pages(): List<Page> = tvPages() + phonePages() + desktopPages() + tabletPages()
 }

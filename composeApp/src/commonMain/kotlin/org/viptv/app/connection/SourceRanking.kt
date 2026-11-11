@@ -78,10 +78,10 @@ internal fun rankedSourcesResponse(response: JsonObject, candidates: List<Source
 
 internal fun sourceRankingRequest(candidates: List<SourceCandidate>, context: RankingContext): JsonObject = buildJsonObject {
     put("ids", JsonArray(candidates.map { JsonPrimitive(it.id) }))
-    context.providerAffinity?.let { put("provider_affinity", it) }
     wireHeight(context.device.maxHeight)?.let { put("device_max_height", it) }
     deviceCapabilityJson(context.device)?.let { put("device", it) }
     context.seriesMemory?.let(::seriesMemoryJson)?.let { put("series_memory", it) }
+    affinityText(context.providerAffinity)?.let { put("provider_affinity", it) }
 }
 
 internal const val SOURCE_RANKING_BATCH_SIZE = 120

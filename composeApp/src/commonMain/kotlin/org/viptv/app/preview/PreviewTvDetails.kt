@@ -24,9 +24,10 @@ internal object PreviewTvDetails {
         progress = if (index == 1) 0.27 else null, badges = if (index == 0) listOf("Watched") else emptyList()) }
     val series = DetailSnapshot(item = Card(identity = MediaIdentity("tv-series", "series", emptyList()), provider_id = "preview", title = "Monster: The Jeffrey Dahmer Story",
         subtitle = "Series · 2022 · Biography, Crime, Drama · IMDb 7.7",
-        metadata = CardMetadata(year = 2022, genres = listOf("Biography", "Crime", "Drama"), rating = 7.7, certification = "TV-MA"),
+        metadata = CardMetadata(year = 2022, genres = listOf("Biography", "Crime", "Drama"), rating = 7.7, certification = "TV-MA",
+            cast = listOf("Evan Peters", "Richard Jenkins", "Niecy Nash")),
         description = "This true-crime anthology series delivers a multi-layered psychological study of individuals whose extreme actions shocked society. The series follows the victims’ families and the systemic failures that allowed the crimes to continue for years.",
         landscape = art("tv3title-0.jpg"), logo = art("tv3title-1.png"), badges = listOf("TV-MA", "HD", "5.1", "CC")), episodes = episodes)
     val movieExtras = TvDetailExtras(recommendations = recommendations)
-    val seriesExtras = TvDetailExtras("Evan Peters, Richard Jenkins, Niecy Nash", episodes[1], "Resume S1 E2", "38m left", recommendations)
+    val seriesExtras = TvDetailExtras(episodes[1], "Resume S1 E2", "38m left", recommendations)
 }

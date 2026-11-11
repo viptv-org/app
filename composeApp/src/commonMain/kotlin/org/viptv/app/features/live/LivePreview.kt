@@ -8,8 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,31 +18,42 @@ import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
 import org.viptv.app.resources.ic_play_zip
 import org.viptv.app.theme.Palette
+import org.viptv.app.theme.Scrim
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
+import org.viptv.app.components.FavouriteStar
+import org.viptv.app.components.LiveBadge
 import org.viptv.app.components.Button
+import org.viptv.app.components.MutationFailure
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationSpinner
 import org.viptv.app.format.providerText
+import org.viptv.app.state.liveFavoriteTarget
 
 @Composable
 internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?, phone: Boolean, television: Boolean,
     scale: Float, watch: () -> Unit, favourite: (() -> Unit)?, guide: (() -> Unit)? = null) {
     val art = program?.artwork ?: channel.card.landscape ?: channel.card.poster
+    val mutations = LocalPendingMutation.current
+    val favoriteTarget = liveFavoriteTarget(channel.id)
+    val favoritePending = mutations.isPending(favoriteTarget)
     if (phone) {
         Box(Modifier.fillMaxWidth().heightIn(min = 196.dp).pointerClickable(onClick = watch).clip(RoundedCornerShape(12.dp)).background(Palette.surface)) {
             if (art != null) AsyncImage(art, channel.card.title, Modifier.matchParentSize(), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
-            Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
+            Box(Modifier.matchParentSize().background(Scrim.phoneLivePreview))
             Column(Modifier.fillMaxWidth().heightIn(min = 196.dp)
                 .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            LiveBadge(Modifier)
+            if (program == null || liveFraming(program, now) == LiveFraming.OnAir) LiveBadge() else Spacer(Modifier.height(19.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(listOfNotNull(channel.number, channel.card.title).joinToString(" · "), fontSize = 12.sp, color = Palette.secondary)
                 (program?.title ?: channel.card.subtitle)?.let {
                     Text(it, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (program != null && now != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LinearProgressIndicator(progress = { liveProgress(program, now) }, modifier = Modifier.width(90.dp).height(3.dp),
-                        color = Palette.text, trackColor = Palette.raised)
-                    Text("${(program.end - now).coerceAtLeast(0)} min left", fontSize = 11.sp, color = Palette.secondary)
+                val status = program?.let { liveStatus(it, now) }
+                if (program != null && status != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (liveFraming(program, now) == LiveFraming.OnAir) LinearProgressIndicator(progress = { liveProgress(program, now) },
+                        modifier = Modifier.width(90.dp).height(3.dp), color = Palette.text, trackColor = Palette.raised)
+                    Text(status, fontSize = 11.sp, color = Palette.secondary)
                 }
             }
             }
@@ -60,7 +69,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     lineHeight = (if (television) 62 * scale else 34f).sp, fontWeight = FontWeight.Bold)
             }
             program?.let {
-                Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
+                Text("${liveTime(it.start)} – ${liveTime(it.end, period = true)}${liveRangeStatus(it, now)}", fontSize = (if (television) 24 * scale else 14f).sp, color = Palette.body)
                 it.description.providerText()?.let { description -> ClampedText(description, fontSize = (if (television) 26 * scale else 14f).sp, color = Palette.body, maxLines = 2) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp * scale)) {
@@ -68,14 +77,17 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Watch")
                 }
-                favourite?.let { save -> Button(save, enabled = !channel.favoritePending, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
-                    Icon(Lucide.Star, null, Modifier.size(16.dp), tint = if (channel.favorite) Palette.accent else Palette.text); Spacer(Modifier.width(8.dp)); Text(if (channel.favorite) "Favourited" else "Favourite")
+                favourite?.let { save -> Button(save, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
+                    if (favoritePending) MutationSpinner(16.dp, color = Palette.text)
+                    else FavouriteStar(channel.favorite, 16.dp, Palette.text)
+                    Spacer(Modifier.width(8.dp)); Text(if (favoritePending) "Saving…" else favouriteActionLabel(channel.favorite))
                 } }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     Icon(Lucide.LayoutGrid, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp)); Text("Full guide")
                 }
             }
+            MutationFailure(favoriteTarget)
         }
         if (television && art != null) AsyncImage(art, channel.card.title, Modifier.width(640.dp * scale).aspectRatio(16f / 9)
             .clip(RoundedCornerShape(16.dp * scale)), contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
@@ -83,9 +95,3 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
     }
 }
 
-@Composable
-private fun LiveBadge(modifier: Modifier) {
-    Surface(modifier, shape = RoundedCornerShape(4.dp), color = Color(0xFFE8434F)) {
-        Text("LIVE", Modifier.padding(horizontal = 6.dp, vertical = 3.dp), fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
-    }
-}

@@ -49,7 +49,7 @@ class DiscoverySelectionsTest {
 
     @Test fun remoteMultiValuesStayInOneJsonParameterAcrossPagesWhileScalarWireStaysCompatible() = runBlocking {
         val selection = listOf(QueryValue("genre", listOf("Sci-Fi & Fantasy", "Drama/Comedy")))
-        val skips = mutableListOf<Int>()
+        val skips = EngineRequests<Int>()
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
             override suspend fun save(session: SavedRemoteSession) = Unit

@@ -59,6 +59,28 @@ jobs:
           packages: 'platform-tools platforms;android-37.0'
       - name: Compile Wasm JS main
         run: ./gradlew --max-workers=2 :composeApp:compileKotlinWasmJs
+  compile-ios:
+    name: compile iOS main and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Reclaim hosted Linux runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - name: Compile iOS main and test klibs
+        run: ./gradlew --max-workers=2 :composeApp:compileKotlinIosSimulatorArm64 :composeApp:compileTestKotlinIosSimulatorArm64
   compile-android-app:
     name: compile Android app debug
     runs-on: ubuntu-latest
@@ -259,19 +281,35 @@ jobs:
           path: composeApp/build/reports/tests/desktopTest
           if-no-files-found: ignore
           retention-days: 14
+  submodule-guard:
+    name: native/core forward only
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check native/core never moves backwards
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: origin/${{ github.base_ref }}
+        run: bash scripts/ci/native-core-forward-only.sh
   checks:
     name: app checks
     runs-on: ubuntu-latest
-    needs: [compile-android, compile-wasm, compile-android-app, native-prep, desktop-test]
+    needs: [compile-android, compile-wasm, compile-ios, compile-android-app, native-prep, desktop-test, submodule-guard]
     if: always()
     steps:
       - name: Gate on every parallel job
         shell: bash
         run: |
-          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.compile-android-app.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }}'
+          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.compile-ios.result }} ${{ needs.compile-android-app.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }} ${{ needs.submodule-guard.result }}'
           echo "parallel jobs: $results"
           for result in $results; do
-            # compile-android is push-only; every other job must pass.
+            # compile-android and submodule-guard are push-only; every other job must pass.
             if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "a parallel job did not succeed: $results" >&2
               exit 1

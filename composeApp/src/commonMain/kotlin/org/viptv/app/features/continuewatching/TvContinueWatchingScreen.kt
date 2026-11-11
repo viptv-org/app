@@ -14,7 +14,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.viptv.app.components.AutomaticPage
+import org.viptv.app.components.tvPagePadding
 import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.ListPageState
+import org.viptv.app.components.PageStateLayout
 import org.viptv.app.components.LIST_TITLES
 import org.viptv.app.components.ListRemovalConfirmation
 import org.viptv.app.components.PageRestore
@@ -25,7 +28,6 @@ import org.viptv.app.components.tvGridItem
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.features.home.TvHomeSkeletonCard
-import org.viptv.app.state.ContinueUndo
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -36,7 +38,7 @@ private const val CARD_WIDTH = (1728f - GAP * (COLUMNS - 1)) / COLUMNS
 @Composable
 internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -> Unit, open: (Card) -> Unit,
     more: (() -> Unit)?, retry: () -> Unit, home: () -> Unit,
-    remove: ((Card) -> Unit)? = null, undo: ContinueUndo? = null, undoRemove: () -> Unit = {}) {
+    remove: ((Card) -> Unit)? = null) {
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val grid = rememberLazyGridState()
     val cards = remember(page.cards) { page.cards.distinctBy(::cardLookupKey) }
@@ -49,13 +51,12 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
     var confirming by remember { mutableStateOf<Card?>(null) }
     val target = lastFocused?.takeIf { card -> cards.any { cardLookupKey(it) == cardLookupKey(card) } } ?: cards.firstOrNull()
     val removal = remember { FocusRequester() }
-    val undoFocus = remember { FocusRequester() }
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
     }
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(cards.size) { cardLookupKey(cards[it]) } })
-    LaunchedEffect(cards.isEmpty(), page.loaded, page.error != null) {
-        if (cards.isEmpty() && !page.loading) claim(action)
+    LaunchedEffect(cards.isEmpty(), page.state) {
+        if (cards.isEmpty() && page.state != ListPageState.Loading) claim(action)
     }
     LaunchedEffect(cards) {
         val lost = focusedKey ?: return@LaunchedEffect
@@ -67,23 +68,23 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
     AutomaticPage(cards.size, page.busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val scale = maxWidth / 1920.dp
-        Column(Modifier.fillMaxSize().padding(start = 96.dp * scale, end = 96.dp * scale, top = 72.dp * scale)) {
+        Column(Modifier.fillMaxSize().tvPagePadding(scale)) {
             Text("Continue Watching", fontSize = (40 * scale).sp, lineHeight = (48 * scale).sp,
                 letterSpacing = (-.8f * scale).sp, fontWeight = FontWeight.Bold)
             Text("Everything you’re in the middle of, most recent first.", color = Palette.secondary,
                 fontSize = (24 * scale).sp, lineHeight = (32 * scale).sp)
             Spacer(Modifier.height(32.dp * scale))
-            page.error?.takeIf { page.loaded }?.let { Text(it, color = Palette.danger, fontSize = (24 * scale).sp) }
             when {
-                page.loading -> Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+                page.state == ListPageState.Loading -> Column(verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
                     repeat(2) {
                         Row(horizontalArrangement = Arrangement.spacedBy(GAP.dp * scale)) {
                             repeat(COLUMNS) { Box(Modifier.width(CARD_WIDTH.dp * scale)) { TvHomeSkeletonCard(scale, portrait = false) } }
                         }
                     }
                 }
-                !page.loaded && page.error != null -> TvPageMessage(scale, "Continue Watching didn’t load", page.error, "Try again", retry, action)
-                page.empty -> TvPageMessage(scale, "Nothing in progress", "Titles you start watching appear here.", "Browse Home", home, action)
+                page.state == ListPageState.Failed || page.state == ListPageState.Empty ->
+                    ContinueWatchingState(page.state, page.error, retry, home, Modifier.weight(1f),
+                        layout = PageStateLayout.Tv, scale = scale, focus = action)
                 else -> {
                     LazyVerticalGrid(GridCells.Fixed(COLUMNS), Modifier.fillMaxWidth().weight(1f).focusGroup()
                         .onFocusChanged {
@@ -111,32 +112,23 @@ internal fun TvContinueWatchingScreen(page: ContinueWatchingPage, play: (Card) -
                             ListEndFooter(ended = true, noun = LIST_TITLES, modifier = Modifier.fillMaxWidth(), television = true, scale = scale)
                         }
                     }
-                    if (remove != null) TvRemovalBar(scale, target, undo, undoFocus, removal, request = { confirming = it }, undoRemove = undoRemove)
+                    if (remove != null) TvRemovalBar(scale, target, removal, request = { confirming = it })
                 }
             }
         }
-    }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+        confirming?.let { card ->
+            ListRemovalConfirmation(card, REMOVE_CONTINUE_LABEL, confirm = { confirming = null; remove?.invoke(card) },
+                dismiss = { confirming = null }, television = true, scale = scale)
+        }
     }
 }
 
 @Composable
-private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoFocus: FocusRequester,
-    requester: FocusRequester, request: (Card) -> Unit, undoRemove: () -> Unit) {
+private fun TvRemovalBar(scale: Float, target: Card?, requester: FocusRequester, request: (Card) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 12.dp * scale, bottom = 96.dp * scale), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        if (undo != null) {
-            Text("Removed “${undo.card.title}” from Continue Watching.", Modifier.weight(1f), color = Palette.secondary,
-                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            TvAction(Modifier.heightIn(min = 64.dp * scale).width(200.dp * scale), scale, requester = undoFocus,
-                activate = undoRemove, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-                Text("Undo", color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
-            }
-        } else {
-            Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
-                fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
+        Text(target?.let { "“${it.title}”" }.orEmpty(), Modifier.weight(1f), color = Palette.secondary,
+            fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(560.dp * scale), scale, requester = requester, enabled = target != null,
             activate = { target?.let(request) }, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
             Text(REMOVE_CONTINUE_LABEL, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold)
@@ -144,14 +136,3 @@ private fun TvRemovalBar(scale: Float, target: Card?, undo: ContinueUndo?, undoF
     }
 }
 
-@Composable
-private fun TvPageMessage(scale: Float, title: String, message: String, action: String, activate: () -> Unit, requester: FocusRequester) {
-    Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
-        Text(title, fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
-        Text(message, color = Palette.secondary, fontSize = (24 * scale).sp)
-        TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, requester = requester,
-            activate = activate, contentPadding = PaddingValues(horizontal = 24.dp * scale)) {
-            Text(action, color = it, fontSize = (24 * scale).sp, fontWeight = FontWeight.Bold)
-        }
-    }
-}

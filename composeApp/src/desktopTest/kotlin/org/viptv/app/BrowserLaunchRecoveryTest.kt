@@ -31,7 +31,7 @@ class BrowserLaunchRecoveryTest {
     private val bootstrap = """{"identity":{"profiles":[{"id":"p1","name":"Me"}],"profile_id":"p1"},"home":null}"""
 
     private class Fixture(scope: CoroutineScope, private val bootstrap: String) {
-        val requests = mutableListOf<String>()
+        val requests = EngineRequests<String>()
         var authenticated = true
         var failWith: (Int) -> Unit = {}
         private var attempts = 0
@@ -49,7 +49,7 @@ class BrowserLaunchRecoveryTest {
             })
 
         private suspend fun io.ktor.client.engine.mock.MockRequestHandleScope.answer(path: String): io.ktor.client.request.HttpResponseData {
-            synchronized(requests) { requests += path }
+            requests += path
             val json = headersOf(HttpHeaders.ContentType, "application/json")
             return when (path) {
                 "/api/auth/status" -> respond("""{"authenticated":$authenticated}""", HttpStatusCode.OK, json)
@@ -63,7 +63,7 @@ class BrowserLaunchRecoveryTest {
             }
         }
 
-        fun count(path: String) = synchronized(requests) { requests.count { it == path } }
+        fun count(path: String) = requests.count { it == path }
         fun launches() = count("/api/bootstrap")
     }
 

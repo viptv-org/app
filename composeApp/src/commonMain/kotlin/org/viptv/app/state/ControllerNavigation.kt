@@ -1,6 +1,7 @@
 package org.viptv.app.state
 
 import org.viptv.app.connection.*
+import org.viptv.app.features.sources.sourceSettingsSection
 import org.viptv.engine.wire.LiveQuery
 import kotlinx.coroutines.CancellationException
 
@@ -71,6 +72,7 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
             leavePinFrom = restored.leavePinFrom.takeIf { screen == Screen.ProfilePin },
             pendingAction = null,
             settingsEntrySection = if (screen == Screen.Settings) restored.settingsEntrySection else null,
+            settingsAddonTarget = if (screen == Screen.Settings) restored.settingsAddonTarget else null,
             liveSetupReturnFocus = restored.liveSetupReturnFocus && screen in listOf(Screen.Settings, Screen.Live),
             settingsReturnsToPlayer = playerVisit,
             settingsPage = if (screen == Screen.Settings && previousScreen == Screen.Settings) restored.settingsPage else null,
@@ -82,9 +84,11 @@ private fun ApplicationController.transition(screen: Screen, record: Boolean, br
 
 // Back to a list screen restores its captured entry and skips the load that would reset filters, data and scroll.
 private fun ApplicationController.recoverBackEntryLoads(screen: Screen, browse: BrowseQuery?, navigation: Long, restore: BackEntry?) {
-    val skip = restore != null && screen in restoredListScreens
+    // Restrictions dropped the catalog, so a restored screen reads it again instead of drawing its old entry.
+    val skip = restore != null && screen in restoredListScreens && !mutable.value.catalogDropped
     if (!skip && screen in listOf(Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime)) run {
-        loadBrowse(browse ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
+        loadBrowse(browse ?: mutable.value.browseQuery.takeIf { restore != null }
+            ?: BrowseQuery(when (screen) { Screen.Series -> "series"; Screen.Anime -> "anime"; else -> "movie" }))
     }
     if (screen == Screen.Home && mutable.value.policyRefreshNeeded) refresh()
     else if (screen == Screen.Home) freshen()
@@ -196,12 +200,21 @@ private fun ApplicationState.settingsLevelOpen() =
     screen == Screen.Settings && (parentTitles != null || settingsPage?.parent() != null)
 
 fun ApplicationController.showSettingsPage(page: SettingsPage) {
-    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page) updateState { it.copy(settingsPage = page) }
+    if (mutable.value.screen == Screen.Settings && mutable.value.settingsPage != page)
+        updateState { it.copy(settingsPage = page, settingsAddonTarget = it.settingsAddonTarget.takeIf { page.section == "Add-ons" }) }
 }
 
-fun ApplicationController.openAddonsSettings() {
-    updateState { it.copy(settingsEntrySection = "Add-ons", settingsPage = null) }
+fun ApplicationController.openAddonsSettings() = openSettingsSection("Add-ons")
+
+fun ApplicationController.openSettingsSection(section: String, addonTarget: String? = null) {
+    updateState { it.copy(settingsEntrySection = section, settingsAddonTarget = addonTarget, settingsPage = null) }
     navigate(Screen.Settings)
+}
+
+fun ApplicationController.configureSource(providerId: String) {
+    sourceSettingsSection(providerId)?.let {
+        openSettingsSection(it, addonTarget = providerId.takeIf { it.startsWith("addon:") })
+    }
 }
 
 private fun ApplicationController.backWithinSettings(): Boolean {

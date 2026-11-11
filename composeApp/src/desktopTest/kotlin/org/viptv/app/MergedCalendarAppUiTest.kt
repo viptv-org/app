@@ -43,6 +43,8 @@ class MergedCalendarAppUiTest {
     @Test fun tabletShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1024, height = 768, name = "tablet", details = false)
     @Test fun desktopShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "desktop", details = false, desktopChrome = true)
     @Test fun webShowsYourShowsMergedAndFiltersThem() = merged(television = false, width = 1280, height = 800, name = "web", details = false, browser = true)
+    @Test fun phoneKeepsTheShowsFilterWhenReturningFromARelease() = returns(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvKeepsTheShowsFilterWhenReturningFromARelease() = returns(television = true, width = 1920, height = 1080, name = "tv")
 
     @Test fun phoneLibraryOnlyProfileHasNoFilter() = single(MergedCalendarWire.page(listOf(
         MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, poster = art("poster3.jpg")),
@@ -61,9 +63,61 @@ class MergedCalendarAppUiTest {
         assertFalse(nodes.any { marked(it) || text(it) == "Your shows" })
     }
 
+    @Test fun phoneRowsDrawTheFactsAndTheStatusCopyMdRecords() = rowFacts(television = false, width = 390, height = 844, name = "phone")
+    @Test fun tvRowsDrawTheFactsAndTheStatusCopyMdRecords() = rowFacts(television = true, width = 1920, height = 1080, name = "tv")
+
+    private fun rowFacts(television: Boolean, width: Int, height: Int, name: String) = factsPage(television, width, height) { s ->
+        s.until("the read's rows") { s.controller.state.value.calendarEntries.size == 2 && !s.controller.state.value.busy }
+        s.frames(20)
+        fun rowOf(title: String): String {
+            val rows = s.nodes().filter { text(it).contains(title) && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(rows.isNotEmpty(), "$name: no $title row; texts=" + s.nodes().map(::text).filter(String::isNotBlank))
+            return text(rows.minBy { it.boundsInRoot.width * it.boundsInRoot.height })
+        }
+        val clock = Regex("^\\d{1,2}:\\d{2} (AM|PM) ")
+        // The phone pill and the TV word sit in different places, so compare the facts a row draws, not their order.
+        fun facts(line: String) = line.replaceFirst(clock, "").split(" ").filter(String::isNotBlank).sorted().joinToString(" ")
+        fun assertRow(title: String, expected: String) {
+            val row = rowOf(title)
+            assertTrue(clock.containsMatchIn(row), "$name: the row keeps its time: $row")
+            assertEquals(facts(expected), facts(row), "$name: $title draws copy.md's facts and nothing else")
+        }
+        assertRow("Slow Horses", "Slow Horses S5 E3 · Chapter 3 Your show Out now")
+        s.chooseShows("All")
+        s.until("the public row") { s.nodes().any { text(it).contains("Public premiere") } }
+        assertRow("Public premiere", "Public premiere S1 E1 · Pilot in 1h 20m")
+    }
+
+    private fun factsPage(television: Boolean, width: Int, height: Int, check: (Scene) -> Unit) = scene(
+        MergedCalendarWire.page(listOf(
+            MergedCalendarWire.library("lib-1", "Slow Horses", 5, 3, date = MergedCalendarWire.today(3), poster = art("poster3.jpg")),
+            MergedCalendarWire.public("public-1", "Public premiere", source = "public", date = MergedCalendarWire.today(22), poster = art("poster5.jpg"))),
+            listOf("library", "public"), null), television, width, height) { s ->
+        if (!television && width < 640) s.showToday()
+        check(s)
+    }
+
+    private fun returns(television: Boolean, width: Int, height: Int, name: String) = scene(mergedPage, television, width, height) { s ->
+        if (!television && width < 640) s.showToday()
+        s.until("the merged rows") { s.nodes().any { text(it).contains("Slow Horses") } }
+        s.chooseShows("All")
+        s.until("the public schedule") { s.nodes().any { text(it).contains("Public premiere") } }
+        s.save("$name-calendar-all-before-return")
+        s.openRow("Public premiere")
+        s.until("Details") { s.controller.state.value.screen == Screen.Details }
+        s.controller.navigateBack()
+        s.until("the Calendar") { s.controller.state.value.screen == Screen.Calendar && s.showsTrigger() != null }
+        s.until("the release back in the list") { s.nodes().any { text(it).contains("Public premiere") && it.config.contains(SemanticsActions.OnClick) } }
+        assertEquals("Shows: All", s.showsLabel(), "$name: Back keeps the picked Shows value; filter=" +
+            s.controller.state.value.calendarFilter + "; texts=" + s.nodes().map(::text).filter(String::isNotBlank))
+        assertTrue(s.nodes().any { text(it).contains("Slow Horses") }, "$name: the other release stays listed")
+        assertFalse(s.nodes().any { text(it) == CALENDAR_FALLBACK }, "$name: All needs no fallback line")
+        s.save("$name-calendar-all-after-return")
+    }
+
     private fun art(name: String) = Res.getUri("files/ui-preview/$name")
 
-    private val metaOffsets = mutableListOf<Int>()
+    private val metaOffsets = EngineRequests<Int>()
     private val slowHorses get() = MergedCalendarWire.seriesCard("Slow Horses").copy(poster = art("poster3.jpg"),
         landscape = art("landscape.jpg"), description = "Slow Horses, a scheduled series.")
     private val allEpisodes = (1L..5L).flatMap { season -> (1L..6L).map { season to it } }
@@ -111,7 +165,7 @@ class MergedCalendarAppUiTest {
         assertEquals(MergedCalendarWire.seriesId("Slow Horses"), s.controller.state.value.detail?.item?.identity?.id)
         s.until("season 5's episodes") { s.nodes().any { text(it).contains("Episode 5-3") } }
         assertTrue(s.nodes().any { text(it).contains("Season 5") }, "Season 5 is selected")
-        assertTrue(24 in synchronized(metaOffsets) { metaOffsets.toList() }, "Season 5 loads through Details paging: $metaOffsets")
+        assertTrue(24 in metaOffsets.snapshot(), "Season 5 loads through Details paging: $metaOffsets")
         s.save("$name-details-from-calendar")
     }
 
@@ -217,6 +271,13 @@ class MergedCalendarAppUiTest {
             }
         }
 
+        fun openRow(title: String) {
+            val row = nodes().firstOrNull { text(it).contains(title) && it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(row != null, "no $title row; texts=" + nodes().map(::text).filter(String::isNotBlank))
+            assertTrue(row!!.config[SemanticsActions.OnClick].action!!.invoke(), "$title opens")
+            frames(10)
+        }
+
         fun showToday() {
             until("the calendar rows") { controller.state.value.calendarEntries.isNotEmpty() && !controller.state.value.busy }
             val today = controller.state.value.calendarDays.single { it.label == "Today" }
@@ -240,7 +301,7 @@ class MergedCalendarAppUiTest {
                 path == "/api/calendar" -> page
                 path.startsWith("/api/meta/series/") -> {
                     val offset = request.url.parameters["offset"]?.toInt() ?: 0
-                    synchronized(metaOffsets) { metaOffsets += offset }
+                    metaOffsets += offset
                     detailPage(offset, request.url.parameters["limit"]?.toInt() ?: 24)
                 }
                 else -> return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))

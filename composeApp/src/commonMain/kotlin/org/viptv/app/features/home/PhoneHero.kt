@@ -22,6 +22,7 @@ import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Check
 import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.theme.Palette
@@ -73,6 +74,7 @@ internal fun PhoneHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, s
                             Text(if (pending) "Saving…" else "My List", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
+                    MutationFailure(saveTarget(shown), Modifier.fillMaxWidth())
                 }
             }
             carousel?.let { HeroIndicators(it.count, it.index, it.progress) }

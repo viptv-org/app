@@ -49,12 +49,16 @@ sealed interface PlayerFact {
     // What the renderer actually holds, in title coordinates. A renderer that cannot tell sends nothing.
     data class Buffered(val ranges: List<BufferedRange>) : PlayerFact
     data class Status(val name: String) : PlayerFact
+    // The renderer's own share of the buffer it needs before a first frame; a renderer without that measure sends nothing.
+    data class Startup(val fraction: Float) : PlayerFact
     data class Properties(val volume: Float, val speed: Double, val subtitleSize: Float = 1f) : PlayerFact
     data class Tracks(val options: PlaybackTracks) : PlayerFact
     data object Failed : PlayerFact
     data class ControlFailed(val control: PlaybackControl) : PlayerFact
     // The clock advances with no presented frame: a stream this device cannot decode.
     data object Undecodable : PlayerFact
+    // Every sample of the presented picture was identical: the source is probably an error slate, not the title.
+    data object ProbableErrorSlate : PlayerFact
 }
 
 // Milliseconds on the title clock; ranges stay separate so a seek that leaves a gap keeps it.

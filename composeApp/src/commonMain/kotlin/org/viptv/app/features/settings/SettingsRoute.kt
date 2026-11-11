@@ -57,6 +57,13 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         state.profiles.find { it.id == state.selectedProfile }, controller::navigateBack, television,
         initialSection = state.settingsEntrySection ?: if (browser && !compact && accountSession) "Devices" else null,
         page = state.settingsPage, pageChanged = controller::showSettingsPage,
+        addonTarget = state.settingsAddonTarget,
+        configurableAddons = state.configurableAddons,
+        configureAddon = { controller.configureAddon(it, openInBrowser = !television) },
+        configureAddonFailure = state.addonConfigure?.failure?.let { (state.addonConfigure?.addon ?: "") to it },
+        retryConfigureAddon = { state.addonConfigure?.addon?.let { controller.configureAddon(it, openInBrowser = !television) } },
+        addonConfigure = state.addonConfigure,
+        dismissAddonConfigure = controller::dismissAddonConfigure,
         desktop = desktop, browser = browser,
         profilePage = { layout -> ProfilePageRoute(state, controller, layout) },
         profileTitles = if (state.parentTitles != null) ({ compact ->
@@ -74,14 +81,14 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         tvProfileTitles = if (state.parentTitles != null) ({ first, sidebar, scale ->
             ParentTitlesSettings(requireNotNull(state.parentTitles), state.busy, state.error, controller::closeParentTitles,
                 controller::searchParentTitles, controller::refreshApprovedTitles, controller::approveParentTitle,
-                controller::revokeParentTitle, first = first, backLabel = "Back to Profile")
+                controller::revokeParentTitle, first = first, backLabel = "Back to Profile", television = true, scale = scale)
         }) else null,
         installWithCompletion = controller::installAddon,
         addonsRequested = if (browser) controller::refreshAddonConfiguration else null,
         accountAccessRequested = if (remote != null) controller::refreshAccountAccess else null,
-        householdPin = if (ownerWrites) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
+        householdPin = if (accountSession) ({ HouseholdPinSettings(state.parentSettings, state.busy, state.error,
             state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
-            controller::unlockParentControls, controller::changeParentPin, compact = compact) }) else null,
+            controller::unlockParentControls, controller::changeParentPin, compact = compact, canManage = ownerWrites) }) else null,
         password = if (accountSession) passwordPage else null,
         deleteAccount = if (accountSession) controller.connection.takeUnless { state.localMode }?.let { _ -> { cancel: () -> Unit ->
             DeleteAccountScreen(state.accountIdentity, state.parentSettings?.parent?.pin_configured,
@@ -149,23 +156,20 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles,
-                openHouseholdPin = if (ownerWrites) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
+                openHouseholdPin = if (accountSession) ({ controller.showSettingsPage(SettingsPage("Household PIN")) }) else null, compact = compact)
             else ParentControlsNative({ controller.navigate(Screen.Profiles) }, compact = compact)
         },
-        tvParental = if (state.localMode) null else ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
-            if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
+        tvParental = ({ first: FocusRequester, sidebar: FocusRequester, scale: Float ->
+            if (state.localMode) TvParentalLocalSettings(scale, first, sidebar) { controller.navigate(Screen.Profiles) }
+            else if (state.parentTitles != null) ParentTitlesSettings(state.parentTitles, state.busy, state.error,
                 controller::closeParentTitles, controller::searchParentTitles, controller::refreshApprovedTitles,
                 controller::approveParentTitle, controller::revokeParentTitle, controller::blockParentTitle,
-                controller::unblockParentTitle, controller::refreshBlockedTitles, first)
+                controller::unblockParentTitle, controller::refreshBlockedTitles, first, television = true, scale = scale)
             else TvParentControlsSettings(state.parentSettings, state.parentControls, state.busy, state.error,
                 state.parentSettingsNotice, state.parentSettingsSaved, controller::refreshParentControls,
                 controller::unlockParentControls, controller::changeParentPin, controller::changeKidsPolicy,
                 controller::changeProfileLeavePin, controller::openParentTitles, first, sidebar, scale)
         }),
-        tvParentalMaturity = state.profileManagement?.profiles?.find { it.id == state.selectedProfile }?.let {
-            if (it.kids) it.max_age?.let { age -> "Up to age $age" } ?: "Kids restrictions" else "No profile restriction"
-        },
-        tvParentalPinAvailable = state.localMode,
         tvDevices = if (!state.localMode && accountSession) ({ first, sidebar, scale, back ->
             TvAccountDevices(state.accountDevices, state.busy, state.error, controller::refreshAccountDevices, scale, first, sidebar, back,
                 retryable = state.devicesRetryable)

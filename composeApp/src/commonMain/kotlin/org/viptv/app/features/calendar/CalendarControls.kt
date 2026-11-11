@@ -38,7 +38,8 @@ internal fun CalendarControls(type: String, week: Int, television: Boolean, scal
     val weeks: LazyListScope.() -> Unit = { calendarWeeks(week, shift, television, scale, range) }
     if (!phone) { FilterBar(modifier, gutter, bleed, clear = clear, down = down) { filters(); weeks() }; return }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterBar(gutter = gutter, bleed = bleed, content = weeks)
+        FilterBar(gutter = gutter, bleed = bleed) { calendarWeeks(week, shift, television, scale, null) }
+        range?.let { Text(it, color = Palette.secondary, fontSize = 12.sp, maxLines = 1) }
         FilterBar(gutter = gutter, bleed = bleed, clear = clear, content = filters)
     }
 }

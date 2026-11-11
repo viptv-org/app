@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.app.features.calendar.CalendarRow
@@ -71,7 +72,7 @@ class ClampedTextOverflowTest {
             }
         },
         SurfaceCase("tv channel label") { text ->
-            tvScene(300, 72) { TvLiveChannelLabel(LiveChannel(channel(text)), 1f, null, null, Modifier, focus = {}, watch = {}) }
+            tvScene(300, 72) { TvLiveChannelLabel(LiveChannel(channel(text)), 1f, 34.dp, null, null, Modifier, focus = {}, watch = {}) }
         },
         SurfaceCase("calendar subtitle") { text ->
             phoneScene(390, 140) { CalendarRow(entry(text), phone = true, television = false, scale = 1f, focus = {}, open = {}) }

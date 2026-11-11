@@ -33,7 +33,7 @@ class ContinueWatchingPagingFooterTest {
 
     @Test fun pagesLoadReachTheEndAndARetryRecovers() = runBlocking {
         val total = 6
-        val requested = mutableListOf<Int>()
+        val requested = EngineRequests<Int>()
         var failNext = false
         val client = HttpClient(MockEngine { request ->
             when {

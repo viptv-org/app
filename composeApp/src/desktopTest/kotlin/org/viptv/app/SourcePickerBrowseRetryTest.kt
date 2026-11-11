@@ -109,8 +109,11 @@ class SourcePickerBrowseRetryTest {
 
     @Test fun webBrowseFailureOffersTryAgain() {
         var retried = 0
+        // A second catalog of the same type is what makes "Choose another catalog" a real way out.
+        val peers = controls.copy(catalogs = controls.catalogs + DiscoveryCatalog("new", "New Releases", "movie", "c1",
+            controls = listOf(genre), connection_name = "Cinemeta"))
         val scene = page(1440, 900) {
-            BrowserBrowseScreen(Screen.Movies, emptyList(), controls, BrowseQuery("movie", "top", "c1"),
+            BrowserBrowseScreen(Screen.Movies, emptyList(), peers, BrowseQuery("movie", "top", "c1"),
                 busy = false, error = "The server did not answer.", more = null, open = {}, changed = { _, _ -> },
                 multipleChanged = { _, _ -> }, applyQuery = {}, retry = { retried++ })
         }

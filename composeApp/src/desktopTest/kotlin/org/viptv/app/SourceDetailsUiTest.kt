@@ -10,11 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.viptv.app.features.sources.SOURCE_DETAILS_LABEL
 import org.viptv.app.features.sources.SourceDetailsPanel
 import org.viptv.app.features.sources.SourcesScreen
 import org.viptv.app.features.sources.TvSourceInfo
@@ -33,7 +36,7 @@ class SourceDetailsUiTest {
     private val description = "Oak.Street.2026.2160p.WEB-DL.DUAL.DDP5.1.Atmos.DV.HDR10.H.265.MSubs-GROUP.mkv · MKV · HEVC · EAC3 · 14.2 GB · a tail the two-line window cannot hold"
     private fun onEdt(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)
 
-    @Test fun holdingOkOnATvRowOpensSourceDetailsAndBackReturnsToIt() = onEdt {
+    @Test fun holdingOkOnATvRowOffersSourceDetailsAndBackReturnsToIt() = onEdt {
         var chosen: SourceCandidate? = null
         val source = SourceCandidate("tv", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160,
             presentation = SourcePresentation(provider_name = "Fixture Group"))
@@ -43,11 +46,14 @@ class SourceDetailsUiTest {
             s.frames(40)
             assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "the first row takes focus")
             s.keyDown(Key.DirectionCenter)
-            s.waitFor("Source details") { s.hasDetails() }
+            s.waitFor("the source menu") { s.menuItem(SOURCE_DETAILS_LABEL) != null }
             s.keyUp(Key.DirectionCenter)
-            s.frames()
+            assertFalse(s.hasDetails(), "a hold opens the row's menu, not the panel")
+            assertNull(chosen, "a hold does not play the source")
+            assertTrue(s.menuItem(SOURCE_DETAILS_LABEL)!!.config[SemanticsActions.OnClick].action!!.invoke())
+            s.waitFor("Source details") { s.hasDetails() }
+            s.waitFor("the panel to take focus") { s.focused()?.let(s::text) == "Close" }
             assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
-            assertNull(chosen, "a hold opens details instead of playing the source")
             s.keyDown(Key.Back); s.keyUp(Key.Back)
             s.waitFor("Source details to close") { !s.hasDetails() }
             assertTrue(s.text(s.focused()!!).contains("Fixture Group"), "Back returns to the row it came from")
@@ -55,17 +61,19 @@ class SourceDetailsUiTest {
         }
     }
 
-    @Test fun holdingEnterOnADesktopRowOpensSourceDetailsWithItsFullText() = onEdt {
+    @Test fun holdingADesktopRowOffersSourceDetailsWithItsFullText() = onEdt {
         val source = SourceCandidate("desktop", "addon:fixture", "Torrentio 4K", detail = description, quality_height = 2160,
             presentation = SourcePresentation(provider_name = "Fixture Group"))
         Scene(1440, 900) { SourcesScreen(null, listOf(source), false, null, {}, {}) }.use { s ->
             s.frames(40)
-            assertTrue(s.row("Fixture Group").config[SemanticsActions.RequestFocus].action!!.invoke())
-            s.frames()
-            s.keyDown(Key.Enter)
+            val at = s.row("Fixture Group").boundsInRoot.center
+            val held = s.hold(at)
+            s.waitFor("the source menu") { s.menuItem(SOURCE_DETAILS_LABEL) != null }
+            held()
+            assertFalse(s.hasDetails(), "a hold opens the row's menu, not the panel")
+            assertTrue(s.menuItem(SOURCE_DETAILS_LABEL)!!.config[SemanticsActions.OnClick].action!!.invoke())
             s.waitFor("Source details") { s.hasDetails() }
-            s.keyUp(Key.Enter)
-            s.frames()
+            s.waitFor("the panel to take focus") { s.focused()?.let(s::text) == "Close" }
             assertEquals(1, s.descriptionNodes(), "the details panel holds the full text")
             s.keyDown(Key.Escape); s.keyUp(Key.Escape)
             s.waitFor("Source details to close") { !s.hasDetails() }
@@ -103,6 +111,18 @@ class SourceDetailsUiTest {
         fun focused() = merged().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }
         fun row(label: String) = merged().single { it.config.contains(SemanticsActions.OnClick) && text(it).contains(label) }
         fun pane() = unmerged().single { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Source details" }
+        fun menuItem(label: String) = merged().firstOrNull {
+            it.config.contains(SemanticsActions.OnClick) && text(it) == label
+        }
+
+        suspend fun hold(at: androidx.compose.ui.geometry.Offset): () -> Unit {
+            var clock = 1_000L
+            scene.sendPointerEvent(PointerEventType.Press, at, type = PointerType.Touch, timeMillis = clock)
+            repeat(40) { delay(20); clock += 20; scene.render(clock * 1_000_000L).close() }
+            return {
+                scene.sendPointerEvent(PointerEventType.Release, at, type = PointerType.Touch, timeMillis = clock)
+            }
+        }
         fun hasDetails() = unmerged().any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Source details" }
         fun descriptionNodes() = unmerged().count { text(it) == description }
         fun keyDown(key: Key) { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }

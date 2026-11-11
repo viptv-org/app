@@ -20,10 +20,16 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.state.ToggleableState
@@ -32,9 +38,11 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.LocalTvColumnFocus
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.TvTextField
+import org.viptv.app.components.requestFocusWhenPlaced
+import org.viptv.app.components.tvHold
 import org.viptv.app.components.tvRingReach
 import org.viptv.app.components.tvRingRoom
-import org.viptv.app.features.search.TvSearchKeyboard
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.MutationKind
@@ -46,13 +54,22 @@ import org.viptv.engine.wire.IntegrationConnection
 @Composable
 internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<String>, local: Boolean, busy: Boolean,
     scale: Float, initial: FocusRequester, sidebar: FocusRequester, info: Map<String, TvAddonInfo>, toggle: (String, Boolean) -> Unit,
-    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap()) {
+    install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
+    initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissConfigure: () -> Unit = {},
+    remove: (String) -> Unit = {}) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
+    var managing by remember { mutableStateOf<IntegrationConnection?>(null) }
+    var removing by remember { mutableStateOf<IntegrationConnection?>(null) }
     var wasSearching by remember { mutableStateOf(false) }
     val counts = remember(addons) { addonProvidesCounts(addons) }
     val shown = AddonFilter(query, provides).filtered(addons)
+    val listState = rememberLazyListState()
+    val targetRow = remember(shown, initialAddonId) { shown.indexOfFirst { it.id == initialAddonId } }
+    val targetFocus = remember(initialAddonId) { FocusRequester() }
+    LaunchedEffect(targetRow) { if (targetRow >= 0) listState.scrollToItem(targetRow) }
     val searchChip = remember { FocusRequester() }
     val clear = { query = ""; provides = null }
     // Leaving the keyboard returns the D-pad to the chip that opened it.
@@ -68,13 +85,18 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
             // Inside the list its own focus search moves through every row: the page's TvFocusColumn clamp only knows composed rows and stops Down at the last visible one.
             CompositionLocalProvider(LocalTvColumnFocus provides null) {
                 LazyColumn(Modifier.width(760.dp * scale).fillMaxHeight().tvRingRoom(tvRingReach(scale), horizontal = false),
+                    state = listState,
                     contentPadding = PaddingValues(top = tvRingReach(scale), bottom = TvAddonListBottom * scale),
                     verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
                     itemsIndexed(shown, key = { _, addon -> addon.id }) { index, addon ->
                         val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
+                        val target = addon.id == initialAddonId
+                        val configurable = addon.id in configurableAddons
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 100.dp * scale)
+                            .tvHold(enabled = manage && !busy) { managing = addon }
                             .focusProperties { left = sidebar }
-                            .then(if (index == 0) Modifier.focusRequester(initial) else Modifier)
+                            .then(if (target) targetFocus.requestFocusWhenPlaced().targetRing(scale)
+                                else if (index == 0) Modifier.focusRequester(initial) else Modifier)
                             .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
@@ -128,6 +150,35 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
             }
         }
     }
+    managing?.let { addon ->
+        TvAddonManageDialog(addon, addon.id in enabled, addon.id in configurableAddons, busy, scale,
+            toggle = { on -> toggle(addon.id, on) },
+            reconfigure = { managing = null; configure(addon.id) },
+            remove = { managing = null; removing = addon },
+            dismiss = { managing = null })
+    }
+    removing?.let { addon ->
+        val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
+        TvAddonRemoveDialog(addon, local, busy, pending, scale,
+            confirm = { remove(addon.id); removing = null },
+            dismiss = { if (!pending) removing = null })
+    }
+    addonConfigure?.let { request ->
+        TvAddonConfigureDialog(request, scale, dismiss = dismissConfigure, newCode = { configure(request.addon) })
+    }
+}
+
+// The row's own fill covers a border modifier, so the arrival ring is drawn over the fill instead.
+@Composable
+private fun Modifier.targetRing(scale: Float): Modifier {
+    val accent = Palette.accent
+    return drawWithContent {
+        drawContent()
+        val stroke = 2.dp.toPx() * scale
+        drawRoundRect(accent, topLeft = Offset(stroke / 2, stroke / 2),
+            size = Size((size.width - stroke).coerceAtLeast(0f), (size.height - stroke).coerceAtLeast(0f)),
+            cornerRadius = CornerRadius((18.dp.toPx() - stroke / 2) * scale), style = Stroke(stroke))
+    }
 }
 
 @Composable
@@ -162,7 +213,7 @@ private fun TvAddonFilterChip(label: String, icon: ImageVector?, selected: Boole
 
 @Composable
 private fun TvAddonSearchPanel(query: String, queryChange: (String) -> Unit, scale: Float, finish: () -> Unit) {
-    Column(Modifier.width(520.dp * scale).background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
+    Column(Modifier.width(520.dp * scale).imePadding().background(Color(0xFF191919), RoundedCornerShape(18.dp * scale))
         .padding(horizontal = 24.dp * scale, vertical = 24.dp * scale), verticalArrangement = Arrangement.spacedBy(14.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Search add-ons", Modifier.weight(1f), fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
@@ -170,9 +221,8 @@ private fun TvAddonSearchPanel(query: String, queryChange: (String) -> Unit, sca
                 Text("Done", color = tint, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
-        Text(query.ifBlank { "Type part of a name" }, fontSize = (22 * scale).sp, lineHeight = (28 * scale).sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, color = if (query.isBlank()) Palette.secondary else Palette.text)
-        TvSearchKeyboard({ transform -> queryChange(transform(query)) }, scale)
+        TvTextField(query, queryChange, scale, Modifier.fillMaxWidth(),
+            placeholder = "Type part of a name", imeAction = ImeAction.Done, submit = finish, focusOnEnter = true, onEscape = finish)
     }
 }
 

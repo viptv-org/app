@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
@@ -34,7 +36,7 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
             TextButton(onClick = { open = true }, shape = RoundedCornerShape(if (phone) 10.dp else 8.dp),
                 colors = ButtonDefaults.textButtonColors(containerColor = Color.White.copy(alpha = .08f), contentColor = Palette.text),
                 contentPadding = PaddingValues(horizontal = if (phone) 14.dp else 12.dp),
-                modifier = Modifier.height(if (phone) 38.dp else 34.dp)) {
+                modifier = Modifier.heightIn(min = if (phone) 38.dp else 34.dp)) {
                 Text(if (selected.number == null && seasons.size == 1) "Episodes" else selected.label,
                     fontSize = if (phone) 15.sp else 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(6.dp))
@@ -52,10 +54,8 @@ internal fun DetailSeasonPicker(seasons: List<DetailSeason>, selected: DetailSea
                 }
             }
         }
-        if (!phone) {
-            Spacer(Modifier.weight(1f))
-            Text(selected.countLabel, color = Palette.secondary, fontSize = 13.sp)
-        }
+        if (!phone) Text(selected.countLabel, Modifier.weight(1f), color = Palette.secondary, fontSize = 13.sp,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End)
     }
     PhoneSheet(visible = phone && open, title = "Seasons", dismiss = { open = false },
         touch = !LocalPointerHover.current, closeLabel = "Close seasons") {

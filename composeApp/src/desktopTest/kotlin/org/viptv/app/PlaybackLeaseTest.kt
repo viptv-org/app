@@ -25,7 +25,7 @@ class PlaybackLeaseTest {
     private val facts = buildJsonObject { put("platform", "android"); put("can_play_direct", true) }
 
     private class Server {
-        val opens = mutableListOf<JsonObject>()
+        val opens = EngineRequests<JsonObject>()
         val heartbeats = mutableListOf<String>()
         var heartbeat: (String) -> HttpStatusCode = { HttpStatusCode.OK }
         var open: (Int) -> HttpStatusCode = { HttpStatusCode.OK }
@@ -216,9 +216,9 @@ class PlaybackLeaseTest {
     @Test fun aLiveStreamReacquiresWithAFreshGrantAndStreamId() = runTest {
         val channel = LiveChannel("channel-1", "m3u:1", Card(MediaIdentity("channel-1", "live", emptyList()), provider_id = "m3u:1", title = "Channel", badges = emptyList()))
         var granted = "stream-1"
-        val grants = mutableListOf<String>()
-        val opens = mutableListOf<String>()
-        val deletes = mutableListOf<String>()
+        val grants = EngineRequests<String>()
+        val opens = EngineRequests<String>()
+        val deletes = EngineRequests<String>()
         val client = HttpClient(MockEngine) {
             engine {
                 dispatcher = StandardTestDispatcher(testScheduler)

@@ -20,7 +20,8 @@ fun ApplicationController.refresh() = run {
     val refreshed = if (profile != null && result.selected == profile && device != null)
         result.copy(home = device.refreshHome(profile)) else result
     currentCoroutineContext().ensureActive()
-    if (mutable.value.screen == Screen.Home || refreshed.selected != profile) accept(refreshed, busy = true)
+    if (refreshed.selected != profile) accept(refreshed, busy = true)
+    else if (mutable.value.screen == Screen.Home) refreshSnapshot(refreshed, busy = true)
     else {
         updateState { it.copy(home = refreshed.home, homeRowBusy = emptySet(), homeRowErrors = emptyMap()) }
         adoptContinuation(refreshed.continuation)
@@ -153,8 +154,11 @@ fun ApplicationController.loadTrendingSearches() {
 fun ApplicationController.search(term: String, retry: Boolean = false) {
     if (!retry && term == lastSearchedTerm) return
     val unchanged = term == mutable.value.searchTerm
-    if (!unchanged) updateState { it.copy(searchFocusResults = false, pendingDetailSeason = null) }
-    if (!(retry && unchanged)) updateState { it.copy(searchTerm = term, results = emptyList(), searchRows = emptyList()) }
+    if (!unchanged) updateState { state ->
+        val keepShown = term.isNotBlank()
+        state.copy(searchFocusResults = false, pendingDetailSeason = null, searchTerm = term,
+            results = if (keepShown) state.results else emptyList(), searchRows = if (keepShown) state.searchRows else emptyList())
+    }
     rememberNavigation()
     run {
         val operation = generation
@@ -185,7 +189,7 @@ private suspend fun ApplicationController.searchRemote(remote: RemoteConnection,
         remote.searchStreamResults(term) { event ->
             if (!session()) return@searchStreamResults
             when (event) {
-                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows, results = emptyList()) }
+                is SearchStreamEvent.Plan -> updateState { it.copy(searchRows = event.rows) }
                 is SearchStreamEvent.Row -> updateState { state ->
                     val rows = state.searchRows.map { if (it.id == event.row.id) event.row else it }
                     state.copy(searchRows = rows, results = rows.flatMap { it.cards })
@@ -493,7 +497,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
         val profile = requireNotNull(mutable.value.selectedProfile)
         val device = local
         val remote = connection
-        val context = rankingContext(seriesMemoryOf(profile, card), capability).copy(providerAffinity = sourceMemory.affinity(profile),
+        val context = rankingContext(seriesMemoryOf(profile, card), sourceMemory.affinity(profile), capability).copy(
             reuse = if (activeReuse != null) sourceMemory.context(profile, card) else SourceReuseContext())
         val preferences = mutable.value.preferences?.preferences
         coroutineScope {
@@ -518,7 +522,8 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
             }
 
             var phase: String? = null
-            val ranking = ProgressiveSourceRanking(this,
+            lateinit var ranking: ProgressiveSourceRanking
+            ranking = ProgressiveSourceRanking(this,
                 rank = { rows -> (device?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context)).copy(discoveryPhase = phase) },
                 show = { ranked ->
                     if (generation != operation) return@ProgressiveSourceRanking
@@ -529,7 +534,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                         }
                         state.copy(sources = ranked.rows, sourceGroups = ranked.groups, bestMatch = session)
                     }
-                    consider(ranked)
+                    if (!ranking.failed) consider(ranked)
                 })
             val observed: (SourcesOutcome) -> Unit = { outcome ->
                 phase = outcome.discoveryPhase ?: phase

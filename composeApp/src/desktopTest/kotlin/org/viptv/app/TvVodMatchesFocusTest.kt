@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
@@ -88,8 +89,10 @@ class TvVodMatchesFocusTest {
             val inForm = requireNotNull(focused(scene)) { "the form keeps a focus stop" }
             assertFalse(text(inForm).contains("Star Wars"), "focus moves into the form, not the row behind it")
 
-            activate(scene) { state.value.form?.metadataId == "q" }
-            assertEquals("q", state.value.form?.metadataId, "the on-screen keyboard types into the metadata ID")
+            val metadata = nodes(scene).first { it.config.contains(SemanticsActions.SetText) }
+            metadata.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("q"))
+            settle(scene)
+            assertEquals("q", state.value.form?.metadataId, "the editable field writes the metadata ID")
 
             scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyDown))
             scene.sendKeyEvent(KeyEvent(Key.Escape, KeyEventType.KeyUp))

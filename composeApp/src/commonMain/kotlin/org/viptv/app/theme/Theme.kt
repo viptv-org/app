@@ -15,6 +15,7 @@ object Palette {
     val surface = Color(0xFF161618)
     val dialog = Color(0xFF181818)
     val raised = Color(0xFF212124)
+    val surface3 = Color(0xFF2A2A2E)
     val text = Color(0xFFF4F2EE)
     val body = Color(0xFFDAD8D3)
     val secondary = Color(0xFFB6B4AF)

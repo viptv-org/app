@@ -59,6 +59,46 @@ class PlayerFitFillUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun theToggleReadsItsModeInWordsBesideFullscreenAndAfterLockOnPhone() {
+        for ((width, height, phone) in listOf(Triple(1280, 900, false), Triple(1440, 900, false), Triple(390, 844, true))) {
+            val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
+                PlayerScreen(null, true, null, {}, {}, {}, title = episode(1), phone = phone, toggleFullscreen = {},
+                    tvExtras = TvPlaybackExtras(episodes = listOf(episode(1)), nextEpisode = episode(2)), playEpisode = {})
+            } }
+            try {
+                frames(scene)
+                assertEquals("Fit", text(fitFill(scene, "Fill video")), "$width×$height: the toggle reads its mode")
+                click(scene, "Fill video"); frames(scene)
+                assertEquals("Fill", text(fitFill(scene, "Fit video")), "$width×$height: the toggle follows the mode")
+                if (phone) {
+                    val fit = fitFill(scene, "Fit video").boundsInRoot
+                    val lock = assertNotNull(controlText(scene, "Lock"), "$width×$height: no Lock").boundsInRoot
+                    assertTrue(lock.right <= fit.left, "$width×$height: Lock must sit before Fit/Fill: $lock vs $fit")
+                    assertTrue(leftNeighbour(scene, fit) == lock, "$width×$height: Fit/Fill follows Lock in the tools row")
+                    val next = assertNotNull(controlText(scene, "Next episode"), "$width×$height: no Next").boundsInRoot
+                    assertTrue(fit.right <= next.left, "$width×$height: Fit/Fill must sit before Next episode")
+                } else {
+                    val fit = fitFill(scene, "Fit video").boundsInRoot
+                    val fullscreen = assertNotNull(nodes(scene).firstOrNull {
+                        it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { d -> d == "Enter fullscreen" } == true &&
+                            it.config.contains(SemanticsActions.OnClick) }, "$width×$height: no Fullscreen").boundsInRoot
+                    assertTrue(fit.right <= fullscreen.left, "$width×$height: Fit/Fill must sit before Fullscreen")
+                    assertEquals(fit, leftNeighbour(scene, fullscreen), "$width×$height: Fullscreen follows Fit/Fill")
+                }
+            } finally { scene.close() }
+        }
+    }
+
+    private fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
+
+    private fun controlText(scene: ImageComposeScene, value: String) = nodes(scene).firstOrNull {
+        it.config.contains(SemanticsActions.OnClick) && text(it) == value
+    }
+
+    private fun leftNeighbour(scene: ImageComposeScene, bounds: androidx.compose.ui.geometry.Rect) = nodes(scene)
+        .filter { it.config.contains(SemanticsActions.OnClick) && it.boundsInRoot.right <= bounds.left && it.boundsInRoot.width < 4000f }
+        .maxByOrNull { it.boundsInRoot.right }!!.boundsInRoot
+
     private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene) = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

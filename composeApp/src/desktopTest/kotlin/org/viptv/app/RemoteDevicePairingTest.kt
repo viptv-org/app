@@ -72,12 +72,12 @@ class RemoteDevicePairingTest {
             }
             val expired = assertFailsWith<DevicePairingEnded> { pairing.poll(code) }
             assertEquals(DevicePairingEnded.Reason.Expired, expired.reason)
-            assertEquals("This sign-in code expired. Request a new code.", expired.message)
+            assertEquals("This code expired.", expired.message)
         } finally { remote.close() }
     }
 
     @Test fun aNewCodeSendsThePreviousDeviceCodeAndTheFirstCodeSendsNone() = runBlocking {
-        val bodies = mutableListOf<JsonObject>()
+        val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             bodies += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond(challenge, headers = headersOf(HttpHeaders.ContentType, "application/json"))

@@ -18,16 +18,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.textColumnWidth
 import org.viptv.app.theme.Palette
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
+import org.viptv.app.connection.calendarClock
 
 @Composable
 internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boolean, scale: Float,
     focus: () -> Unit, open: () -> Unit, modifier: Modifier = Modifier, selected: Boolean = false,
-    watch: ((CalendarEntry) -> Unit)? = null) {
+    watch: ((CalendarEntry) -> Unit)? = null, nowMillis: Long = calendarClock().millis) {
     var focused by remember { mutableStateOf(false) }
+    val status = entry.statusAt(nowMillis)
     val color = if ((focused || selected) && television) Palette.background else Palette.text
     val shape = RoundedCornerShape(if (phone) 16.dp else 18.dp * scale)
     Column(modifier.fillMaxWidth().clip(shape)
@@ -37,7 +40,7 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
         .padding(horizontal = if (phone) 12.dp else 28.dp * scale, vertical = if (phone) 10.dp else 12.dp * scale)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(if (phone) 12.dp else 28.dp * scale)) {
-            Text(entry.time, Modifier.width(if (phone) 62.dp else 132.dp * scale), fontSize = (if (phone) 12f else 26 * scale).sp,
+            Text(entry.time, Modifier.width(textColumnWidth(if (phone) 62.dp else 132.dp * scale)), fontSize = (if (phone) 12f else 26 * scale).sp,
                 fontWeight = FontWeight.SemiBold, color = color)
             val art = entry.card.poster ?: entry.card.landscape
             if (art != null) AsyncImage(art, entry.card.title, Modifier.width(if (phone) 36.dp else 72.dp * scale).aspectRatio(2f / 3)
@@ -46,8 +49,8 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
                 Text(entry.card.title, fontSize = (if (phone) 14f else 28 * scale).sp, fontWeight = FontWeight.SemiBold, color = color,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 entry.subtitle?.let { ClampedText(it, fontSize = (if (phone) 12f else 24 * scale).sp, color = color.copy(alpha = 0.7f), maxLines = 1) }
-                if (phone && (entry.status != null || entry.library)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    entry.status?.let { status ->
+                if (phone && (status != null || entry.library)) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    status?.let { status ->
                         Surface(shape = RoundedCornerShape(6.dp), color = if (entry.aired) Palette.raised else Palette.accent.copy(alpha = 0.14f)) {
                             Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -59,7 +62,7 @@ internal fun CalendarRow(entry: CalendarEntry, phone: Boolean, television: Boole
                     if (entry.library) CalendarYourShow(11f, Palette.accent)
                 } else if (!phone && entry.library) CalendarYourShow(20 * scale, if ((focused || selected) && television) color else Palette.accent)
             }
-            if (!phone) entry.status?.let { Text(it, fontSize = (24 * scale).sp,
+            if (!phone) status?.let { Text(it, fontSize = (24 * scale).sp,
                 color = if (entry.aired) color.copy(alpha = 0.7f) else Palette.accent) }
         }
         watch?.let { action -> entry.actionLabel()?.let { label ->

@@ -25,7 +25,9 @@ import org.viptv.app.components.ServerMessages
 import org.viptv.app.features.home.TvCatalogCard
 import org.viptv.app.components.AutomaticPage
 import org.viptv.app.components.ListEndFooter
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.LIST_TITLES
+import org.viptv.app.components.listPageState
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
@@ -56,7 +58,8 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     val restore = rememberPageRestore("library")
     val anchored = restore.landing(visible.size) { cardLookupKey(visible[it]) }
     val empty = libraryEmptyState(snapshot, query, available)
-    val failed = error != null && visible.isEmpty() && !busy
+    val pageState = listPageState(visible.size, busy, error,
+        answered = snapshot != null && (!busy || snapshot.query.sameList(query)))
     PageRestore(grid, restore, claimOnEntry = true, target = { restore.landing(visible.size) { cardLookupKey(visible[it]) } })
     AutomaticPage(visible.size, busy, more) { grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -70,17 +73,17 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 }
                 Spacer(Modifier.height(32.dp * scale))
                 if (busy && visible.isEmpty()) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-                if (!failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
+                if (pageState != ListPageState.Failed) (error ?: snapshot?.reason?.let { ServerMessages.human(it, ServerMessages.LIST_REASON) })?.let {
                     Text(it, color = if (error != null) Palette.danger else Palette.secondary, fontSize = (24 * scale).sp)
                 }
-                if (failed) TvLibraryFailure(error ?: "", retry, scale)
-                else if (visible.isEmpty()) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
+                if (pageState == ListPageState.Failed) TvLibraryFailure(error ?: "", retry, scale)
+                else if (pageState == ListPageState.Empty) Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
                     Text(empty.title, fontSize = (32 * scale).sp)
                     Text(empty.message, fontSize = (24 * scale).sp, color = Palette.secondary)
                     TvAction(Modifier.heightIn(min = 64.dp * scale), scale, primary = true,
                         activate = { if (empty.clearFilters) changeQuery(org.viptv.app.connection.defaultLibraryQuery().copy(source = query.source)) else home() },
                         contentPadding = PaddingValues(horizontal = 28.dp * scale)) { Text(if (empty.clearFilters) "Clear filters" else "Browse Home", color = it, fontSize = (24 * scale).sp) }
-                } else {
+                } else if (pageState == ListPageState.Content) {
                     LazyVerticalGrid(GridCells.Fixed(7), Modifier.width(1720.dp * scale).weight(1f), state = grid,
                         horizontalArrangement = Arrangement.spacedBy(16.dp * scale), verticalArrangement = Arrangement.spacedBy(22.dp * scale),
                         contentPadding = PaddingValues(bottom = 8.dp * scale)) {
@@ -115,16 +118,17 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
                 }
             }
         }
-    }
-    confirming?.let { card ->
-        ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) }, dismiss = { confirming = null })
+        confirming?.let { card ->
+            ListRemovalConfirmation(card, REMOVE_LIBRARY_LABEL, confirm = { confirming = null; remove?.invoke(card) },
+                dismiss = { confirming = null }, television = true, scale = scale)
+        }
     }
 }
 
 @Composable
 private fun TvLibraryFailure(reason: String, retry: () -> Unit, scale: Float) {
     Column(Modifier.padding(top = 120.dp * scale), verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-        Text("Couldn’t load My List", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
+        Text(MY_LIST_FAILED_TITLE, fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Palette.secondary, fontSize = (24 * scale).sp)
         TvAction(Modifier.heightIn(min = 64.dp * scale).width(280.dp * scale), scale, primary = true, activate = retry,
             contentPadding = PaddingValues(horizontal = 24.dp * scale)) {

@@ -38,7 +38,7 @@ import org.viptv.app.format.providerText
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), chooseSource: (Card) -> Unit = play) {
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), playFromStart: ((Card) -> Unit)? = null, chooseSource: (Card) -> Unit = play) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -49,11 +49,12 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (maxWidth < 800.dp) {
             DetailsScreen(detail, busy, error, back, play, save = save, saved = saved, open = open, loadPage = loadPage,
-                continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage)
+                continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage,
+                playFromStart = playFromStart)
             return@BoxWithConstraints
         }
         AutomaticEpisodes(selected, detail?.next_cursor, busy, loadPage, enabled = paging, scopeKey = detail?.item?.let { it.provider_id to it.identity })
-        val episodesList = rememberLazyListState()
+        val episodesList = rememberDetailListState(detail?.item)
         val landing = (if (focus != null) resume.indexIn(selected?.episodes) else null) ?: focus.episodeIn(selected)
         LandOnResume(seasonChoice, episodesList, landing?.plus(1), selected)
         val paneWidth = maxWidth
@@ -63,7 +64,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                 detail?.item?.let { card ->
                     AsyncImage(card.landscape ?: card.poster, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     Box(Modifier.fillMaxSize().background(Scrim.tabletDetailPane))
-                    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom,
+                    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Bottom),
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp)) {
                         item {
                             Column(Modifier.padding(horizontal = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -72,11 +73,13 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                 }
                                 MediaMetadata(card, kindFirst = true)
                                 card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = 22.sp, color = Palette.body) }
+                                HeroStarring(card, 14.sp, 20.sp)
                                 Button(onClick = { play(heroEpisode ?: card) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Palette.text, contentColor = Palette.background)) {
                                     Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(16.dp))
                                     Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(heroEpisode), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
+                                HeroRestart(card, heroEpisode, playFromStart, fontSize = 15.sp)
                                 FavoriteAction(card, saved, save)
                             }
                         }

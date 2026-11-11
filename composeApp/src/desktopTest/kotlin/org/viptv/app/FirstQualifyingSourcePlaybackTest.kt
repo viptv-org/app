@@ -2,12 +2,14 @@ package org.viptv.app
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.*
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.state.*
 import org.viptv.engine.wire.*
 import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FirstQualifyingSourcePlaybackTest {
     private val movie = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "fixture", title = "Movie", badges = emptyList())
     private fun row(id: String, height: Long) = SourceCandidate(id, "addon:$id", "Source $id", quality_height = height)
@@ -41,10 +43,11 @@ class FirstQualifyingSourcePlaybackTest {
     }
 
     private fun runDiscovery(first: List<SourceCandidate>, second: List<SourceCandidate>, openGate: CompletableDeferred<Unit>? = null,
-        ready: (List<SourceCandidate>) -> Boolean = { true }, check: suspend (ApplicationController, Streaming) -> Unit) = runBlocking<Unit> {
+        ready: (List<SourceCandidate>) -> Boolean = { true }, check: suspend (ApplicationController, Streaming) -> Unit) = runTest {
         val fixture = LocalSetupFixture()
         val streaming = Streaming(fixture, first, second, openGate, ready)
-        val controller = fixture.controller { streaming.device }; controller.local = streaming.device
+        val controller = fixture.controller(backgroundScope) { streaming.device }; controller.local = streaming.device
+        controller.capability = { DeviceCapability() }
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
         try { controller.playTitle(movie); check(controller, streaming) }

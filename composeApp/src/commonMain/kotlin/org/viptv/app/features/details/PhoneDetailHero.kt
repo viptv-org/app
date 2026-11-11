@@ -26,6 +26,7 @@ import com.composables.icons.lucide.Plus
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MediaMetadata
+import org.viptv.app.components.MutationFailure
 import org.viptv.app.components.MutationSpinner
 import org.viptv.app.components.saveActionLabel
 import org.viptv.app.components.TitleLogo
@@ -49,7 +50,8 @@ private val PhoneHeroMetaLine = 19.dp
 
 @Composable
 internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
-    resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play) {
+    resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play,
+    playFromStart: ((Card) -> Unit)? = null) {
     val art = card.landscape ?: card.poster
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
@@ -97,30 +99,28 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                     }
                 }
             }
+            HeroRestart(card, resumeEpisode, playFromStart, fontSize = 14.sp)
             DetailSourceSummary(sourcePreview, open = { chooseSource(resume ?: card) })
+            val mutations = LocalPendingMutation.current
+            val mutationTarget = saveTarget(card)
+            val saveLabel = saveActionLabel(saved)
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
-                val mutations = LocalPendingMutation.current
-                val target = saveTarget(card)
-                val saveLabel = saveActionLabel(saved)
                 Column(Modifier.width(76.dp)
                     .pointerClickable(role = Role.Button) { save(card) }
                     .semantics { contentDescription = saveLabel }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
-                        if (mutations.isPending(target)) MutationSpinner(22.dp)
+                        if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp)
                         else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
                     }
-                    Text(if (mutations.isPending(target)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
+                    Text(if (mutations.isPending(mutationTarget)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
             }
+            MutationFailure(mutationTarget, Modifier.fillMaxWidth())
             card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
-            card.metadata?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                Text("Starring ${cast.joinToString(", ")}", fontSize = 14.sp, lineHeight = 21.sp,
-                    color = Palette.secondary, maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-            }
+            HeroStarring(card, 14.sp, 21.sp)
         }
     }
 }

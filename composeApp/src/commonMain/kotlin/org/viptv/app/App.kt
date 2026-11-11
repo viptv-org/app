@@ -46,6 +46,8 @@ import org.viptv.app.features.home.LocalCardActions
 import org.viptv.app.features.search.SearchScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.settings.SettingsScreen
+import org.viptv.app.features.settings.HouseholdPinDialog
+import org.viptv.app.features.settings.TvHouseholdPinDialog
 import org.viptv.app.features.settings.LocalTvDisplayState
 import org.viptv.app.features.settings.rememberSystemReducedMotion
 import org.viptv.app.features.settings.rememberTvDisplayState
@@ -121,10 +123,13 @@ fun App(
             markWatched = if (localMode) null else controller::toggleWatched)
     }
     val bannerSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
+    val notice = state.notice?.takeIf { backendBannerScreen(state.screen) }
     val bannerFocus = remember { TvBannerFocus() }
+    val noticeFocus = remember { TvNoticeFocus() }
     val focusManager = LocalFocusManager.current
     var appHasFocus by remember { mutableStateOf(false) }
     var bannerHadFocus by remember { mutableStateOf(false) }
+    var noticeHadFocus by remember { mutableStateOf(false) }
     LaunchedEffect(bannerSince != null) {
         if (bannerSince != null) {
             snapshotFlow { bannerFocus.focused.value }.collect { if (it) bannerHadFocus = true }
@@ -133,6 +138,17 @@ fun App(
         if (!bannerHadFocus) return@LaunchedEffect
         bannerHadFocus = false
         // The banner's Dismiss leaves composition while it holds focus, so Compose clears focus with it: put the D-pad back on the page.
+        repeat(2) { withFrameNanos { } }
+        if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
+    }
+    // The notice's Undo leaves the same way when it is pressed or expires while the D-pad is on it.
+    LaunchedEffect(notice?.serial) {
+        if (notice != null) {
+            snapshotFlow { noticeFocus.focused.value }.collect { if (it) noticeHadFocus = true }
+            return@LaunchedEffect
+        }
+        if (!noticeHadFocus) return@LaunchedEffect
+        noticeHadFocus = false
         repeat(2) { withFrameNanos { } }
         if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
     }
@@ -146,11 +162,14 @@ fun App(
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
             .onPreviewKeyEvent { controller.userActivity(); false }
-            // The banner takes no focus: Up from a page's topmost control is how the D-pad reaches Dismiss, with or without a header rail.
+            // Neither the banner nor the notice takes focus: Up from a page's topmost control is how the D-pad
+            // reaches Dismiss and Undo, with or without a header rail.
             .onKeyEvent { event ->
-                if (!television || bannerSince == null || event.type != KeyEventType.KeyDown || event.key != Key.DirectionUp) false
+                if (!television || event.type != KeyEventType.KeyDown || event.key != Key.DirectionUp) false
+                else if (bannerSince == null && notice?.action == null) false
                 else if (focusManager.moveFocus(FocusDirection.Up)) true
-                else { bannerFocus.requester.requestFocus(); true }
+                else if (bannerSince != null) { bannerFocus.requester.requestFocus(); true }
+                else { noticeFocus.requester.requestFocus(); true }
             }
             .onFocusChanged { appHasFocus = it.hasFocus }
             .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
@@ -161,8 +180,8 @@ fun App(
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
                     TvSplash(controller::disconnect)
                 } else {
-                    // Restore-in-progress placeholder: never flash the login screen while the browser session is validated.
-                    Box(Modifier.fillMaxSize().background(Palette.background))
+                    DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
+                    StartupScreen(controller::disconnect)
                 }
                 return@BoxWithConstraints
             }
@@ -218,7 +237,7 @@ fun App(
                   val prefs = watchOnTvState.value
                   val remoteTvName = prefs.tvName
                   val remote: (@Composable () -> Unit)? =
-                      if (watchOnTvPlatform && remoteTvName != null && state.screen in listOf(Screen.Discover, Screen.Live, Screen.Library)) {
+                      if (watchOnTvPlatform && remoteTvName != null) {
                           { RemoteHeaderButton(remoteTvName, showTip = !prefs.tipDismissed, dismissTip = watchOnTvState::dismissRemoteTip, open = { remoteOpen = true }) }
                       } else null
                   CompositionLocalProvider(LocalHomeGenres provides homeGenres, LocalNextEpisodes provides state.continueNext,
@@ -229,7 +248,7 @@ fun App(
                     if (browser || (television && state.screen !in listOf(Screen.Home, Screen.Details, Screen.Sources, Screen.Settings, Screen.ContinueWatching))) TopNavigation(navigationScreen, television, controller::navigate, state.profiles.find { it.id == state.selectedProfile })
                     else if (!desktopChrome && !browser && !television && state.screen !in listOf(Screen.Details, Screen.Sources, Screen.History, Screen.Search, Screen.Settings, Screen.ContinueWatching)) {
                         if (phone) PhoneHeader(state.screen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
-                        else if (tablet) TabletHeader()
+                        else if (tablet) TabletHeader(state.screen)
                     }
 
                     Row(Modifier.weight(1f)) {
@@ -248,7 +267,8 @@ fun App(
                                 play = controller::playTitle, tablet = tablet, navigate = controller::navigate, browser = browser, profile = state.profiles.find { it.id == state.selectedProfile }, backChanged = entryBackChanged, save = controller::toggleFavorite, saved = { card -> state.isSaved(card) },
                                 summaryCards = state.summaryCards, enrichSummary = controller::enrichSummary, heroRotates = viewerPresent,
                                 seeAllFor = { state.rowSeeAll(it) }, openSeeAll = { controller.navigate(it.screen) },
-                                moreRow = controller::homeRowPage, rowBusy = state.homeRowBusy, rowErrors = state.homeRowErrors) }
+                                moreRow = controller::homeRowPage, rowBusy = state.homeRowBusy, rowErrors = state.homeRowErrors,
+                                removeContinueWatching = if (state.localMode) null else controller::removeFromContinueWatching) }
                                 // Kept per profile on every layout, so Back finds the row and focus it left.
                                 routes.SaveableStateProvider("${state.selectedProfile}:home", homeContent)
                             }
@@ -273,8 +293,9 @@ fun App(
                             }
                             Screen.Calendar -> routes.SaveableStateProvider("${state.selectedProfile}:calendar") {
                                 CalendarScreen(state.calendarDays, state.calendarEntries, television, controller::open, { controller.navigate(Screen.Settings) }, available = !state.localMode && state.calendarAvailable, busy = state.busy, error = state.error,
-                                    type = state.calendarType, week = state.calendarWeek, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
-                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser, retry = controller::retryCalendar)
+                                    type = state.calendarType, week = state.calendarWeek, filter = state.calendarFilter, filterChanged = controller::calendarFilter, controls = true, categoryChanged = controller::calendarCategory, weekChanged = controller::calendarWeek, watch = controller::watchCalendar,
+                                    sources = state.calendarSources, openEntry = controller::openCalendarEntry, browser = browser, retry = controller::retryCalendar,
+                                    dayChanged = controller::rolloverCalendar)
                             }
                             Screen.Live -> routes.SaveableStateProvider("${state.selectedProfile}:live") {
                                 org.viptv.app.features.live.LiveRoute(state, controller, television)
@@ -329,6 +350,10 @@ fun App(
                       BackendBanner(television, phone, bottomBar, bannerSince, state.backendRetrySeconds,
                           controller::dismissBackendBanner, bannerFocus)
                   }
+                  notice?.let { shown ->
+                      NoticeToast(shown, television, phone, bottomBar, undo = controller::undoRemoval,
+                          dismiss = controller::dismissNotice, focus = noticeFocus.takeIf { television })
+                  }
                 }
             }
             val remoteTv = watchOnTvState.pairedTv()
@@ -358,6 +383,13 @@ fun App(
                 val update = appUpdateAction(LocalAppUpdater.current)
                 AppUpdateRequiredNotice(television, update?.let { act -> { controller.dismissUpdateRequired(); act() } },
                     controller::dismissUpdateRequired)
+            }
+            state.householdPinTitle?.let { title ->
+                if (television) BoxWithConstraints(Modifier.fillMaxSize()) {
+                    TvHouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                        controller::submitHouseholdPin, scale = maxWidth / 1920.dp)
+                } else HouseholdPinDialog(title, state.busy, state.error, controller::cancelHouseholdPin,
+                    controller::submitHouseholdPin)
             }
         }
     }
@@ -416,7 +448,7 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             manageAddons = controller::openAddonsSettings,
             failures = state.detailFailures)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings) }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings, configureSource = controller::configureSource) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }

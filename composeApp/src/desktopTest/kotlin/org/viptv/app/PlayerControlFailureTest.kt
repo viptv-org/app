@@ -23,7 +23,6 @@ import org.viptv.app.player.playbackControlErrorCopy
 import org.viptv.app.player.playbackControlErrorVisibleMillis
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.*
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 class PlayerControlFailureTest {
@@ -81,16 +80,20 @@ class PlayerControlFailureTest {
         val scene = ImageComposeScene(1280, 720, Density(1f), Dispatchers.Unconfined) { ViptvTheme {
             PlayerScreen(null, true, null, {}, {}, {}, preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts)
         } }
+        val step = 250_000_000L
         var frame = 0L
-        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
+        fun render(times: Int = 1) = repeat(times) { scene.render(frame++ * step).close() }
+        fun sceneMillis() = frame * step / 1_000_000
         try {
             render()
             assertFalse(showsNotice(scene), "a healthy player shows no control error")
             assertTrue(facts.tryEmit(PlayerFact.ControlFailed(PlaybackControl.Seek)))
-            render(6)
+            render(2)
             assertTrue(showsNotice(scene), "a failed viewer command is visible in the middle of the picture")
-            frame = scene.renderUntil(timeout = (playbackControlErrorVisibleMillis + 10_000).milliseconds, from = frame,
-                what = "the control error notice to clear") { !showsNotice(scene) }
+            render(17)
+            assertTrue(showsNotice(scene), "at ${sceneMillis()} ms of scene time the notice is still inside its window")
+            render(3)
+            assertTrue(sceneMillis() > playbackControlErrorVisibleMillis, "the window is counted in the frames the scene renders")
             assertFalse(showsNotice(scene), "the notice clears instead of staying over working playback")
         } finally { scene.close() }
     }

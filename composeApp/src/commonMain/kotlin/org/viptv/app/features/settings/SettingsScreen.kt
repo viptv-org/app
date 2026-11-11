@@ -42,7 +42,6 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     preferencesError: String? = null, retryPreferences: (() -> Unit)? = null,
     sectionPreferences: (@Composable (String, Boolean) -> Unit)? = null,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null,
-    tvParentalMaturity: String? = null, tvParentalPinAvailable: Boolean = true,
     stremioImport: (@Composable (Boolean, () -> Unit, () -> Unit) -> Unit)? = null,
     addDevice: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     page: SettingsPage? = null, pageChanged: ((SettingsPage) -> Unit)? = null,
@@ -62,12 +61,18 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     watchOnTvValue: String = "Off",
     watchOnTvSettings: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     addonsManageable: Boolean = true,
+    addonTarget: String? = null,
+    configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
+    configureAddonFailure: Pair<String, String>? = null, retryConfigureAddon: () -> Unit = {},
+    addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissAddonConfigure: () -> Unit = {},
     addonLogos: Map<String, String> = emptyMap()) {
     if (television) {
-        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, maturity = tvParentalMaturity, pinAvailable = tvParentalPinAvailable, devicePlayback = tvDevicePlayback,
+        TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches,
             addonLogos = addonLogos,
-            addonsManageable = addonsManageable)
+            addonsManageable = addonsManageable, addonTarget = addonTarget,
+            configurableAddons = configurableAddons, configureAddon = configureAddon,
+            addonConfigure = addonConfigure, dismissAddonConfigure = dismissAddonConfigure, removeAddon = remove)
         return
     }
     val unusedRequester = remember { androidx.compose.ui.focus.FocusRequester() }
@@ -115,6 +120,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
             }
         }
         val backLabel = if (returnToPlayer != null && section == root) "Back to player" else null
+        val paneStyle = if (!compact && !webAccount) layout.paneStyle() else null
+        CompositionLocalProvider(LocalSettingsPaneStyle provides paneStyle) {
         Row(Modifier.fillMaxSize().then(if (webAccount) Modifier.padding(horizontal = pageGutter(television = false, tablet = false, browser = browser, maxWidth), vertical = 32.dp) else Modifier)) {
             if (webAccount) {
                 AccountSettingsSidebar(section ?: SettingsRow.Addons.key, profile, settingsSections(rows), local, profiles, { open(it) }, { leaving = true }); Spacer(Modifier.width(48.dp))
@@ -127,7 +134,12 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         managementAvailable = addonsManageable,
                         logos = addonLogos,
-                        installWithCompletion = installWithCompletion)
+                        installWithCompletion = installWithCompletion,
+                        initialAddonId = addonTarget,
+                        configurableAddons = configurableAddons,
+                        configure = configureAddon,
+                        configureFailure = configureAddonFailure,
+                        retryConfigure = retryConfigureAddon)
                     section == "Profile" && profileTitles != null -> SettingsDetailContent(compact, profileTitlesBack ?: back) { profileTitles(compact) }
                     section == "Profile" && profilePage != null -> SettingsDetailContent(compact, back, title = "Profile") { profilePage(layout) }
                     section == "Linked services" && linkedServices != null -> SettingsDetailContent(compact, back, title = "Linked services") { linkedServices(compact) }
@@ -142,14 +154,14 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                         deleteAccount(cancel)
                     }
                     section == "Source integrations" && phoneSourceIntegrations != null -> SettingsDetailContent(compact, back, title = "Source integrations") {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp).pageBottomClearance()) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact)).pageBottomClearance()) {
                             phoneSourceIntegrations.invoke()
                         }
                     }
                     section == xtreamConnectionsSection && xtreamConnections != null -> xtreamConnections(compact, if (compact) back else null)
                     section == "VOD matches" && vodMatches != null -> SettingsDetailContent(compact, back, title = "VOD matches") { vodMatches(compact) }
                     section == "Gateways" && phoneGateways != null -> SettingsDetailContent(compact, back, title = "Playback gateways") {
-                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(if (compact) 16.dp else 32.dp)) {
+                        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(settingsPanePadding(compact))) {
                             phoneGateways.invoke()
                         }
                     }
@@ -167,6 +179,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     }
                 }
             }
+        }
         }
         if (leaving) SettingsLeaveDialog(local, compact, busy, error, { leaving = false }, leave)
     }

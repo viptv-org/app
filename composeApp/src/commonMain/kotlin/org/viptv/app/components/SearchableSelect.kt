@@ -75,6 +75,8 @@ internal val LocalSelectPresentation = staticCompositionLocalOf { SelectPresenta
 
 internal val LocalFilterChipDown = staticCompositionLocalOf<FocusRequester?> { null }
 
+internal val LocalFilterChipUp = staticCompositionLocalOf<FocusRequester?> { null }
+
 internal const val SearchRowLimit = 8
 
 internal fun selectTriggerLabel(title: String, options: List<SelectOption>, selected: List<String>, placeholder: String): String =
@@ -165,12 +167,14 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
     chipFocus: FocusRequester? = null) {
     val metrics = chipMetrics()
     val chipDown = LocalFilterChipDown.current
+    val chipUp = LocalFilterChipUp.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier
         .then(if (chipFocus == null) Modifier else Modifier.focusRequester(chipFocus))
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
+        .then(if (chipUp == null) Modifier else Modifier.focusProperties { this.up = chipUp })
         .pointerToggleable(on, role = Role.Switch, shape = shape, onValueChange = onChange)
         .chipFrame(on, focused, metrics, shape)
         .padding(start = if (on) metrics.startInset - 2.dp else metrics.startInset, end = metrics.endInset),
@@ -185,11 +189,13 @@ internal fun ToggleSelect(title: String, on: Boolean, onChange: (Boolean) -> Uni
 internal fun ActionChip(label: String, icon: ImageVector?, onClick: () -> Unit, modifier: Modifier = Modifier, down: FocusRequester? = null) {
     val metrics = chipMetrics()
     val chipDown = down ?: LocalFilterChipDown.current
+    val chipUp = LocalFilterChipUp.current
     val shape = RoundedCornerShape(50)
     var focused by remember { mutableStateOf(false) }
     Row(modifier
         .then(if (metrics.tv) Modifier.onFocusChanged { focused = it.isFocused }.tvFocusOutline(focused, metrics.corner, metrics.scale) else Modifier)
         .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
+        .then(if (chipUp == null) Modifier else Modifier.focusProperties { this.up = chipUp })
         .pointerClickable(role = Role.Button, shape = shape, onClick = onClick)
         .chipFrame(false, focused, metrics, shape, bordered = false)
         .padding(horizontal = metrics.actionInset), verticalAlignment = Alignment.CenterVertically,
@@ -259,6 +265,7 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
     focus: FocusRequester?, down: FocusRequester?, onClick: () -> Unit) {
     val shape = RoundedCornerShape(50)
     val chipDown = down ?: LocalFilterChipDown.current
+    val chipUp = LocalFilterChipUp.current
     var focused by remember { mutableStateOf(false) }
     val ink = if (focused) Palette.background else if (valueSet) Palette.text else Palette.secondary
     Row(Modifier.widthIn(max = if (metrics.tv) 420.dp * metrics.scale else ChipMaxWidth)
@@ -266,6 +273,7 @@ private fun SelectTrigger(title: String, value: String, valueSet: Boolean, highl
             .then(if (chipDown == null) Modifier else Modifier.focusProperties { this.down = chipDown })
             .onFocusChanged { focused = it.isFocused }
             .tvFocusOutline(focused, metrics.corner, metrics.scale))
+        .then(if (chipUp == null) Modifier else Modifier.focusProperties { this.up = chipUp })
         .pointerClickable(role = Role.DropdownList, shape = shape, onClick = onClick)
         .chipFrame(highlighted, focused, metrics, shape)
         .padding(start = metrics.startInset, end = metrics.endInset),
@@ -296,7 +304,7 @@ private fun SelectSheet(visible: Boolean, title: String, dismiss: () -> Unit, co
             val drag = rememberSheetDrag(enabled = touch, threshold = sheetHeight / 3f, dismiss = dismiss,
                 dismissSpec = leave, settleSpec = motionSpec(tween(Motion.response, easing = Motion.standard)))
             Box(Modifier.matchParentSize().graphicsLayer { alpha = motion.scrim }.background(Color.Black.copy(alpha = .62f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = height)
                 .graphicsLayer { translationY = size.height * (1f - motion.container) + drag.offset }
                 .onSizeChanged { sheetHeight = it.height.toFloat() }
@@ -325,7 +333,7 @@ private fun SelectPanelSheet(title: String, dismiss: () -> Unit, content: @Compo
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = maxWidth / 1920.dp
             Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .6f))
-                .pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = dismiss))
+                .dismissScrim(remember { MutableInteractionSource() }, dismiss))
             Column(Modifier.align(Alignment.CenterEnd).width(760.dp * scale).fillMaxHeight()
                 // Back and Escape close only the panel; the chip row behind it stays as it was.
                 .onPreviewKeyEvent { event ->

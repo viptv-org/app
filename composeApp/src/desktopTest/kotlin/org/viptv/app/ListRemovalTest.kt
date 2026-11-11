@@ -102,6 +102,80 @@ class ListRemovalTest {
         }
     }
 
+    @Test fun removingFromTheHomeShelfWorksBeforeThePageIsLoaded() = runBlocking<Unit> {
+        ListRemovalHost().use { host ->
+            val controller = controller(host, Screen.Home)
+            val row = HomeRow(browse = HomeBrowseAction(HomeBrowseTarget.CONTINUE), id = "continue",
+                title = "Continue Watching", provider_id = "library", state = RowState.READY, cards = host.continueCards)
+            controller.mutable.value = controller.state.value.copy(
+                home = HomeSnapshot(ListRemovalHost.scope, 1, rows = listOf(row), complete = true))
+            controller.removeFromContinueWatching(continueCard(2))
+            until("the hide") { host.visibility.size == 1 }
+            val removed = controller.state.value
+            assertNull(removed.continueWatching, "the shelf removals never need the page's own list")
+            assertEquals(listOf("Show 01", "Show 03", "Show 04"),
+                removed.home?.rows?.single()?.cards?.map { it.title }, "the card leaves the shelf")
+            assertEquals(1, removed.continueUndo?.index, "Undo needs the position the card had on the shelf")
+            assertEquals(REMOVED_FROM_CONTINUE, removed.notice?.text, "the shelf offers the same Undo")
+            assertEquals(NoticeAction.Undo, removed.notice?.action)
+
+            controller.undoRemoveFromContinueWatching()
+            until("the show") { host.visibility.size == 2 }
+            assertEquals(host.continueCards, controller.state.value.home?.rows?.single()?.cards,
+                "Undo puts the shelf card back where it was")
+            assertNull(controller.state.value.continueUndo)
+        }
+    }
+
+    @Test fun theLastCardLeavingTheHomeShelfEmptiesTheRow() = runBlocking<Unit> {
+        ListRemovalHost().use { host ->
+            val controller = controller(host, Screen.Home)
+            val last = continueCard(2)
+            val row = HomeRow(browse = HomeBrowseAction(HomeBrowseTarget.CONTINUE), id = "continue",
+                title = "Continue Watching", provider_id = "library", state = RowState.READY, cards = listOf(last))
+            controller.mutable.value = controller.state.value.copy(
+                home = HomeSnapshot(ListRemovalHost.scope, 1, rows = listOf(row), complete = true))
+            controller.removeFromContinueWatching(last)
+            until("the hide") { host.visibility.size == 1 }
+            assertEquals(RowState.EMPTY, controller.state.value.home?.rows?.single()?.state,
+                "the shelf the last card left is gone")
+            controller.undoRemoveFromContinueWatching()
+            until("the show") { host.visibility.size == 2 }
+            assertEquals(listOf(last), controller.state.value.home?.rows?.single()?.cards)
+            assertEquals(RowState.READY, controller.state.value.home?.rows?.single()?.state)
+        }
+    }
+
+    @Test fun aRefusedHidePutsTheCardBackOnTheHomeShelf() = runBlocking<Unit> {
+        ListRemovalHost().use { host ->
+            val controller = controller(host, Screen.Home)
+            val row = HomeRow(browse = HomeBrowseAction(HomeBrowseTarget.CONTINUE), id = "continue",
+                title = "Continue Watching", provider_id = "library", state = RowState.READY, cards = host.continueCards)
+            controller.mutable.value = controller.state.value.copy(
+                home = HomeSnapshot(ListRemovalHost.scope, 1, rows = listOf(row), complete = true))
+            host.refuseVisibility = true
+            controller.removeFromContinueWatching(continueCard(2))
+            until("the failure") { controller.state.value.error != null }
+            assertEquals(host.continueCards, controller.state.value.home?.rows?.single()?.cards,
+                "a refused hide puts the shelf card back")
+            assertNull(controller.state.value.continueUndo)
+        }
+    }
+
+    @Test fun aCardOnNoListIsNeverRemoved() = runBlocking<Unit> {
+        ListRemovalHost().use { host ->
+            val controller = controller(host, Screen.Home)
+            val row = HomeRow(browse = HomeBrowseAction(HomeBrowseTarget.CONTINUE), id = "continue",
+                title = "Continue Watching", provider_id = "library", state = RowState.READY, cards = host.continueCards)
+            controller.mutable.value = controller.state.value.copy(
+                home = HomeSnapshot(ListRemovalHost.scope, 1, rows = listOf(row), complete = true))
+            controller.removeFromContinueWatching(libraryCard(1))
+            assertEquals(0, host.visibility.size, "a title the shelf never offered is not hidden")
+            assertEquals(host.continueCards, controller.state.value.home?.rows?.single()?.cards)
+            assertNull(controller.state.value.continueUndo)
+        }
+    }
+
     @Test fun aRefusedRemovalRestoresItsCardWithoutDroppingAnotherRemovalsOffer() {
         val newer = ContinueUndo("1", continueCard(3), 2)
         val state = ApplicationState(selectedProfile = "1", continueUndo = newer,

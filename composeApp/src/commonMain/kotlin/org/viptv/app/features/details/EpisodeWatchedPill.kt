@@ -27,7 +27,7 @@ internal fun Card.episodeArtLabel(): String? =
 @Composable
 internal fun EpisodeWatchedPill(television: Boolean, scale: Float = 1f, modifier: Modifier = Modifier) {
     val unit = if (television) scale else 1f
-    Row(modifier.height((if (television) 32 else 24).dp * unit)
+    Row(modifier.heightIn(min = (if (television) 32 else 24).dp * unit)
         .background(Color(0xFF2A2A2E), RoundedCornerShape(50))
         .padding(horizontal = 8.dp * unit),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp * unit)) {

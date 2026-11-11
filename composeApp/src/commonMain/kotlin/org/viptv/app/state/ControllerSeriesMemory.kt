@@ -11,7 +11,6 @@ internal fun ApplicationController.seriesMemoryOf(profile: String, card: Card?):
 
 internal fun ApplicationController.rememberStartedSource(profile: String, card: Card?, source: SourceCandidate?) {
     if (profile.isEmpty()) return
-    source?.let { sourceMemory.started(profile, it) }
     val key = card?.let(::seriesKey) ?: return
     val binge = source?.binge_group ?: return
     val provider = source.provider_id.takeIf { it.isNotEmpty() } ?: return

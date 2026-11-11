@@ -47,7 +47,8 @@ class CalendarControlsUiTest {
             val layout=if(tv)"TV" else "desktop"
             var category=""
             val type=mutableStateOf(CALENDAR_DEFAULT_TYPE)
-            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry,library),tv,{},{},controls=true,type=type.value,categoryChanged={category=it;type.value=it})}}}
+            val filter=mutableStateOf(CALENDAR_DEFAULT_FILTER)
+            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry,library),tv,{},{},controls=true,type=type.value,categoryChanged={category=it;type.value=it},filter=filter.value,filterChanged={filter.value=it})}}}
             try{
                 frames(scene)
                 assertTrue(nodes(scene).any{it.config.getOrNull(SemanticsProperties.Role)==Role.DropdownList&&text(it)=="Type: All"},"$layout: every type is the default")
@@ -62,6 +63,7 @@ class CalendarControlsUiTest {
                 open(scene,"Type: All");pick(scene,"Movies");assertEquals("movie",category,"$layout: the type chip applies at once")
                 click(scene,"Clear");frames(scene,10)
                 assertEquals("all",category,"$layout: Clear returns to every type")
+                assertEquals(CALENDAR_DEFAULT_FILTER,filter.value,"$layout: Clear resets the Shows state")
                 assertTrue(nodes(scene).any{text(it).contains("Library series")},"$layout: Clear returns to your shows")
                 assertFalse(nodes(scene).any{text(it).contains("Scheduled series")},"$layout: and not to all releases")
                 assertFalse(nodes(scene).any{it.config.getOrNull(SemanticsProperties.Role)==Role.Button&&text(it)=="Clear"})
@@ -71,7 +73,8 @@ class CalendarControlsUiTest {
     @Test fun anEmptyWeekFromYourListShowsEveryReleaseWithALine(){
         for(tv in listOf(false,true)){
             val layout=if(tv)"TV" else "desktop"
-            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),tv,{},{},controls=true,sources=setOf(CalendarSource.Library,CalendarSource.Public))}}}
+            val filter=mutableStateOf(CALENDAR_DEFAULT_FILTER)
+            val scene=ImageComposeScene(if(tv)1920 else 1200,900,Density(1f)){ViptvTheme(tv){Surface(Modifier.fillMaxSize(),color=Palette.background){CalendarScreen(days,listOf(entry),tv,{},{},controls=true,sources=setOf(CalendarSource.Library,CalendarSource.Public),filter=filter.value,filterChanged={filter.value=it})}}}
             try{
                 frames(scene)
                 assertTrue(nodes(scene).any{text(it)==CALENDAR_FALLBACK},"$layout: the fallback says why; texts="+nodes(scene).map(::text).filter(String::isNotBlank))
@@ -114,6 +117,9 @@ class CalendarControlsUiTest {
                     assertTrue(onScreen||reach(rowStrip).second>0f,"row $index shows its controls or scrolls to them")
                 }
             }
+            val range=nodes(scene).firstOrNull{text(it)=="Thursday, October 15 – Friday, October 16"}?:fail("the date range is missing")
+            val rangeBounds=range.boundsInRoot
+            assertTrue(rangeBounds.top>=bands[0].second&&rangeBounds.bottom<=bands[1].first,"the date range gets a line between the week and the filters")
             val overflowing=strips.indices.filter{reach(strips[it]).second>0f}
             assertTrue(overflowing.isNotEmpty(),"the week's navigation overflows the 390 dp row")
             for(index in overflowing){
@@ -123,11 +129,10 @@ class CalendarControlsUiTest {
                 frames(scene,10)
                 strips=listOf(bands[0],bands[1]).map{strip(scene,it)}
                 val after=strips.map(::reach)
-                near(end,after[index].first,"row $index reaches its end")
+                near(after[index].second,after[index].first,"row $index reaches its end")
                 strips.indices.filter{it!=index}.forEach{other->near(before[other].first,after[other].first,"row $other stays put")}
             }
-            val range=nodes(scene).firstOrNull{text(it)=="Thursday, October 15 – Friday, October 16"}?:fail("the date range is not on the week row")
-            assertTrue(range.boundsInRoot.top>=bands[0].first&&range.boundsInRoot.bottom<=bands[0].second,"the date range rides the week row")
+            assertEquals(rangeBounds,nodes(scene).single{text(it)=="Thursday, October 15 – Friday, October 16"}.boundsInRoot,"the date range does not scroll with either row")
         }finally{scene.close()}
     }
     private fun weekRow(s:ImageComposeScene)=listOf("Previous week","This week","Next week").map{label->nodes(s).single{text(it)==label&&it.config.contains(SemanticsActions.OnClick)}}

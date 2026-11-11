@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.viptv.app.theme.Palette
@@ -22,7 +23,7 @@ internal fun PinnedHeaderSurface(
     height: Dp = 56.dp,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Column(modifier) {
+    Column(modifier.semantics { overlaysContent = Unit }) {
         Box(Modifier.fillMaxWidth().height(height)
             .background(if (scrolled) Palette.background else Color.Transparent), content = content)
         if (scrolled) ScrollEdgeFade(ScrollEdge.Top, fade = ScrollEdgeFadeHeight)

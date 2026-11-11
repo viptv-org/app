@@ -32,7 +32,7 @@ class BrowsePagingFooterTest {
     }
 
     @Test fun aFailedPageKeepsCardsAndRetryRecovers() = runBlocking {
-        val requested = mutableListOf<Int>()
+        val requested = EngineRequests<Int>()
         var failNext = false
         val client = HttpClient(MockEngine { request ->
             when (request.url.encodedPath) {

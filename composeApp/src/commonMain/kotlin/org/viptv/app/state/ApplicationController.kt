@@ -37,6 +37,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
             value?.onClientUpdateRequired = { updateState { it.copy(updateRequired = true) } }
             value?.onBackendReachability = ::backendOutcome
         }
+    internal var browserOpen: (String) -> Unit = ::openAccountAuthorization
     internal var local: LocalConnection? = null
     internal var localPersistenceWarning: String? = null
     @Volatile internal var job: Job? = null
@@ -54,7 +55,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var liveGuideRequest = 0L
     internal var liveDirectoryRequest = 0L
     internal val liveGuideFetchedAt = mutableMapOf<String, kotlin.time.TimeMark>()
-    internal val liveFavoriteJobs = mutableMapOf<String, Job>()
     internal var liveFavoriteVersion = 0L
     internal var liveFavoriteScope = 0L
     internal var detailPagingJob: Job? = null
@@ -65,6 +65,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var rememberedNavigationProfile: String? = null
     internal var continueChecked: ContinueCheck? = null
     internal var continueVisibilityJob: Job? = null
+    // A newer notice restarts the toast's timer, so each one carries its own serial.
+    internal var noticeSerial = 0L
     internal var libraryImportRefresh: Job? = null
     internal var calendarReread: Job? = null
     internal var remotePlayback: RemotePlaybackLease? = null
@@ -107,6 +109,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var stremioImport: StremioImportSession? = null
     internal var restartRequested = false
     internal var firstFrameSeen = false
+    internal var startupBuffered: Float? = null
     internal var fallbackJob: Job? = null
     internal var startDeadlineJob: Job? = null
     internal var playbackStall: Job? = null
@@ -128,14 +131,16 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var addonOperation: Job? = null
     internal val mutationJobs = mutableMapOf<MutationTarget, Job>()
     internal val mutationRetries = mutableMapOf<MutationTarget, MutationRetry>()
+    internal var householdPinAction: (suspend () -> Unit)? = null
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
 
     // The quiet lane and Back wait on the controller's operation job, so a write that must not be reloaded under
-    // hands claims it instead of leaving it pointing at nothing.
+    // hands claims it instead of leaving it pointing at nothing; the write then owns the busy its claim replaced.
     internal fun claimOperation(task: Job) {
-        synchronized(runGate) { generation++; job = task }
+        val current = synchronized(runGate) { job = task; ++generation }
+        task.invokeOnCompletion { settle(current) }
     }
 
     internal fun run(operation: suspend () -> Unit) {
@@ -186,7 +191,10 @@ private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
 // A write built from a snapshot drops whatever another coroutine published in between, so every state change publishes atomically.
 internal fun ApplicationController.updateState(change: (ApplicationState) -> ApplicationState) {
     mutable.update { before ->
-        val after = change(before)
+        val changed = change(before)
+        val startup = startupProgress(changed.startup, changed.startupSignals(startupBuffered))
+        val after = if (startup == changed.startup) changed else changed.copy(startup = startup)
+        if (startup == null) startupBuffered = null
         CrashFacts.lastScreen = after.screen.name
         if (before.playback == null && after.playback != null) {
             // A native crash between playback start and a clean stop has no stack: this marker attributes it to the source opening.
@@ -202,7 +210,7 @@ internal fun ApplicationController.failureMessage(error: Exception): String? = w
     is RemoteFailure -> error.message
     is LocalFailure -> error.message
     is kotlinx.serialization.SerializationException -> "The server returned an incompatible response."
-    is IllegalArgumentException -> "Enter a valid HTTPS server address."
+    is IllegalArgumentException -> SERVER_ADDRESS_ERROR
     else -> if (local != null) "Could not complete this action on this device." else "Could not reach your server. Check the connection and try again."
 }
 

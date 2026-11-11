@@ -21,6 +21,7 @@ import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.app.components.AddonFailureNotice
 import org.viptv.app.components.TextButton
+import org.viptv.app.features.settings.TvNoticeDialog
 
 internal enum class TvDetailRow { Hero, Episodes, Recommendations }
 
@@ -30,7 +31,6 @@ private class TvDetailVisit(val firstEntry: Boolean, seen: Boolean) {
 }
 
 internal data class TvDetailExtras(
-    val cast: String? = null,
     val resume: Card? = null,
     val resumeLabel: String? = null,
     val remaining: String? = null,
@@ -58,7 +58,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
         val scale = maxWidth / 1920.dp
         val card = detail?.item
         val resume = remember(detail, continuing) { detailResume(detail, continuing) }
-        val scroll = key(card?.identity) { rememberSaveable(saver = LazyListState.Saver) { LazyListState() } }
+        val scroll = rememberDetailListState(card)
         val scope = rememberCoroutineScope()
         val playFocus = remember { FocusRequester() }
         val shelfFocus = remember(card?.identity) { ShelfFocusHandle() }
@@ -132,7 +132,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                             play = { sources(extras.resume ?: detail.item) },
                             save = { save(detail.item) }, saved = saved,
                             trailer = { notice = "No trailer is available for this title." },
-                            restart = { playFromStart?.invoke(extras.resume ?: detail.item) ?: sources(extras.resume ?: detail.item) }, first = playFocus,
+                            restart = playFromStart?.let { start -> { start(extras.resume ?: detail.item) } }, first = playFocus,
                             down = null, requestInitialFocus = requestInitialFocus && visit.firstEntry && activeRow == TvDetailRow.Hero,
                             downAction = if (detail.episodes.isEmpty()) null else ({ focusEpisodes() }),
                             hold = { chooseSource(extras.resume ?: detail.item) })
@@ -157,7 +157,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                                 pageError = pageError, retryPage = retryPage)
                         }
                         if (extras.recommendations.isNotEmpty()) item(key = "recommendations") {
-                            TvRecommendationShelf(extras.recommendations, scale, open,
+                            TvRecommendationShelf(detail.item, extras.recommendations, scale, open,
                                 focused = { focusRow(TvDetailRow.Recommendations) }, up = { focusEpisodes() })
                         }
                     }
@@ -165,9 +165,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
             }
         }
 
-        notice?.let { message -> AlertDialog(onDismissRequest = { notice = null },
-            title = { Text("Title options") }, text = { Text(message) },
-            confirmButton = { TextButton(onClick = { notice = null }) { Text("OK") } }) }
+        notice?.let { message -> TvNoticeDialog(scale, "Title options", message, onDismiss = { notice = null }) }
     }
 }
 

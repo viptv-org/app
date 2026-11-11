@@ -31,7 +31,7 @@ class AccountCapabilityTest {
     private class Server(private val capabilities: String?, private val accountRole: String,
         private val sessionRole: String, browser: Boolean,
         private val devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
-        val paths = mutableListOf<String>()
+        val paths = EngineRequests<String>()
         private val json = headersOf(HttpHeaders.ContentType, "application/json")
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
@@ -108,7 +108,7 @@ class AccountCapabilityTest {
             ui.render()
             ui.waitFor { ui.shows("Devices & sessions") }
             assertTrue(ui.shows("Devices & sessions"), "A member still reads the devices list")
-            assertFalse(ui.shows("Household PIN"), "Only the owner changes the household PIN")
+            assertTrue(ui.shows("Household PIN"), "A member reads the household PIN status")
             assertTrue(ui.shows("Delete account"), "Any account session keeps the self-service delete row")
             ui.click("Devices & sessions")
             ui.render(24)

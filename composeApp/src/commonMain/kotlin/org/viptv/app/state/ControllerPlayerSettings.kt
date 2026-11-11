@@ -5,8 +5,16 @@ import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.subtitleMode
 
 const val PLAYER_SETTINGS_SECTION = "Subtitles & audio"
+const val PLAYER_ADDONS_SECTION = "Add-ons"
 
-fun ApplicationController.openPlayerSettings() {
+fun ApplicationController.openPlayerSettings() = visitSettingsFromPlayer(PLAYER_SETTINGS_SECTION)
+
+// The error-slate notice's Configure source: the add-on that served this source is listed there, focused.
+fun ApplicationController.openPlayerAddons() = visitSettingsFromPlayer(PLAYER_ADDONS_SECTION, addonTarget = mutable.value.playerAddonTarget())
+
+internal fun ApplicationState.playerAddonTarget(): String? = playingSource?.provider_id?.takeIf { it.startsWith("addon:") }
+
+private fun ApplicationController.visitSettingsFromPlayer(section: String, addonTarget: String? = null) {
     val state = mutable.value
     if (state.screen != Screen.Player || state.playback == null) return
     backgroundPlayback = null
@@ -18,7 +26,7 @@ fun ApplicationController.openPlayerSettings() {
         if (!completionSeen) saveProgress(false)
     }
     playerVisitTracks = mutable.value.preferences?.preferences?.serverTracks()
-    updateState { next -> next.copy(settingsReturnsToPlayer = true, settingsEntrySection = PLAYER_SETTINGS_SECTION) }
+    updateState { next -> next.copy(settingsReturnsToPlayer = true, settingsEntrySection = section, settingsAddonTarget = addonTarget) }
     navigate(Screen.Settings, record = false)
 }
 

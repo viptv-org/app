@@ -10,8 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.resources.Res
@@ -92,7 +96,7 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth < CompactButtonsBelow) Column {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                playPause(); skipBack(); skipForward(); nextAction(); muteAction(); closeAction()
+                skipBack(); playPause(); skipForward(); nextAction(); muteAction(); closeAction()
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 episodesIcon()
@@ -100,10 +104,11 @@ internal fun PlaybackButtons(paused: Boolean, toggle: () -> Unit, skip: (Long) -
                 tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill)
             }
         } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            playPause(); skipBack(); skipForward(); nextAction(); muteAction()
-            PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
+            skipBack(); playPause(); skipForward(); nextAction()
             Spacer(Modifier.weight(1f))
-            episodesAction(); streamsAction(Modifier); tracksAction(); speedAction(); PlaybackFitFill(fill, toggleFill); fullscreenAction(); closeAction()
+            episodesAction(); streamsAction(Modifier); tracksAction(); muteAction()
+            PlaybackSlider(volume, setVolume, Modifier.width(90.dp), accent = Palette.text, label = "Volume")
+            speedAction(); PlaybackFitFill(fill, toggleFill); fullscreenAction(); closeAction()
         }
     }
 }
@@ -130,14 +135,17 @@ internal fun PlaybackFitFill(fill: Boolean, toggle: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     Box(
         Modifier
-            .size(44.dp)
+            .heightIn(min = 44.dp)
+            .widthIn(min = 44.dp)
             .clip(CircleShape)
             .background(if (fill) Palette.accent.copy(alpha = 0.16f) else Color.Transparent)
             .pressScale(interaction, Motion.control)
-            .pointerToggleable(fill, interaction, null, shape = CircleShape, onValueChange = { toggle() }),
+            .pointerToggleable(fill, interaction, null, shape = CircleShape, onValueChange = { toggle() })
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .semantics { contentDescription = if (fill) "Fit video" else "Fill video" },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(if (fill) Lucide.Minimize2 else Lucide.Maximize2, if (fill) "Fit video" else "Fill video",
-            Modifier.size(22.dp), tint = if (fill) Palette.accent else Palette.text)
+        Text(if (fill) "Fill" else "Fit", fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1,
+            color = if (fill) Palette.accent else Palette.text)
     }
 }

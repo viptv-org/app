@@ -109,7 +109,7 @@ class HomeHeaderControlsUiTest {
         val remote: @Composable () -> Unit = { RemoteHeaderButton("Living Room", showTip = false, dismissTip = {}, open = { opened++ }) }
         for (width in listOf(800, 1280)) {
             opened = 0
-            val scene = scene(width, 800, null) { CompositionLocalProvider(LocalHeaderRemote provides remote) { TabletHeader() } }
+            val scene = scene(width, 800, null) { CompositionLocalProvider(LocalHeaderRemote provides remote) { TabletHeader(Screen.Home) } }
             try {
                 frames(scene)
                 val button = nodes(scene).firstOrNull { description(it) == listOf("TV remote: Living Room") && it.config.contains(SemanticsActions.OnClick) }

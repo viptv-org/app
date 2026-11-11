@@ -77,6 +77,7 @@ class TvBusyFocusTest {
             val node = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }
                 .firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true } ?: return null
             return node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()
+                .ifEmpty { node.config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty() }
         }
         suspend fun focus(label: String, key: Key? = null) {
             repeat(14) {

@@ -27,7 +27,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
+import org.viptv.app.components.listPageState
+import org.viptv.app.features.settings.TvConfirmDialog
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
@@ -47,6 +50,7 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
     var lastFocused by remember { mutableStateOf<HistoryDisplay?>(null) }
     var resuming by remember { mutableStateOf<HistoryDisplay?>(null) }
     val restore = rememberPageRestore("history")
+    val pageState = listPageState(history.size, busy, error)
     val lines = remember(history) { history.lines() }
     val anchored = remember(lines, restore.lastKey) {
         lines.indexOfFirst { it is HistoryLine.Entry && cardLookupKey(it.display.entry.card) == restore.lastKey }
@@ -81,9 +85,9 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
             }
             Spacer(Modifier.height(32.dp * scale))
             if (busy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
-            if (error != null && history.isEmpty()) TvHistoryFailure(error, retry, scale, requester = if (!attached) first else null)
+            if (pageState == ListPageState.Failed) TvHistoryFailure(error.orEmpty(), retry, scale, requester = if (!attached) first else null)
             if (localMode) Text("Progress corrections need a server.", color = Palette.secondary, fontSize = (24 * scale).sp)
-            if (!busy && history.isEmpty() && error == null) {
+            if (pageState == ListPageState.Empty) {
                 Column(Modifier.padding(top = 96.dp * scale), verticalArrangement = Arrangement.spacedBy(18.dp * scale)) {
                     Text("Nothing watched yet", fontSize = (32 * scale).sp, fontWeight = FontWeight.Bold)
                     Text("Titles you play show up here.", color = Palette.secondary, fontSize = (24 * scale).sp)
@@ -138,15 +142,13 @@ internal fun TvHistoryScreen(history: List<HistoryDisplay>, busy: Boolean, error
                 }
             }
         }
-    }
-    if (confirm) androidx.compose.material3.AlertDialog(onDismissRequest = { confirm = false },
-        title = { Text("Clear history?") },
-        text = { Text("This removes viewing history for this profile.") },
-        confirmButton = { TextButton(onClick = { clear(); confirm = false }) { Text("Clear") } },
-        dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } })
+    if (confirm) TvConfirmDialog(scale, "Clear history?", "This removes viewing history for this profile.", confirm = "Clear",
+        danger = true, onConfirm = { clear(); confirm = false }, onDismiss = { confirm = false })
     resuming?.let { display ->
         ResumePositionDialog(display.position.toLong(), display.duration, onDismiss = { resuming = null },
-            onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) })
+            onSave = { seconds -> resuming = null; correct(display, HistoryCorrection.Position(seconds)) },
+            television = true, scale = scale)
+    }
     }
 }
 

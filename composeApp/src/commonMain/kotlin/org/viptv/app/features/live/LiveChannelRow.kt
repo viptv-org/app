@@ -16,12 +16,19 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.AccessibleIconButton
+import org.viptv.app.components.favouriteStarPainter
+import org.viptv.app.components.MutationFailure
+import org.viptv.app.components.LocalPendingMutation
+import org.viptv.app.state.liveFavoriteTarget
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
 internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, favourite: (() -> Unit)?, modifier: Modifier = Modifier) {
     val program = channel.current(now)
     val next = channel.next(now)
+    val mutations = LocalPendingMutation.current
+    val target = liveFavoriteTarget(channel.id)
+    val pending = mutations.isPending(target)
     Column {
         Row(modifier.fillMaxWidth().pointerClickable(onClick = watch, shape = RectangleShape).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -44,9 +51,10 @@ internal fun LiveChannelRow(channel: LiveChannel, now: Int?, watch: () -> Unit, 
                 }
                 next?.let { ClampedText("Next: ${it.title} ${liveTime(it.start)}", fontSize = 11.sp, lineHeight = 15.sp, color = Palette.secondary, maxLines = 1) }
             }
-            favourite?.let { save -> AccessibleIconButton(Lucide.Star, if (channel.favorite) "Remove favourite channel" else "Favourite channel", save,
-                enabled = !channel.favoritePending, iconSize = 18.dp, tint = if (channel.favorite) Palette.accent else Palette.secondary, wash = null) }
+            favourite?.let { save -> AccessibleIconButton(favouriteStarPainter(channel.favorite), favouriteActionLabel(channel.favorite), save,
+                enabled = !pending, iconSize = 18.dp, tint = if (channel.favorite) Palette.accent else Palette.secondary, wash = null, pending = pending) }
         }
+        MutationFailure(target, Modifier.padding(start = 76.dp, bottom = 8.dp))
         HorizontalDivider(color = Palette.raised)
     }
 }

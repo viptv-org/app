@@ -77,7 +77,7 @@ class MergedCalendarTest {
     }
 
     @Test fun aRefreshHintStopsPagingOnUnstableCursors() = runBlocking {
-        val skips = mutableListOf<String?>()
+        val skips = EngineRequests<String?>()
         val remote = RemoteConnection("https://fixture.example", client = client { request ->
             skips += request.url.parameters["skip"]
             buildJsonObject {
@@ -94,7 +94,7 @@ class MergedCalendarTest {
     }
 
     @Test fun theDefaultTypeReadsEveryCalendarAndMergesThem() = runBlocking {
-        val types = mutableListOf<String>()
+        val types = EngineRequests<String>()
         val client = client { request ->
             if (!request.url.encodedPath.startsWith("/api/calendar")) return@client null
             val type = request.url.parameters["type"].orEmpty()
@@ -120,7 +120,7 @@ class MergedCalendarTest {
     }
 
     @Test fun anOlderServerRejectingTheAllTypeFallsBackToThePerTypeMerge() = runBlocking {
-        val types = mutableListOf<String>()
+        val types = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             if (!request.url.encodedPath.startsWith("/api/calendar")) return@MockEngine respond("{}", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
             val type = request.url.parameters["type"].orEmpty()
@@ -163,7 +163,7 @@ class MergedCalendarTest {
     }
 
     @Test fun refreshAfterRereadsTheWindowFromTheFirstPageQuietly() = runBlocking {
-        val skips = mutableListOf<String?>()
+        val skips = EngineRequests<String?>()
         val client = client { request ->
             if (!request.url.encodedPath.startsWith("/api/calendar")) return@client null
             skips += request.url.parameters["skip"]
@@ -210,7 +210,7 @@ class MergedCalendarTest {
     }
 
     @Test fun choosingALibraryEntryOpensItsSeriesDetailsThroughTheEpisode() = runBlocking {
-        val details = mutableListOf<String>()
+        val details = EngineRequests<String>()
         val client = client { request ->
             if (!request.url.encodedPath.startsWith("/api/meta/")) return@client null
             details += request.url.encodedPath

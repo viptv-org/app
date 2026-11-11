@@ -15,7 +15,7 @@ class DevicePairingEnded(val reason: Reason) : Exception(when (reason) {
     enum class Reason { Denied, Expired }
 }
 
-internal const val DEVICE_PAIRING_EXPIRED_MESSAGE = "This sign-in code expired. Request a new code."
+internal const val DEVICE_PAIRING_EXPIRED_MESSAGE = "This code expired."
 
 internal class DevicePairingChallenge(val display: DevicePairingDisplay, internal val secret: String, var intervalSeconds: Long) {
     override fun toString() = "DevicePairingChallenge(deviceCode=<redacted>)"
