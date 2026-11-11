@@ -504,18 +504,45 @@ class NextEpisodePreparationTest {
         } finally { fixture.close(controller) }
     }
 
-    @Test fun disablingReuseNeverPreparesAndTheSuccessorAsks() = runTest {
+    @Test fun anUnpreparedSuccessorStillStartsBestMatchWhenRememberedChoicesAreOff() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("best", languages = listOf("ja"))), bestMatch = "best"))
+        try {
+            controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(2,
+                ProfilePreferences(source_selection = "ask", remembered_source_reuse = false)))
+            controller.sourceMemory.remember("profile", episode(1), row("remembered", languages = listOf("en")))
+            controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
+            assertEquals(Screen.Player, controller.state.value.screen)
+            assertEquals("best", controller.state.value.playingSource?.id)
+            assertEquals(listOf("en"), controller.sourceMemory.entry("profile", episode(2))?.languages)
+            controller.closePlayer()
+        } finally { fixture.close(controller) }
+    }
+
+    @Test fun anUnrememberedEpisodeBeyondTheResolvedSuccessorStillAsks() = runTest {
+        val fixture = LocalSetupFixture()
+        val controller = controller(local = localDevice(fixture, listOf(row("best")), bestMatch = "best"))
+        try {
+            controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(2, ProfilePreferences(source_selection = "ask")))
+            controller.playEpisode(episode(4)); advanceTimeBy(2_000); runCurrent()
+            assertEquals(Screen.Sources, controller.state.value.screen)
+            assertNull(controller.state.value.playback)
+        } finally { fixture.close(controller) }
+    }
+
+    @Test fun disablingRememberedChoicesStillPreparesAndStartsTheSuccessorsBestMatch() = runTest {
         val fixture = LocalSetupFixture()
         val controller = controller(local = localDevice(fixture, listOf(row("best", languages = listOf("ja"))), bestMatch = "best"))
         try {
             controller.mutable.value = controller.state.value.copy(preferences = PreferencesSnapshot(2, ProfilePreferences(source_selection = "ask", remembered_source_reuse = false)))
             controller.progress(1_300_000); advanceTimeBy(2_000); runCurrent()
-            assertNull(controller.state.value.nextEpisodePreparation, "No successor is prepared once reuse is disabled")
+            assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
 
             controller.playEpisode(episode(2)); advanceTimeBy(2_000); runCurrent()
             val state = controller.state.value
-            assertEquals(Screen.Sources, state.screen, "The successor asks for a source instead of starting on its own")
-            assertNull(state.playback)
+            assertEquals(Screen.Player, state.screen)
+            assertEquals("best", state.playingSource?.id)
+            assertNotNull(state.playback)
             controller.closePlayer()
         } finally { fixture.close(controller) }
     }

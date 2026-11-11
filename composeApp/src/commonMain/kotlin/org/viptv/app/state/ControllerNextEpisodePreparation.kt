@@ -134,7 +134,6 @@ internal fun ApplicationController.cancelNextEpisodePreparation(): Job? = clearN
 
 internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value
-    if (!state.preferences.rememberedSourceReuseEnabled()) return false
     val prepared = state.nextEpisodePreparation?.takeIf {
         it.status == NextEpisodePreparationStatus.Ready && it.source != null &&
             (it.preparedAtMillis == null || clockMillis() - it.preparedAtMillis < NEXT_PREPARED_SOURCE_TTL_MILLIS) &&

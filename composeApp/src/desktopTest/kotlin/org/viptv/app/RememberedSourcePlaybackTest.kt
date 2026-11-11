@@ -159,6 +159,21 @@ class RememberedSourcePlaybackTest {
         } finally { harness.close() }
     }
 
+    @Test fun anOlderEpisodePickedFromThePlayerUsesTheRememberedSeriesChoice() = runBlocking<Unit> {
+        val harness = Harness { listOf(row("fresh", "addon:a", listOf("en"))) }
+        try {
+            remember(harness)
+            harness.controller.updateState { it.copy(screen = Screen.Player,
+                playback = PlaybackInput("current", "https://media.example/current", profileId = "default"),
+                sourceTitle = episode(1, 3), nextEpisode = episode(1, 4),
+                detail = DetailSnapshot(series, episodes = (1L..4L).map { episode(1, it) })) }
+            harness.controller.playEpisode(episode(1, 1))
+            settle(harness.controller)
+            assertEquals(Screen.Player, harness.controller.state.value.screen)
+            assertEquals("fresh", harness.controller.state.value.playingSource?.id)
+        } finally { harness.close() }
+    }
+
     @Test fun anotherProfileOrUnrelatedTitleNeverReuses() = runBlocking<Unit> {
         val harness = Harness { listOf(row("a", languages = listOf("en"))) }
         val controller = harness.controller

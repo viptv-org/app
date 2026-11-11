@@ -38,7 +38,7 @@ import org.viptv.app.format.providerText
 @Composable
 internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: () -> Unit, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false, open: (Card) -> Unit = play, loadPage: (Long) -> Unit = {},
     continuing: List<Card> = emptyList(), paging: Boolean = true, focus: DetailFocus? = null, pageError: String? = null, retryPage: (() -> Unit)? = null,
-    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList()) {
+    manageAddons: () -> Unit = {}, failures: List<AddonFailure> = emptyList(), chooseSource: (Card) -> Unit = play) {
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -98,7 +98,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                     } }
                     items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume.shown(episode), true, { play(episode) }, Modifier.fillMaxWidth(), tablet = true, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                        DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth(), tablet = true, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                     }
                     if (pageError != null) item(key = "page-failure") {
                         DetailInlineFailure(pageError, retryPage, Modifier.padding(top = 16.dp))
