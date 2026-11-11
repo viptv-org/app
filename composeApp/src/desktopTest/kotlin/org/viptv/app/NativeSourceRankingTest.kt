@@ -22,7 +22,7 @@ class NativeSourceRankingTest {
         }
     }) : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-source-ranking-")
-        val requested = mutableListOf<String>()
+        val requested = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             requested += request.url.host
             respond(body(request.url.host), headers = headersOf(HttpHeaders.ContentType, "application/json"))

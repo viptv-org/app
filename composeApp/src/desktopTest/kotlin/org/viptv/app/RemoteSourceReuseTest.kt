@@ -20,7 +20,7 @@ class RemoteSourceReuseTest {
     private val memory = SourceReuseContext(title = SourceReuseMemory("connection", listOf("en"), "Supplier", "supplier-id"))
 
     @Test fun discoveryOnlySendsOptionalMemoryAfterCapabilityNegotiationAndCarriesFallbackExclusion() = runBlocking {
-        val requests = mutableListOf<JsonObject>()
+        val requests = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             if (request.method == HttpMethod.Post) {
                 requests += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
@@ -41,7 +41,7 @@ class RemoteSourceReuseTest {
     }
 
     @Test fun rankingNegotiatesOlderServersBeforeSendingMemoryAndKeepsDecisionOnCore() = runBlocking {
-        val requests = mutableListOf<JsonObject>()
+        val requests = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             requests += Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond("""{"streams":[{"id":"fresh","reuse_audio_language":"en"}],"source_reuse_supported":true,"source_reuse_ready":true,"source_reuse_ids":["fresh"]}""",
@@ -60,7 +60,7 @@ class RemoteSourceReuseTest {
         } finally { connection.close() }
     }
     @Test fun olderServersCanRejectAffinityWithoutBreakingOrdinaryRanking() = runBlocking {
-        val requests = mutableListOf<JsonObject>()
+        val requests = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             requests += body
