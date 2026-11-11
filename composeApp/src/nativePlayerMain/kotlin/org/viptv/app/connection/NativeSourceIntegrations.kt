@@ -22,10 +22,11 @@ internal suspend fun NativeLocalConnection.deleteSourceIntegration(profile: Stri
 }
 
 internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: String, card: Card,
-    publish: suspend (SourcesOutcome) -> Unit): List<SourceCandidate> {
+    publish: suspend (SourcesOutcome) -> Unit, context: RankingContext = RankingContext(),
+    fallback: () -> Unit = {}): List<SourceCandidate> {
     val snapshot = readSourceIntegrationSchemas(profile)
     val ready = snapshot.schemas.filter { it.runtime_enabled && it.state == "Ready" }
-    if (ready.isEmpty()) return emptyList()
+    if (ready.isEmpty()) { fallback(); return emptyList() }
     val names = snapshot.connections.associate { it.id to it.name }
     val producers = linkedMapOf<String, SourceProducerOutcome>()
     ready.forEach { schema ->
@@ -38,7 +39,12 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
     try {
         val completed = withTimeoutOrNull(45_000) {
             val started = withContext(Dispatchers.IO) {
-                json.parseToJsonElement(engine.startIntegrationSources(profile, json.encodeToString(card))).jsonObject
+                json.parseToJsonElement(engine.startIntegrationSources(profile, JsonObject(json.encodeToJsonElement(card).jsonObject + ("discovery" to buildJsonObject {
+                    context.reuse.json(true).forEach { (key, value) -> put(key, value) }
+                    if (context.excludePreferred) put("exclude_preferred_source", true)
+                    context.preferredBudgetMillis?.let { put("preferred_budget_ms", it) }
+                    put("ranking", rankingContextJson(context.copy(reuse = SourceReuseContext())))
+                })).toString())).jsonObject
             }
             jobId = started.getValue("id").jsonPrimitive.content
             if (producers.isNotEmpty()) publish(published())
@@ -47,6 +53,7 @@ internal suspend fun NativeLocalConnection.fetchIntegrationSources(profile: Stri
                 val page = withContext(Dispatchers.IO) {
                     json.decodeFromString<IntegrationSourcePage>(engine.pollIntegrationSources(profile, requireNotNull(jobId), after.toULong()))
                 }
+                if (page.phase == "fallback") fallback()
                 page.events.forEach { event ->
                     event.sources.forEach { found[it.id] = it }
                     after = maxOf(after, event.seq)

@@ -72,7 +72,7 @@ private suspend fun ApplicationController.discoverDetailSources(session: DetailS
         publishDetailSourcePreview(session, DetailSourcePreview(settled = true, failed = true))
         return
     }
-    val context = rankingContext(seriesMemoryOf(profile, card), capability)
+    val context = rankingContext(seriesMemoryOf(profile, card), capability).copy(providerAffinity = sourceMemory.affinity(profile))
     var rows: List<SourceCandidate> = emptyList()
     var groups = SourceGroups()
     var producers: List<SourceProducerOutcome> = emptyList()

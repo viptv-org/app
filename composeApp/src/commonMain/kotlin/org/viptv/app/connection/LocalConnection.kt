@@ -100,3 +100,11 @@ data class ProgressCorrection(
     val completionOnly: Boolean,
     val watchDateKnown: Boolean,
 )
+
+internal interface PreferredSourceDiscovery {
+    suspend fun discoverSources(profile: String, card: Card, context: RankingContext, publish: (SourcesOutcome) -> Unit): SourcesOutcome
+}
+
+internal suspend fun LocalConnection.discoverSources(profile: String, card: Card, context: RankingContext,
+    publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome =
+    if (this is PreferredSourceDiscovery) discoverSources(profile, card, context, publish) else sources(profile, card, publish)

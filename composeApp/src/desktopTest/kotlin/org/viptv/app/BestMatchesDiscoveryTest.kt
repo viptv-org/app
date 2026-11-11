@@ -37,13 +37,13 @@ class BestMatchesDiscoveryTest {
         }
     }
 
-    private fun discover(selection: String, discovery: (LocalSetupFixture) -> Discovery, check: suspend (ApplicationController, Discovery) -> Unit) = runBlocking<Unit> {
+    private fun discover(selection: String, discovery: (LocalSetupFixture) -> Discovery, manual: Boolean = false, check: suspend (ApplicationController, Discovery) -> Unit) = runBlocking<Unit> {
         val fixture = LocalSetupFixture()
         val fake = discovery(fixture)
         val controller = fixture.controller { fake.device }; controller.local = fake.device
-        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = selection)))
-        try { controller.chooseSource(movie); check(controller, fake) }
+        try { if (manual) controller.chooseSource(movie) else controller.playTitle(movie); check(controller, fake) }
         finally { fake.release.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
 
@@ -70,6 +70,16 @@ class BestMatchesDiscoveryTest {
             "The better row takes the marker; the sixth passing row and the camera row stay in All sources")
         assertEquals(listOf("b", "best"), fake.opened, "A clearly better row switches during the grace window")
         assertEquals(2, fake.rankingCalls.size)
+    }
+
+    @Test fun explicitChooseSourceAlwaysAsksEvenWithBestMatchEnabled() = discover("best", {
+        Discovery(it, listOf(row("a", 720)), listOf(row("best", 2160)))
+    }, manual = true) { controller, fake ->
+        fake.release.complete(Unit)
+        settle(controller)
+        assertTrue(fake.opened.isEmpty())
+        assertEquals(Screen.Sources, controller.state.value.screen)
+        assertEquals(listOf("best", "a"), controller.state.value.sources.map { it.id })
     }
 
     @Test fun alwaysAskGroupsTheSameWayAndPlaysNothing() = discover("ask", {

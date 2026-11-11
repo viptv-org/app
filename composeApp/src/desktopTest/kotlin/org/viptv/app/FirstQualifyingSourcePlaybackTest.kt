@@ -40,9 +40,9 @@ class FirstQualifyingSourcePlaybackTest {
         val fixture = LocalSetupFixture()
         val streaming = Streaming(fixture, first, second, openGate)
         val controller = fixture.controller { streaming.device }; controller.local = streaming.device
-        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
-        try { controller.chooseSource(movie); check(controller, streaming) }
+        try { controller.playTitle(movie); check(controller, streaming) }
         finally { streaming.openGate?.complete(Unit); streaming.gate.complete(Unit); controller.job?.cancelAndJoin(); fixture.close(controller) }
     }
 

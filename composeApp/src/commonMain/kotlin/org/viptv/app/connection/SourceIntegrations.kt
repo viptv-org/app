@@ -38,4 +38,5 @@ internal data class IntegrationSourcePage(
     val events: List<IntegrationSourceEvent> = emptyList(),
     val done: Boolean = false,
     val error_code: String? = null,
+    val phase: String = "fallback",
 )

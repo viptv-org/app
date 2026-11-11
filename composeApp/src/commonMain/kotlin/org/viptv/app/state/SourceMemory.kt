@@ -1,5 +1,6 @@
 package org.viptv.app.state
 
+import androidx.compose.runtime.*
 import kotlin.concurrent.Volatile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -16,10 +17,18 @@ import org.viptv.engine.wire.SourceCandidate
 internal data class RememberedSource(
     val provider_id: String,
     val languages: List<String> = emptyList(),
+    val provider_name: String? = null,
+    val source_id: String? = null,
 )
 
 @Serializable
-internal data class SourceMemoryRecord(val entries: Map<String, RememberedSource> = emptyMap())
+internal data class SourceMemoryRecord(
+    val entries: Map<String, RememberedSource> = emptyMap(),
+    val across: Set<String> = emptySet(),
+    val crossTitle: Map<String, RememberedSource> = emptyMap(),
+    val lastManual: Map<String, RememberedSource> = emptyMap(),
+    val lastStartedProvider: Map<String, String> = emptyMap(),
+)
 
 internal interface SourceMemoryStore {
     fun read(): String?
@@ -57,37 +66,85 @@ internal fun sourceMemoryKey(profile: String, card: Card): String {
 object SourceMemory {
     @Volatile private var store: SourceMemoryStore = EmptySourceMemoryStore
 
-    fun useDeviceStorage() { store = platformSourceMemoryStore() }
+    private var shared: SourceMemoryBook? = null
 
-    internal fun book(): SourceMemoryBook = SourceMemoryBook(store)
+    fun useDeviceStorage() { store = platformSourceMemoryStore(); shared = null }
+
+    internal fun book(): SourceMemoryBook = if (store === EmptySourceMemoryStore) SourceMemoryBook(store)
+        else shared ?: SourceMemoryBook(store).also { shared = it }
 }
 
 internal enum class SourceChoice { None, Manual }
 
 internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySourceMemoryStore) {
-    private var record = decodeSourceMemory(runCatching { store.read() }.getOrNull())
+    private var record by mutableStateOf(decodeSourceMemory(runCatching { store.read() }.getOrNull()))
+
+    var revision: Long = 0
+        private set
+
+    fun affinity(profile: String): String? = record.lastStartedProvider[profile]
+
+    fun started(profile: String, source: SourceCandidate) {
+        if (!source.provider_id.durableSourceText() || affinity(profile) == source.provider_id) return
+        record = record.copy(lastStartedProvider = (record.lastStartedProvider - profile + (profile to source.provider_id)).entries.takeLastEntries(32))
+        persist()
+    }
+
+    fun across(profile: String): Boolean = profile in record.across
+
+    fun setAcross(profile: String, enabled: Boolean) {
+        record = record.copy(across = (record.across - profile).let { if (enabled) it + profile else it },
+            crossTitle = if (enabled && profile !in record.crossTitle) record.lastManual[profile]?.let { record.crossTitle + (profile to it) } ?: record.crossTitle else record.crossTitle)
+        persist()
+    }
+
+    fun context(profile: String, card: Card): org.viptv.app.connection.SourceReuseContext =
+        org.viptv.app.connection.SourceReuseContext(entry(profile, card)?.wire(),
+            record.crossTitle[profile]?.takeIf { across(profile) }?.wire())
+
+    fun choice(profile: String, card: Card): RememberedSource? = entry(profile, card)
+        ?: record.crossTitle[profile]?.takeIf { across(profile) }
+
+    private fun persist() {
+        revision++
+        var encoded = encodeSourceMemory(record)
+        while (encoded.length > MAX_RECORD_LENGTH) {
+            record = when {
+                record.entries.isNotEmpty() -> record.copy(entries = record.entries - record.entries.keys.first())
+                record.lastManual.isNotEmpty() -> record.copy(lastManual = record.lastManual - record.lastManual.keys.first())
+                record.crossTitle.isNotEmpty() -> record.copy(crossTitle = record.crossTitle - record.crossTitle.keys.first())
+                else -> break
+            }
+            encoded = encodeSourceMemory(record)
+        }
+        runCatching { store.write(encoded) }
+    }
 
     fun entry(profile: String, card: Card): RememberedSource? = record.entries[sourceMemoryKey(profile, card)]
 
     fun remember(profile: String, card: Card, source: SourceCandidate) {
+        if (!source.provider_id.durableSourceText()) return
         val key = sourceMemoryKey(profile, card)
         val remembered = RememberedSource(source.provider_id,
-            source.audio_languages.map(String::trim).filter(String::isNotEmpty).distinct().take(MAX_LANGUAGES))
+            source.audio_languages.map(String::trim).filter(String::isNotEmpty).distinct().take(MAX_LANGUAGES),
+            source.presentation?.provider_name?.takeIf { it.durableSourceText() }, source.presentation?.source_id?.takeIf { it.durableSourceText() })
         val merged = record.entries - key + (key to remembered)
         val entries = if (merged.size <= MAX_ENTRIES) merged
             else merged.entries.drop(merged.size - MAX_ENTRIES).associate { it.key to it.value }
-        record = record.copy(entries = entries)
-        runCatching { store.write(encodeSourceMemory(record)) }
+        record = record.copy(entries = entries, lastManual = record.lastManual + (profile to remembered),
+            crossTitle = if (across(profile)) record.crossTitle + (profile to remembered) else record.crossTitle)
+        persist()
     }
 
     fun forget(profile: String, card: Card) {
         val key = sourceMemoryKey(profile, card)
         if (key !in record.entries) return
         record = record.copy(entries = record.entries - key)
-        runCatching { store.write(encodeSourceMemory(record)) }
+        persist()
     }
 
     companion object {
+        const val MAX_RECORD_LENGTH = 8_000
         const val MAX_ENTRIES = 200
         const val MAX_LANGUAGES = 8
     }
@@ -118,10 +175,18 @@ internal fun PreferencesSnapshot?.rememberedSourceReuseEnabled(): Boolean =
 internal fun ApplicationController.rememberSourceChoice() {
     val choice = sourceChoice
     sourceChoice = SourceChoice.None
-    if (choice != SourceChoice.Manual) return
+    if (choice != SourceChoice.Manual || !mutable.value.preferences.rememberedSourceReuseEnabled()) return
     val profile = mutable.value.selectedProfile ?: return
     val card = mutable.value.sourceTitle ?: return
     val source = mutable.value.playingSource ?: return
     if (card.identity.kind !in rememberedKinds) return
-    sourceMemory.remember(profile, card, source)
+    val language = mutable.value.playback?.selectedAudioLanguage
+    sourceMemory.remember(profile, card, source.copy(audio_languages = language?.let(::listOf)
+        ?: source.audio_languages.takeIf { it.size == 1 }.orEmpty()))
 }
+
+internal fun RememberedSource.wire() = org.viptv.app.connection.SourceReuseMemory(provider_id, languages, provider_name, source_id)
+
+private fun String.durableSourceText(): Boolean = isNotBlank() && length <= 256 && !contains("://") && none { it.isISOControl() }
+
+private fun <K, V> Set<Map.Entry<K, V>>.takeLastEntries(limit: Int): Map<K, V> = toList().takeLast(limit).associate { it.key to it.value }

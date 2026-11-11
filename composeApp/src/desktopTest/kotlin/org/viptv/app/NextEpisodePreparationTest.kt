@@ -66,7 +66,7 @@ class NextEpisodePreparationTest {
             }, null, true))
     }
 
-    private fun TestScope.controller(initial: ApplicationState = state(), server: PlaybackServer = PlaybackServer(), local: LocalConnection? = null): ApplicationController {
+    private fun TestScope.controller(initial: ApplicationState = state(), server: PlaybackServer = PlaybackServer(), local: LocalConnection? = null, prepareDelivery: Boolean = true): ApplicationController {
         val client = HttpClient(MockEngine) {
             engine {
                 dispatcher = StandardTestDispatcher(testScheduler)
@@ -120,7 +120,7 @@ class NextEpisodePreparationTest {
             connection.openPlayback(candidate, profile, buildJsonObject { put("platform", "desktop"); put("can_play_direct", true) },
                 forceGateway, position, torrents = null, stage = stage)
         }
-        controller.nextEpisodeDeliveryPreparer = serverPreparer(server)
+        if (prepareDelivery) controller.nextEpisodeDeliveryPreparer = serverPreparer(server)
         controller.mutable.value = initial
         return controller
     }
@@ -130,6 +130,34 @@ class NextEpisodePreparationTest {
 
     private fun ApplicationController.playingLease() =
         RemotePlaybackLease(input(), 20, requireNotNull(connection))
+
+    @Test fun expiredSourcePreparationIsResolvedAgainInTheLastThreeMinutes() = runTest {
+        val controller = controller(prepareDelivery = false)
+        var now = 0L
+        var preparations = 0
+        controller.clockMillis = { now }
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparations++; preparedSource() }
+        controller.progress(1_220_000); runCurrent()
+        assertEquals(1, preparations)
+        now = NEXT_PREPARED_SOURCE_TTL_MILLIS
+        controller.progress(1_230_000); runCurrent()
+        assertEquals(2, preparations)
+        assertNull(controller.nextEpisodePreparedLease)
+        controller.closePlayer()
+    }
+
+    @Test fun productionPreparationKeepsOnlyTheSourceAndOpensNoSpeculativeLease() = runTest {
+        val server = PlaybackServer()
+        val controller = controller(server = server, prepareDelivery = false)
+        controller.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> preparedSource() }
+        controller.progress(1_220_000); runCurrent()
+        assertEquals(NextEpisodePreparationStatus.Ready, controller.state.value.nextEpisodePreparation?.status)
+        assertNull(controller.nextEpisodePreparedLease)
+        assertEquals(0, server.prepares)
+        assertEquals(0, server.opens)
+        assertEquals(0, server.promotes)
+        controller.closePlayer()
+    }
 
     @Test fun theLastThreeMinutesPrepareOneDeliveryAndNextPromotesIt() = runTest {
         val server = PlaybackServer()

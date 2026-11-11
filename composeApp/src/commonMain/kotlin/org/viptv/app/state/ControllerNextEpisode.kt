@@ -91,7 +91,7 @@ fun ApplicationController.playEpisode(card: Card) {
     val reuseEnabled = state.preferences.rememberedSourceReuseEnabled()
     closePlayer()
     // A successor inherits the series' remembered source; otherwise the plain player pick keeps its ask or best-match flow.
-    val remembered = reuseEnabled && state.selectedProfile?.let { sourceMemory.entry(it, card) } != null
+    val remembered = reuseEnabled && state.selectedProfile?.let { sourceMemory.choice(it, card) } != null
     if (successor && remembered) playTitle(card)
     else chooseSource(card, startPlayback = successor && reuseEnabled)
 }

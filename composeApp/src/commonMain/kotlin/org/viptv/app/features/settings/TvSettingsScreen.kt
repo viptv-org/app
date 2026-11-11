@@ -132,7 +132,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
                     TvSettingsSection.Playback -> {
                         val active = requireNotNull(change)
                         TvPlaybackSettings(profile?.name, requireNotNull(prefs), scale, first, sidebar, active,
-                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly, devicePlayback)
+                            { title, values, select -> choice = TvSettingsChoice(title, values, select) }, actualPreferencesOnly, devicePlayback, profile?.id)
                     }
                     TvSettingsSection.Subtitles -> {
                         val active = requireNotNull(change)

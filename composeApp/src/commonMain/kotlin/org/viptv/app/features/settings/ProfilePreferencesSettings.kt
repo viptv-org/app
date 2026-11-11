@@ -29,7 +29,8 @@ private val languageOptions = languageChoices.map { (tag, name) -> SelectOption(
 
 @Composable
 internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSnapshot?, busy: Boolean, error: String?,
-    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null) {
+    retry: () -> Unit, save: (ProfilePreferences) -> Unit, devicePlayback: DevicePlaybackState? = null, profileId: String? = null) {
+    val sourceMemory = remember { org.viptv.app.state.SourceMemory.book() }
     var draft by remember(snapshot) { mutableStateOf(snapshot?.preferences) }
     val deviceHeight = remember { deviceMaxVideoHeight() }
     val mutations = LocalPendingMutation.current
@@ -80,6 +81,10 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
                         PhonePreferenceSwitchRow(skipIntrosRow, skipIntrosDescription, value.skip_intros) { draft = draft?.copy(skip_intros = it) }
                         PhonePreferenceDivider()
                         PhonePreferenceSwitchRow(rememberedSourceRow, rememberedSourceDescription, value.remembered_source_reuse) { draft = draft?.copy(remembered_source_reuse = it) }
+                        profileId?.let { profile ->
+                            PhonePreferenceDivider()
+                            PhonePreferenceSwitchRow(crossTitleSourceRow, crossTitleSourceDescription, sourceMemory.across(profile)) { sourceMemory.setAcross(profile, it) }
+                        }
                     }
                     Text("Sources", color = Palette.secondary, style = MaterialTheme.typography.bodySmall)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

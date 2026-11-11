@@ -43,10 +43,10 @@ class BestMatchFallbackTest {
             bestMatchNoticeMillis = 20, startDeadlineMillis = startDeadlineMillis)
         controller.capability = { DeviceCapability() }
         controller.local = fake.device
-        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
         try {
-            controller.chooseSource(movie)
+            controller.playTitle(movie)
             withTimeout(5000) { controller.state.first { it.playback != null } }
             check(controller, fake)
         } finally {
@@ -57,6 +57,30 @@ class BestMatchFallbackTest {
 
     private suspend fun awaitPlayback(controller: ApplicationController, id: String) =
         withTimeout(5000) { controller.state.first { it.playingSource?.id == id && it.playback?.id == id } }
+
+    @Test fun anAdmissionFailureBeforeThePlayerOpensFallsBackWithinTheAttemptLimit() = runTest {
+        val fixture = LocalSetupFixture()
+        val opened = mutableListOf<String>()
+        val rows = listOf(row("a"), row("b"))
+        val device = object : LocalConnection by fixture.local {
+            override suspend fun openSource(id: String): PlaybackInput {
+                opened += id
+                if (id == "a") throw LocalFailure("Source expired")
+                return PlaybackInput(id, "https://media.example/$id", profileId = "default")
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val controller = ApplicationController(scope, fixture.store, bestMatchNoticeMillis = 20)
+        controller.local = device
+        controller.mutable.value = ApplicationState(screen = Screen.Sources, selectedProfile = "default", localMode = true,
+            sourceTitle = movie, sources = rows, preferences = PreferencesSnapshot())
+        try {
+            controller.startBestMatch(RankedSources(rows, interimSourceGroups(rows)), rows.first())
+            withTimeout(5_000) { controller.state.first { it.playback?.id == "b" } }
+            assertEquals(listOf("a", "b"), opened)
+            assertEquals(2, controller.state.value.bestMatch?.attempts)
+        } finally { fixture.close(controller); scope.cancel() }
+    }
 
     @Test fun aFailedStartShowsTheNoticeThenOpensTheNextRowThatSurvivesTheHardFilters() =
         fallback(listOf(row("a"), row("cam", 2160, "cam"), row("b"))) { controller, fake ->
@@ -210,10 +234,10 @@ class BestMatchFallbackTest {
         val controller = ApplicationController(scope, fixture.store, localFactory = { device })
         controller.capability = { DeviceCapability() }
         controller.local = device
-        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
         try {
-            controller.chooseSource(movie)
+            controller.playTitle(movie)
             withTimeout(5000) { controller.state.first { it.playback?.id == "a" } }
             controller.observePlayback(PlayerFact.Progress(123_456, 800_000))
             controller.playNextSource()

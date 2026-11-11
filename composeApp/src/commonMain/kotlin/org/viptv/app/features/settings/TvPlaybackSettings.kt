@@ -18,7 +18,8 @@ import org.viptv.app.theme.Palette
 @Composable
 internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, scale: Float, initial: FocusRequester,
     sidebar: FocusRequester, change: (TvSettingsPreferences, String) -> Unit, choose: (String, List<String>, (String) -> Unit) -> Unit,
-    actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null) {
+    actualPreferencesOnly: Boolean = false, devicePlayback: DevicePlaybackState? = null, profileId: String? = null) {
+    val sourceMemory = remember { org.viptv.app.state.SourceMemory.book() }
     val rows = tvPlaybackRows(actualPreferencesOnly, deviceRows = devicePlayback != null)
     val deviceHeight = remember { deviceMaxVideoHeight() }
     val mutations = LocalPendingMutation.current
@@ -37,6 +38,10 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, sca
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(skipIntros = !prefs.skipIntros), row) }
                 rememberedSourceRow -> TvSettingsRow(rememberedSourceRow, rememberedSourceDescription, scale, checked = prefs.rememberSource,
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(rememberSource = !prefs.rememberSource), row) }
+                crossTitleSourceRow -> profileId?.let { profile ->
+                    TvSettingsRow(row, crossTitleSourceDescription, scale, checked = sourceMemory.across(profile), requester = requester, left = sidebar) {
+                        sourceMemory.setAcross(profile, !sourceMemory.across(profile)) }
+                }
                 "Default source" -> TvSettingsRow(row, scale = scale, value = prefs.source, pending = mutations.isPending(preferenceTarget(row)),
                     requester = requester, left = sidebar) {
                     choose(row, listOf("Best match", "Always ask")) { change(prefs.copy(source = it), row) } }
