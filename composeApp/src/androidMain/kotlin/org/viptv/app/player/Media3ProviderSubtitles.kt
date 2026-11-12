@@ -139,6 +139,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
                 if (closed || generation != operation || input.providerSubtitles.value.none { it.id == candidate.id }) return@launch
                 // Only text selection changes: the media item, seek position and audio override do not.
                 tracks.select(PlaybackTrackKind.Subtitle, null)
+                input.subtitleSync.select(SubtitleSyncIdentity(input.id, selectedAudioIdentity(), candidate.id))
                 timeline = parsed; desired = candidate.id; shown = null
                 tracks.providerSelected(desired)
                 render()
@@ -181,11 +182,16 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         autoSelect(values)
     }
 
-    private fun clear() { timeline = null; desired = null; shown = null; tracks.providerSelected(null); render() }
+    private fun clear() { timeline = null; desired = null; shown = null; input.subtitleSync.select(null); tracks.providerSelected(null); render() }
+    private fun selectedAudioIdentity() = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+        .flatMap { group -> (0 until group.length).filter(group::isTrackSelected).map { index -> "${group.mediaTrackGroup.id}:$index" } }.joinToString()
     private fun render() {
         if (closed) return
+        input.subtitleSync.audioChanged(selectedAudioIdentity())
         embeddedLayer?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
-        val cues = timeline?.cuesAt(positionMillis().coerceAtLeast(0) * 1000) ?: emptyList()
+        val titleUs = positionMillis().coerceAtLeast(0) * 1000
+        var cues = timeline?.cuesAt(input.subtitleSync.subtitleTimeUs(titleUs)) ?: emptyList()
+        if (cues.isEmpty()) cues = timeline?.cuesAt(input.subtitleSync.subtitleTimeUs(titleUs, cueGap = true)) ?: emptyList()
         if (cues !== shown) {
             overlay?.setStackedCues(cues); shown = cues
             input.diagnostics?.invoke("sidecar_active=${timeline != null} sidecar_cues=${cues.size} sidecar_position_ms=${positionMillis()}")

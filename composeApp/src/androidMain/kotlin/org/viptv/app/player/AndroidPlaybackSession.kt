@@ -75,9 +75,10 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             }
         }
         override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+            input.subtitleSync.discontinuity()
             input.diagnostics?.invoke("discontinuity_reason=$reason discontinuity_old_ms=${oldPosition.positionMs} discontinuity_new_ms=${newPosition.positionMs}")
         }
-        override fun onTracksChanged(value: Tracks) { tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
+        override fun onTracksChanged(value: Tracks) { input.subtitleSync.discontinuity(); tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
         override fun onPlayerError(error: PlaybackException) {
             reportNativePlaybackFailure("Media3 playback error: ${error.errorCodeName}")
             emit(if (media3DecodeFailure(error)) PlayerFact.Undecodable else PlayerFact.Failed)
