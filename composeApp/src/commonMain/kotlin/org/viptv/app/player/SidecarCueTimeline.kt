@@ -15,6 +15,13 @@ internal class SidecarCueTimeline<T>(groups: List<SidecarCueGroup<T>>, private v
         this.groups.forEachIndexed { index, group -> maximumEnd[index] = maxOf(group.endUs ?: Long.MAX_VALUE,
             maximumEnd.getOrNull(index - 1) ?: 0) }
     }
+    fun intervals(): List<SubtitleCueInterval> = groups.mapIndexedNotNull { index, group ->
+        if (group.cues.isEmpty()) return@mapIndexedNotNull null
+        val next = groups.getOrNull(index + 1)?.startUs
+        val end = if (replace) listOfNotNull(group.endUs, next).minOrNull() ?: return@mapIndexedNotNull null
+            else group.endUs ?: return@mapIndexedNotNull null
+        if (end <= group.startUs) null else SubtitleCueInterval(group.startUs, end)
+    }
     fun cuesAt(positionUs: Long): List<T> {
         val event = floor(events.size, { events[it] }, positionUs)
         if (event == previousEvent) return previousCues

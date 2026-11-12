@@ -103,7 +103,7 @@ internal class AVProviderSubtitles(private val player: AVPlayer, private val inp
                 group(PlaybackTrackKind.Subtitle)?.let { player.currentItem?.selectMediaOption(null, it) }
                 timeline = parsed
                 desired = id
-                input.subtitleSync.select(SubtitleSyncIdentity(input.id, selectedAudioIdentity(), id))
+                input.subtitleSync.select(SubtitleSyncIdentity(input.id, selectedAudioIdentity(), id), parsed.intervals())
                 refresh()
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) {

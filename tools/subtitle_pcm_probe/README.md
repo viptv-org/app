@@ -10,7 +10,7 @@ From the app repository:
 ```sh
 flock /tmp/viptv-tv-validation.lock flock /tmp/viptv-heavy-build.lock \
   ./gradlew --max-workers=1 -p tools/subtitle_pcm_probe assembleDebug
-adb -s SERIAL install -r tools/subtitle_pcm_probe/build/outputs/apk/debug/subtitle_pcm_probe-debug.apk
+adb -s SERIAL install -r tools/subtitle_pcm_probe/build/outputs/apk/debug/SubtitlePcmProbe-debug.apk
 adb -s SERIAL shell am start -n org.viptv.subtitleprobe/org.viptv.app.player.SubtitlePcmProbeActivity
 adb -s SERIAL shell run-as org.viptv.subtitleprobe cat files/result.txt
 ```

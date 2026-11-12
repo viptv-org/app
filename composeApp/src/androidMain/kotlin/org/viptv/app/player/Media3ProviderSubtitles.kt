@@ -139,7 +139,7 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
                 if (closed || generation != operation || input.providerSubtitles.value.none { it.id == candidate.id }) return@launch
                 // Only text selection changes: the media item, seek position and audio override do not.
                 tracks.select(PlaybackTrackKind.Subtitle, null)
-                input.subtitleSync.select(SubtitleSyncIdentity(input.id, selectedAudioIdentity(), candidate.id))
+                input.subtitleSync.select(SubtitleSyncIdentity(input.id, selectedAudioIdentity(), candidate.id), parsed.intervals())
                 timeline = parsed; desired = candidate.id; shown = null
                 tracks.providerSelected(desired)
                 render()

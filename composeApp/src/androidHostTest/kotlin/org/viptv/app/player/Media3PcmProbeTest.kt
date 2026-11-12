@@ -15,7 +15,7 @@ import kotlin.test.*
 
 @UnstableApi
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36])
+@Config(sdk = [35])
 class Media3PcmProbeTest {
     private var writes = 0
     private val sink = Proxy.newProxyInstance(AudioSink::class.java.classLoader, arrayOf(AudioSink::class.java)) { _, method, args ->

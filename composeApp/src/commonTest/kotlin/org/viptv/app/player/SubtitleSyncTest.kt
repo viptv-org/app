@@ -3,6 +3,13 @@ package org.viptv.app.player
 import kotlin.test.*
 
 class SubtitleSyncTest {
+    private fun session(audio: String = "audio") = SubtitleSyncSession().apply {
+        select(SubtitleSyncIdentity("media", audio, "subtitle"), listOf(SubtitleCueInterval(0, 20_000_000)))
+        setLocalAudioAvailable(true)
+        setAutomatic(true)
+        subtitleTimeUs(10_000_000)
+    }
+
     @Test fun anchoredProjectionAndDelaySign() {
         val correction = SubtitleCorrection(600_000_000, 2_000_000, 1.001)
         val playerTimeUs = 592_050_000L
@@ -12,8 +19,7 @@ class SubtitleSyncTest {
     }
 
     @Test fun changingAudioInvalidatesAcceptedCorrection() {
-        val session = SubtitleSyncSession()
-        session.select(SubtitleSyncIdentity("media", "original", "subtitle"))
+        val session = session("original")
         session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
         assertEquals(9_000_000L, session.subtitleTimeUs(10_000_000, true))
         val previous = session.epoch
@@ -23,8 +29,7 @@ class SubtitleSyncTest {
     }
 
     @Test fun laterAbstentionKeepsAcceptedCorrectionAcrossPendingSwap() {
-        val session = SubtitleSyncSession()
-        session.select(SubtitleSyncIdentity("media", "audio", "subtitle"))
+        val session = session()
         assertTrue(session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000), 5))
         assertTrue(session.offer(session.epoch, 1, SubtitleSyncAvailability.Ambiguous, observationRevision = 6))
         assertEquals(9_000_000L, session.subtitleTimeUs(10_000_000, true))
@@ -33,8 +38,7 @@ class SubtitleSyncTest {
     }
 
     @Test fun gapSwapManualFreezeAndStaleResults() {
-        val session = SubtitleSyncSession()
-        session.select(SubtitleSyncIdentity("media", "audio", "subtitle"))
+        val session = session()
         val epoch = session.epoch
         assertTrue(session.offer(epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 2_000_000)))
         assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000))
@@ -45,20 +49,51 @@ class SubtitleSyncTest {
         assertEquals(7_000_000L, session.subtitleTimeUs(10_000_000, cueGap = true))
         session.resumeAutomatic()
         assertFalse(session.offer(epoch, 3, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 0)))
-        assertEquals(8_000_000L, session.subtitleTimeUs(10_000_000))
+        assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000))
         session.select(SubtitleSyncIdentity("media", "other dub", "subtitle"))
         assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000))
-        assertEquals(SubtitleSyncAvailability.Unavailable, session.availability)
+        assertEquals(SubtitleSyncAvailability.Observing, session.availability)
     }
 
     @Test fun discontinuityRetainsOnlyAcceptedCorrection() {
-        val session = SubtitleSyncSession()
-        session.select(SubtitleSyncIdentity("media", "audio", "subtitle"))
+        val session = session()
         session.offer(session.epoch, 0, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, -1_000_000))
         val previous = session.epoch
         session.discontinuity()
         assertEquals(5_000_000L, session.subtitleTimeUs(5_000_000, true))
         assertFalse(session.offer(previous, 99, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 0)))
+    }
+
+    @Test fun defaultOffAndExplicitOnOffReset() {
+        val session = SubtitleSyncSession()
+        session.select(SubtitleSyncIdentity("media", "audio", "subtitle"), listOf(SubtitleCueInterval(0, 20_000_000)))
+        session.setLocalAudioAvailable(true)
+        assertFalse(session.ui.value.automatic)
+        assertNull(session.target.value)
+        assertFalse(session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000)))
+        session.setAutomatic(true)
+        assertNotNull(session.target.value)
+        session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
+        assertEquals(9_000_000L, session.subtitleTimeUs(10_000_000, true))
+        session.adjustManual(500_000)
+        assertNull(session.target.value)
+        assertEquals(8_500_000L, session.subtitleTimeUs(10_000_000))
+        session.setAutomatic(false)
+        assertEquals(9_500_000L, session.subtitleTimeUs(10_000_000))
+        session.setAutomatic(true)
+        assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000))
+        session.adjustManual(-500_000)
+        assertEquals(10_500_000L, session.subtitleTimeUs(10_000_000))
+        session.resetTiming()
+        assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000))
+        assertNotNull(session.target.value)
+    }
+
+    @Test fun acceptedSwapWaitHasBoundedContentTime() {
+        val session = session()
+        session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
+        assertEquals(14_999_999L, session.subtitleTimeUs(14_999_999))
+        assertEquals(14_000_000L, session.subtitleTimeUs(15_000_000))
     }
 
     @Test fun vttAndSrtCanonicalOverlapAndBounds() {

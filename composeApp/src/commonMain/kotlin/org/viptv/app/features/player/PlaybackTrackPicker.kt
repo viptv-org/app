@@ -54,7 +54,9 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
     preferences: ProfilePreferences, onPreferences: (ProfilePreferences) -> Unit,
     setBackground: (String?) -> Unit, insets: WindowInsets, bottomInset: Dp = 76.dp, openSettings: (() -> Unit)? = null,
     pendingSubtitle: SubtitleSelection? = null, subtitleError: SubtitleSelection? = null, retrySubtitle: () -> Unit = {},
-    pendingAudio: Int? = null, audioError: Int? = null, retryAudio: () -> Unit = {}) {
+    pendingAudio: Int? = null, audioError: Int? = null, retryAudio: () -> Unit = {}, subtitleSync: SubtitleSyncSession? = null) {
+    val timing = subtitleSync?.ui?.collectAsState()?.value
+    var showTiming by remember(subtitleSync) { mutableStateOf(false) }
     val reveal = rememberArriveFade()
     var dialog by remember { mutableStateOf<PhonePreferenceField?>(null) }
     var draft by remember(preferences) { mutableStateOf(preferences) }
@@ -72,10 +74,16 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 .then(if (phone) Modifier.windowInsetsPadding(insets.endSheet()) else Modifier)
                 .padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(if (showTiming) "Subtitle timing" else "Audio & subtitles", Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     AccessibleIconButton(Lucide.X, "Close track selection", close, modifier = Modifier.focusRequester(initial), iconSize = 16.dp, wash = null)
                 }
-                if (phone) {
+                if (showTiming && subtitleSync != null) {
+                    Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                        SubtitleTimingChoices(subtitleSync) { label, selected, action ->
+                            PlaybackTrackRow(label, null, selected, choose = action)
+                        }
+                    }
+                } else if (phone) {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         AudioColumn(tracks.audio, select, scrollable = false, pendingAudio = pendingAudio, audioError = audioError, retryAudio = retryAudio)
                         SubtitlesColumn(tracks.subtitles, select, scrollable = false, pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = retrySubtitle)
@@ -88,10 +96,11 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                     }
                     SubtitleSettings(draft, apply, setSize, setBackground, row = true) { dialog = it }
                 }
-                if (openSettings != null) PlaybackSettingsLink(openSettings)
+                if (!showTiming && timing?.providerSelected == true) PlaybackTrackRow(subtitleTimingLabel(timing), null, false) { showTiming = true }
+                if (openSettings != null && !showTiming) PlaybackSettingsLink(openSettings)
             }
         }
-        LaunchedEffect(Unit) { withFrameNanos { }; initial.requestFocus() }
+        LaunchedEffect(showTiming) { withFrameNanos { }; initial.requestFocus() }
     }
     dialog?.let { field ->
         PhonePreferenceDialog(field, draft, busy = false, update = apply, close = { dialog = null })

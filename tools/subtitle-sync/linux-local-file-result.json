@@ -1,0 +1,48 @@
+{
+  "scope": "owned-local-file/null-output-only",
+  "networkAllowed": false,
+  "fixtureSha256": "47fad93b8f685a719848de09c4173524d49459e567aa7a5b3d8298ea9a956f10",
+  "fixtureBytes": 349966,
+  "audioTrack": {
+    "id": 1,
+    "ff-index": 1,
+    "codec": "aac",
+    "audio-channels": 2,
+    "demux-samplerate": 48000
+  },
+  "mpvVersion": "mpv 0.35.1",
+  "audioParams": {
+    "samplerate": 48000,
+    "channel-count": 2,
+    "channels": "stereo",
+    "hr-channels": "stereo",
+    "format": "floatp"
+  },
+  "playlistEntriesBefore": 1,
+  "originalCue": "",
+  "anchoredCue": "Anchored local cue",
+  "subSpeed": 1.001,
+  "subDelay": 1.46,
+  "playlistEntriesAfter": 1,
+  "playerPidUnchanged": true,
+  "boundedDecoderWindows": [
+    {
+      "epoch": 1,
+      "requestedStart": 592,
+      "firstPts": 592.0,
+      "lastPts": 593.98,
+      "frames": 100,
+      "pcmBytes": 64000
+    },
+    {
+      "epoch": 2,
+      "requestedStart": 100,
+      "firstPts": 100.0,
+      "lastPts": 101.98,
+      "frames": 100,
+      "pcmBytes": 64000
+    }
+  ],
+  "fixtureUnchanged": true,
+  "anchoredPropertyQualified": true
+}
