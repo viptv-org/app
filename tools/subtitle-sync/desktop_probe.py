@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Bounded audio-only decoding beside mpv from one owned immutable local file."""
 import argparse
 import hashlib
 import json

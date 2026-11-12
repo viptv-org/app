@@ -7,6 +7,21 @@ internal data class SubtitleNativeEstimate(val epoch: Long, val revision: Long, 
 internal data class SubtitlePcmResult(val epoch: Long, val status: String, val processedFrames: Long,
     val emittedFrames: Int, val estimate: SubtitleNativeEstimate?)
 
+internal fun subtitlePcmBackendAvailable(value: String): Boolean {
+    if (value.length > 4096) return false
+    return runCatching {
+        val item = Json.parseToJsonElement(value).jsonObject
+        item["available"]?.jsonPrimitive?.booleanOrNull == true && item["workerOnly"]?.jsonPrimitive?.booleanOrNull == true &&
+            item["encoding"]?.jsonPrimitive?.content == "pcmS16Le" && item["frameMs"]?.jsonPrimitive?.intOrNull == 20 &&
+            item["maxInputBytes"]?.jsonPrimitive?.intOrNull == 32_768 &&
+            item["frontendVersion"]?.jsonPrimitive?.content == "pcm16-webrtc20-v2" &&
+            item["vadPatch"]?.jsonPrimitive?.content == "48k-input-offset-v1" &&
+            item["vadRevision"]?.jsonPrimitive?.content == "e283ca41df3a84b0e87fb1f5cb9b21580a286b09" &&
+            item["sampleRates"]?.jsonArray?.any { it.jsonPrimitive.intOrNull == 48_000 } == true &&
+            item["channels"]?.jsonArray?.any { it.jsonPrimitive.intOrNull == 2 } == true
+    }.getOrDefault(false)
+}
+
 internal fun subtitleCueJson(cues: List<SubtitleCueInterval>): String = buildJsonArray {
     require(cues.size <= 16_384)
     cues.forEach { cue -> add(buildJsonObject { put("startUs", cue.startUs); put("endUs", cue.endUs) }) }

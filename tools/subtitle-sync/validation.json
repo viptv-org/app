@@ -1,0 +1,56 @@
+{
+  "androidFocused": {
+    "Media3PcmProbeTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "AndroidSubtitleSyncWorkerTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "SubtitleSyncTest": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "SubtitleSyncProtocolTest": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "desktopUi": {
+    "SubtitleTimingPickerUiTest": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "PlayerSettingsLinkUiTest": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "nativeSource": "9742769ea30aa6c90758a16aa6dcd01b48b101d6",
+  "correctedDeviceRuntime": "blocked: emulator exited during startup; final status error",
+  "pythonGuardTests": 7,
+  "platformCompiles": [
+    "Android",
+    "WasmJs",
+    "iosSimulatorArm64 main/test klib"
+  ],
+  "limits": [
+    "No Apple runtime/framework link",
+    "No Windows/macOS acquisition",
+    "No corrected48k Android runtime result",
+    "No held-out speech accuracy or sustained device performance"
+  ]
+}

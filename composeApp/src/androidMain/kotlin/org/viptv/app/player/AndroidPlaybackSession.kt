@@ -198,7 +198,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private fun windowOffsetMillis(): Long = if (input.live || player.currentTimeline.isEmpty) 0 else
         player.currentTimeline.getWindow(player.currentMediaItemIndex, window).positionInFirstPeriodMs.coerceAtLeast(0)
     private fun updateSubtitleDelivery() {
-        subtitleDelivery.value = subtitleTimelineEligible && windowOffsetMillis() == 0L &&
+        val timeline = player.currentTimeline
+        subtitleDelivery.value = subtitleTimelineEligible && !timeline.isEmpty &&
+            nativeSubtitleWindowEligible(timeline.getWindow(player.currentMediaItemIndex, window)) &&
             player.playbackState == Player.STATE_READY && player.playerError == null
     }
     private fun titlePositionMillis(): Long = input.mediaProgress(player.currentPosition, null, windowOffsetMillis()).positionMillis
@@ -251,6 +253,10 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         mediaSession.close(); player.release(); view = null
     }
 }
+
+@UnstableApi
+internal fun nativeSubtitleWindowEligible(window: Timeline.Window): Boolean = window.positionInFirstPeriodUs == 0L &&
+    !window.isPlaceholder && !window.isDynamic && !window.isLive
 
 private const val SLATE_SAMPLE_FAILURE_LIMIT = 3
 

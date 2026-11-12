@@ -1,6 +1,11 @@
 import socket
+import hashlib
+import subprocess
+import zipfile
 import struct
 import tempfile
+import json
+import sys
 import threading
 import unittest
 from pathlib import Path
@@ -10,6 +15,60 @@ import run_android_probe as probe
 
 
 class SharedAdbPreflightTest(unittest.TestCase):
+    def test_wrong_apk_package_is_rejected_before_any_device_action(self):
+        with tempfile.TemporaryDirectory() as root:
+            apk = Path(root) / 'wrong.apk'
+            apk.write_bytes(b'owned test')
+            with patch.object(probe.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'other.package', b'')):
+                with self.assertRaisesRegex(RuntimeError, 'other than the owned'):
+                    probe.inspect_apk(apk, Path('aapt2'))
+
+    def test_native_apk_requires_matching_binary_and_packaged_notice(self):
+        with tempfile.TemporaryDirectory() as root:
+            apk = Path(root) / 'owned.apk'
+            data = b'owned native artifact'
+            with zipfile.ZipFile(apk, 'w') as archive:
+                archive.writestr('lib/x86_64/libviptv_core.so', data)
+                archive.writestr('assets/licenses/webrtc-vad.LICENSE', b'owned test notice')
+            with patch.object(probe.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, probe.PACKAGE.encode(), b'')):
+                expected = hashlib.sha256(data).hexdigest()
+                self.assertTrue(probe.inspect_apk(apk, Path('aapt2'), True, expected)['nativeNoticePackaged'])
+                with self.assertRaisesRegex(RuntimeError, 'does not match'):
+                    probe.inspect_apk(apk, Path('aapt2'), True, '0' * 64)
+
+    def test_successful_playback_cannot_hide_unverified_device_cleanup(self):
+        with tempfile.TemporaryDirectory() as root:
+            apk = Path(root) / 'owned.apk'
+            apk.write_bytes(b'owned APK')
+            output = Path(root) / 'result.json'
+            console_results = [
+                {'devices': [{'id': 'phone', 'status': 'stopped'}]},
+                {'ok': True}, {'ok': True},
+                {'devices': [{'id': 'phone', 'status': 'error'}]},
+            ]
+            cats = 0
+
+            def shell(*args, **kwargs):
+                nonlocal cats
+                if args[:2] == ('getprop', 'sys.boot_completed'): return (0, b'1', b'')
+                if args[:2] == ('getprop', 'ro.build.version.sdk'): return (0, b'35', b'')
+                if args[-2:] == ('cat', 'files/result.txt'):
+                    cats += 1
+                    return (1, b'', b'') if cats == 1 else (0, b'state=ended ordered=true nonzero=true stage=3', b'')
+                return (0, b'', b'')
+
+            def command(*args, **kwargs):
+                return subprocess.CompletedProcess([], 0, json.dumps(console_results.pop(0)).encode(), b'')
+
+            argv = ['probe', '--apk', str(apk), '--output', str(output)]
+            with patch.object(sys, 'argv', argv), patch.object(probe, 'inspect_apk', return_value={'package': probe.PACKAGE}), \
+                    patch.object(probe, 'preflight', return_value='0029'), patch.object(probe.subprocess, 'run', side_effect=command), \
+                    patch.object(probe.SharedAdb, 'shell', side_effect=shell), patch('builtins.print'):
+                with self.assertRaisesRegex(RuntimeError, 'cleanup did not verify'):
+                    probe.main()
+            self.assertFalse(json.loads(output.read_text())['cleanupVerified'])
+            self.assertEqual([], console_results)
+
     def test_missing_socket_refuses_without_launching_any_process(self):
         with tempfile.TemporaryDirectory() as root, patch.object(probe.subprocess, 'run') as launch:
             with self.assertRaisesRegex(RuntimeError, 'missing'):

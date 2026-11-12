@@ -3,6 +3,8 @@ package org.viptv.app.player
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Timeline
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.audio.AudioSink
 import org.junit.Test
@@ -17,6 +19,26 @@ import kotlin.test.*
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class Media3PcmProbeTest {
+    @Test fun analysisRequiresKnownStaticZeroOriginWithoutMillisecondTruncation() {
+        val window = Timeline.Window()
+        window.positionInFirstPeriodUs = 0
+        assertTrue(nativeSubtitleWindowEligible(window))
+        window.positionInFirstPeriodUs = 500
+        assertEquals(0L, window.positionInFirstPeriodMs)
+        assertFalse(nativeSubtitleWindowEligible(window))
+        window.positionInFirstPeriodUs = C.TIME_UNSET
+        assertFalse(nativeSubtitleWindowEligible(window))
+        window.positionInFirstPeriodUs = 0
+        window.isPlaceholder = true
+        assertFalse(nativeSubtitleWindowEligible(window))
+        window.isPlaceholder = false
+        window.isDynamic = true
+        assertFalse(nativeSubtitleWindowEligible(window))
+        window.isDynamic = false
+        window.liveConfiguration = MediaItem.LiveConfiguration.Builder().build()
+        assertFalse(nativeSubtitleWindowEligible(window))
+    }
+
     private var writes = 0
     private val sink = Proxy.newProxyInstance(AudioSink::class.java.classLoader, arrayOf(AudioSink::class.java)) { _, method, args ->
         when (method.name) {

@@ -49,6 +49,8 @@ if args.target == "android":
     notices = root / "androidApp/build/generated/subtitleLicenses/licenses"
     notices.mkdir(parents=True, exist_ok=True)
     shutil.copy2(core / "THIRD_PARTY_LICENSES/webrtc-vad.txt", notices / "webrtc-vad.LICENSE")
+    shutil.copy2(core / "crates/viptv-vad/vendor/source-manifest.json", notices / "webrtc-vad-source.json")
+    shutil.copy2(core / "crates/viptv-vad/vendor/patches/48k-input-offset.patch", notices / "webrtc-vad-48k.patch")
 else:
     subprocess.run(["cargo", *build], env=env, check=True)
     system = platform.system()

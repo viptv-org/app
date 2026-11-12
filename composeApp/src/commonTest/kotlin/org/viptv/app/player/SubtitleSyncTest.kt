@@ -127,4 +127,18 @@ class SubtitleSyncTest {
         assertFailsWith<IllegalArgumentException> { parseProviderTextCues("1\n00:00:02,000 --> 00:00:01,000\nbad".encodeToByteArray()) }
         assertFailsWith<IllegalArgumentException> { parseProviderTextCues(ByteArray(8 * 1024 * 1024 + 1)) }
     }
+
+    @Test fun analysisFailureKeepsAppliedViewAndDropsUnappliedCandidate() {
+        val session = session()
+        session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
+        session.analysisFailed(session.epoch)
+        assertEquals(10_000_000L, session.subtitleTimeUs(10_000_000, true))
+        assertFalse(session.ui.value.corrected)
+        session.resetTiming()
+        session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
+        assertEquals(9_000_000L, session.subtitleTimeUs(10_000_000, true))
+        session.offer(session.epoch, 2, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 2_000_000))
+        session.analysisFailed(session.epoch)
+        assertEquals(19_000_000L, session.subtitleTimeUs(20_000_000, true))
+    }
 }

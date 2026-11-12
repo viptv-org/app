@@ -1,0 +1,28 @@
+{
+  "rawHostVersion": "0029",
+  "noCodingNamespaceListener": true,
+  "package": "org.viptv.subtitleprobe",
+  "nativeSoSha256": "99a87a1dca0b204ad0143d09c6bf10cb1013b07b4d42cb06211383d5b3885bea",
+  "nativeSoBytes": 34489440,
+  "nativeNoticePackaged": true,
+  "apkSha256": "9861ce8883e25789798bbbfacadde62a3027422a6d742691b0377e2656acafea",
+  "bootSeconds": 37.983,
+  "api": "35",
+  "resultAbsentBeforeLaunch": true,
+  "fixtureSha256": "082120aea9945e4d0ed46fe16b04f02a7ad76c4610df936a9ab910f51a60334f",
+  "captionsSha256": "dc2ea0202ac335a8aebbb0fe857ed6ebeed4e83141f679fd966311c442c77d22",
+  "wallSeconds": 60.822,
+  "result": "state=ended mode=nativeSync defaultOff=true acceptedOffsetUs=2000000 acceptedFrames=3000 manual=true off=true reset=true stale=true mediaTransitions=1 samePlayer=true workerThread=DefaultDispatcher-worker-1 nativeStatus=ok gaps=0 sdk=35 media3=1.11.1 speed=2.0 accuracy=syntheticWiringOnly",
+  "scope": "Wiring record before the correction. The pinned 48 kHz / 20 ms VAD repeats the first 10 ms and ignores the second 10 ms. PCM acquisition evidence remains valid.",
+  "finalDevices": [
+    {
+      "id": "phone",
+      "status": "stopped"
+    },
+    {
+      "id": "tv",
+      "status": "stopped"
+    }
+  ],
+  "classificationQualified": false
+}

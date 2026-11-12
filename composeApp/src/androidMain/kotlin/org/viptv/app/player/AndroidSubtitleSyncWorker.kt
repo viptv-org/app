@@ -3,7 +3,6 @@ package org.viptv.app.player
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.json.*
 import uniffi.viptv_core.SubtitlePcmSyncBridge
 import uniffi.viptv_core.subtitlePcmCapabilities
 
@@ -30,11 +29,7 @@ internal class AndroidSubtitleSyncWorker(scope: CoroutineScope, private val sess
     private val workerDispatcher: CoroutineDispatcher = subtitleAnalysisDispatcher,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     private val engineFactory: (SubtitleAnalysisTarget) -> SubtitlePcmEngine = ::NativeSubtitlePcmEngine,
-    private val nativeAvailable: () -> Boolean = {
-        val value = Json.parseToJsonElement(subtitlePcmCapabilities()).jsonObject
-        value["available"]?.jsonPrimitive?.booleanOrNull == true && value["encoding"]?.jsonPrimitive?.content == "pcmS16Le" &&
-            value["frameMs"]?.jsonPrimitive?.intOrNull == 20 && value["maxInputBytes"]?.jsonPrimitive?.intOrNull == 32_768
-    }) {
+    private val nativeAvailable: () -> Boolean = { subtitlePcmBackendAvailable(subtitlePcmCapabilities()) }) {
     private val mutableStats = MutableStateFlow(SubtitleWorkerStats())
     val stats = mutableStats.asStateFlow()
     private val owner = SupervisorJob(scope.coroutineContext[Job])

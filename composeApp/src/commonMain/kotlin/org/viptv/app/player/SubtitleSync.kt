@@ -84,6 +84,7 @@ internal class SubtitleSyncSession {
 
     fun analysisFailed(operation: Long) {
         if (operation != epoch || manual) return
+        pending = null
         availability = SubtitleSyncAvailability.Unavailable
         publish()
     }

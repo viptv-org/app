@@ -29,6 +29,19 @@ The current window qualifies only a fixed-offset prototype, not drift.
 Automatic changes are bounded to ±15 seconds; manual delay is bounded to ±60
 seconds. Accepted changes swap at a cue gap, or after five content seconds.
 
+The native frontend requires `pcm16-webrtc20-v2` and `48k-input-offset-v1`.
+The upstream 48 kHz implementation ignored the second half of each 20 ms input;
+the core patch and asymmetric-half regressions correct that defect. The app
+rejects ABI-compatible unpatched libraries. [Corrected build provenance](../tools/subtitle-sync/android-native-build.json)
+records source `9742769ea30aa6c90758a16aa6dcd01b48b101d6`, upstream/patched
+hashes and binary identity. Patch/source notices accompany the library.
+
+[Earlier pipeline output](../tools/subtitle-sync/android-pipeline-before-48k-fix.json)
+is wiring evidence only and carries no 48 kHz classifier qualification.
+[The corrected attempt](../tools/subtitle-sync/android-fixed-pipeline-attempt.json)
+verified the APK but never reached device runtime. The startup failure and
+error-state cleanup remain operational blockers; no repeated start was attempted.
+
 The native estimator reports `uncalibratedHeuristic`. The picker exposes
 **Automatic timing (experimental)** and **Automatic timing (prototype)** rather
 than calibrated confidence. Held-out accuracy and sustainable device costs
@@ -36,11 +49,13 @@ remain qualification gates.
 
 | Gate | Execution |
 | --- | --- |
-| Android main and focused tests | Compiled; 20 controller/protocol/PCM/worker tests passed |
-| iOS simulator main/test klib | Initial prerequisite compiled; final shared changes need another compile |
+| Android main and focused tests | Compiled; 23 controller/protocol/PCM/worker tests passed |
+| Wasm/iOS simulator main/test klib | Compiled; final pending-candidate cleanup is covered by Android tests; CI rechecks the final revision |
 | Standalone Android acquisition | API 35 x86_64, 144 spans, 691,200 stereo PCM frames across three seek/speed epochs, zero queue gaps |
 | Android native VAD library | x86_64 linked for API 26; 16 KiB ELF load alignment; minimum-OS runtime unverified |
-| Complete Android local pipeline | Pending matching APK/owned synthetic fixture run |
+| Corrected Android local pipeline | Rerun blocked: Phone exited during startup; Stop requested, final status error |
+| Picker/focus regressions | Six passed in owned Xvfb; no physical display qualification |
+| Main APK packaging | x86_64 debug APK and ABI checks passed; torrent runtime omitted in this validation build |
 | Linux mpv + bounded decoder | Owned local AAC/H.264 file, null outputs only |
 | Windows/macOS/iOS acquisition | Unavailable; no executed platform proof |
 

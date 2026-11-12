@@ -108,7 +108,7 @@ val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_engine.py", "android", "--abis", selectedAbis.joinToString(","))
     inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/*.c", "**/*.h", "**/source-manifest.json", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("native/core/THIRD_PARTY_LICENSES/webrtc-vad.txt"), rootProject.file("tools/build_engine.py"))
+    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/*.c", "**/*.h", "**/*.patch", "**/source-manifest.json", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("native/core/THIRD_PARTY_LICENSES/webrtc-vad.txt"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
     outputs.dir(layout.buildDirectory.dir("generated/subtitleLicenses"))
 }
