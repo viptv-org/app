@@ -812,6 +812,18 @@ public protocol LocalEngineProtocol: AnyObject, Sendable {
      */
     func rankSources(profile: String, sourcesJson: String) throws  -> String
     
+    /**
+     * `device_max_height` (144..=4320) caps quality at what the device shows,
+     * together with the profile cap (the lower one wins); None = unknown.
+     */
+    func rankSourcesForDevice(profile: String, sourcesJson: String, deviceMaxHeight: UInt32?) throws  -> String
+    
+    /**
+     * `context_json` is a `RankingContext`: device capability, series memory
+     * and provider affinity.
+     */
+    func rankSourcesWithContext(profile: String, sourcesJson: String, contextJson: String) throws  -> String
+    
     func recordProgress(profile: String, revision: UInt64, cardJson: String, positionMillis: UInt64, durationMillis: UInt64) throws 
     
     func removeAddon(id: String) throws 
@@ -831,6 +843,8 @@ public protocol LocalEngineProtocol: AnyObject, Sendable {
     func setLiveFavorite(profile: String, channel: String, saved: Bool) throws  -> String
     
     func setProfileAvatar(id: String, avatarId: String, pin: String) throws 
+    
+    func setProfileAvatarChoice(id: String, avatarStyle: String, avatarChoice: UInt16, pin: String) throws 
     
     func setProfilePin(id: String, oldPin: String, newPin: String) throws 
     
@@ -1400,6 +1414,34 @@ open func rankSources(profile: String, sourcesJson: String)throws  -> String  {
 })
 }
     
+    /**
+     * `device_max_height` (144..=4320) caps quality at what the device shows,
+     * together with the profile cap (the lower one wins); None = unknown.
+     */
+open func rankSourcesForDevice(profile: String, sourcesJson: String, deviceMaxHeight: UInt32?)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_localengine_rank_sources_for_device(self.uniffiClonePointer(),
+        FfiConverterString.lower(profile),
+        FfiConverterString.lower(sourcesJson),
+        FfiConverterOptionUInt32.lower(deviceMaxHeight),$0
+    )
+})
+}
+    
+    /**
+     * `context_json` is a `RankingContext`: device capability, series memory
+     * and provider affinity.
+     */
+open func rankSourcesWithContext(profile: String, sourcesJson: String, contextJson: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_localengine_rank_sources_with_context(self.uniffiClonePointer(),
+        FfiConverterString.lower(profile),
+        FfiConverterString.lower(sourcesJson),
+        FfiConverterString.lower(contextJson),$0
+    )
+})
+}
+    
 open func recordProgress(profile: String, revision: UInt64, cardJson: String, positionMillis: UInt64, durationMillis: UInt64)throws   {try rustCallWithError(FfiConverterTypeCoreError_lift) {
     uniffi_viptv_core_fn_method_localengine_record_progress(self.uniffiClonePointer(),
         FfiConverterString.lower(profile),
@@ -1487,6 +1529,16 @@ open func setProfileAvatar(id: String, avatarId: String, pin: String)throws   {t
     uniffi_viptv_core_fn_method_localengine_set_profile_avatar(self.uniffiClonePointer(),
         FfiConverterString.lower(id),
         FfiConverterString.lower(avatarId),
+        FfiConverterString.lower(pin),$0
+    )
+}
+}
+    
+open func setProfileAvatarChoice(id: String, avatarStyle: String, avatarChoice: UInt16, pin: String)throws   {try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_localengine_set_profile_avatar_choice(self.uniffiClonePointer(),
+        FfiConverterString.lower(id),
+        FfiConverterString.lower(avatarStyle),
+        FfiConverterUInt16.lower(avatarChoice),
         FfiConverterString.lower(pin),$0
     )
 }
@@ -2185,7 +2237,7 @@ public func FfiConverterTypeSecretStore_lower(_ value: SecretStore) -> UnsafeMut
 
 
 /**
- * Stateful SmartCast workflow used by Android mobile and Tauri desktop.
+ * Stateful SmartCast workflow used by the Android app.
  *
  * The shell executes each returned request and resolves it by ID. The bridge
  * keeps pairing credentials, fresh hash values, retry state, and command
@@ -2210,7 +2262,7 @@ public protocol SmartCastBridgeProtocol: AnyObject, Sendable {
     
 }
 /**
- * Stateful SmartCast workflow used by Android mobile and Tauri desktop.
+ * Stateful SmartCast workflow used by the Android app.
  *
  * The shell executes each returned request and resolves it by ID. The bridge
  * keeps pairing credentials, fresh hash values, retry state, and command
@@ -3126,6 +3178,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_viptv_core_checksum_method_localengine_rank_sources() != 47395) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_viptv_core_checksum_method_localengine_rank_sources_for_device() != 9705) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_method_localengine_rank_sources_with_context() != 14012) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_viptv_core_checksum_method_localengine_record_progress() != 19446) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -3154,6 +3212,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_viptv_core_checksum_method_localengine_set_profile_avatar() != 34126) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_method_localengine_set_profile_avatar_choice() != 29570) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_viptv_core_checksum_method_localengine_set_profile_pin() != 48421) {
