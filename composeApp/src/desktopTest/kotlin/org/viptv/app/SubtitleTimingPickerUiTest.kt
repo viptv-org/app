@@ -20,6 +20,7 @@ import kotlin.test.*
 
 class SubtitleTimingPickerUiTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private var frame = 0L
     private fun until(scene: ImageComposeScene, condition: () -> Boolean) {
         frame = scene.renderUntil(from = frame, what = "subtitle timing state", condition = condition)
