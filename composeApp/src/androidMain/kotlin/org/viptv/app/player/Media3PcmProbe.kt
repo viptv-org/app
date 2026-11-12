@@ -7,9 +7,12 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.ForwardingAudioSink
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 internal data class SubtitlePcmSpan(val epoch: Long, val startUs: Long, val sampleRate: Int,
     val channels: Int, val pcm16: ByteArray)
+internal data class SubtitlePcmFormat(val sampleRate: Int, val channels: Int)
 
 @UnstableApi
 internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
@@ -25,6 +28,9 @@ internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
     private val head = AtomicLong()
     private val tail = AtomicLong()
     private val generation = AtomicLong()
+    private val observing = AtomicBoolean(true)
+    private val configured = AtomicReference<SubtitlePcmFormat?>()
+    val format: SubtitlePcmFormat? get() = configured.get()
     val epoch: Long get() = generation.get()
     val gaps = AtomicLong()
     private var sampleRate = 0
@@ -40,12 +46,13 @@ internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
             format.sampleRate in 8_000..192_000 && format.channelCount in 1..8
         sampleRate = if (usable) format.sampleRate else 0
         channels = if (usable) format.channelCount else 0
+        configured.set(if (usable) SubtitlePcmFormat(sampleRate, channels) else null)
     }
 
     override fun handleBuffer(buffer: ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
         if (buffer !== copied) {
             copied = buffer
-            if (sampleRate > 0 && buffer.hasRemaining()) capture(buffer, presentationTimeUs - outputOffsetUs)
+            if (observing.get() && sampleRate > 0 && buffer.hasRemaining()) capture(buffer, presentationTimeUs - outputOffsetUs)
         }
         val consumed = super.handleBuffer(buffer, presentationTimeUs, encodedAccessUnitCount)
         if (consumed) copied = null
@@ -61,12 +68,13 @@ internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
             return
         }
         val slot = slots[(write % slots.size).toInt()]
+        val operation = generation.get()
         buffer.duplicate().get(slot.bytes, 0, size)
         slot.size = size
         slot.startUs = startUs
         slot.rate = sampleRate
         slot.channels = channels
-        slot.epoch = generation.get()
+        slot.epoch = operation
         tail.lazySet(write + 1)
     }
 
@@ -83,6 +91,10 @@ internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
         return null
     }
 
+    fun observe(value: Boolean) {
+        if (observing.getAndSet(value) != value) generation.incrementAndGet()
+    }
+
     private fun invalidate() { generation.incrementAndGet(); copied = null }
     override fun setOutputStreamOffsetUs(outputStreamOffsetUs: Long) {
         invalidate()
@@ -91,5 +103,5 @@ internal class Media3PcmProbe(sink: AudioSink) : ForwardingAudioSink(sink) {
     }
     override fun handleDiscontinuity() { invalidate(); super.handleDiscontinuity() }
     override fun flush() { invalidate(); super.flush() }
-    override fun reset() { invalidate(); sampleRate = 0; channels = 0; super.reset() }
+    override fun reset() { invalidate(); sampleRate = 0; channels = 0; configured.set(null); super.reset() }
 }

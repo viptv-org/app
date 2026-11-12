@@ -96,6 +96,27 @@ class SubtitleSyncTest {
         assertEquals(14_000_000L, session.subtitleTimeUs(15_000_000))
     }
 
+    @Test fun changingSelectionDoesNotResumeFrozenAutomaticPolicy() {
+        val session = session()
+        session.offer(session.epoch, 1, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 1_000_000))
+        session.subtitleTimeUs(10_000_000, true)
+        session.adjustManual(500_000)
+        val oldEpoch = session.epoch
+        session.audioChanged("different audio")
+        assertTrue(session.manual)
+        assertEquals(500_000L, session.ui.value.manualDelayUs)
+        assertEquals(9_500_000L, session.subtitleTimeUs(10_000_000))
+        assertNull(session.target.value)
+        assertFalse(session.offer(oldEpoch, 99, SubtitleSyncAvailability.Accepted, SubtitleCorrection(0, 0)))
+        session.select(null)
+        session.select(SubtitleSyncIdentity("media", "different audio", "different subtitle"), listOf(SubtitleCueInterval(0, 20_000_000)))
+        assertTrue(session.manual)
+        assertNull(session.target.value)
+        session.resetTiming()
+        assertFalse(session.manual)
+        assertNotNull(session.target.value)
+    }
+
     @Test fun vttAndSrtCanonicalOverlapAndBounds() {
         val timeline = parseProviderTextCues("WEBVTT\n\nfirst\n00:01.000 --> 00:03.000 align:center\n<v Person>Hello &amp; welcome</v>\n\n00:00:02.000 --> 00:00:04.000\nOther".encodeToByteArray())
         assertEquals(listOf("Hello & welcome", "Other"), timeline.cuesAt(2_000_000))

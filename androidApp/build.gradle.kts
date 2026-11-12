@@ -83,6 +83,7 @@ android {
     // Shared torrent runtime (TORRENT_RUNTIME_REF). Without it the app never advertises native torrents.
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/jniLibs").get().asFile)
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/assets").get().asFile)
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/subtitleLicenses").get().asFile)
 }
 dependencies {
     // Diagnostic semantics inspection must compile against the shared app's UI
@@ -107,8 +108,9 @@ val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_engine.py", "android", "--abis", selectedAbis.joinToString(","))
     inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
+    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/*.c", "**/*.h", "**/source-manifest.json", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("native/core/THIRD_PARTY_LICENSES/webrtc-vad.txt"), rootProject.file("tools/build_engine.py"))
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
+    outputs.dir(layout.buildDirectory.dir("generated/subtitleLicenses"))
 }
 tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
 

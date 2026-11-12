@@ -69,7 +69,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
             val panel = if (phone) Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.82f)
                 else Modifier.align(Alignment.BottomEnd).padding(end = 150.dp, bottom = bottomInset).widthIn(max = 680.dp).fillMaxWidth().heightIn(max = 520.dp)
             Column(panel.clip(RoundedCornerShape(if (phone) 0.dp else 12.dp)).background(Palette.surface)
-                .semantics { paneTitle = "Audio and subtitles" }
+                .semantics { paneTitle = if (showTiming) "Subtitle timing" else "Audio and subtitles" }
                 .border(1.dp, Palette.raised, RoundedCornerShape(if (phone) 0.dp else 12.dp))
                 .then(if (phone) Modifier.windowInsetsPadding(insets.endSheet()) else Modifier)
                 .padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -80,7 +80,7 @@ internal fun PlaybackTrackPicker(tracks: PlaybackTracks, select: (PlayerCommand.
                 if (showTiming && subtitleSync != null) {
                     Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                         SubtitleTimingChoices(subtitleSync) { label, selected, action ->
-                            PlaybackTrackRow(label, null, selected, choose = action)
+                            PlaybackTrackRow(label, null, selected == true, action = selected == null, choose = action)
                         }
                     }
                 } else if (phone) {

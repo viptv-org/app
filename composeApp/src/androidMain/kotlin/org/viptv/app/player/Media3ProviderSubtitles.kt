@@ -183,11 +183,12 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     }
 
     private fun clear() { timeline = null; desired = null; shown = null; input.subtitleSync.select(null); tracks.providerSelected(null); render() }
-    private fun selectedAudioIdentity() = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
-        .flatMap { group -> (0 until group.length).filter(group::isTrackSelected).map { index -> "${group.mediaTrackGroup.id}:$index" } }.joinToString()
+    fun audioChanged() { input.subtitleSync.audioChanged(selectedAudioIdentity()) }
+    private fun selectedAudioIdentity() = player.currentTracks.groups.withIndex().filter { it.value.type == C.TRACK_TYPE_AUDIO }
+        .flatMap { (groupIndex, group) -> (0 until group.length).filter(group::isTrackSelected)
+            .map { index -> "$groupIndex:${group.mediaTrackGroup.id}:$index" } }.joinToString()
     private fun render() {
         if (closed) return
-        input.subtitleSync.audioChanged(selectedAudioIdentity())
         embeddedLayer?.visibility = if (timeline == null) View.VISIBLE else View.INVISIBLE
         val titleUs = positionMillis().coerceAtLeast(0) * 1000
         var cues = timeline?.cuesAt(input.subtitleSync.subtitleTimeUs(titleUs)) ?: emptyList()

@@ -3,11 +3,9 @@ package org.viptv.app.player
 import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.Serializable
 
 internal data class SubtitleSyncIdentity(val media: String, val audio: String, val subtitle: String)
 
-@Serializable
 internal data class SubtitleCueInterval(val startUs: Long, val endUs: Long)
 
 internal data class SubtitleAnalysisTarget(val epoch: Long, val cues: List<SubtitleCueInterval>)
@@ -59,8 +57,6 @@ internal class SubtitleSyncSession {
         require(intervals.size <= 20_000 && intervals.all { it.startUs >= 0 && it.endUs > it.startUs })
         identity = value
         cues = if (value == null) emptyList() else intervals
-        manualDelayUs = 0
-        manual = false
         restart(clearCorrection = true)
     }
 
@@ -86,13 +82,19 @@ internal class SubtitleSyncSession {
 
     fun discontinuity() = restart(clearCorrection = false)
 
+    fun analysisFailed(operation: Long) {
+        if (operation != epoch || manual) return
+        availability = SubtitleSyncAvailability.Unavailable
+        publish()
+    }
+
     private fun restart(clearCorrection: Boolean) {
         epoch++
         revision = -1
         observationRevision = -1
         pending = null
         if (clearCorrection) correction = null
-        availability = if (automatic && localAudioAvailable && identity != null && cues.isNotEmpty())
+        availability = if (automatic && !manual && localAudioAvailable && identity != null && cues.size in 1..16_384)
             SubtitleSyncAvailability.Observing else SubtitleSyncAvailability.Unavailable
         publish()
     }
@@ -132,7 +134,7 @@ internal class SubtitleSyncSession {
 
     private fun publish() {
         mutableUi.value = SubtitleSyncUiState(identity != null, localAudioAvailable, automatic, manual, manualDelayUs, availability, correction != null)
-        mutableTarget.value = if (automatic && !manual && localAudioAvailable && identity != null && cues.isNotEmpty())
+        mutableTarget.value = if (automatic && !manual && localAudioAvailable && identity != null && cues.size in 1..16_384)
             SubtitleAnalysisTarget(epoch, cues) else null
     }
 }

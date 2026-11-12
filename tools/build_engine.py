@@ -21,13 +21,15 @@ if not abis or unknown:
 root = Path(__file__).resolve().parents[1]
 core = root / "native/core"
 env = os.environ.copy()
-env["CARGO_TARGET_DIR"] = str(root / "build/rust")
+env["CARGO_TARGET_DIR"] = env.get("VIPTV_CARGO_TARGET_DIR", str(root / "build/rust"))
 env.setdefault("CARGO_BUILD_JOBS", "2")
 env.setdefault("CARGO_PROFILE_DEV_DEBUG", "0")
 env.setdefault("CARGO_INCREMENTAL", "0")
-features = "vsources-runtime,live-runtime" + (",os-secrets" if args.target == "desktop" else "")
+features = "vsources-runtime,live-runtime" + (",os-secrets" if args.target == "desktop" else ",subtitle-vad")
 build = ["build", "--release", "--manifest-path", str(core / "Cargo.toml"), "--locked", "-p", "viptv-core", "--features", features, "--lib"]
 if args.target == "android":
+    if env.get("VIPTV_CARGO_NDK_DIR"):
+        env["PATH"] = env["VIPTV_CARGO_NDK_DIR"] + os.pathsep + env["PATH"]
     sdk = env.get("ANDROID_SDK_ROOT") or env.get("ANDROID_HOME")
     properties = root / "local.properties"
     if not sdk and properties.exists():
@@ -44,6 +46,9 @@ if args.target == "android":
     shutil.rmtree(output, ignore_errors=True)
     targets = [flag for abi in abis for flag in ("-t", abi)]
     subprocess.run(["cargo", "ndk", *targets, "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
+    notices = root / "androidApp/build/generated/subtitleLicenses/licenses"
+    notices.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(core / "THIRD_PARTY_LICENSES/webrtc-vad.txt", notices / "webrtc-vad.LICENSE")
 else:
     subprocess.run(["cargo", *build], env=env, check=True)
     system = platform.system()
@@ -55,6 +60,6 @@ else:
     }[system]
     output = root / "composeApp/build/nativeResources" / f"{prefix}-{arch}"
     output.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(root / "build/rust/release" / library, output / library)
+    shutil.copy2(Path(env["CARGO_TARGET_DIR"]) / "release" / library, output / library)
     if system == "Darwin":
         sign_like_packaging(output / library)

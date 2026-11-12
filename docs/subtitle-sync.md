@@ -4,21 +4,53 @@ The session-scoped timing controls adopt only [PLAY-SUBTITLE-SYNC-001 at
 3eb55db3fd248621bbf56dc30e8718450280c767](https://github.com/viptv-org/design/blob/3eb55db3fd248621bbf56dc30e8718450280c767/specs/behavior/subtitle-synchronization.md).
 The application's broader design pin remains unchanged.
 
-Provider subtitle timing uses canonical intervals and one effective title/player
-origin. Android and iOS provider overlays support additive manual timing. The
-experimental picker defaults automatic timing Off; On and Reset clear the
-accepted view/manual delay and begin a new generation. Manual changes freeze
-automatic updates. Automatic local analysis is unavailable until a qualified
-PCM/VAD worker is installed; this source does not install that worker.
+Provider subtitles retain canonical intervals. Android/iOS overlays invert the
+accepted mapping for lookup, with one effective title/player origin. Manual
+changes add ±0.5 content seconds, freeze automatic updates and survive selection
+changes within the playback session. On and Reset clear the current automatic
+view/manual delay and start a fresh generation. Off restores original timing
+plus the explicit manual delay. Neither the controls nor a correction replaces
+the player, its media source or output mode. Corrections remain session-only.
+
+The Android experimental worker defaults Off. Its initial route requires a
+progressive source, zero effective origin, PCM16 48 kHz stereo and the matching
+native WebRTC/VAD core. The dormant forwarding tee preserves the default sink's
+capabilities; encoded/offload/passthrough data are forwarded unchanged without
+analysis. HLS, rebased timelines and unqualified formats remain unavailable.
+Native clients never fall back to server analysis.
+
+Analysis uses one serial worker, eight preallocated 32 KiB slots and a maximum
+120-second content window per generation. Audio comes from the selected decoded
+stream with media timestamps. Retried sink buffers are copied once. Queue loss
+stops analysis; discontinuities reset evidence and fence late results. Native
+partial 20 ms frames are retained within the bound and never padded as silence.
+Worker failure retains the current accepted/manual view and reports unavailable.
+The current window qualifies only a fixed-offset prototype, not drift.
+Automatic changes are bounded to ±15 seconds; manual delay is bounded to ±60
+seconds. Accepted changes swap at a cue gap, or after five content seconds.
+
+The native estimator reports `uncalibratedHeuristic`. The picker exposes
+**Automatic timing (experimental)** and **Automatic timing (prototype)** rather
+than calibrated confidence. Held-out accuracy and sustainable device costs
+remain qualification gates.
 
 | Gate | Execution |
 | --- | --- |
-| Shared initial timeline/parser tests | Six passed before the experimental picker/lifecycle revision |
-| Android main and iOS simulator main/test klib | Initial prerequisite source compiled; revised picker/lifecycle needs another compile |
-| Android PCM host tests | API 36 could not start under Java 17; API 35 adjustment awaits execution |
-| Isolated Android PCM APK | Compiled; Phone failed to register with ADB within the bounded 90 s boot attempt; no acquisition run |
-| Linux mpv + bounded local decoder | Owned local AAC/H.264 fixture, null outputs only |
+| Android main and focused tests | Compiled; 20 controller/protocol/PCM/worker tests passed |
+| iOS simulator main/test klib | Initial prerequisite compiled; final shared changes need another compile |
+| Standalone Android acquisition | API 35 x86_64, 144 spans, 691,200 stereo PCM frames across three seek/speed epochs, zero queue gaps |
+| Android native VAD library | x86_64 linked for API 26; 16 KiB ELF load alignment; minimum-OS runtime unverified |
+| Complete Android local pipeline | Pending matching APK/owned synthetic fixture run |
+| Linux mpv + bounded decoder | Owned local AAC/H.264 file, null outputs only |
 | Windows/macOS/iOS acquisition | Unavailable; no executed platform proof |
+
+[Acquisition evidence](../tools/subtitle-sync/android-acquisition-result.json)
+uses an owned ten-second WAV; the backward seek repeats source samples.
+[Native build provenance](../tools/subtitle-sync/android-native-build.json)
+records the exact binary source and equivalent cosmetic core pin. Full WebRTC
+notices are packaged with the Android native library. The guarded
+[Android runner](../tools/subtitle-sync/run_android_probe.py) uses raw shared
+ADB framing, rejects a coding-namespace listener and never starts an ADB daemon.
 
 The [Linux probe](../tools/subtitle-sync/desktop_probe.py) runs mpv 0.35.1 beside
 FFmpeg 5.1.9 against one immutable owned file with file/pipe protocols only.
@@ -27,11 +59,9 @@ Two two-second windows retain source PTS at 592 and 100 seconds, producing 100
 `sub-delay=1.46` projection selects the expected cue without replacing the
 player. [Recorded result](../tools/subtitle-sync/linux-local-file-result.json).
 This does not qualify app HTTP/torrent/HLS byte reuse, real audio/GPU outputs,
-packaged decoder dependencies, estimator accuracy or playback impact.
+packaged desktop dependencies, estimator accuracy or playback impact.
 
-The [Android tool](../tools/subtitle_pcm_probe/README.md) uses a separate package
-and an owned local PCM16 fixture. Passthrough/offload and unsupported formats
-are forwarded unchanged. Native paths never fall back to server analysis.
-Held-out speech accuracy, minimum-OS devices, codec/output variants, sustained
-battery/thermal behavior and complete native integration remain qualification
-gates. Core adoption requires matching generated bindings and native binaries.
+Android minimum/latest OS devices, ARM builds/runtime, codec/output variants,
+iOS rendering/runtime, held-out speech accuracy and sustained battery/thermal
+behavior require separate execution. A compile or circular synthetic fixture
+cannot establish synchronization accuracy or production performance targets.

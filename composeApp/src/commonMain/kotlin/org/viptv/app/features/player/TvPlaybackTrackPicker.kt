@@ -51,7 +51,8 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                     LazyColumn(Modifier.weight(1f).width(1000.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)) {
                         item {
                             SubtitleTimingChoices(subtitleSync, 24 * scale / 14) { label, selected, action ->
-                                TvTrackRow(label, selected, scale, if (label == "Earlier by 0.5 s") initial else null, choose = action)
+                                TvTrackRow(label, selected == true, scale, if (label == "Earlier by 0.5 s") initial else null,
+                                    selectionState = selected, choose = action)
                             }
                         }
                     }
@@ -110,9 +111,9 @@ private fun TvTrackColumn(label: String, modifier: Modifier, scale: Float, conte
 
 @Composable
 private fun TvTrackRow(label: String, selected: Boolean, scale: Float, requester: FocusRequester?,
-    pending: Boolean = false, error: String? = null, choose: () -> Unit) {
+    pending: Boolean = false, error: String? = null, selectionState: Boolean? = null, choose: () -> Unit) {
     val highlighted = selected && !pending
-    TvAction(Modifier.fillMaxWidth().height((64 * scale).dp), scale, requester = requester, activate = choose,
+    TvAction(Modifier.fillMaxWidth().height((64 * scale).dp).semantics { selectionState?.let { this.selected = it } }, scale, requester = requester, activate = choose,
         background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
         Box(Modifier.width(40.dp * scale)) {
             when {
