@@ -83,17 +83,24 @@ class SourceRowBoundsUiTest {
         assertFalse(packs("Oak Street (2022)"))
     }
 
-    @Test fun audioAndSubtitleChipsInferFromFlags() {
+    @Test fun audioAndSubtitleChipsKeepLanguageEvidenceSeparate() {
         val source = SourceCandidate("a", "p", "Relax")
         assertNull(source.audioChips())
         assertNull(source.subtitleChips())
-        assertEquals(listOf(LanguageChip("EN dub", true), LanguageChip("JA", true)),
+        assertEquals(listOf(LanguageChip("Dual audio", true)),
             source.copy(audio_flags = listOf("dual", "dubbed")).audioChips())
+        assertEquals(listOf(LanguageChip("Dubbed", true)), source.copy(audio_flags = listOf("dubbed")).audioChips())
+        assertEquals(listOf(LanguageChip("Multi audio", true)), source.copy(audio_flags = listOf("multi")).audioChips())
+        assertEquals(listOf(LanguageChip("FR", false)),
+            source.copy(label = "Johnny English", audio_languages = listOf("fr"), audio_flags = listOf("dual", "dubbed")).audioChips())
+        assertNull(source.copy(label = "Johnny English", subtitle_languages = listOf("en")).audioChips())
         assertEquals(listOf(LanguageChip("RU", false)),
             source.copy(audio_languages = listOf("ru")).audioChips())
         assertEquals(listOf(LanguageChip("EN dub", false), LanguageChip("JA", false)),
             source.copy(audio_languages = listOf("en", "ja"), audio_flags = listOf("dual", "dubbed")).audioChips())
         assertEquals(listOf(LanguageChip("EN", false)), source.copy(audio_languages = listOf("en")).audioChips())
+        assertEquals(listOf(LanguageChip("EN", false)), source.copy(audio_languages = listOf("en"), audio_flags = listOf("dual")).audioChips())
+        assertEquals(listOf(LanguageChip("EN dub", false)), source.copy(audio_languages = listOf("en"), audio_flags = listOf("dual", "dubbed")).audioChips())
         assertEquals(listOf(LanguageChip("EN", false), LanguageChip("ES", false)),
             source.copy(subtitle_languages = listOf("en", "es")).subtitleChips())
         assertEquals(listOf(LanguageChip("Subs", true)), source.copy(subbed = true).subtitleChips())

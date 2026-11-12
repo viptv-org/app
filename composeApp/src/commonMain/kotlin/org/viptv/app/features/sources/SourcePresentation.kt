@@ -63,18 +63,11 @@ internal fun SourceCandidate.releaseGroupLabel(): String = parseReleaseGroup(det
 
 internal fun SourceCandidate.audioChips(): List<LanguageChip>? {
     val codes = languageTags(audio_languages)
-    val dubbed = "dubbed" in audio_flags
-    val dual = "dual" in audio_flags
-    if (codes.isEmpty() && !dubbed && !dual) return null
+    if (codes.isEmpty()) return audioFlagLabel()?.let { listOf(LanguageChip(it, dashed = true)) }
     val chips = mutableListOf<LanguageChip>()
-    when {
-        dubbed && "EN" in codes -> chips += LanguageChip("EN dub", dashed = false)
-        dubbed -> chips += LanguageChip("EN dub", dashed = true)
-        "EN" in codes -> chips += LanguageChip("EN", dashed = false)
-    }
+    if ("EN" in codes) chips += LanguageChip(if ("dubbed" in audio_flags) "EN dub" else "EN", dashed = false)
     codes.filter { it != "EN" }.forEach { chips += LanguageChip(it, dashed = false) }
-    if (dual && chips.none { it.label != "EN dub" }) chips += LanguageChip("JA", dashed = true)
-    return chips.ifEmpty { null }
+    return chips
 }
 
 internal fun SourceCandidate.subtitleChips(): List<LanguageChip>? {
