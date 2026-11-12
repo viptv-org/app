@@ -36,11 +36,17 @@ rejects ABI-compatible unpatched libraries. [Corrected build provenance](../tool
 records source `9742769ea30aa6c90758a16aa6dcd01b48b101d6`, upstream/patched
 hashes and binary identity. Patch/source notices accompany the library.
 
-[Earlier pipeline output](../tools/subtitle-sync/android-pipeline-before-48k-fix.json)
-is wiring evidence only and carries no 48 kHz classifier qualification.
-[The corrected attempt](../tools/subtitle-sync/android-fixed-pipeline-attempt.json)
-verified the APK but never reached device runtime. The startup failure and
-error-state cleanup remain operational blockers; no repeated start was attempted.
+[Corrected Android runtime](../tools/subtitle-sync/android-corrected-runtime.json)
+uses the exact patched Core974 x86_64 library. API35 decoded the owned48k
+fixture, accepted+2s after3000frames, kept one player/transition and passed
+manual/Off/reset/stale-epoch checks with zero queue gaps. Phone and TV were
+independently verified stopped. The fixture is synthetic/circular wiring
+and offset-sign evidence, not held-out speech accuracy.
+
+The consumer pin `be05e4e8f510116b356bd20d4736db6a9ae47287` includes the
+qualified SDK320 lineage. VAD, native API, estimator and worker/lifecycle
+bytes match the runtime-qualified component. Combined host compatibility
+is checked separately; the Android binary is not relabeled as a new build.
 
 The native estimator reports `uncalibratedHeuristic`. The picker exposes
 **Automatic timing (experimental)** and **Automatic timing (prototype)** rather
@@ -53,7 +59,7 @@ remain qualification gates.
 | Wasm/iOS simulator main/test klib | Compiled; final pending-candidate cleanup is covered by Android tests; CI rechecks the final revision |
 | Standalone Android acquisition | API 35 x86_64, 144 spans, 691,200 stereo PCM frames across three seek/speed epochs, zero queue gaps |
 | Android native VAD library | x86_64 linked for API 26; 16 KiB ELF load alignment; minimum-OS runtime unverified |
-| Corrected Android local pipeline | Rerun blocked: Phone exited during startup; Stop requested, final status error |
+| Corrected Android local pipeline | API35 x86_64 synthetic wiring passed; +2s,3000frames, zero gaps; lifecycle and stopped cleanup verified |
 | Picker/focus regressions | Six passed in owned Xvfb; no physical display qualification |
 | Main APK packaging | x86_64 debug APK and ABI checks passed; torrent runtime omitted in this validation build |
 | Linux mpv + bounded decoder | Owned local AAC/H.264 file, null outputs only |

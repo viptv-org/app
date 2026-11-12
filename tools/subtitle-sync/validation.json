@@ -39,8 +39,17 @@
       "skipped": 0
     }
   },
-  "nativeSource": "9742769ea30aa6c90758a16aa6dcd01b48b101d6",
-  "correctedDeviceRuntime": "blocked: emulator exited during startup; final status error",
+  "correctedDeviceRuntime": {
+    "result": "passed",
+    "record": "android-corrected-runtime.json",
+    "api": 35,
+    "abi": "x86_64",
+    "acceptedOffsetUs": 2000000,
+    "acceptedFrames": 3000,
+    "queueGaps": 0,
+    "cleanupVerified": true,
+    "scope": "synthetic/circular wiring only"
+  },
   "pythonGuardTests": 7,
   "platformCompiles": [
     "Android",
@@ -50,7 +59,9 @@
   "limits": [
     "No Apple runtime/framework link",
     "No Windows/macOS acquisition",
-    "No corrected48k Android runtime result",
     "No held-out speech accuracy or sustained device performance"
-  ]
+  ],
+  "consumerCorePin": "be05e4e8f510116b356bd20d4736db6a9ae47287",
+  "androidNativeSource": "9742769ea30aa6c90758a16aa6dcd01b48b101d6",
+  "integrationQualification": "Pending combined host/binding and targeted merge gates"
 }
