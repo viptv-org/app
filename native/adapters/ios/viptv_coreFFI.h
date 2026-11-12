@@ -853,6 +853,51 @@ RustBuffer uniffi_viptv_core_fn_method_smartcastbridge_resolve(void*_Nonnull ptr
 RustBuffer uniffi_viptv_core_fn_method_smartcastbridge_start(void*_Nonnull ptr, RustBuffer operation, RustBuffer input, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_SUBTITLEPCMSYNCBRIDGE
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_SUBTITLEPCMSYNCBRIDGE
+void*_Nonnull uniffi_viptv_core_fn_clone_subtitlepcmsyncbridge(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FREE_SUBTITLEPCMSYNCBRIDGE
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FREE_SUBTITLEPCMSYNCBRIDGE
+void uniffi_viptv_core_fn_free_subtitlepcmsyncbridge(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CONSTRUCTOR_SUBTITLEPCMSYNCBRIDGE_NEW
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CONSTRUCTOR_SUBTITLEPCMSYNCBRIDGE_NEW
+void*_Nonnull uniffi_viptv_core_fn_constructor_subtitlepcmsyncbridge_new(uint64_t epoch, RustBuffer cues_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLEPCMSYNCBRIDGE_GAP
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLEPCMSYNCBRIDGE_GAP
+RustBuffer uniffi_viptv_core_fn_method_subtitlepcmsyncbridge_gap(void*_Nonnull ptr, uint64_t epoch, int64_t start_us, int64_t end_us, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLEPCMSYNCBRIDGE_PUSH_PCM16
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLEPCMSYNCBRIDGE_PUSH_PCM16
+RustBuffer uniffi_viptv_core_fn_method_subtitlepcmsyncbridge_push_pcm16(void*_Nonnull ptr, uint64_t epoch, int64_t start_us, uint32_t sample_rate, uint8_t channels, RustBuffer encoding, RustBuffer pcm_bytes, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_SUBTITLESYNCBRIDGE
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_SUBTITLESYNCBRIDGE
+void*_Nonnull uniffi_viptv_core_fn_clone_subtitlesyncbridge(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FREE_SUBTITLESYNCBRIDGE
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FREE_SUBTITLESYNCBRIDGE
+void uniffi_viptv_core_fn_free_subtitlesyncbridge(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CONSTRUCTOR_SUBTITLESYNCBRIDGE_NEW
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CONSTRUCTOR_SUBTITLESYNCBRIDGE_NEW
+void*_Nonnull uniffi_viptv_core_fn_constructor_subtitlesyncbridge_new(uint64_t epoch, RustBuffer cues_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLESYNCBRIDGE_PUSH
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_METHOD_SUBTITLESYNCBRIDGE_PUSH
+RustBuffer uniffi_viptv_core_fn_method_subtitlesyncbridge_push(void*_Nonnull ptr, uint64_t epoch, RustBuffer observations_json, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_TORRENTRUNTIMEBRIDGE
 #define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_CLONE_TORRENTRUNTIMEBRIDGE
 void*_Nonnull uniffi_viptv_core_fn_clone_torrentruntimebridge(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
@@ -956,6 +1001,12 @@ RustBuffer uniffi_viptv_core_fn_method_torrentruntimebridge_uniffi_trait_display
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FUNC_NORMALIZE
 #define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FUNC_NORMALIZE
 RustBuffer uniffi_viptv_core_fn_func_normalize(RustBuffer kind, RustBuffer input, RustBuffer origin, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FUNC_SUBTITLE_PCM_CAPABILITIES
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FUNC_SUBTITLE_PCM_CAPABILITIES
+RustBuffer uniffi_viptv_core_fn_func_subtitle_pcm_capabilities(RustCallStatus *_Nonnull out_status
+    
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_FN_FUNC_SYSTEM_SECRET_STORE
@@ -1272,6 +1323,12 @@ void ffi_viptv_core_rust_future_complete_void(uint64_t handle, RustCallStatus *_
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_FUNC_NORMALIZE
 #define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_FUNC_NORMALIZE
 uint16_t uniffi_viptv_core_checksum_func_normalize(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_FUNC_SUBTITLE_PCM_CAPABILITIES
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_FUNC_SUBTITLE_PCM_CAPABILITIES
+uint16_t uniffi_viptv_core_checksum_func_subtitle_pcm_capabilities(void
     
 );
 #endif
@@ -1893,6 +1950,24 @@ uint16_t uniffi_viptv_core_checksum_method_smartcastbridge_start(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLEPCMSYNCBRIDGE_GAP
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLEPCMSYNCBRIDGE_GAP
+uint16_t uniffi_viptv_core_checksum_method_subtitlepcmsyncbridge_gap(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLEPCMSYNCBRIDGE_PUSH_PCM16
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLEPCMSYNCBRIDGE_PUSH_PCM16
+uint16_t uniffi_viptv_core_checksum_method_subtitlepcmsyncbridge_push_pcm16(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLESYNCBRIDGE_PUSH
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_SUBTITLESYNCBRIDGE_PUSH
+uint16_t uniffi_viptv_core_checksum_method_subtitlesyncbridge_push(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_TORRENTRUNTIMEBRIDGE_ACCEPT_BYTES
 #define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_METHOD_TORRENTRUNTIMEBRIDGE_ACCEPT_BYTES
 uint16_t uniffi_viptv_core_checksum_method_torrentruntimebridge_accept_bytes(void
@@ -2004,6 +2079,18 @@ uint16_t uniffi_viptv_core_checksum_constructor_nativetorrentbridge_new(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SMARTCASTBRIDGE_NEW
 #define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SMARTCASTBRIDGE_NEW
 uint16_t uniffi_viptv_core_checksum_constructor_smartcastbridge_new(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SUBTITLEPCMSYNCBRIDGE_NEW
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SUBTITLEPCMSYNCBRIDGE_NEW
+uint16_t uniffi_viptv_core_checksum_constructor_subtitlepcmsyncbridge_new(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SUBTITLESYNCBRIDGE_NEW
+#define UNIFFI_FFIDEF_UNIFFI_VIPTV_CORE_CHECKSUM_CONSTRUCTOR_SUBTITLESYNCBRIDGE_NEW
+uint16_t uniffi_viptv_core_checksum_constructor_subtitlesyncbridge_new(void
     
 );
 #endif

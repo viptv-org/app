@@ -1,0 +1,25 @@
+{
+  "source": "9742769ea30aa6c90758a16aa6dcd01b48b101d6",
+  "target": "x86_64-linux-android",
+  "minimumApi": 26,
+  "ndk": "27.2.12479018",
+  "features": [
+    "vsources-runtime",
+    "live-runtime",
+    "subtitle-vad"
+  ],
+  "sha256": "eccaff086fa206d0d2e43c661be88283f4f482ecb19a082d50e874a5ca88c009",
+  "bytes": 34451320,
+  "kotlinSha256": "e40c803e55580facfaad62029c6753de2ae9d06d2ba7ff3d44680078c0de2a3d",
+  "frontendVersion": "pcm16-webrtc20-v2",
+  "vadPatch": "48k-input-offset-v1",
+  "upstreamVadSourceSha256": "e73c0a7562225cb36eeca4a9d849cb445a932a8cb4bf948eb11135cfcfc81e57",
+  "patchedVadSourceSha256": "abb940e5329da26a935a5eceff54f2f45db709fc326ee23f5ea0da3b5e20fb0d",
+  "vendorManifestSha256": "c002fb8c3f0adbb19c38e16a433031a8206df70bcab8ac9ed752d7c161436323",
+  "loadAlignment": [
+    "0x4000",
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ]
+}

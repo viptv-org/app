@@ -406,6 +406,22 @@ private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
+    typealias FfiType = UInt8
+    typealias SwiftType = UInt8
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt8 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: UInt8, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterUInt16: FfiConverterPrimitive {
     typealias FfiType = UInt16
     typealias SwiftType = UInt16
@@ -447,6 +463,22 @@ fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
     }
 
     public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
+    typealias FfiType = Int64
+    typealias SwiftType = Int64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int64, into buf: inout [UInt8]) {
         writeInt(&buf, lower(value))
     }
 }
@@ -2435,6 +2467,288 @@ public func FfiConverterTypeSmartCastBridge_lower(_ value: SmartCastBridge) -> U
 
 
 
+public protocol SubtitlePcmSyncBridgeProtocol: AnyObject, Sendable {
+    
+    func gap(epoch: UInt64, startUs: Int64, endUs: Int64) throws  -> String
+    
+    func pushPcm16(epoch: UInt64, startUs: Int64, sampleRate: UInt32, channels: UInt8, encoding: String, pcmBytes: Data) throws  -> String
+    
+}
+open class SubtitlePcmSyncBridge: SubtitlePcmSyncBridgeProtocol, @unchecked Sendable {
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noPointer: NoPointer) {
+        self.pointer = nil
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_viptv_core_fn_clone_subtitlepcmsyncbridge(self.pointer, $0) }
+    }
+public convenience init(epoch: UInt64, cuesJson: String)throws  {
+    let pointer =
+        try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_constructor_subtitlepcmsyncbridge_new(
+        FfiConverterUInt64.lower(epoch),
+        FfiConverterString.lower(cuesJson),$0
+    )
+}
+    self.init(unsafeFromRawPointer: pointer)
+}
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_viptv_core_fn_free_subtitlepcmsyncbridge(pointer, $0) }
+    }
+
+    
+
+    
+open func gap(epoch: UInt64, startUs: Int64, endUs: Int64)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_subtitlepcmsyncbridge_gap(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(epoch),
+        FfiConverterInt64.lower(startUs),
+        FfiConverterInt64.lower(endUs),$0
+    )
+})
+}
+    
+open func pushPcm16(epoch: UInt64, startUs: Int64, sampleRate: UInt32, channels: UInt8, encoding: String, pcmBytes: Data)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_subtitlepcmsyncbridge_push_pcm16(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(epoch),
+        FfiConverterInt64.lower(startUs),
+        FfiConverterUInt32.lower(sampleRate),
+        FfiConverterUInt8.lower(channels),
+        FfiConverterString.lower(encoding),
+        FfiConverterData.lower(pcmBytes),$0
+    )
+})
+}
+    
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSubtitlePcmSyncBridge: FfiConverter {
+
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = SubtitlePcmSyncBridge
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> SubtitlePcmSyncBridge {
+        return SubtitlePcmSyncBridge(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: SubtitlePcmSyncBridge) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SubtitlePcmSyncBridge {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: SubtitlePcmSyncBridge, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSubtitlePcmSyncBridge_lift(_ pointer: UnsafeMutableRawPointer) throws -> SubtitlePcmSyncBridge {
+    return try FfiConverterTypeSubtitlePcmSyncBridge.lift(pointer)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSubtitlePcmSyncBridge_lower(_ value: SubtitlePcmSyncBridge) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeSubtitlePcmSyncBridge.lower(value)
+}
+
+
+
+
+
+
+public protocol SubtitleSyncBridgeProtocol: AnyObject, Sendable {
+    
+    func push(epoch: UInt64, observationsJson: String) throws  -> String
+    
+}
+open class SubtitleSyncBridge: SubtitleSyncBridgeProtocol, @unchecked Sendable {
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noPointer: NoPointer) {
+        self.pointer = nil
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_viptv_core_fn_clone_subtitlesyncbridge(self.pointer, $0) }
+    }
+public convenience init(epoch: UInt64, cuesJson: String)throws  {
+    let pointer =
+        try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_constructor_subtitlesyncbridge_new(
+        FfiConverterUInt64.lower(epoch),
+        FfiConverterString.lower(cuesJson),$0
+    )
+}
+    self.init(unsafeFromRawPointer: pointer)
+}
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_viptv_core_fn_free_subtitlesyncbridge(pointer, $0) }
+    }
+
+    
+
+    
+open func push(epoch: UInt64, observationsJson: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeCoreError_lift) {
+    uniffi_viptv_core_fn_method_subtitlesyncbridge_push(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(epoch),
+        FfiConverterString.lower(observationsJson),$0
+    )
+})
+}
+    
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSubtitleSyncBridge: FfiConverter {
+
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = SubtitleSyncBridge
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> SubtitleSyncBridge {
+        return SubtitleSyncBridge(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: SubtitleSyncBridge) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SubtitleSyncBridge {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: SubtitleSyncBridge, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSubtitleSyncBridge_lift(_ pointer: UnsafeMutableRawPointer) throws -> SubtitleSyncBridge {
+    return try FfiConverterTypeSubtitleSyncBridge.lift(pointer)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSubtitleSyncBridge_lower(_ value: SubtitleSyncBridge) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeSubtitleSyncBridge.lower(value)
+}
+
+
+
+
+
+
 public protocol TorrentRuntimeBridgeProtocol: AnyObject, Sendable {
     
     func acceptBytes(status: UInt16, body: Data, observation: String) throws  -> String
@@ -2918,6 +3232,12 @@ public func normalize(kind: String, input: String, origin: String)throws  -> Str
     )
 })
 }
+public func subtitlePcmCapabilities() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_viptv_core_fn_func_subtitle_pcm_capabilities($0
+    )
+})
+}
 public func systemSecretStore() -> SecretStore  {
     return try!  FfiConverterTypeSecretStore_lift(try! rustCall() {
     uniffi_viptv_core_fn_func_system_secret_store($0
@@ -2996,6 +3316,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.contractVersionMismatch
     }
     if (uniffi_viptv_core_checksum_func_normalize() != 57983) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_func_subtitle_pcm_capabilities() != 23877) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_viptv_core_checksum_func_system_secret_store() != 38748) {
@@ -3307,6 +3630,15 @@ private let initializationResult: InitializationResult = {
     if (uniffi_viptv_core_checksum_method_smartcastbridge_start() != 13924) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_viptv_core_checksum_method_subtitlepcmsyncbridge_gap() != 15685) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_method_subtitlepcmsyncbridge_push_pcm16() != 20766) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_method_subtitlesyncbridge_push() != 1676) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_viptv_core_checksum_method_torrentruntimebridge_accept_bytes() != 39778) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -3362,6 +3694,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_viptv_core_checksum_constructor_smartcastbridge_new() != 25967) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_constructor_subtitlepcmsyncbridge_new() != 31986) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_viptv_core_checksum_constructor_subtitlesyncbridge_new() != 36108) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_viptv_core_checksum_constructor_torrentruntimebridge_new() != 65496) {

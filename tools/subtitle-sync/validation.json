@@ -1,0 +1,67 @@
+{
+  "androidFocused": {
+    "Media3PcmProbeTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "AndroidSubtitleSyncWorkerTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "SubtitleSyncTest": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "SubtitleSyncProtocolTest": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "desktopUi": {
+    "SubtitleTimingPickerUiTest": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "PlayerSettingsLinkUiTest": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "correctedDeviceRuntime": {
+    "result": "passed",
+    "record": "android-corrected-runtime.json",
+    "api": 35,
+    "abi": "x86_64",
+    "acceptedOffsetUs": 2000000,
+    "acceptedFrames": 3000,
+    "queueGaps": 0,
+    "cleanupVerified": true,
+    "scope": "synthetic/circular wiring only"
+  },
+  "pythonGuardTests": 7,
+  "platformCompiles": [
+    "Android",
+    "WasmJs",
+    "iosSimulatorArm64 main/test klib"
+  ],
+  "limits": [
+    "No Apple runtime/framework link",
+    "No Windows/macOS acquisition",
+    "No held-out speech accuracy or sustained device performance"
+  ],
+  "consumerCorePin": "be05e4e8f510116b356bd20d4736db6a9ae47287",
+  "androidNativeSource": "9742769ea30aa6c90758a16aa6dcd01b48b101d6",
+  "integrationQualification": "Pending combined host/binding and targeted merge gates"
+}

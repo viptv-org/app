@@ -322,7 +322,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     preferences ?: rendering?.preferences ?: ProfilePreferences(), updatePreferences,
                     { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, bottomInset = panelBottomInset, openSettings,
                     pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = ::retrySubtitle,
-                    pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio)
+                    pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio, subtitleSync = rendering?.subtitleSync)
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

@@ -16,6 +16,8 @@ import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.concurrent.atomic.AtomicReference
 import org.viptv.app.connection.subtitleMode
 import org.viptv.engine.wire.SubtitleCandidate
 
@@ -24,15 +26,19 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private val scope: CoroutineScope, var observe: (PlayerFact) -> Unit) {
     private fun emit(fact: PlayerFact) = observe(fact)
     private val application = context.applicationContext
+    private val subtitleCapture = AtomicReference<Media3PcmProbe?>()
+    private val subtitleDelivery = MutableStateFlow(false)
+    private var subtitleTimelineEligible = false
     private val sourceFactory = DefaultMediaSourceFactory(context).setDataSourceFactory(
         androidx.media3.datasource.DefaultDataSource.Factory(context,
             DefaultHttpDataSource.Factory().setDefaultRequestProperties(input.headers)
                 // A torrent read can wait for peers well past Media3's 8 s default.
                 .apply { if (input.localTorrent) setReadTimeoutMs(LOCAL_TORRENT_READ_TIMEOUT_MS) }))
-    val player: ExoPlayer = ExoPlayer.Builder(context, androidx.media3.exoplayer.DefaultRenderersFactory(context)
+    val player: ExoPlayer = ExoPlayer.Builder(context, Media3SubtitleRenderersFactory(context, subtitleCapture::set)
         .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
         .setMediaSourceFactory(sourceFactory)
         .build()
+    private val subtitleAnalysis = AndroidSubtitleSyncWorker(scope, input.subtitleSync, subtitleCapture::get, subtitleDelivery, input.diagnostics)
     private val mediaSession = AndroidMediaSession(application, player, seek = { position ->
         if (!closed && seekable) scope.launch { command(PlayerCommand.Seek(position)) }
     }, skip = { deltaMillis ->
@@ -69,15 +75,17 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) = status()
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { mediaTransitions++ }
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            updateSubtitleDelivery()
             if (input.diagnostics != null && !timeline.isEmpty && timelineReports++ < 5) {
                 val value = timeline.getWindow(player.currentMediaItemIndex, Timeline.Window())
                 input.diagnostics.invoke("timeline_default_ms=${value.defaultPositionMs} timeline_position_ms=${player.currentPosition} timeline_offset_ms=${value.positionInFirstPeriodMs} timeline_placeholder=${value.isPlaceholder} timeline_live=${value.isLive} timeline_dynamic=${value.isDynamic}")
             }
         }
         override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+            input.subtitleSync.discontinuity()
             input.diagnostics?.invoke("discontinuity_reason=$reason discontinuity_old_ms=${oldPosition.positionMs} discontinuity_new_ms=${newPosition.positionMs}")
         }
-        override fun onTracksChanged(value: Tracks) { tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
+        override fun onTracksChanged(value: Tracks) { subtitles.audioChanged(); tracks.changed(); subtitles.autoSelect(input.providerSubtitles.value) }
         override fun onPlayerError(error: PlaybackException) {
             reportNativePlaybackFailure("Media3 playback error: ${error.errorCodeName}")
             emit(if (media3DecodeFailure(error)) PlayerFact.Undecodable else PlayerFact.Failed)
@@ -126,6 +134,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         val item = MediaItem.Builder().setUri(input.uri).setMimeType(input.mimeType)
         input.title?.let { item.setMediaMetadata(MediaMetadata.Builder().setTitle(it).build()) }
         val source = sourceFactory.createMediaSource(item.build())
+        subtitleTimelineEligible = source is androidx.media3.exoplayer.source.ProgressiveMediaSource &&
+            !input.live && input.timelineOffsetMillis == 0L
+        subtitleDelivery.value = subtitleTimelineEligible
         player.setMediaSource(if (!input.live && source is HlsMediaSource) TitleHlsMediaSource(source) else source,
             input.positionMillis.coerceAtLeast(0))
         player.playWhenReady = !paused
@@ -133,6 +144,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         properties()
     }
     private fun status() {
+        updateSubtitleDelivery()
         if (closed || player.playerError != null) return
         emit(PlayerFact.Status(when (player.playbackState) {
             Player.STATE_BUFFERING -> "Buffering"
@@ -185,6 +197,12 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
 
     private fun windowOffsetMillis(): Long = if (input.live || player.currentTimeline.isEmpty) 0 else
         player.currentTimeline.getWindow(player.currentMediaItemIndex, window).positionInFirstPeriodMs.coerceAtLeast(0)
+    private fun updateSubtitleDelivery() {
+        val timeline = player.currentTimeline
+        subtitleDelivery.value = subtitleTimelineEligible && !timeline.isEmpty &&
+            nativeSubtitleWindowEligible(timeline.getWindow(player.currentMediaItemIndex, window)) &&
+            player.playbackState == Player.STATE_READY && player.playerError == null
+    }
     private fun titlePositionMillis(): Long = input.mediaProgress(player.currentPosition, null, windowOffsetMillis()).positionMillis
     val seekable: Boolean get() = !input.live
     suspend fun skip(deltaMillis: Long) {
@@ -230,11 +248,15 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     }
     fun close() {
         if (closed) return
-        closed = true; player.removeListener(listener); subtitles.close()
+        closed = true; subtitleDelivery.value = false; subtitleAnalysis.close(); player.removeListener(listener); subtitles.close()
         if (systemControls) AndroidMediaSessions.withdraw(application, mediaSession.session)
         mediaSession.close(); player.release(); view = null
     }
 }
+
+@UnstableApi
+internal fun nativeSubtitleWindowEligible(window: Timeline.Window): Boolean = window.positionInFirstPeriodUs == 0L &&
+    !window.isPlaceholder && !window.isDynamic && !window.isLive
 
 private const val SLATE_SAMPLE_FAILURE_LIMIT = 3
 

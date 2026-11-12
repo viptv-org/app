@@ -31,7 +31,9 @@ import org.viptv.app.theme.Palette
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
     close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit,
     openSettings: (() -> Unit)? = null, pendingSubtitle: SubtitleSelection? = null,
-    subtitleError: SubtitleSelection? = null, pendingAudio: Int? = null, audioError: Int? = null) {
+    subtitleError: SubtitleSelection? = null, pendingAudio: Int? = null, audioError: Int? = null, subtitleSync: SubtitleSyncSession? = null) {
+    val timing = subtitleSync?.ui?.collectAsState()?.value
+    var showTiming by remember(subtitleSync) { mutableStateOf(false) }
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
     val preferAudio = tracks.subtitles.isEmpty() && tracks.audio.isNotEmpty()
@@ -45,7 +47,16 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 .clip(RoundedCornerShape(topStart = 24.dp * scale, topEnd = 24.dp * scale))
                 .tvBackdropBlur(30.dp * scale).background(Color(0xFF161618).copy(alpha = .9f))
                 .padding(start = 76.dp * scale, top = 48.dp * scale, bottom = if (openSettings != null) 28.dp * scale else 0.dp)) {
-                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
+                if (showTiming && subtitleSync != null) {
+                    LazyColumn(Modifier.weight(1f).width(1000.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)) {
+                        item {
+                            SubtitleTimingChoices(subtitleSync, 24 * scale / 14) { label, selected, action ->
+                                TvTrackRow(label, selected == true, scale, if (label == "Earlier by 0.5 s") initial else null,
+                                    selectionState = selected, choose = action)
+                            }
+                        }
+                    }
+                } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(80.dp * scale)) {
                     TvTrackColumn("Audio", Modifier.width(520.dp * scale), scale) {
                         if (tracks.audio.size <= 1) item { Text("Default audio", color = Palette.secondary, fontSize = (24 * scale).sp) }
                         else items(tracks.audio, key = { it.id }) { track ->
@@ -68,12 +79,15 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                             error = if (failed) subtitleTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
                     }
                     TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
+                        if (timing?.providerSelected == true) item {
+                            TvTrackRow(subtitleTimingLabel(timing), false, scale, null) { showTiming = true }
+                        }
                         items(listOf("Small" to 0.8f, "Medium" to 1f, "Large" to 1.25f, "Extra large" to 1.5f)) { (label, value) ->
                             TvTrackRow(label, size == value, scale, null) { send(PlayerCommand.SubtitleSize(value)) }
                         }
                     }
                 }
-                if (openSettings != null) TvAction(Modifier.width(520.dp * scale).heightIn(min = 64.dp * scale), scale, activate = openSettings,
+                if (openSettings != null && !showTiming) TvAction(Modifier.width(520.dp * scale).heightIn(min = 64.dp * scale), scale, activate = openSettings,
                     background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
                     Box(Modifier.width(40.dp * scale)) { Icon(Lucide.Settings, null, Modifier.size(24.dp * scale), tint) }
                     Text(PLAYER_SETTINGS_LINK, Modifier.weight(1f), color = if (tint == Palette.text) Palette.body else tint,
@@ -82,7 +96,7 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 }
             }
         }
-        LaunchedEffect(Unit) { initial.requestFocus() }
+        LaunchedEffect(showTiming) { withFrameNanos { }; initial.requestFocus() }
 }
 
 @Composable
@@ -97,9 +111,9 @@ private fun TvTrackColumn(label: String, modifier: Modifier, scale: Float, conte
 
 @Composable
 private fun TvTrackRow(label: String, selected: Boolean, scale: Float, requester: FocusRequester?,
-    pending: Boolean = false, error: String? = null, choose: () -> Unit) {
+    pending: Boolean = false, error: String? = null, selectionState: Boolean? = null, choose: () -> Unit) {
     val highlighted = selected && !pending
-    TvAction(Modifier.fillMaxWidth().height((64 * scale).dp), scale, requester = requester, activate = choose,
+    TvAction(Modifier.fillMaxWidth().height((64 * scale).dp).semantics { selectionState?.let { this.selected = it } }, scale, requester = requester, activate = choose,
         background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
         Box(Modifier.width(40.dp * scale)) {
             when {
