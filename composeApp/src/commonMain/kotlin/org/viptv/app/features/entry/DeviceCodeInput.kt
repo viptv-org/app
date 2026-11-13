@@ -42,40 +42,30 @@ internal fun DeviceCodeInput(
     val gap = if (compact) 6.dp else 8.dp
     val digitSize = if (compact) 20.sp else 26.sp
     val browserInput = LocalDomTextHost.current != null
-    Box {
+    Box(Modifier.widthIn(max = slotWidth * 8 + gap * 8 + 12.dp).fillMaxWidth()) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(gap),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.pointerClickable(interactionSource = interaction, indication = null) { focus.requestFocus() },
+            modifier = Modifier.fillMaxWidth().pointerClickable(interactionSource = interaction, indication = null) { focus.requestFocus() },
         ) {
-            listOf(0, 4).forEach { group ->
-                if (group == 4) Text("-", color = Palette.tertiary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    repeat(4) { index ->
-                        val position = group + index
-                        val digit = code.getOrNull(position)?.toString() ?: ""
-                        Box(
-                            Modifier
-                                .size(slotWidth, slotHeight)
-                                .background(
-                                    when {
-                                        error -> Color(0x29FF7A6E)
-                                        else -> Color(0x0FFFFFFF)
-                                    },
-                                    RoundedCornerShape(10.dp),
-                                )
-                                .border(
-                                    when {
-                                        error -> androidx.compose.foundation.BorderStroke(1.dp, Palette.danger)
-                                        position == code.length && enabled -> androidx.compose.foundation.BorderStroke(2.dp, Palette.text)
-                                        else -> androidx.compose.foundation.BorderStroke(1.dp, Color(0x24FFFFFF))
-                                    },
-                                    RoundedCornerShape(10.dp),
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) { Text(digit, color = Palette.text, fontSize = digitSize, fontWeight = FontWeight.Bold) }
-                    }
-                }
+            repeat(8) { position ->
+                if (position == 4) Text("-", Modifier.width(12.dp), color = Palette.tertiary,
+                    fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                val digit = code.getOrNull(position)?.toString() ?: ""
+                Box(
+                    Modifier
+                        .weight(1f).height(slotHeight)
+                        .background(if (error) Color(0x29FF7A6E) else Color(0x0FFFFFFF), RoundedCornerShape(10.dp))
+                        .border(
+                            when {
+                                error -> androidx.compose.foundation.BorderStroke(1.dp, Palette.danger)
+                                position == code.length && enabled -> androidx.compose.foundation.BorderStroke(2.dp, Palette.text)
+                                else -> androidx.compose.foundation.BorderStroke(1.dp, Color(0x24FFFFFF))
+                            },
+                            RoundedCornerShape(10.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) { Text(digit, color = Palette.text, fontSize = digitSize, fontWeight = FontWeight.Bold) }
             }
         }
         AppBasicTextField(

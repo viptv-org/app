@@ -2,6 +2,9 @@ package org.viptv.app
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -45,4 +48,25 @@ class BrowserDeviceCodeInputTest {
                 "Browser device-code input must cover its visible slots, got $size")
         } finally { scene.close() }
     }
+    @Test fun allEightDigitsFitInsideTheCardContent() {
+        for ((width, compact) in listOf(440 to false, 294 to true)) {
+            val scene = ImageComposeScene(width, 200, Density(1f)) {
+                ViptvTheme { Box(Modifier.width(width.dp)) {
+                    DeviceCodeInput("88888888", {}, {}, compact = compact, autofocus = false)
+                } }
+            }
+            fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
+            fun digits() = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }.filter { node ->
+                node.config.getOrNull(SemanticsProperties.Text)?.singleOrNull()?.text == "8"
+            }
+            try {
+                scene.renderUntil(what = "eight code digits") { digits().size == 8 }
+                assertTrue(digits().all { it.boundsInRoot.left >= 0 && it.boundsInRoot.right <= width },
+                    "All code digits must fit within $width pixels")
+                val widths = digits().map { it.boundsInRoot.width }
+                assertTrue(widths.all { it == widths.first() && it > 0 }, "Every digit must remain fully visible: $widths")
+            } finally { scene.close() }
+        }
+    }
+
 }

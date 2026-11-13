@@ -336,7 +336,7 @@ def visit_password(browser, origin, args, log, check):
 
     if not sign_in():
         return context.close()
-    if not check(wait_until(page, lambda: page.get_by_text("Who’s watching?").count() > 0),
+    if not check(wait_until(page, lambda: page.get_by_text(re.compile(r"Who[’']s watching\?")).count() > 0),
                  f"[{scenario}] the profile picker opened after signing in"):
         return context.close()
     if not click_control(page, check, scenario, "Smoke QA", args.settle):
@@ -465,7 +465,7 @@ def visit(browser, origin, scenario, args, log, check):
     check(isinstance(body, dict) and body.get("username") == USERNAME and body.get("password") == PASSWORD,
           f"[{scenario}] the login carried the typed username and password (fake values; got {body})")
     check(followed, f"[{scenario}] the signed-in bootstrap followed the login")
-    check(page.get_by_text("Who’s watching?").count() > 0 and page.get_by_text("Smoke QA").count() > 0,
+    check(page.get_by_text(re.compile(r"Who[’']s watching\?")).count() > 0 and page.get_by_text("Smoke QA").count() > 0,
           f"[{scenario}] the profile picker shows the fake profile")
     check(not errors, f"[{scenario}] no page errors {errors}")
     print(f"     [{scenario}] requests: " + json.dumps([f'{e["method"]} {e["path"]}' for e in log]))
@@ -475,6 +475,8 @@ def visit(browser, origin, scenario, args, log, check):
 def visit_device(browser, origin, scenario, args, log, check):
     context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
     page = context.new_page()
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
     page.goto(origin + "/device")
     if scenario == "device-signin":
         form = page.locator("form.viptv-cred-form")
@@ -483,6 +485,7 @@ def visit_device(browser, origin, scenario, args, log, check):
         username = form.locator('input[name="username"][autocomplete="username"]')
         password = form.locator('input[name="password"][autocomplete="current-password"]')
         check(username.count() == 1 and password.count() == 1, "[device-signin] stable autofill field names and purposes")
+        page.screenshot(path=str(args.out / "device-signin-form.png"))
         username.fill(USERNAME)
         password.fill(PASSWORD)
         password.press("Enter")
@@ -498,11 +501,13 @@ def visit_device(browser, origin, scenario, args, log, check):
     check(wait_until(page, lambda: field.input_value() == "12345678"), "[device] typing preserves all eight digits")
     field.fill("87-65 43210")
     check(wait_until(page, lambda: field.input_value() == "87654321"), "[device] pasted code is normalized and limited to eight digits")
+    page.screenshot(path=str(args.out / f"{scenario}-code.png"))
     field.press("Enter")
     posted = lambda: [e for e in log if e["path"] == "/api/auth/device/lookup" and e["method"] == "POST"]
     check(wait_until(page, lambda: bool(posted())), "[device] Enter looks up the code")
     check(bool(posted()) and posted()[0]["body"] == {"user_code": "87654321"}, "[device] lookup receives the typed code")
     page.screenshot(path=str(args.out / f"{scenario}.png"))
+    check(not errors, f"[{scenario}] no page errors {errors}")
     context.close()
 
 
