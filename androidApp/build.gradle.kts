@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -36,6 +38,10 @@ android {
         // Optional prefilled sign-in server for dev builds: -Pviptv.defaultServer=https://host
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
+        val serverUri = defaultServer.takeIf(String::isNotEmpty)?.let(URI::create)
+        require(serverUri == null || (serverUri.host != null && (serverUri.port == -1 || serverUri.port in 1..65535))) {
+            "viptv.defaultServer must have a valid host and HTTPS port"
+        }
         buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
         buildConfigField("String", "BUILD_COMMIT", "\"${commitSha ?: "unknown"}\"")
         // Updates come from <signed-in server>/updates/android/update.json. -Pviptv.updateFeed=<url>
@@ -45,9 +51,7 @@ android {
             "viptv.updateFeed must be an https URL (plain http only on 127.0.0.1 or localhost)" }
         buildConfigField("String", "UPDATE_FEED", "\"$updateFeed\"")
         buildConfigField("boolean", "APP_UPDATES", "true")
-        // App Links (the sign-in QR opens the app): the default server's host. Android cannot verify a
-        // port, so those servers, and builds without one, get a host that matches nothing real.
-        manifestPlaceholders["viptvLinkHost"] = Regex("https://([A-Za-z0-9.-]+)").matchEntire(defaultServer)?.groupValues?.get(1) ?: "viptv-links.invalid"
+        manifestPlaceholders["viptvLinkHost"] = serverUri?.host?.lowercase() ?: "viptv-links.invalid"
     }
     buildFeatures { compose = true; buildConfig = true }
     buildTypes {

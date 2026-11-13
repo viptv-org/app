@@ -63,6 +63,7 @@ import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import quote, urlsplit
 
 from playwright.sync_api import sync_playwright
 
@@ -75,7 +76,7 @@ FIELD_SCENARIOS = {
     "escape":  ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
     "tab":     ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
 }
-SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS) + ("device", "device-signin")
+SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS) + ("device", "device-signin", "device-app")
 USERNAME = "smoke-visitor"
 PASSWORD = "smoke-password-55"
 CURRENT_PASSWORD = "smoke-current-password-446"
@@ -472,6 +473,39 @@ def visit(browser, origin, scenario, args, log, check):
     context.close()
 
 
+def visit_device_app(browser, origin, args, log, check):
+    context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height},
+        user_agent="Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36")
+    page = context.new_page()
+    navigations = []
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    cdp = context.new_cdp_session(page)
+    cdp.send("Page.enable")
+    cdp.on("Page.frameRequestedNavigation", lambda event: navigations.append(event["url"]))
+    target = origin + "/device?code=00428701"
+    try:
+        page.goto(target)
+        button = page.get_by_role("button", name="Open VIPTV app", exact=True)
+        if not check(wait_until(page, lambda: visible_box(button) is not None), "[device-app] signed-out app handoff is visible"):
+            return
+        check(urlsplit(origin).port is not None, "[device-app] fixture uses a non-default HTTPS port")
+        check(wait_until(page, lambda: page.locator('input[autocomplete="username"]').count() == 1),
+              "[device-app] browser sign-in remains available")
+        check(not any(url.startswith("intent:") for url in navigations), "[device-app] no automatic app launch")
+        click_box(page, visible_box(button), args.settle)
+        check(wait_until(page, lambda: any(url.startswith("intent:") for url in navigations)), "[device-app] click emits an Android intent")
+        intent = next((url for url in navigations if url.startswith("intent:")), None)
+        expected = (f"intent://{urlsplit(origin).netloc}/device?code=00428701#Intent;scheme=https;package=org.viptv.experiment;"
+                    f"S.browser_fallback_url={quote(target, safe='')};end")
+        check(intent == expected, "[device-app] server port, leading-zero code and browser fallback are preserved")
+        check(not any(entry["path"] == "/api/auth/device/approve" for entry in log), "[device-app] handoff does not approve the device")
+        page.screenshot(path=str(args.out / "device-app.png"))
+        check(not errors, f"[device-app] no page errors {errors}")
+    finally:
+        context.close()
+
+
 def visit_device(browser, origin, scenario, args, log, check):
     context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
     page = context.new_page()
@@ -558,7 +592,9 @@ def main():
                         log.clear()
                     session["profile"] = None
                     session["device_authenticated"] = scenario == "device"
-                    if scenario in ("device", "device-signin"):
+                    if scenario == "device-app":
+                        visit_device_app(browser, origin, args, log, check)
+                    elif scenario in ("device", "device-signin"):
                         visit_device(browser, origin, scenario, args, log, check)
                     elif scenario in FIELD_SCENARIOS:
                         visit_field(browser, origin, scenario, args, check)
