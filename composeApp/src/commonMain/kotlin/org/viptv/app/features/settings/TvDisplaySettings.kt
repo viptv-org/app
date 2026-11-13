@@ -52,11 +52,11 @@ internal val LocalTvDisplayState = staticCompositionLocalOf<TvDisplayState?> { n
 internal val LocalSystemReducedMotion = staticCompositionLocalOf<Boolean?> { null }
 
 @Composable
-internal fun rememberSystemReducedMotion(read: (coil3.PlatformContext) -> Boolean = ::systemReducedMotion): Boolean {
+internal fun rememberSystemReducedMotion(read: @Composable (coil3.PlatformContext) -> Boolean = { systemReducedMotion(it) }): Boolean {
     val context = LocalPlatformContext.current
     val provided = LocalSystemReducedMotion.current
     if (provided != null) return provided
-    return remember(context, read) { derivedStateOf { read(context) } }.value
+    return read(context)
 }
 
 @Composable
