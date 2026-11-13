@@ -32,16 +32,17 @@ class SourceProducerStatusTest {
     private val failing = SourceProducerOutcome("addon:8", "Debridio", errorCode = "addon_unavailable",
         errorMessage = "The addon could not return sources. Try again or choose another addon.")
 
-    @Test fun theProviderChoiceCarriesProducersWithNoRows() {
-        val options = sourceProviderOptions(listOf(torrentio), listOf(comet, unsupported))
-        assertEquals(listOf("Torrentio", "Comet", "Annatar"), options.map { it.label })
-        assertEquals(listOf<String?>("1", null, null), options.map { it.trailing })
+    @Test fun theProviderChoicesContainOnlyProvidersWithSources() {
+        val options = sourceProviderOptions(listOf(torrentio))
+        assertEquals(listOf("Torrentio"), options.map { it.label })
+        assertEquals(listOf<String?>("1"), options.map { it.trailing })
         assertEquals(options.size, options.map { it.id }.distinct().size, "each producer keeps its own filter")
     }
 
-    @Test fun aProducerWithRowsDoesNotAddASecondChoice() {
-        val options = sourceProviderOptions(listOf(torrentio), listOf(SourceProducerOutcome("addon:1", "Torrentio")))
+    @Test fun multipleSourcesFromAProviderShareOneCountedChoice() {
+        val options = sourceProviderOptions(listOf(torrentio, torrentio.copy(id = "a2")))
         assertEquals(listOf("Torrentio"), options.map { it.label })
+        assertEquals(listOf("2"), options.map { it.trailing })
     }
 
     @Test fun producersWithoutAConfiguredNameStillRead() {
@@ -74,35 +75,28 @@ class SourceProducerStatusTest {
         assertTrue(scene.allTexts().any { it.startsWith("1 source from") }, "the finished summary returns")
     }
 
-    @Test fun aZeroResultProducerIsSelectableAndExplainsItself() = Scene().use { scene ->
-        scene.render(rows = listOf(torrentio), producers = listOf(comet), pending = true)
+    @Test fun zeroResultProducersDoNotCreateAnonymousOrEmptyFilterChoices() = Scene().use { scene ->
+        scene.render(rows = listOf(torrentio), producers = listOf(comet, unsupported, SourceProducerOutcome("iptv:2")), pending = true)
         scene.openSources()
-        assertTrue(scene.options().any { it.startsWith("Comet") }, scene.options().toString())
-        scene.pick("Comet")
-        assertTrue(scene.allTexts().any { it == "Still checking Comet" }, scene.allTexts().toString())
-
-        scene.render(rows = listOf(torrentio), producers = listOf(comet), pending = false)
-        assertTrue(scene.allTexts().any { it == "No playable sources from Comet" }, scene.allTexts().toString())
-        assertFalse(scene.allTexts().any { it.startsWith("No streams found") })
-
-        scene.render(rows = listOf(torrentio, source("a2", "addon:2", "Comet")), producers = listOf(comet), pending = false)
-        assertTrue(scene.allTexts().any { it == "Stream a2" }, "the producer's own row takes over the filtered view")
-        assertFalse(scene.allTexts().any { it == "No playable sources from Comet" }, scene.allTexts().toString())
+        assertTrue(scene.options().any { it.startsWith("Torrentio") })
+        assertFalse(scene.options().any { it.startsWith("Comet") || it.startsWith("Annatar") || "this provider" in it }, scene.options().toString())
+        scene.pick("Torrentio")
+        assertTrue(scene.allTexts().any { it == "Still checking sources" }, "Other providers may still finish")
+        scene.render(rows = listOf(torrentio), producers = listOf(comet, unsupported), pending = false)
+        assertTrue(scene.allTexts().any { it == "Stream a1" })
+        assertFalse(scene.allTexts().any { it == "No playable sources from Comet" })
     }
 
-    @Test fun theSelectionSurvivesEventsAndClearsWhenItsProducerDisappears() = Scene().use { scene ->
-        scene.render(rows = listOf(torrentio), producers = listOf(comet), pending = true)
+    @Test fun selectionSurvivesNewRowsButClearsWhenItsLastSourceDisappears() = Scene().use { scene ->
+        val cometRow = source("a2", "addon:2", "Comet")
+        scene.render(rows = listOf(torrentio, cometRow), producers = listOf(comet), pending = true)
         scene.openSources()
         scene.pick("Comet")
-        assertTrue(scene.allTexts().any { it == "Still checking Comet" })
-
-        scene.render(rows = listOf(torrentio, source("a3", "addon:1", "Torrentio")), producers = listOf(comet), pending = true)
-        assertTrue(scene.allTexts().any { it == "Still checking Comet" }, "arriving rows keep the selected provider")
+        scene.render(rows = listOf(torrentio, cometRow, source("a3", "addon:1", "Torrentio")), producers = listOf(comet), pending = true)
         assertEquals("Source: Comet", scene.triggers().map(scene::nodeText).last())
-
-        scene.render(rows = listOf(torrentio), producers = emptyList(), pending = false)
-        assertEquals("Source: All sources", scene.triggers().map(scene::nodeText).last(), "a vanished producer leaves no stale filter")
-        assertTrue(scene.allTexts().any { it == "Stream a1" }, "the rows are visible again")
+        scene.render(rows = listOf(torrentio), producers = listOf(comet), pending = false)
+        assertEquals("Source: All sources", scene.triggers().map(scene::nodeText).last(), "Producer completion must not retain an empty filter")
+        assertTrue(scene.allTexts().any { it == "Stream a1" })
     }
 
     private class Scene : AutoCloseable {
