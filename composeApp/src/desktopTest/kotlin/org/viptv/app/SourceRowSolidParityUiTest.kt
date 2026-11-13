@@ -47,6 +47,9 @@ class SourceRowSolidParityUiTest {
                 assertTrue("Audio EN/JA · Subs EN" in text, "Plain audio/subtitle facts: $text")
                 assertTrue("1.2 GB · HEVC · ↑12 · Torrentio" in text)
                 assertTrue("Best match" in text)
+                val row = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
+                    .single { it.config.contains(SemanticsActions.OnClick) }
+                assertTrue(row.boundsInRoot.height <= 80f, "Compact source rows must not inherit oversized default line heights: ${row.boundsInRoot}")
             } finally { scene.close() }
         }
     }
