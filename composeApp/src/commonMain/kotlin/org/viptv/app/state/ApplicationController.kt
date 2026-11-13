@@ -104,6 +104,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var pairingJob: Job? = null
     internal var vodMatchesJob: Job? = null
     internal var vodMatchesRequest = 0L
+    internal var accountIdentityRequest = 0L
     internal var pairingGeneration = 0L
     internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null

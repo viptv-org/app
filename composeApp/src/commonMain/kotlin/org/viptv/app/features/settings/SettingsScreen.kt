@@ -89,10 +89,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     val show: (SettingsPage) -> Unit = pageChanged ?: { localPage = it }
     var leaving by remember { mutableStateOf(initialLeave) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    var addonsLoaded by remember { mutableStateOf(false) }
+    var addonsRequestedOnce by remember { mutableStateOf(false) }
     LaunchedEffect(section) { accountAccessRequested?.invoke() }
-    LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsLoaded = true }
-    LaunchedEffect(section) { if (section == "Add-ons" && addonsLoaded) addonsRequested?.invoke() }
+    LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsRequestedOnce = true }
+    LaunchedEffect(section) { if (section == "Add-ons" && addonsRequestedOnce) addonsRequested?.invoke() }
     LaunchedEffect(section) { if (section == "Gateways") gatewaysRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
