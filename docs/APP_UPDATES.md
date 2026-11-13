@@ -99,18 +99,21 @@ so a cache in front of the server does no harm as long as it does not cache
 
 ## Signing
 
-Release builds use an explicit stable keystore. Its certificate SHA-256 is
-`E429B1C898D11630A75117D119672E3D8D82E9DAFB4240A48006CB0EFB138777`,
-pinned in `tools/android_signing.py`. Android accepts an update over existing
-installs only with this key, preserving app data and sign-in. A different key
-fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+Release builds use a dedicated persistent keystore. Its certificate SHA-256 is
+`FBD4A7625A283F84CA956DCE0F1E6EB8F6601AB305D087EBA57D083015662DB5`,
+pinned in `tools/android_signing.py`. Android accepts an update over installations
+signed with this key, preserving app data and sign-in. A different key
+fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. Installations signed with another
+certificate require a one-time clean reinstall before receiving these updates.
+A clean reinstall removes local app data and sign-in and needs authorization for
+each device.
 
 The Android release workflow requires these repository secrets, passed
 explicitly by `platform-builds.yml`:
 
-- `ANDROID_RELEASE_KEYSTORE_BASE64`: base64 of the original keystore.
+- `ANDROID_RELEASE_KEYSTORE_BASE64`: base64 of the persistent release keystore.
 - `ANDROID_RELEASE_STORE_PASSWORD`: keystore password.
-- `ANDROID_RELEASE_KEY_ALIAS`: original signing alias.
+- `ANDROID_RELEASE_KEY_ALIAS`: release signing alias.
 - `ANDROID_RELEASE_KEY_PASSWORD`: private key password.
 
 The workflow decodes the key into a private runner temporary file and checks
@@ -127,19 +130,18 @@ default branch. They remove the temporary keystore even after a failure, and
 disable Gradle configuration caching and persistent daemons for the signing
 invocation. The key is never stored under `~/.android` or in build caches.
 
-Keep a private backup of the original keystore. Never generate a replacement
-for release signing: it cannot update existing installations.
+Keep a private backup of the release keystore and retain it for future releases.
+A replacement key cannot update installations signed with this key.
 
 ## Moving to GitHub Releases
 
 The feed format and `-Pviptv.updateFeed` already allow a GitHub Releases feed
 (`https://github.com/viptv-org/app/releases/latest/download/update.json`, whose
-`url` is the release asset's absolute download address). Three things block it
-today:
+`url` is the release asset's absolute download address). Delivery requires:
 
 1. **Signing secrets.** The four repository secrets above must contain the
-   original keystore and credentials. CI refuses missing credentials or a
-   certificate that differs from installed releases.
+   persistent release keystore and credentials. CI refuses missing credentials
+   or a certificate that differs from the pinned release identity.
 2. **Private build dependency.** Every Android build compiles the torrent
    runtime from `viptv-org/playback-gateway` (`TORRENT_RUNTIME_REF`,
    `tools/build_torrent_runtime.py`), which is private. CI needs read access

@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-EXPECTED_CERT_SHA256 = 'E429B1C898D11630A75117D119672E3D8D82E9DAFB4240A48006CB0EFB138777'
+EXPECTED_CERT_SHA256 = 'FBD4A7625A283F84CA956DCE0F1E6EB8F6601AB305D087EBA57D083015662DB5'
 CREDENTIALS = (
     'ANDROID_RELEASE_KEYSTORE_BASE64',
     'ANDROID_RELEASE_STORE_PASSWORD',
@@ -34,7 +34,7 @@ def prepare(destination: Path):
             '-storepass:env', 'ANDROID_RELEASE_STORE_PASSWORD',
         ], check=True, capture_output=True, stdin=subprocess.DEVNULL).stdout
         if hashlib.sha256(certificate).hexdigest().upper() != EXPECTED_CERT_SHA256:
-            raise ValueError('Release signing certificate does not match existing installs')
+            raise ValueError('Release signing certificate does not match the pinned release identity')
         subprocess.run([
             'keytool', '-certreq', '-keystore', str(destination),
             '-alias', os.environ['ANDROID_RELEASE_KEY_ALIAS'],
@@ -64,7 +64,7 @@ def verify_apk(apk: Path):
     ], check=True, capture_output=True, text=True).stdout
     certificates = re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)$', verification, re.M)
     if [value.upper() for value in certificates] != [EXPECTED_CERT_SHA256]:
-        raise ValueError('APK signing certificate does not match existing installs')
+        raise ValueError('APK signing certificate does not match the pinned release identity')
     root = Path(__file__).resolve().parents[1]
     def git(*arguments):
         return subprocess.check_output(['git', *arguments], cwd=root, text=True).strip()
