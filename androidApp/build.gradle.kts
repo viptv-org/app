@@ -159,6 +159,19 @@ val verifyTorrentRuntime by tasks.registering(Exec::class) {
     commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
 }
 tasks.named("preBuild") { dependsOn(verifyAndroidEngine, verifyTorrentRuntime) }
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    val missingCredentials = listOf(
+        "ANDROID_RELEASE_KEYSTORE_PATH",
+        "ANDROID_RELEASE_STORE_PASSWORD",
+        "ANDROID_RELEASE_KEY_ALIAS",
+        "ANDROID_RELEASE_KEY_PASSWORD",
+    ).filter { providers.environmentVariable(it).orNull.isNullOrBlank() }
+    doFirst {
+        check(missingCredentials.isEmpty()) {
+            "Missing release signing credentials: ${missingCredentials.joinToString()}"
+        }
+    }
+}
 
 // Guard: the debug APK packages exactly the selected ABIs (all shipped ABIs without viptv.abis).
 val checkDebugApkAbis by tasks.registering(Exec::class) {

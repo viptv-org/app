@@ -116,8 +116,8 @@ explicitly by `platform-builds.yml`:
 The workflow decodes the key into a private runner temporary file and checks
 its certificate and key password before building. Gradle reads that file through
 `ANDROID_RELEASE_KEYSTORE_PATH` and the three credential environment variables.
-Release signing has no debug-key fallback. Debug, QA and shared compilation do
-not require release credentials.
+Release signing has no debug-key fallback and release pre-build rejects missing
+credentials. Debug, QA and shared compilation do not require release credentials.
 
 After building, `tools/android_signing.py verify <apk>` checks the APK signature,
 certificate, package and version against the full git checkout. Only a verified
