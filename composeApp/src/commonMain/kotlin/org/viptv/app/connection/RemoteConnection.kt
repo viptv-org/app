@@ -61,7 +61,8 @@ internal fun Throwable.searchStreamTimeout(): Throwable? {
 }
 
 private val nativeSessionGate = Mutex()
-internal suspend fun <T> withNativeSessionStoreLock(block: suspend () -> T): T = nativeSessionGate.withLock { block() }
+internal suspend fun <T> withNativeSessionStoreLock(store: RemoteSessionStore, block: suspend () -> T): T =
+    nativeSessionGate.withLock { store.withSessionLock(block) }
 
 val offMainRemoteFactory: (String, RemoteSessionStore) -> RemoteConnection = { origin, store ->
     RemoteConnection(origin, sessionStore = store, workerDispatcher = Dispatchers.Default)
@@ -103,6 +104,8 @@ open class RemoteConnection(
     private var csrf: String? = null
     private var accessToken: String? = null
     private var refreshToken: String? = null
+    private var sessionId: String? = null
+    private var storedRefreshToken: String? = null
     private val refreshGate = Mutex()
     private var retired = false
     private var refreshVersion = 0L
@@ -182,6 +185,8 @@ open class RemoteConnection(
             ensureOpen()
             if (refreshToken != null && refreshToken != saved.refreshToken) return@authSession
             refreshToken = saved.refreshToken
+            sessionId = saved.sessionId
+            storedRefreshToken = saved.refreshToken
             refreshDevice()
             refreshVersion++
         }
@@ -479,14 +484,17 @@ open class RemoteConnection(
     private suspend fun installDeviceTokens(value: JsonObject, persist: Boolean = true) {
         val nextAccess = value["access_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a device session.")
         val nextRefresh = value["refresh_token"]?.jsonPrimitive?.contentOrNull ?: throw RemoteFailure(502, "The server did not provide a refresh token.")
-        if (persist) persistDeviceToken(nextRefresh)
+        val nextSessionId = value["session_id"]?.jsonPrimitive?.contentOrNull
+        if (persist) persistDeviceToken(nextRefresh, nextSessionId)
         accessToken = nextAccess
         refreshToken = nextRefresh
+        sessionId = nextSessionId
     }
 
-    private suspend fun persistDeviceToken(token: String) {
+    private suspend fun persistDeviceToken(token: String, family: String? = sessionId) {
         try {
-            sessionStore.save(SavedRemoteSession(origin, token))
+            sessionStore.save(SavedRemoteSession(origin, token, family))
+            storedRefreshToken = token
             persistenceWarning = null
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) {
@@ -494,16 +502,44 @@ open class RemoteConnection(
         }
     }
 
+    private suspend fun clearStoredSession(token: String) {
+        val saved = sessionStore.read() ?: return
+        if (remoteOriginOrNull(saved.origin) == origin &&
+            (saved.refreshToken == token || (sessionId != null && saved.sessionId == sessionId))) sessionStore.clear()
+    }
+
+    private suspend fun adoptStoredRotation() {
+        val stored = try { sessionStore.savedConnection() }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) {
+            if (storedRefreshToken == null) return
+            throw LocalFailure("Secure storage is unavailable. Try again.")
+        }
+        if (stored == SavedConnection.None) {
+            if (storedRefreshToken != null) throw LocalFailure("The saved connection changed. Choose your connection again.")
+            return
+        }
+        val saved = (stored as? SavedConnection.Remote)?.session
+            ?: throw LocalFailure("The saved connection changed. Choose your connection again.")
+        if (remoteOriginOrNull(saved.origin) != origin) throw LocalFailure("The saved connection changed. Choose your connection again.")
+        if (saved.refreshToken == refreshToken || saved.refreshToken == storedRefreshToken) return
+        if (sessionId == null || saved.sessionId != sessionId)
+            throw LocalFailure("The saved connection changed. Choose your connection again.")
+        refreshToken = saved.refreshToken
+        storedRefreshToken = saved.refreshToken
+    }
+
     // A sent rotation may already have consumed its one-use token: wait until its replacement is installed and persisted.
     private suspend fun refreshDevice() = withContext(NonCancellable) {
         try {
             withTimeout(20_000) {
+                adoptStoredRotation()
                 val token = refreshToken ?: throw sessionExpired()
                 val response = send("/api/auth/device/refresh", HttpMethod.Post,
                     buildJsonObject { put("refresh_token", token) }, null, null)
                 if (response.status == HttpStatusCode.Unauthorized) {
                     accessToken = null; refreshToken = null
-                    try { sessionStore.clear() }
+                    try { clearStoredSession(token) }
                     catch (error: CancellationException) { throw error }
                     catch (_: Exception) { }
                     throw sessionExpired()
@@ -546,7 +582,7 @@ open class RemoteConnection(
                         try { sessionStore.clear() }
                         catch (error: CancellationException) { throw error }
                         catch (_: Exception) { }
-                        accessToken = null; refreshToken = null; csrf = null
+                        accessToken = null; refreshToken = null; csrf = null; sessionId = null; storedRefreshToken = null
                     }
                 } catch (error: TimeoutCancellationException) {
                     // A sign-out timeout must not look like navigation cancellation: the dialog would close with a live session.
@@ -570,13 +606,13 @@ open class RemoteConnection(
             try { sessionStore.clear() }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) { }
-            accessToken = null; refreshToken = null; csrf = null
+            accessToken = null; refreshToken = null; csrf = null; sessionId = null; storedRefreshToken = null
         }
     }
 
     private suspend fun <T> authSession(block: suspend () -> T): T = refreshGate.withLock {
         ensureOpen()
-        if (browser) block() else nativeSessionGate.withLock { ensureOpen(); block() }
+        if (browser) block() else withNativeSessionStoreLock(sessionStore) { ensureOpen(); block() }
     }
 
     private fun ensureOpen() {
@@ -599,5 +635,5 @@ open class RemoteConnection(
         refreshGate.withLock { finishClose() }
     }
 
-    private fun finishClose() { client.close(); accessToken = null; refreshToken = null; csrf = null }
+    private fun finishClose() { client.close(); accessToken = null; refreshToken = null; csrf = null; sessionId = null; storedRefreshToken = null }
 }

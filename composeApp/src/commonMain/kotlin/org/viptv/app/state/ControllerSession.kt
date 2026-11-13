@@ -36,7 +36,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
     val restored = launchRestore(operation, connect = {
         try { remoteFactory(saved.origin, sessionStore) }
         catch (_: IllegalArgumentException) {
-            withNativeSessionStoreLock {
+            withNativeSessionStoreLock(sessionStore) {
                 if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
             }
             null
@@ -118,7 +118,7 @@ fun ApplicationController.connect(origin: String, username: String, password: St
             remote.close()
             throw error
         }
-        try { withNativeSessionStoreLock {
+        try { withNativeSessionStoreLock(sessionStore) {
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         } }
         catch (error: CancellationException) { throw error }
@@ -134,12 +134,12 @@ internal fun ApplicationController.startLocal(path: String) {
     disconnect()
     run {
         priorRemote?.retire()
-        try { withNativeSessionStoreLock { sessionStore.clear() } }
+        try { withNativeSessionStoreLock(sessionStore) { sessionStore.clear() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { }
         val bootstrap = openLocalConnection(path)
         // Finish the connection choice before publishing Profiles, or a quick profile selection cancels its pending vault write.
-        try { withNativeSessionStoreLock { sessionStore.rememberLocalConnection() } }
+        try { withNativeSessionStoreLock(sessionStore) { sessionStore.rememberLocalConnection() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { localPersistenceWarning = "This connection could not be remembered. Choose local mode again after restarting." }
         accept(bootstrap)
@@ -162,7 +162,7 @@ private suspend fun ApplicationController.openLocalConnection(path: String): Boo
 fun ApplicationController.leaveLocal() {
     if (mutable.value.busy) return
     run {
-        withNativeSessionStoreLock {
+        withNativeSessionStoreLock(sessionStore) {
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         }
         disconnect()
