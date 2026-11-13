@@ -1,5 +1,7 @@
 package org.viptv.app.state
 
+import io.ktor.http.Url
+import org.viptv.app.connection.deviceApprovalOrigin
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
 import org.viptv.app.features.settings.addDeviceSection
@@ -13,6 +15,16 @@ class DeviceCodeLink internal constructor(val origin: String, val code: String, 
 
 private val deviceCodeShape = Regex("[0-9]{8}")
 private val beforeProfile = setOf(Screen.Connect, Screen.RecoveryCodes, Screen.Profiles, Screen.ProfilePin, Screen.ProfileEdit)
+
+fun ApplicationController.offerDeviceCodeLink(url: String) {
+    if (!url.startsWith("https://")) return
+    val link = runCatching { Url(url) }.getOrNull() ?: return
+    if (link.encodedPath != "/device" || link.fragment.isNotEmpty()) return
+    val authority = url.removePrefix("https://").substringBefore('/')
+    val origin = deviceApprovalOrigin("https://$authority") ?: return
+    val code = link.parameters.getAll("code")?.singleOrNull() ?: return
+    offerDeviceCode(origin, code)
+}
 
 fun ApplicationController.offerDeviceCode(origin: String, code: String) {
     val checked = runCatching { org.viptv.app.connection.validatedRemoteOrigin(origin) }.getOrNull() ?: return
