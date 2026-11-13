@@ -18,13 +18,24 @@ def main():
         browser = playwright.chromium.launch(executable_path=args.chromium, headless=True)
         try:
             origin = f'https://127.0.0.1:{server.server_port}'
-            for outcome in ('ready', 'script-error', 'initialization-error'):
+            for outcome in ('ready', 'script-error', 'initialization-error', 'no-webgl2'):
                 context = browser.new_context(ignore_https_errors=True)
                 page = context.new_page()
+                if outcome == 'no-webgl2':
+                    page.add_init_script("HTMLCanvasElement.prototype.getContext = function () { return null; }")
                 pending = []
                 page.route('**/composeApp.js', lambda route: pending.append(route))
                 try:
                     page.goto(origin, wait_until='commit')
+                    if outcome == 'no-webgl2':
+                        expect(page.locator('html')).to_have_class('no-webgl2')
+                        expect(page.locator('#viptv-startup')).to_be_hidden()
+                        pending.pop().fulfill(status=200, content_type='text/javascript', body=
+                            "document.getElementById('viptv-ui-layer').textContent = 'This browser requires WebGL2';")
+                        expect(page.locator('#viptv-ui-layer')).to_contain_text('requires WebGL2')
+                        assert page.locator('#viptv-ui-layer').evaluate("e => getComputedStyle(e).color") == 'rgb(218, 216, 211)'
+                        print('PASS no-webgl2')
+                        continue
                     startup = page.get_by_role('status', name='Starting VIPTV')
                     expect(startup).to_be_visible()
                     expect(startup).to_contain_text('Getting VIPTV ready…')
