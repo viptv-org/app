@@ -62,11 +62,7 @@ def ndk_home(env):
     return str(ndks[-1])
 
 
-LAYOUT = 2  # jniLibs + notice assets
-stamped = json.loads(stamp.read_text()) if stamp.exists() else {}
-if stamped.get("revision") == revision and stamped.get("layout") == LAYOUT and stamped.get("abis") == abis:
-    print("Torrent runtime", revision, "is up to date")
-    raise SystemExit(0)
+LAYOUT = 2
 
 env = os.environ.copy()
 repository = playback_gateway.repository(env)
