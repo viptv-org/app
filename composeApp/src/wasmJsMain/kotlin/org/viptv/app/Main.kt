@@ -5,6 +5,9 @@ import androidx.compose.ui.window.ComposeViewport
 import kotlinx.browser.window
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.events.Event
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.graphics.Color
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.preview.PlaybackQa
@@ -35,14 +38,27 @@ fun main() {
     val screen = runCatching { Screen.valueOf(previewParts.getOrNull(1) ?: "Home") }.getOrDefault(Screen.Home)
     val variant = previewParts.getOrNull(2) ?: "Movie"
     ComposeViewport(document.getElementById("viptv-ui-layer") as HTMLElement) {
-        CompositionLocalProvider(LocalDomTextHost provides BrowserDomTextHost) {
-            when {
-                window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
-                preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
-                window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
-                else -> BrowserApp()
+        val firstFrame = remember { BrowserFirstFrame() }
+        Box(Modifier.fillMaxSize().drawWithContent { drawContent(); firstFrame.drawn() }) {
+            CompositionLocalProvider(LocalDomTextHost provides BrowserDomTextHost) {
+                when {
+                    window.location.hash == "#playback-qa" -> PlaybackQa(canvasColor = Color.Transparent)
+                    preview -> UiPreview(initialScreen = screen, browser = true, tvDetailVariant = variant)
+                    window.location.pathname.trimEnd('/').endsWith("/device") -> DeviceApprovalRoute()
+                    else -> BrowserApp()
+                }
             }
         }
+    }
+}
+
+private class BrowserFirstFrame {
+    private var sent = false
+
+    fun drawn() {
+        if (sent) return
+        sent = true
+        window.dispatchEvent(Event("viptv-first-frame"))
     }
 }
 
