@@ -12,6 +12,7 @@ import org.viptv.app.state.DeviceApprovalController
 import org.viptv.app.state.Screen
 import org.viptv.app.state.SourceMemory
 import org.viptv.app.features.entry.DeviceApprovalPage
+import org.viptv.app.connection.deviceApprovalAppIntent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import org.viptv.app.components.BrowserDomTextHost
@@ -58,7 +59,11 @@ private fun DeviceApprovalRoute() {
             val initialCode = remember { window.location.search.removePrefix("?").split("&")
                 .firstNotNullOfOrNull { it.split("=", limit = 2).takeIf { parts -> parts.size == 2 && parts[0] == "code" } }
                 ?.let { parts -> parts[1] } ?: "" }
-            DeviceApprovalPage(compact, controller, initialCode)
+            val openApp: ((String) -> Unit)? = if (window.navigator.userAgent.contains("Android") &&
+                deviceApprovalAppIntent(window.location.origin, initialCode) != null) {
+                { code -> deviceApprovalAppIntent(window.location.origin, code)?.let { window.location.assign(it) } }
+            } else null
+            DeviceApprovalPage(compact, controller, initialCode, openApp)
         }
     }
 }

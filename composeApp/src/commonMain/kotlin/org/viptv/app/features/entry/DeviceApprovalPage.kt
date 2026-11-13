@@ -41,6 +41,7 @@ internal fun DeviceApprovalPage(
     compact: Boolean,
     controller: DeviceApprovalController,
     initialCode: String = "",
+    openApp: ((String) -> Unit)? = null,
 ) {
     var step by remember { mutableStateOf(DeviceApprovalStep.Restore) }
     var code by remember { mutableStateOf(initialCode.filter(Char::isDigit).take(8)) }
@@ -110,6 +111,9 @@ internal fun DeviceApprovalPage(
     fun startOver() { code = ""; device = null; error = null; step = DeviceApprovalStep.Code }
 
     DeviceCard(compact) {
+        if (openApp != null && code.length == 8 && step in setOf(DeviceApprovalStep.Restore, DeviceApprovalStep.SignIn, DeviceApprovalStep.Code)) {
+            DeviceSecondaryButton("Open VIPTV app") { openApp(code) }
+        }
         when (step) {
             DeviceApprovalStep.Restore -> {
                 DeviceTile()
