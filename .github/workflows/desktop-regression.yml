@@ -1,0 +1,125 @@
+name: Targeted desktop regression
+on:
+  workflow_dispatch:
+    inputs:
+      classes:
+        description: 'One to eight fully-qualified desktop test classes, separated by commas'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: desktop-regression-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  LC_ALL: C
+  RUSTUP_TOOLCHAIN: 1.98.0
+  CARGO_BUILD_JOBS: '1'
+jobs:
+  regression:
+    name: selected desktop tests only
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      APT_PACKAGES: libdbus-1-dev libmpv2 mpv patchelf
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Check regression tooling
+        run: python3 -m unittest discover -s scripts/ci/tests -p 'test_desktop_regression.py'
+      - name: Validate bounded selection and native cache identity
+        id: selection
+        env:
+          REGRESSION_CLASSES: ${{ inputs.classes }}
+        run: python3 scripts/ci/desktop-regression.py prepare --output "$RUNNER_TEMP/regression"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - name: Compute apt cache identity
+        run: bash scripts/ci/apt-cache-key.sh >> "$GITHUB_ENV"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/apt-debs
+          key: ${{ env.APT_DEB_CACHE_KEY }}
+      - name: Install native dependencies
+        timeout-minutes: 12
+        run: bash scripts/ci/install-apt-packages.sh
+      - name: Restore exact native outputs
+        id: natives
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            composeApp/build/nativeResources
+            composeApp/build/torrentResources
+          key: ${{ steps.selection.outputs.native_key }}
+      - uses: actions/setup-go@v7
+        if: steps.natives.outputs.cache-hit != 'true'
+        with:
+          go-version: '1.25.11'
+          cache: false
+      - name: Install pinned Rust
+        if: steps.natives.outputs.cache-hit != 'true'
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - uses: actions/cache@v6
+        if: steps.natives.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            build/rust
+          key: cargo-${{ runner.os }}-${{ hashFiles('native/core/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Build pinned native prerequisites on a cache miss
+        if: steps.natives.outputs.cache-hit != 'true'
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          export VIPTV_PLAYBACK_GATEWAY="$RUNNER_TEMP/playback-gateway"
+          python3 tools/build_engine.py desktop
+          python3 tools/build_desktop_torrent.py
+      - name: Verify native outputs
+        run: |
+          test -s composeApp/build/nativeResources/linux-x86-64/libviptv_core.so
+          test -x composeApp/build/torrentResources/torrent-runtime/linux-x86-64/torrent-worker
+      - name: Save built native prerequisites before running regressions
+        if: steps.natives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            composeApp/build/nativeResources
+            composeApp/build/torrentResources
+          key: ${{ steps.selection.outputs.native_key }}
+      - name: Run selected tests and repository guards
+        env:
+          VIPTV_NATIVE_PREBUILT: '1'
+        run: |
+          mapfile -t filters < "$RUNNER_TEMP/regression/filters.txt"
+          args=()
+          for filter in "${filters[@]}"; do args+=(--tests "$filter"); done
+          ./gradlew --max-workers=1 --build-cache :composeApp:desktopTest "${args[@]}"
+      - name: Verify executed cases and summarize
+        if: always() && steps.selection.outcome == 'success'
+        env:
+          NATIVE_CACHE_HIT: ${{ steps.natives.outputs.cache-hit }}
+        run: python3 scripts/ci/desktop-regression.py report --output "$RUNNER_TEMP/regression"
+      - name: Publish targeted evidence
+        if: always() && steps.selection.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: targeted-desktop-regression
+          path: |
+            ${{ runner.temp }}/regression
+            composeApp/build/test-results/desktopTest
+            composeApp/build/reports/tests/desktopTest
+          retention-days: 7
+          if-no-files-found: error
