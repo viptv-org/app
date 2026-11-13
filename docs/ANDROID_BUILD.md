@@ -107,7 +107,9 @@ integrity and APK ABI/profile checks gate the uploaded APK. Existing CI debug
 signing keys are runner-local, so these APKs do not establish update-signature
 compatibility with installations signed on another runner.
 
-Gradle persists dependency and task-output caches. Engine and torrent packaging
+Gradle persists dependency and task-output caches. The server-origin matrix
+keeps an immutable Gradle snapshot for each origin while sharing cache fallback
+and dependency entries. Engine and torrent packaging
 outputs have separate exact-only cache keys, including licenses and provenance.
 Cargo and Go dependency/compiler caches may restore a compatible older cache;
 their build tools decide which objects need recompilation.
