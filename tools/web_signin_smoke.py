@@ -75,7 +75,7 @@ FIELD_SCENARIOS = {
     "escape":  ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
     "tab":     ("/#ui-preview/Profiles/Locked", "Add profile", "Name", "", None, True),
 }
-SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS)
+SCENARIOS = SIGNIN_SCENARIOS + tuple(FIELD_SCENARIOS) + ("device", "device-signin")
 USERNAME = "smoke-visitor"
 PASSWORD = "smoke-password-55"
 CURRENT_PASSWORD = "smoke-current-password-446"
@@ -188,7 +188,9 @@ def fake_backend(dist: Path, log: list, keys: Path, session: dict):
             if path.startswith("/api/"):
                 self.record()
                 if path == "/api/auth/status":
-                    return self.reply_json(200, {"authenticated": False})
+                    return self.reply_json(200, {"authenticated": session.get("device_authenticated", False)})
+                if path == "/api/auth/me":
+                    return self.reply_json(200, {"account": {"username": USERNAME}})
                 # A change-password route that answers a GET with 405 is available; 404 would hide the Password row.
                 if path == "/api/auth/password":
                     return self.reply_json(405, {"error": "Method not allowed"})
@@ -470,6 +472,40 @@ def visit(browser, origin, scenario, args, log, check):
     context.close()
 
 
+def visit_device(browser, origin, scenario, args, log, check):
+    context = browser.new_context(ignore_https_errors=True, viewport={"width": args.width, "height": args.height})
+    page = context.new_page()
+    page.goto(origin + "/device")
+    if scenario == "device-signin":
+        form = page.locator("form.viptv-cred-form")
+        if not check(wait_until(page, lambda: form.count() == 1), "[device-signin] native credential form is present"):
+            return context.close()
+        username = form.locator('input[name="username"][autocomplete="username"]')
+        password = form.locator('input[name="password"][autocomplete="current-password"]')
+        check(username.count() == 1 and password.count() == 1, "[device-signin] stable autofill field names and purposes")
+        username.fill(USERNAME)
+        password.fill(PASSWORD)
+        password.press("Enter")
+        check(wait_until(page, lambda: bool(login_then_bootstrap(log)[0])), "[device-signin] Enter posts login")
+        logins = login_then_bootstrap(log)[0]
+        check(len(logins) == 1 and logins[0]["body"] == {"username": USERNAME, "password": PASSWORD},
+              "[device-signin] exactly one login carries filled credentials")
+    field = page.locator('input[aria-label="Device code"]')
+    if not check(wait_until(page, lambda: field.count() == 1 and field.is_visible()), "[device] native code input is visible"):
+        return context.close()
+    field.click()
+    page.keyboard.type("12345678")
+    check(wait_until(page, lambda: field.input_value() == "12345678"), "[device] typing preserves all eight digits")
+    field.fill("87-65 43210")
+    check(wait_until(page, lambda: field.input_value() == "87654321"), "[device] pasted code is normalized and limited to eight digits")
+    field.press("Enter")
+    posted = lambda: [e for e in log if e["path"] == "/api/auth/device/lookup" and e["method"] == "POST"]
+    check(wait_until(page, lambda: bool(posted())), "[device] Enter looks up the code")
+    check(bool(posted()) and posted()[0]["body"] == {"user_code": "87654321"}, "[device] lookup receives the typed code")
+    page.screenshot(path=str(args.out / f"{scenario}.png"))
+    context.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dist", type=Path, default=Path("composeApp/build/dist/wasmJs/productionExecutable"))
@@ -516,7 +552,10 @@ def main():
                     with LOG_LOCK:
                         log.clear()
                     session["profile"] = None
-                    if scenario in FIELD_SCENARIOS:
+                    session["device_authenticated"] = scenario == "device"
+                    if scenario in ("device", "device-signin"):
+                        visit_device(browser, origin, scenario, args, log, check)
+                    elif scenario in FIELD_SCENARIOS:
                         visit_field(browser, origin, scenario, args, check)
                     elif scenario == "password":
                         visit_password(browser, origin, args, log, check)
