@@ -12,6 +12,15 @@ on:
         options: [none, cold, kotlin, native, corrupt]
         default: none
   workflow_call:
+    secrets:
+      ANDROID_RELEASE_KEYSTORE_BASE64:
+        required: true
+      ANDROID_RELEASE_STORE_PASSWORD:
+        required: true
+      ANDROID_RELEASE_KEY_ALIAS:
+        required: true
+      ANDROID_RELEASE_KEY_PASSWORD:
+        required: true
     inputs:
       default_server:
         type: string
@@ -27,6 +36,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   android:
+    if: github.event_name == 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -60,6 +70,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Prepare and verify stable release signing
+        env:
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: python3 tools/android_signing.py prepare "$RUNNER_TEMP/android-release.keystore"
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-write-only: ${{ inputs.cache_experiment == 'cold' }}
@@ -105,6 +122,8 @@ jobs:
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Native cache seam tests
         run: python3 -m unittest discover -s tools/tests -p 'test_android_native.py'
+      - name: Release signing seam tests
+        run: python3 -m unittest discover -s tools/tests -p 'test_android_signing.py'
       - name: Apply cache verification scenario
         shell: bash
         run: |
@@ -174,10 +193,20 @@ jobs:
       - name: Build optimized universal release and host tests
         id: release
         shell: bash
+        env:
+          ANDROID_RELEASE_KEYSTORE_PATH: ${{ runner.temp }}/android-release.keystore
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
         run: |
           started=$SECONDS
-          ./gradlew --build-cache --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process "-Pviptv.defaultServer=$DEFAULT_SERVER" :androidApp:assembleRelease :composeApp:testAndroidHostTest --console=plain | tee "$RUNNER_TEMP/gradle.log"
+          ./gradlew --build-cache --no-configuration-cache --no-daemon --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process "-Pviptv.defaultServer=$DEFAULT_SERVER" :androidApp:assembleRelease :composeApp:testAndroidHostTest --console=plain | tee "$RUNNER_TEMP/gradle.log"
           echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
+      - name: Remove temporary release key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/android-release.keystore"
+      - name: Verify APK signer, package and git version
+        run: python3 tools/android_signing.py verify androidApp/build/outputs/apk/release/androidApp-release.apk
       - name: Verify APK native libraries and release profile
         run: |
           python3 tools/check_apk_abis.py androidApp/build/outputs/apk/release/androidApp-release.apk armeabi-v7a,arm64-v8a,x86_64
@@ -212,11 +241,15 @@ jobs:
             build/rust
           key: android-compilers-${{ runner.os }}-${{ hashFiles('tools/android-toolchains.json', 'native/core/Cargo.lock', 'TORRENT_RUNTIME_REF') }}-${{ github.sha }}
       - uses: actions/upload-artifact@v7
+        with:
+          name: android-release-apk
+          path: androidApp/build/outputs/apk/release/androidApp-release.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: android-release-evidence
           path: |
-            androidApp/build/outputs/apk/release/*.apk
             androidApp/build/outputs/mapping/release/mapping.txt
             composeApp/build/reports/tests/testAndroidHostTest
             ${{ runner.temp }}/engine.log

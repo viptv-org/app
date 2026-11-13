@@ -54,6 +54,14 @@ android {
         manifestPlaceholders["viptvLinkHost"] = serverUri?.host?.lowercase() ?: "viptv-links.invalid"
     }
     buildFeatures { compose = true; buildConfig = true }
+    signingConfigs {
+        create("release") {
+            providers.environmentVariable("ANDROID_RELEASE_KEYSTORE_PATH").orNull?.let { storeFile = file(it) }
+            storePassword = providers.environmentVariable("ANDROID_RELEASE_STORE_PASSWORD").orNull
+            keyAlias = providers.environmentVariable("ANDROID_RELEASE_KEY_ALIAS").orNull
+            keyPassword = providers.environmentVariable("ANDROID_RELEASE_KEY_PASSWORD").orNull
+        }
+    }
     buildTypes {
         getByName("debug") {
             if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
@@ -65,11 +73,12 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         create("qa") {
             initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
     }
@@ -150,6 +159,19 @@ val verifyTorrentRuntime by tasks.registering(Exec::class) {
     commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
 }
 tasks.named("preBuild") { dependsOn(verifyAndroidEngine, verifyTorrentRuntime) }
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    val missingCredentials = listOf(
+        "ANDROID_RELEASE_KEYSTORE_PATH",
+        "ANDROID_RELEASE_STORE_PASSWORD",
+        "ANDROID_RELEASE_KEY_ALIAS",
+        "ANDROID_RELEASE_KEY_PASSWORD",
+    ).filter { providers.environmentVariable(it).orNull.isNullOrBlank() }
+    doFirst {
+        check(missingCredentials.isEmpty()) {
+            "Missing release signing credentials: ${missingCredentials.joinToString()}"
+        }
+    }
+}
 
 // Guard: the debug APK packages exactly the selected ABIs (all shipped ABIs without viptv.abis).
 val checkDebugApkAbis by tasks.registering(Exec::class) {
