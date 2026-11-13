@@ -62,8 +62,9 @@ def verify_apk(apk: Path):
     verification = subprocess.run([
         sdk_tool('apksigner'), 'verify', '--verbose', '--print-certs', str(apk),
     ], check=True, capture_output=True, text=True).stdout
-    certificates = re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)$', verification, re.M)
-    if [value.upper() for value in certificates] != [EXPECTED_CERT_SHA256]:
+    signer_counts = re.findall(r'^Number of signers: (\d+)$', verification, re.M)
+    certificates = {value.upper() for value in re.findall(r'^.*certificate SHA-256 digest: ([0-9a-fA-F]{64})$', verification, re.M)}
+    if signer_counts != ['1'] or certificates != {EXPECTED_CERT_SHA256}:
         raise ValueError('APK signing certificate does not match the pinned release identity')
     root = Path(__file__).resolve().parents[1]
     def git(*arguments):

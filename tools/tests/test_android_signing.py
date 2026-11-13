@@ -98,6 +98,27 @@ class AndroidSigningTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'certificate'):
             signing.verify_apk(apk)
 
+    def test_apk_with_multiple_signers_is_rejected(self):
+        apk = self.make_apk()
+        other = Path(self.fixture.name) / 'other.jks'
+        with patch.dict(os.environ, self.credentials):
+            subprocess.run([
+                'keytool', '-genkeypair', '-keystore', str(other), '-storetype', 'JKS',
+                '-alias', 'other', '-storepass:env', 'ANDROID_RELEASE_STORE_PASSWORD',
+                '-keypass:env', 'ANDROID_RELEASE_KEY_PASSWORD', '-keyalg', 'RSA',
+                '-dname', 'CN=Other Signing Test', '-validity', '1',
+            ], check=True, capture_output=True)
+            subprocess.run([
+                signing.sdk_tool('apksigner'), 'sign', '--v3-signing-enabled', 'false',
+                '--ks', str(self.keystore), '--ks-key-alias', 'fixture',
+                '--ks-pass', 'env:ANDROID_RELEASE_STORE_PASSWORD', '--key-pass', 'env:ANDROID_RELEASE_KEY_PASSWORD',
+                '--next-signer', '--ks', str(other), '--ks-key-alias', 'other',
+                '--ks-pass', 'env:ANDROID_RELEASE_STORE_PASSWORD', '--key-pass', 'env:ANDROID_RELEASE_KEY_PASSWORD', str(apk),
+            ], check=True, capture_output=True)
+        with patch.object(signing, 'EXPECTED_CERT_SHA256', self.fingerprint):
+            with self.assertRaisesRegex(ValueError, 'certificate'):
+                signing.verify_apk(apk)
+
     def test_verified_apk_requires_the_expected_package_and_git_version(self):
         with patch.object(signing, 'EXPECTED_CERT_SHA256', self.fingerprint):
             signing.verify_apk(self.make_apk())
