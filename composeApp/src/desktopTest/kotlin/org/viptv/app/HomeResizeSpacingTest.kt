@@ -16,14 +16,39 @@ import org.viptv.app.preview.PreviewData
 import org.viptv.app.theme.ViptvTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, androidx.compose.ui.InternalComposeUiApi::class)
 class HomeResizeSpacingTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun shrinkingTheViewportDoesNotKeepTheWideHeroHeight() {
         for (browser in listOf(true, false)) for (width in listOf(420, 900)) assertResizedMatchesFresh(width, browser)
+    }
+
+    @Test fun sameLayoutResizePreservesHeroKeyboardFocus() {
+        var actualSize = IntSize.Zero
+        val scene = ImageComposeScene(1000, 632, Density(1f)) {
+            ViptvTheme(pointer = true) {
+                Box(Modifier.fillMaxSize().onSizeChanged { actualSize = it }) {
+                    HomeScreen(PreviewData.home, false, {}, {}, desktopChrome = true, heroRotates = false)
+                }
+            }
+        }
+        fun play() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(true) }.firstOrNull { node ->
+            node.config.contains(SemanticsActions.RequestFocus) &&
+                node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "Play" }
+        }
+        try {
+            scene.renderUntil(what = "hero Play action") { play() != null }
+            assertTrue(play()!!.config[SemanticsActions.RequestFocus].action!!.invoke())
+            scene.renderUntil(what = "hero keyboard focus") { play()?.config?.getOrNull(SemanticsProperties.Focused) == true }
+            scene.constraints = Constraints.fixed(900, 632)
+            scene.renderUntil(what = "resized desktop bounds") { actualSize == IntSize(900, 632) }
+            assertTrue(play()?.config?.getOrNull(SemanticsProperties.Focused) == true,
+                "Resizing within the same layout must preserve the focused hero action")
+        } finally { scene.close() }
     }
 
     private fun assertResizedMatchesFresh(width: Int, browser: Boolean) {
