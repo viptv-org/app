@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      RUSTUP_TOOLCHAIN: 1.98.0
       LC_ALL: C
       DEFAULT_SERVER: ${{ inputs.default_server }}
       CACHE_EXPERIMENT: ${{ inputs.cache_experiment || 'none' }}
@@ -39,6 +38,16 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - name: Read pinned native toolchains
+        run: |
+          python3 - <<'PYENV'
+          import json
+          import os
+          pins = json.load(open('tools/android-toolchains.json'))
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              for name, key in [('RUSTUP_TOOLCHAIN', 'rust'), ('ANDROID_GO_VERSION', 'go'), ('ANDROID_NDK_VERSION', 'ndk'), ('CARGO_NDK_VERSION', 'cargo-ndk')]:
+                  output.write(f'{name}={pins[key]}\n')
+          PYENV
       - name: Reclaim hosted runner space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
       - uses: actions/setup-java@v6
@@ -57,7 +66,7 @@ jobs:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.25.11'
+          go-version: ${{ env.ANDROID_GO_VERSION }}
           cache: false
       - name: Restore compiler and dependency caches
         if: inputs.cache_experiment != 'cold'
@@ -78,13 +87,13 @@ jobs:
         shell: bash
         run: |
           started=$SECONDS
-          rustup toolchain install 1.98.0 --profile minimal
-          rustup target add --toolchain 1.98.0 armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
-          if ! cargo ndk --version 2>/dev/null | grep -q '4.1.2'; then
-            cargo install cargo-ndk --version 4.1.2 --locked
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+          rustup target add --toolchain "$RUSTUP_TOOLCHAIN" armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+          if ! cargo ndk --version 2>/dev/null | grep -Fq "$CARGO_NDK_VERSION"; then
+            cargo install cargo-ndk --version "$CARGO_NDK_VERSION" --locked --force
           fi
-          sdkmanager 'ndk;28.2.13676358'
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          sdkmanager "ndk;$ANDROID_NDK_VERSION"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
           echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
       - name: Check out pinned torrent source
         run: |
