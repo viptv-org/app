@@ -61,6 +61,14 @@ internal fun cacheChip(label: String, delivery: String?): CacheChip? {
 
 internal fun SourceCandidate.releaseGroupLabel(): String = parseReleaseGroup(detail) ?: providerLabel()
 
+internal fun SourceCandidate.rowAudioSubs(): String {
+    fun labels(values: List<String>) = values.map { it.trim().uppercase() }.filter(String::isNotEmpty).take(3).joinToString("/")
+    val audio = labels(audio_languages).takeIf(String::isNotEmpty)?.let { "Audio $it" } ?: "Audio not listed"
+    val subtitles = labels(subtitle_languages).takeIf(String::isNotEmpty)?.let { "Subs $it" }
+        ?: if (subbed) "Subs" else "Subs not listed"
+    return "$audio · $subtitles"
+}
+
 internal fun SourceCandidate.audioChips(): List<LanguageChip>? {
     val codes = languageTags(audio_languages)
     if (codes.isEmpty()) return audioFlagLabel()?.let { listOf(LanguageChip(it, dashed = true)) }
