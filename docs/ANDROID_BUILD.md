@@ -1,6 +1,6 @@
 # Android builds
 
-Every Android build runs the Rust engine (`native/core`, built by
+Every Android build validates or builds the Rust engine (`native/core`, built by
 `tools/build_engine.py` through `cargo ndk`) and the pinned torrent runtime
 (`tools/build_torrent_runtime.py`) before Gradle packages the APK. The FFmpeg
 audio decoder ships prebuilt in `native/media3-ffmpeg/src/main/jniLibs` and is
@@ -31,11 +31,18 @@ RUSTUP_TOOLCHAIN=1.98 ./gradlew --max-workers=1 :androidApp:assembleDebug -Pvipt
 adb -s <serial> install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
 ```
 
-The torrent runtime is built once per checkout and cached by revision and ABI
-list in `androidApp/build/generated/torrentRuntime`, so only a cold build or a
-different ABI list pays for it. `abiFilters` packages only the selected ABIs. To
-skip it entirely, add `-Pviptv.torrentRuntime=false`; the app then needs a
-gateway for torrents.
+`buildAndroidEngine` and `buildTorrentRuntime` are Gradle build-cache tasks.
+Their fingerprints cover native sources, manifests, lockfiles, licenses, build
+helpers, ABI selection, feature flags, compiler flags and resolved toolchains.
+`tools/android-toolchains.json` pins the CI toolchains and default NDK.
+`ANDROID_NDK_HOME` and `VIPTV_CARGO_NDK_DIR` select explicit local toolchains;
+the effective versions participate in the fingerprint. Server URLs and Kotlin
+sources do not invalidate native outputs.
+
+Every build validates the native fingerprint, library checksums and ELF ABI,
+license files and provenance after Gradle restores outputs. Incomplete or
+corrupt output is rebuilt before packaging. Direct torrent-builder calls always
+build; `tools/android_native.py build torrent` provides validated reuse.
 
 Switching between one ABI and the default reruns the engine and torrent runtime
 tasks and the APK packaging. Cargo keeps every ABI's objects in `build/rust`, so
@@ -85,3 +92,32 @@ default build then spent on the other two engine ABIs; it was not run from an
 empty `build/`. A change under `native/core` rebuilds the engine for every
 selected ABI, so with one ABI it should take about a third as long (not
 measured separately).
+
+## Hosted release workflow
+
+Run **Android release** with optional `default_server` (an HTTPS origin, using
+the Gradle validation). **Experimental KMP platforms** calls the same workflow;
+its `android_only` input runs Android independently. Main-branch platform runs
+prime shared caches. Owner-invoked branch dispatches may save branch-local
+caches; other branch callers only read them.
+
+Release builds retain all three ABIs, R8 optimization, resource shrinking,
+the baseline profile and existing signing configuration. Host tests, native
+integrity and APK ABI/profile checks gate the uploaded APK. Existing CI debug
+signing keys are runner-local, so these APKs do not establish update-signature
+compatibility with installations signed on another runner.
+
+Gradle persists dependency and task-output caches. The server-origin matrix
+keeps an immutable Gradle snapshot for each origin while sharing cache fallback
+and dependency entries. Engine and torrent packaging
+outputs have separate exact-only cache keys, including licenses and provenance.
+Cargo and Go dependency/compiler caches may restore a compatible older cache;
+their build tools decide which objects need recompilation.
+
+The workflow summary reports cache hits and toolchain, native and release/test
+timings. `cache_experiment` supports cold (no restores), Kotlin-only, native
+source invalidation and corruption probes. The native probe edits a Rust source
+file; the corruption probe truncates a restored arm64 engine and requires safe
+rebuilding. Use `none` with a different `default_server` for the URL-only probe.
+Compare three unchanged warm runs on the same commit; include setup, cache
+transfer and artifact upload when reporting wall-clock performance.

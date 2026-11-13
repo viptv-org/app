@@ -1,6 +1,7 @@
 """Build the pinned Rust engine into platform packaging inputs."""
 from pathlib import Path
 import argparse
+import json
 import os
 import platform
 import shutil
@@ -20,12 +21,13 @@ if not abis or unknown:
     parser.error(f"--abis: unknown ABI {', '.join(unknown) or '(empty)'}; supported: {', '.join(ANDROID_ABIS)}")
 root = Path(__file__).resolve().parents[1]
 core = root / "native/core"
+pins = json.loads((root / "tools/android-toolchains.json").read_text())
 env = os.environ.copy()
 env["CARGO_TARGET_DIR"] = env.get("VIPTV_CARGO_TARGET_DIR", str(root / "build/rust"))
 env.setdefault("CARGO_BUILD_JOBS", "2")
 env.setdefault("CARGO_PROFILE_DEV_DEBUG", "0")
 env.setdefault("CARGO_INCREMENTAL", "0")
-features = "vsources-runtime,live-runtime" + (",os-secrets" if args.target == "desktop" else ",subtitle-vad")
+features = "vsources-runtime,live-runtime,os-secrets" if args.target == "desktop" else pins["engine-features"]
 build = ["build", "--release", "--manifest-path", str(core / "Cargo.toml"), "--locked", "-p", "viptv-core", "--features", features, "--lib"]
 if args.target == "android":
     if env.get("VIPTV_CARGO_NDK_DIR"):
@@ -37,7 +39,8 @@ if args.target == "android":
     if not sdk:
         raise SystemExit("Android SDK location is missing")
     if "ANDROID_NDK_HOME" not in env:
-        ndks = sorted((Path(sdk) / "ndk").iterdir(), key=lambda p: [int(x) for x in p.name.split('.')])
+        ndks = [Path(sdk) / "ndk" / pins["ndk"]]
+        ndks = [ndk for ndk in ndks if ndk.is_dir()]
         if not ndks:
             raise SystemExit("Android NDK is missing")
         env["ANDROID_NDK_HOME"] = str(ndks[-1])
@@ -45,7 +48,7 @@ if args.target == "android":
     # Drop libraries of ABIs this build no longer selects; cargo keeps their objects cached.
     shutil.rmtree(output, ignore_errors=True)
     targets = [flag for abi in abis for flag in ("-t", abi)]
-    subprocess.run(["cargo", "ndk", *targets, "--platform", "26", "-o", str(output), *build], cwd=core, env=env, check=True)
+    subprocess.run(["cargo", "ndk", *targets, "--platform", str(pins["android-api"]), "-o", str(output), *build], cwd=core, env=env, check=True)
     notices = root / "androidApp/build/generated/subtitleLicenses/licenses"
     notices.mkdir(parents=True, exist_ok=True)
     shutil.copy2(core / "THIRD_PARTY_LICENSES/webrtc-vad.txt", notices / "webrtc-vad.LICENSE")
