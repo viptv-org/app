@@ -19,10 +19,9 @@ on:
       cache_experiment:
         type: string
         default: none
-  push:
-    branches: [main]
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: android-release-${{ github.ref }}
   cancel-in-progress: false
@@ -108,21 +107,28 @@ jobs:
         run: |
           engine=$(python3 tools/android_native.py fingerprint engine)
           torrent=$(python3 tools/android_native.py fingerprint torrent)
-          echo "key=android-native-v1-${RUNNER_OS}-${engine}-${torrent}" >> "$GITHUB_OUTPUT"
-      - name: Restore exact native outputs
+          echo "engine=android-engine-v1-${RUNNER_OS}-${engine}" >> "$GITHUB_OUTPUT"
+          echo "torrent=android-torrent-v1-${RUNNER_OS}-${torrent}" >> "$GITHUB_OUTPUT"
+      - name: Restore exact engine outputs
         if: inputs.cache_experiment != 'cold'
-        id: natives
+        id: engine-cache
         uses: actions/cache/restore@v6
         with:
           path: |
             androidApp/build/generated/rustJni
             androidApp/build/generated/subtitleLicenses
-            androidApp/build/generated/torrentRuntime
-          key: ${{ steps.native-key.outputs.key }}
+          key: ${{ steps.native-key.outputs.engine }}
+      - name: Restore exact torrent outputs
+        if: inputs.cache_experiment != 'cold'
+        id: torrent-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: androidApp/build/generated/torrentRuntime
+          key: ${{ steps.native-key.outputs.torrent }}
       - name: Damage restored library for validation probe
         if: inputs.cache_experiment == 'corrupt'
         run: |
-          test '${{ steps.natives.outputs.cache-hit }}' = true
+          test '${{ steps.engine-cache.outputs.cache-hit }}' = true
           truncate -s 20 androidApp/build/generated/rustJni/arm64-v8a/libviptv_core.so
       - name: Validate or rebuild native outputs
         id: native-build
@@ -139,15 +145,20 @@ jobs:
           cat "$RUNNER_TEMP/engine.log" "$RUNNER_TEMP/torrent.log"
           echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
           exit "$result"
-      - name: Save exact native outputs
-        if: steps.natives.outputs.cache-hit != 'true' && (github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
+      - name: Save exact engine outputs
+        if: steps.engine-cache.outputs.cache-hit != 'true' && (github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v6
         with:
           path: |
             androidApp/build/generated/rustJni
             androidApp/build/generated/subtitleLicenses
-            androidApp/build/generated/torrentRuntime
-          key: ${{ steps.native-key.outputs.key }}
+          key: ${{ steps.native-key.outputs.engine }}
+      - name: Save exact torrent outputs
+        if: steps.torrent-cache.outputs.cache-hit != 'true' && (github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
+        uses: actions/cache/save@v6
+        with:
+          path: androidApp/build/generated/torrentRuntime
+          key: ${{ steps.native-key.outputs.torrent }}
       - name: Build optimized universal release and host tests
         id: release
         shell: bash
@@ -162,8 +173,13 @@ jobs:
           python3 tools/android_native.py validate torrent
           python3 - <<'PY'
           from zipfile import ZipFile
+          import os
           with ZipFile('androidApp/build/outputs/apk/release/androidApp-release.apk') as apk:
               names = set(apk.namelist())
+              expected = os.environ['DEFAULT_SERVER']
+              if expected:
+                  dex = b''.join(apk.read(name) for name in names if name.endswith('.dex'))
+                  assert expected.encode() in dex, 'Requested sign-in origin missing from release DEX'
               assert 'assets/dexopt/baseline.prof' in names, 'Release baseline profile missing'
               for abi in ['armeabi-v7a', 'arm64-v8a', 'x86_64']:
                   for library in ['libtorrent_runtime.so', 'libtorrent_runtime_jni.so']:
@@ -183,27 +199,6 @@ jobs:
             ~/go/pkg/mod
             build/rust
           key: android-compilers-${{ runner.os }}-${{ hashFiles('tools/android-toolchains.json', 'native/core/Cargo.lock', 'TORRENT_RUNTIME_REF') }}-${{ github.sha }}
-      - name: Release build measurements
-        if: always()
-        env:
-          NATIVE_HIT: ${{ steps.natives.outputs.cache-hit }}
-          COMPILER_HIT: ${{ steps.compiler.outputs.cache-hit }}
-          TOOLCHAIN_SECONDS: ${{ steps.toolchains.outputs.seconds }}
-          NATIVE_SECONDS: ${{ steps.native-build.outputs.seconds }}
-          RELEASE_SECONDS: ${{ steps.release.outputs.seconds }}
-        run: |
-          {
-            echo '| Measurement | Result |'
-            echo '| --- | --- |'
-            echo "| Scenario | $CACHE_EXPERIMENT |"
-            echo "| Exact native cache hit | ${NATIVE_HIT:-false} |"
-            echo "| Exact compiler cache hit | ${COMPILER_HIT:-false} |"
-            echo "| Toolchain preparation seconds | $TOOLCHAIN_SECONDS |"
-            echo "| Native validation/build seconds | $NATIVE_SECONDS |"
-            echo "| Gradle release + tests seconds | $RELEASE_SECONDS |"
-            echo "| Gradle tasks restored | $(grep -c FROM-CACHE "$RUNNER_TEMP/gradle.log" || true) |"
-            echo "| Gradle tasks up to date | $(grep -c UP-TO-DATE "$RUNNER_TEMP/gradle.log" || true) |"
-          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -216,3 +211,12 @@ jobs:
             ${{ runner.temp }}/torrent.log
             ${{ runner.temp }}/gradle.log
           if-no-files-found: warn
+      - name: Release build measurements
+        if: always()
+        env:
+          ENGINE_HIT: ${{ steps.engine-cache.outputs.cache-hit }}
+          TORRENT_HIT: ${{ steps.torrent-cache.outputs.cache-hit }}
+          COMPILER_HIT: ${{ steps.compiler.outputs.cache-hit }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" | python3 tools/android_release_summary.py >> "$GITHUB_STEP_SUMMARY"

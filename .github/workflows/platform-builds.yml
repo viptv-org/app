@@ -19,6 +19,7 @@ on:
     branches: [main, experiment/kmp-v2]
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: kmp-platforms-${{ github.ref }}
   cancel-in-progress: true

@@ -28,15 +28,36 @@ def fingerprint(root, component, abis, toolchains):
         paths += [root / name for name in ['TORRENT_RUNTIME_REF', 'tools/build_torrent_runtime.py',
                   'tools/playback_gateway.py', 'androidApp/src/main/java/org/playbackgateway/runtime/NativeRuntime.java']]
     files = {str(p.relative_to(root)): digest(p) for p in sorted(paths) if p.is_file()}
+    prefixes = ('CARGO_', 'RUST', 'GO', 'CGO_', 'CC', 'CXX', 'CFLAGS', 'CPPFLAGS',
+                'AR', 'LD', 'LDFLAGS', 'TARGET_', 'HOST_', 'BINDGEN_')
+    locations = {'CARGO_HOME', 'CARGO_TARGET_DIR', 'RUSTUP_HOME', 'GOPATH', 'GOCACHE', 'GOMODCACHE'}
     environment = {key: value for key, value in os.environ.items()
-                   if (key != 'CARGO_TARGET_DIR' and key.startswith(('CARGO_PROFILE_', 'CARGO_TARGET_', 'CGO_', 'CC_', 'CXX_')))
-                   or key in {'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'GOFLAGS', 'GOEXPERIMENT'}}
+                   if key not in locations and key.startswith(prefixes)}
     payload = {'schema': 1, 'component': component, 'abis': abis, 'files': files,
                'toolchains': toolchains, 'environment': environment}
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
+def native_environment(component):
+    env = os.environ.copy()
+    if component == 'engine' and env.get('VIPTV_CARGO_NDK_DIR'):
+        env['PATH'] = env['VIPTV_CARGO_NDK_DIR'] + os.pathsep + env['PATH']
+    if component == 'torrent' and not env.get('GO'):
+        executable = shutil.which('go')
+        if not executable:
+            raise SystemExit('Go is missing')
+        version = subprocess.check_output([executable, 'env', 'GOVERSION'], text=True, env=env).strip()
+        if [int(part) for part in version.removeprefix('go').split('.')[:2]] < [1, 25]:
+            pins = json.loads((Path(__file__).parent / 'android-toolchains.json').read_text())
+            goroot = subprocess.check_output([executable, 'env', 'GOROOT'], text=True,
+                                             env=dict(env, GOTOOLCHAIN='go' + pins['go'])).strip()
+            executable = str(Path(goroot) / 'bin/go')
+        env['GO'] = executable
+    return env
+
+
 def toolchains(root, component):
+    env = native_environment(component)
     pins = json.loads((root / 'tools/android-toolchains.json').read_text())
     sdk = os.environ.get('ANDROID_SDK_ROOT') or os.environ.get('ANDROID_HOME')
     if not sdk and (root / 'local.properties').exists():
@@ -45,11 +66,11 @@ def toolchains(root, component):
     ndk = Path(os.environ.get('ANDROID_NDK_HOME') or str(Path(sdk or '') / 'ndk' / pins['ndk']))
     actual = {'pins': pins, 'ndk': (ndk / 'source.properties').read_text()}
     if component == 'engine':
-        actual['rust'] = subprocess.check_output(['rustc', '-vV'], text=True).strip()
-        actual['cargo'] = subprocess.check_output(['cargo', '--version'], text=True).strip()
-        actual['cargo-ndk'] = subprocess.check_output(['cargo', 'ndk', '--version'], text=True).strip()
+        actual['rust'] = subprocess.check_output([env.get('RUSTC', 'rustc'), '-vV'], text=True, env=env).strip()
+        actual['cargo'] = subprocess.check_output(['cargo', '--version'], text=True, env=env).strip()
+        actual['cargo-ndk'] = subprocess.check_output(['cargo', 'ndk', '--version'], text=True, env=env).strip()
     else:
-        actual['go'] = subprocess.check_output([os.environ.get('GO', 'go'), 'version'], text=True).strip()
+        actual['go'] = subprocess.check_output([env['GO'], 'version'], text=True, env=env).strip()
     return actual
 
 
@@ -119,7 +140,7 @@ def build(root, component, abis, key):
     if component == 'engine':
         command += ['android']
     command += ['--abis', ','.join(abis)]
-    subprocess.run(command, cwd=root, check=True)
+    subprocess.run(command, cwd=root, env=native_environment(component), check=True)
     seal(root, component, abis, key)
 
 

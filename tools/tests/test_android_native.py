@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 import tempfile
+import os
+from unittest.mock import patch
 import unittest
 
 SPEC = importlib.util.spec_from_file_location('android_native', Path(__file__).parents[1] / 'android_native.py')
@@ -25,6 +27,16 @@ class NativeCacheTest(unittest.TestCase):
             self.assertEqual(expected, native.fingerprint(root, 'engine', ['x86_64'], tools))
             (root / 'native/core/Cargo.toml').write_text('[workspace]\nresolver="2"\n')
             self.assertNotEqual(expected, native.fingerprint(root, 'engine', ['x86_64'], tools))
+
+    def test_native_compiler_flags_abis_and_toolchain_changes_invalidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'native/core').mkdir(parents=True)
+            key = native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.98'})
+            with patch.dict(os.environ, {'CFLAGS': '-DNEW_BUILD=1'}):
+                self.assertNotEqual(key, native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.98'}))
+            self.assertNotEqual(key, native.fingerprint(root, 'engine', ['arm64-v8a'], {'rust': '1.98'}))
+            self.assertNotEqual(key, native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.99'}))
 
     def test_restoration_requires_every_abi_library_license_and_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
