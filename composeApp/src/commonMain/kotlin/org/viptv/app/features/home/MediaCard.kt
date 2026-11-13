@@ -1,11 +1,9 @@
 package org.viptv.app.features.home
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.border
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -47,47 +45,34 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import coil3.compose.AsyncImage
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Ellipsis
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.painterResource
 import org.viptv.app.components.ArtFailure
 import org.viptv.app.components.ArtWatchedBadge
 import org.viptv.app.components.ClampedText
 import org.viptv.app.components.HoverFill
-import org.viptv.app.components.MediaMetadata
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.pressScale
-import org.viptv.app.components.responseSpec
 import org.viptv.app.components.retryAfterFailure
-import org.viptv.app.components.saveActionLabel
+import org.viptv.app.components.responseSpec
 import org.viptv.app.components.WatchedBadge
 import org.viptv.app.components.cardChip
 import org.viptv.app.components.caughtUpCaption
 import org.viptv.app.components.caughtUpNextCaption
 import org.viptv.app.components.LocalNextEpisodes
 import org.viptv.app.components.Motion
-import org.viptv.app.components.hoverFill
-import org.viptv.app.components.motionSpec
-import org.viptv.app.components.rememberEnterLeaveMotion
-import org.viptv.app.components.LocalPendingMutation
 import org.viptv.app.components.MutationFailure
-import org.viptv.app.components.MutationSpinner
 import org.viptv.app.state.saveTarget
 import org.viptv.app.components.LocalListRemoval
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
-import org.viptv.app.components.ListRemoval
 import org.viptv.app.components.LocalCardOverflow
 import org.viptv.app.components.LocalPointerHover
 import org.viptv.app.components.newEpisodesDescription
 import org.viptv.app.components.isWatched
-import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.components.tvHold
-import org.viptv.app.components.frameDelay
 import org.viptv.app.components.holdMenu
 import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.features.search.searchMatchHighlight
@@ -134,27 +119,16 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
     val hoverFade by animateFloatAsState(if (pointerHovered) 1f else 0f, responseSpec(), label = "Card hover")
     val ringFade by animateFloatAsState(if (pointerHovered && !(focused && showFocusOutline)) 1f else 0f, responseSpec(), label = "Card hover ring")
     LaunchedEffect(hovered) { onHover(hovered) }
-    val gap = with(LocalDensity.current) { 12.dp.roundToPx() }
-    var previewOpen by remember { mutableStateOf(false) }
-    var previewHovered by remember { mutableStateOf(false) }
     var menuAt by remember { mutableStateOf<IntOffset?>(null) }
     var menuOpen by remember { mutableStateOf(false) }
     val saved = actions?.isSaved?.invoke(card) == true
     val activate = select ?: actions?.play ?: open
-    // The preview survives the 12 dp gap, so the pointer can reach its own buttons.
-    LaunchedEffect(desktop, hovered) { if (desktop && hovered) { frameDelay(450); previewOpen = true } }
-    LaunchedEffect(desktop, hovered, previewHovered, menuAt) {
-        if (desktop && previewOpen && menuAt == null && !hovered && !previewHovered) {
-            frameDelay(180)
-            if (!hovered && !previewHovered) previewOpen = false
-        }
-    }
     Column(modifier.width(width.dp).hoverable(hover)
-        .secondaryClickMenu(desktop || removal != null) { previewOpen = false; menuAt = it; menuOpen = true }
-        .tvHold(enabled = television && menu, onHold = { previewOpen = false; menuOpen = true })
+        .secondaryClickMenu(desktop || removal != null) { menuAt = it; menuOpen = true }
+        .tvHold(enabled = television && menu, onHold = { menuOpen = true })
         .onFocusChanged { focused = it.isFocused; if (it.isFocused) onFocus(card) }
         .pointerClickable(interactionSource = press, indication = null) { (select ?: open)(card) }
-        .holdMenu(LocalCardOverflow.current && menu) { previewOpen = false; menuAt = it; menuOpen = true }) {
+        .holdMenu(LocalCardOverflow.current && menu) { menuAt = it; menuOpen = true }) {
         Box(Modifier.fillMaxWidth().aspectRatio(if (portrait) 2f / 3 else 16f / 9).pressScale(press, Motion.card)
             .clip(RoundedCornerShape(cornerRadius)).background(Palette.raised)) {
             if (width > 0) {
@@ -172,7 +146,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 if (watchedBadgeSize != null) WatchedBadge(watchedBadgeSize, Modifier.align(Alignment.TopEnd))
                 else ArtWatchedBadge(Modifier.matchParentSize())
             }
-            if (hoverFade > 0f) CardHoverScrim(Modifier.matchParentSize().graphicsLayer { alpha = hoverFade })
+            if (hoverFade > 0f) CardHoverPlay(Modifier.matchParentSize().graphicsLayer { alpha = hoverFade })
             // Touch has no context menu, so the menu gets a target of its own.
             if (LocalCardOverflow.current && menu) {
                 var at by remember { mutableStateOf(IntOffset.Zero) }
@@ -181,7 +155,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                     .onGloballyPositioned { at = IntOffset(it.positionInParent().x.roundToInt(), it.positionInParent().y.roundToInt()) }
                     .size(44.dp).pressScale(more, Motion.button).clip(CircleShape).background(HoverFill.cardScrim)
                     .pointerClickable(interactionSource = more, indication = null, role = Role.Button,
-                        onClickLabel = "More actions", shape = CircleShape) { previewOpen = false; menuAt = at; menuOpen = true },
+                        onClickLabel = "More actions", shape = CircleShape) { menuAt = at; menuOpen = true },
                     contentAlignment = Alignment.Center) {
                     Icon(Lucide.Ellipsis, "More actions", Modifier.size(20.dp), tint = Palette.text)
                 }
@@ -213,8 +187,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
             (card.subtitle ?: caughtUp)?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             nextCaption?.let { Text(it, fontSize = (12 * labelScale).sp, lineHeight = (16 * labelScale).sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
-        // The card is the only thing left when a save from its preview or menu fails: the menu and preview close on the press.
-        MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 6.dp), scale = labelScale.coerceAtLeast(1f), retry = !television)
+            MutationFailure(saveTarget(card), Modifier.fillMaxWidth().padding(top = 6.dp), scale = labelScale.coerceAtLeast(1f), retry = !television)
         if (menu) {
             val present: @Composable () -> Unit = {
                 CardMenu(card, saved, removal, actions,
@@ -237,17 +210,7 @@ fun MediaCard(card: Card, width: Int = 240, portrait: Boolean = false, showLabel
                 }
             }
         }
-        if (actions != null && previewOpen && menuAt == null) {
-            Popup(popupPositionProvider = CardPreviewPosition(gap),
-                onDismissRequest = { previewOpen = false },
-                properties = PopupProperties(focusable = false, dismissOnClickOutside = false, dismissOnBackPress = false)) {
-                CardPreview(card, saved, searchQuery,
-                    onPlay = { previewOpen = false; activate(card) },
-                    onSave = { previewOpen = false; actions.toggleSave(card) },
-                    onInfo = { previewOpen = false; open(card) },
-                    onHoverChanged = { previewHovered = it })
-            }
-        }
+
     }
 }
 
@@ -276,10 +239,10 @@ internal const val MEDIA_CARD_HOVER_TAG = "media-card-hover"
 internal const val MEDIA_CARD_HOVER_RING_TAG = "media-card-hover-ring"
 
 @Composable
-private fun CardHoverScrim(modifier: Modifier) {
-    Box(modifier.testTag(MEDIA_CARD_HOVER_TAG).background(HoverFill.cardScrim), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(48.dp).background(Palette.accent, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(20.dp), tint = OnAccent)
+private fun CardHoverPlay(modifier: Modifier) {
+    Box(modifier.testTag(MEDIA_CARD_HOVER_TAG), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(48.dp).background(Color.White.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
+            Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(20.dp), tint = Palette.text)
         }
     }
 }
@@ -294,106 +257,10 @@ private fun CardHoverRing(radius: Dp, modifier: Modifier) {
     }
 }
 
-private val OnAccent = Color(0xFF15130F)
-
-private class CardPreviewPosition(private val gapPx: Int) : PopupPositionProvider {
-    override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
-        layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
-        val right = anchorBounds.right + gapPx
-        val fitsRight = right + popupContentSize.width <= windowSize.width
-        val x = if (fitsRight || anchorBounds.left - gapPx - popupContentSize.width < 0) right
-            else anchorBounds.left - gapPx - popupContentSize.width
-        val y = anchorBounds.top.coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0))
-        return IntOffset(x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)), y)
-    }
-}
-
 private class CardMenuPosition(private val at: IntOffset) : PopupPositionProvider {
     override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
         layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset = IntOffset(
         (anchorBounds.left + at.x).coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
         (anchorBounds.top + at.y).coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0)),
     )
-}
-
-@Composable
-internal fun CardPreview(card: Card, saved: Boolean, searchQuery: String? = null,
-    onPlay: () -> Unit, onSave: () -> Unit, onInfo: () -> Unit, onHoverChanged: (Boolean) -> Unit) {
-    val hover = remember { MutableInteractionSource() }
-    val hovered by hover.collectIsHoveredAsState()
-    LaunchedEffect(hovered) { onHoverChanged(hovered) }
-    val motion = rememberEnterLeaveMotion(true,
-        enter = motionSpec(tween(Motion.arrive, easing = Motion.standard)),
-        leave = motionSpec(tween(Motion.leave, easing = Motion.exit)))
-    Column(Modifier.width(360.dp).hoverable(hover)
-        .graphicsLayer {
-            shape = RoundedCornerShape(12.dp); shadowElevation = 24.dp.toPx()
-            alpha = motion.progress
-            val s = 0.98f + 0.02f * motion.progress
-            scaleX = s; scaleY = s
-        }
-        .clip(RoundedCornerShape(12.dp)).background(Color(0xFF1C1C1F))
-        .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(12.dp))) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9).background(Palette.raised)) {
-            when (val art = card.landscapeArt()) {
-                is LandscapeArt.Still -> AsyncImage(art.url, card.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                is LandscapeArt.Poster -> PosterInLandscape(art.url, card.title)
-                LandscapeArt.None -> MissingArtTile(card.title)
-            }
-            card.progress?.let { progress ->
-                Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).height(3.dp).background(Color.White.copy(alpha = .2f))) {
-                    Box(Modifier.fillMaxWidth(progress.toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(Palette.accent))
-                }
-            }
-        }
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val previewPlay = remember { MutableInteractionSource() }
-                var previewPlayFocused by remember { mutableStateOf(false) }
-                val playLabel = if (card.progress != null) "Resume" else "Play"
-                Row(Modifier.height(36.dp).pressScale(previewPlay, Motion.button)
-                    .onFocusChanged { previewPlayFocused = it.isFocused }
-                    .tvFocusOutline(previewPlayFocused, 18.dp, darkGap = 2.dp, width = 2.dp)
-                    .clip(CircleShape).background(hoverFill(previewPlay, Palette.text, Color.White))
-                    .pointerClickable(interactionSource = previewPlay, indication = null, role = Role.Button,
-                        onClickLabel = playLabel, onClick = onPlay, shape = CircleShape, hover = null)
-                    .semantics { contentDescription = playLabel }
-                    .padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(painterResource(Res.drawable.ic_play_zip), null, Modifier.size(12.dp), tint = Palette.background)
-                    Text(playLabel, color = Palette.background,
-                        fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                }
-                val saving = LocalPendingMutation.current.isPending(saveTarget(card))
-                PreviewCircle(if (saving) "Saving…" else saveActionLabel(saved), onSave) {
-                    if (saving) MutationSpinner(18.dp)
-                    else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(18.dp), tint = Palette.text)
-                }
-                Spacer(Modifier.weight(1f))
-                PreviewCircle("More info", onInfo) { Icon(Lucide.Info, null, Modifier.size(18.dp), tint = Palette.text) }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(searchQuery?.takeIf { it.isNotBlank() }?.let { searchMatchHighlight(card.title, it) } ?: AnnotatedString(card.title),
-                    fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-                MediaMetadata(card, fontSize = 12f, lineHeight = 16f, badgeSize = 10f)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PreviewCircle(label: String, action: () -> Unit, glyph: @Composable () -> Unit) {
-    val interaction = remember { MutableInteractionSource() }
-    var focused by remember { mutableStateOf(false) }
-    Box(Modifier.size(36.dp).pressScale(interaction, Motion.button)
-        // The ring is the shared focus outline, drawn before the clip so it shows.
-        .onFocusChanged { focused = it.isFocused }
-        .tvFocusOutline(focused, 18.dp, darkGap = 2.dp, width = 2.dp)
-        .background(hoverFill(interaction, Color.Transparent, Color.White.copy(alpha = .18f)), CircleShape)
-        .clip(CircleShape).border(1.dp, Color.White.copy(alpha = .14f), CircleShape)
-        .pointerClickable(interactionSource = interaction, indication = null, role = Role.Button,
-            onClickLabel = label, onClick = action, shape = CircleShape, hover = null)
-        .semantics { contentDescription = label },
-        contentAlignment = Alignment.Center) { glyph() }
 }
