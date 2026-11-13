@@ -176,9 +176,10 @@ class AccountCapabilityTest {
             val body = when (request.url.encodedPath) {
                 "/api/auth/me" -> {
                     entered.complete(Unit); release.await()
-                    """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","capabilities":{"manage_account":true,"manage_integrations":true}}"""
+                    """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","csrf_token":"older-profile-csrf","capabilities":{"manage_account":true,"manage_integrations":true}}"""
                 }
-                "/api/bootstrap" -> """{"identity":{"role":"device","profile_id":"2","profiles":[]},"capabilities":{"manage_account":false,"manage_integrations":false}}"""
+                "/api/bootstrap" -> """{"identity":{"role":"device","profile_id":"2","profiles":[],"csrf_token":"current-profile-csrf"},"capabilities":{"manage_account":false,"manage_integrations":false}}"""
+                "/api/profiles/2/integrations" -> { assertEquals("current-profile-csrf", request.headers["x-csrf-token"]); "{}" }
                 else -> "{}"
             }
             respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -189,6 +190,7 @@ class AccountCapabilityTest {
             entered.await(); remote.switchProfile("2"); remote.bootstrap(); release.complete(Unit); read.await()
             assertEquals("device", remote.accountRole)
             assertEquals(false, remote.integrationManagementEnabled)
+            remote.call("/api/profiles/2/integrations", HttpMethod.Put)
         } finally { release.complete(Unit); remote.close() }
     }
 

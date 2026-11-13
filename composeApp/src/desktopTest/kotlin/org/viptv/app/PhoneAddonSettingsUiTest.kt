@@ -199,7 +199,7 @@ class PhoneAddonSettingsUiTest {
             var frame = scene.renderUntil { nodes(scene).any { text(it) == error } }
             assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
             error = null
-            frame = scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "Loading add-ons…" } }
+            frame = scene.renderUntil(from = frame) { nodes(scene).any { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) } }
             assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
             loaded = true
             scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "No add-ons installed." } }

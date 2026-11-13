@@ -309,8 +309,9 @@ open class RemoteConnection(
     }
 
     internal suspend fun identityCall(): JsonObject {
+        val accessEpoch = accountAccessEpoch
         val value = call("/api/auth/me").jsonObject
-        csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        if (accessEpoch == accountAccessEpoch) csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
         return value
     }
 

@@ -103,7 +103,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                         }
                     }
                     if (!compact && managementAvailable) AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) })
-                    if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                    if (busy || (!inventoryLoaded && error == null)) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                     error?.let { Text(it, color = Palette.danger) }
                     configureFailure?.let { (_, message) ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -115,7 +115,6 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                         AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
                     }
                     if (addons.isNotEmpty() && !compact) Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    if (!inventoryLoaded && !busy && error == null) Text("Loading add-ons…", color = Palette.secondary)
                     if (inventoryLoaded && addons.isEmpty() && !busy && error == null) Text("No add-ons installed.", color = Palette.secondary)
                     if (addons.isNotEmpty() && shown.isEmpty()) Text("No add-ons match.", color = Palette.secondary)
                 }
