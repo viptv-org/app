@@ -1,6 +1,20 @@
 name: Experimental KMP platforms
 on:
   workflow_dispatch:
+    inputs:
+      android_only:
+        description: Build only the universal Android release
+        type: boolean
+        default: false
+      default_server:
+        description: Optional HTTPS sign-in origin
+        type: string
+        default: ''
+      cache_experiment:
+        description: Android cache verification scenario
+        type: choice
+        options: [none, cold, kotlin, native, corrupt]
+        default: none
   push:
     branches: [main, experiment/kmp-v2]
 permissions:
@@ -10,6 +24,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   desktop:
+    if: ${{ !inputs.android_only }}
     strategy:
       fail-fast: false
       matrix:
@@ -110,7 +125,11 @@ jobs:
           if-no-files-found: error
   android:
     uses: ./.github/workflows/android-release.yml
+    with:
+      default_server: ${{ inputs.default_server || '' }}
+      cache_experiment: ${{ inputs.cache_experiment || 'none' }}
   web:
+    if: ${{ !inputs.android_only }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
