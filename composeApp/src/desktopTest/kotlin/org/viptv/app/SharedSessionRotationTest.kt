@@ -25,7 +25,7 @@ class SharedSessionRotationTest {
         var rejectRefresh = false
         var family: String? = "family"
         val expired = mutableSetOf<String>()
-        val submitted = mutableListOf<String>()
+        val submitted = EngineRequests<String>()
         private val bootstrap = """{"identity":{"profiles":[],"profile_id":null},"home":null}"""
         private fun tokens() = buildJsonObject {
             family?.let { put("session_id", it) }
