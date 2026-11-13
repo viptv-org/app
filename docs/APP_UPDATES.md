@@ -99,20 +99,36 @@ so a cache in front of the server does no harm as long as it does not cache
 
 ## Signing
 
-Release builds are signed with `signingConfigs.getByName("debug")`, the debug
-keystore (`~/.android/debug.keystore`) of the host that builds them. Android
-installs an update over the app only when both are signed with the same key,
-and that keeps app data and sign-in. Every APK on the owner's devices was built
-on the dev VPS, so:
+Release builds use an explicit stable keystore. Its certificate SHA-256 is
+`E429B1C898D11630A75117D119672E3D8D82E9DAFB4240A48006CB0EFB138777`,
+pinned in `tools/android_signing.py`. Android accepts an update over existing
+installs only with this key, preserving app data and sign-in. A different key
+fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
 
-- **Publish updates only from the dev host**, or from a build that uses the
-  same keystore. An APK signed with another key fails to install
-  (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`), and the app shows "Android didn't
-  install the update."
-- Never change the key: devices would have to uninstall, which loses
-  sign-in and local data.
-- A future CI or GitHub Releases feed needs this keystore moved into a CI
-  secret first.
+The Android release workflow requires these repository secrets, passed
+explicitly by `platform-builds.yml`:
+
+- `ANDROID_RELEASE_KEYSTORE_BASE64`: base64 of the original keystore.
+- `ANDROID_RELEASE_STORE_PASSWORD`: keystore password.
+- `ANDROID_RELEASE_KEY_ALIAS`: original signing alias.
+- `ANDROID_RELEASE_KEY_PASSWORD`: private key password.
+
+The workflow decodes the key into a private runner temporary file and checks
+its certificate and key password before building. Gradle reads that file through
+`ANDROID_RELEASE_KEYSTORE_PATH` and the three credential environment variables.
+Release signing has no debug-key fallback. Debug, QA and shared compilation do
+not require release credentials.
+
+After building, `tools/android_signing.py verify <apk>` checks the APK signature,
+certificate, package and version against the full git checkout. Only a verified
+APK is uploaded as `android-release-apk`; logs and reports are uploaded separately
+as `android-release-evidence`. Release jobs run for manual dispatches or the
+default branch. They remove the temporary keystore even after a failure, and
+disable Gradle configuration caching and persistent daemons for the signing
+invocation. The key is never stored under `~/.android` or in build caches.
+
+Keep a private backup of the original keystore. Never generate a replacement
+for release signing: it cannot update existing installations.
 
 ## Moving to GitHub Releases
 
@@ -121,11 +137,9 @@ The feed format and `-Pviptv.updateFeed` already allow a GitHub Releases feed
 `url` is the release asset's absolute download address). Three things block it
 today:
 
-1. **Signing key.** Release APKs are signed with the dev host's debug
-   keystore. CI must sign with that same key, so the keystore and its
-   passwords have to move into a CI secret first (and the build read them from
-   there). A CI build signed with any other key cannot update existing
-   installs.
+1. **Signing secrets.** The four repository secrets above must contain the
+   original keystore and credentials. CI refuses missing credentials or a
+   certificate that differs from installed releases.
 2. **Private build dependency.** Every Android build compiles the torrent
    runtime from `viptv-org/playback-gateway` (`TORRENT_RUNTIME_REF`,
    `tools/build_torrent_runtime.py`), which is private. CI needs read access

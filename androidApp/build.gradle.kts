@@ -54,6 +54,14 @@ android {
         manifestPlaceholders["viptvLinkHost"] = serverUri?.host?.lowercase() ?: "viptv-links.invalid"
     }
     buildFeatures { compose = true; buildConfig = true }
+    signingConfigs {
+        create("release") {
+            providers.environmentVariable("ANDROID_RELEASE_KEYSTORE_PATH").orNull?.let { storeFile = file(it) }
+            storePassword = providers.environmentVariable("ANDROID_RELEASE_STORE_PASSWORD").orNull
+            keyAlias = providers.environmentVariable("ANDROID_RELEASE_KEY_ALIAS").orNull
+            keyPassword = providers.environmentVariable("ANDROID_RELEASE_KEY_PASSWORD").orNull
+        }
+    }
     buildTypes {
         getByName("debug") {
             if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
@@ -65,11 +73,12 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         create("qa") {
             initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
     }

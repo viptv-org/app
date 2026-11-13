@@ -126,6 +126,11 @@ jobs:
           if-no-files-found: error
   android:
     uses: ./.github/workflows/android-release.yml
+    secrets:
+      ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+      ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+      ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+      ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
     with:
       default_server: ${{ inputs.default_server || '' }}
       cache_experiment: ${{ inputs.cache_experiment || 'none' }}
