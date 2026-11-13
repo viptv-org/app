@@ -3,7 +3,7 @@ package org.viptv.app.connection
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SavedRemoteSession(val origin: String, val refreshToken: String) {
+data class SavedRemoteSession(val origin: String, val refreshToken: String, val sessionId: String? = null) {
     override fun toString(): String = "SavedRemoteSession(origin=$origin, refreshToken=<redacted>)"
 }
 
@@ -14,6 +14,7 @@ sealed interface SavedConnection {
 }
 
 interface RemoteSessionStore {
+    suspend fun <T> withSessionLock(block: suspend () -> T): T = block()
     suspend fun read(): SavedRemoteSession?
     suspend fun save(session: SavedRemoteSession)
     suspend fun clear()
