@@ -7,7 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -77,8 +77,8 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .pointerClickable(interaction, indication = null, enabled = enabled, onClick = { choose(source) })
         .holdMenu(menu != null && enabled && !pointer && !television) { menuOpen = true }) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(if (inverted) Palette.text else if (television) Palette.raised else Palette.surface)
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(0.dp)).heightIn(min = 72.dp)
+            .background(if (inverted) Palette.text else if (television) Palette.raised else Color(0xFF222222))
             .indication(interaction, LocalIndication.current)
             .padding(horizontal = if (television) 28.dp else 16.dp, vertical = if (television) 14.dp else 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp else 13.dp)) {
@@ -88,17 +88,18 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
                 source.releaseTypeLabel()?.let { Text(it, fontSize = RowQualitySubline, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .55f)) }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(source.releaseGroupLabel(), fontSize = RowNameFont, fontWeight = FontWeight.SemiBold,
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(source.releaseGroupLabel(), Modifier.weight(1f, fill = false), fontSize = RowNameFont, fontWeight = FontWeight.SemiBold,
                         color = foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    source.cacheStatus()?.let { SourceCacheChip(it, 11.sp, 12.dp, 7.dp, 3.dp, 5.dp, 4.dp) }
                     if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = .16f), RoundedCornerShape(5.dp)).padding(horizontal = 7.dp, vertical = 3.dp),
                         color = if (inverted) Palette.text else Palette.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp,
                         fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 }
-                SourceAudioSubsLine(source, foreground, RowDetailFont, 11.sp, 12.dp, 6.dp, 20.dp, 6.dp, 1.dp, 4.dp)
-                SourceFactsRow(source, addon, foreground, RowDetailFont, 12.dp)
+                Text(source.rowAudioSubs(), fontSize = RowDetailFont, color = foreground.copy(alpha = .65f),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(source.factItems(addon).filterNot { it == SEASON_PACK_LABEL }.joinToString(" · "),
+                    fontSize = RowDetailFont, color = foreground.copy(alpha = .65f), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (source.isPlayPending()) PendingActionSpinner(Modifier.size(22.dp), size = 22.dp, strokeWidth = 2.dp, color = foreground)
             else if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {
