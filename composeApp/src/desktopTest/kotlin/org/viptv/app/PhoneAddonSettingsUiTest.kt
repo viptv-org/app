@@ -210,12 +210,15 @@ class PhoneAddonSettingsUiTest {
         var loaded by mutableStateOf(false)
         var requested by mutableStateOf(false)
         val scene = scene {
-            SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
-                initialSection = "Add-ons", addonsRequested = { requested = true }, addonsLoaded = loaded,
-                addonsManageable = false)
+            Column {
+                Text(if (requested) "Inventory requested" else "Waiting for inventory request")
+                SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
+                    initialSection = "Add-ons", addonsRequested = { requested = true }, addonsLoaded = loaded,
+                    addonsManageable = false)
+            }
         }
         try {
-            val frame = scene.renderUntil { requested && nodes(scene).any { text(it) == "Add-on management is not available on this connection." } }
+            val frame = scene.renderUntil { nodes(scene).any { text(it) == "Inventory requested" } }
             assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
             loaded = true
             scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "No add-ons installed." } }
