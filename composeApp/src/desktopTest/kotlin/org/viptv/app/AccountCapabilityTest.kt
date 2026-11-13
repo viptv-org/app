@@ -69,7 +69,9 @@ class AccountCapabilityTest {
         fun waitFor(condition: () -> Boolean) {
             val deadline = System.currentTimeMillis() + 5_000
             while (!condition()) {
-                if (System.currentTimeMillis() > deadline) fail("timed out waiting for ${server.paths.joinToString()}")
+                if (System.currentTimeMillis() > deadline) fail("timed out waiting for ${server.paths.joinToString()}; " +
+                    "identity=${controller.state.value.accountIdentity}, loaded=${controller.state.value.addonsLoaded}, " +
+                    "busy=${controller.state.value.busy}, addons=${controller.state.value.addons.map { it.name }}")
                 render(2)
             }
         }
@@ -168,6 +170,43 @@ class AccountCapabilityTest {
             server.remote.accountIdentity()
             assertEquals(2, server.paths.count { it == "/api/auth/me" })
             assertFalse(server.remote.accountManagementEnabled)
+        }
+    }
+
+    @Test fun anInventoryRefreshCannotDiscardCurrentAccountAuthority(): Unit = runBlocking {
+        withTimeout(10_000) {
+            val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+            val inventoryRead = CompletableDeferred<Unit>()
+            val client = HttpClient(MockEngine { request ->
+                val body = when (request.url.encodedPath) {
+                    "/api/auth/me" -> {
+                        entered.complete(Unit); release.await()
+                        """{"account":{"id":"1","username":"member","name":"Member","role":"member"},"role":"member","capabilities":{"manage_account":false,"manage_integrations":true}}"""
+                    }
+                    "/api/profiles/1/integrations" -> ownedAddonConfiguration
+                    "/api/addons" -> {
+                        inventoryRead.complete(Unit)
+                        """{"items":[{"id":1,"name":"Owned add-on","enabled":true}],"next_cursor":null}"""
+                    }
+                    else -> "{}"
+                }
+                respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }) { configureTransport() }
+            val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = true)
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+            val controller = ApplicationController(scope, NoSavedSession).also {
+                it.connection = remote
+                it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
+            }
+            try {
+                controller.refreshAccountAccess(); entered.await()
+                controller.refreshAddons(); inventoryRead.await()
+                release.complete(Unit)
+                scope.coroutineContext[Job]!!.children.toList().joinAll()
+                assertNotNull(controller.state.value.accountIdentity)
+                assertTrue(controller.state.value.managesOwnIntegrations)
+                assertFalse(controller.state.value.manageAccount)
+            } finally { release.complete(Unit); scope.cancel(); remote.close() }
         }
     }
 
