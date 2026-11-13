@@ -61,6 +61,8 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     watchOnTvValue: String = "Off",
     watchOnTvSettings: (@Composable (Boolean, () -> Unit) -> Unit)? = null,
     addonsManageable: Boolean = true,
+    addonsProfileChangesAvailable: Boolean = addonsManageable,
+    addonsLoaded: Boolean = true,
     addonTarget: String? = null,
     configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
     configureAddonFailure: Pair<String, String>? = null, retryConfigureAddon: () -> Unit = {},
@@ -70,7 +72,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
         TvSettingsScreen(local, addons, enabledAddonIds, busy, error, sessionNotice, install, toggle, profiles, leave, profile, initialSection = TvSettingsSection.entries.firstOrNull { it.label == initialSection && !it.leavesSettings } ?: TvSettingsSection.Playback, sourceIntegrations = sourceIntegrations, gateways = gateways, prefs = tvPreferences, change = changeTvPreferences, actualPreferencesOnly = true, parental = tvParental, account = tvAccount, accountRequested = accountRequested, accountDashboard = accountDashboard, dashboardAddress = serverAddress, preferencesError = preferencesError, retryPreferences = retryPreferences, installWithCompletion = installWithCompletion, devicePlayback = tvDevicePlayback,
             profilePage = tvProfilePage, profileTitles = tvProfileTitles, tvDevices = tvDevices, xtream = tvXtreamConnections, vodMatches = tvVodMatches,
             addonLogos = addonLogos,
-            addonsManageable = addonsManageable, addonTarget = addonTarget,
+            addonsManageable = addonsManageable, addonsProfileChangesAvailable = addonsProfileChangesAvailable, addonTarget = addonTarget,
             configurableAddons = configurableAddons, configureAddon = configureAddon,
             addonConfigure = addonConfigure, dismissAddonConfigure = dismissAddonConfigure, removeAddon = remove)
         return
@@ -87,10 +89,10 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
     val show: (SettingsPage) -> Unit = pageChanged ?: { localPage = it }
     var leaving by remember { mutableStateOf(initialLeave) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    var addonsLoaded by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { accountAccessRequested?.invoke() }
-    LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsLoaded = true }
-    LaunchedEffect(section) { if (section == "Add-ons" && addonsLoaded) addonsRequested?.invoke() }
+    var addonsRequestedOnce by remember { mutableStateOf(false) }
+    LaunchedEffect(section) { accountAccessRequested?.invoke() }
+    LaunchedEffect(Unit) { addonsRequested?.invoke(); addonsRequestedOnce = true }
+    LaunchedEffect(section) { if (section == "Add-ons" && addonsRequestedOnce) addonsRequested?.invoke() }
     LaunchedEffect(section) { if (section == "Gateways") gatewaysRequested?.invoke() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val compact = maxWidth < 640.dp
@@ -133,6 +135,7 @@ internal fun SettingsScreen(local: Boolean, addons: List<IntegrationConnection>,
                     (section ?: "Add-ons") == "Add-ons" -> AddonSettings(local, addons, enabledAddonIds, busy, error,
                         sessionNotice, install, toggle, remove, if (compact) back else null,
                         managementAvailable = addonsManageable,
+                        profileChangesAvailable = addonsProfileChangesAvailable, inventoryLoaded = addonsLoaded,
                         logos = addonLogos,
                         installWithCompletion = installWithCompletion,
                         initialAddonId = addonTarget,

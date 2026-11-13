@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.conflate
 import org.viptv.app.components.Motion
@@ -25,14 +26,14 @@ import org.viptv.app.connection.cardLookupKey
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun HeroCopyFade(card: Card, modifier: Modifier = Modifier, alignment: Alignment = Alignment.Center, content: @Composable (Card) -> Unit) {
+internal fun HeroCopyFade(card: Card, modifier: Modifier = Modifier, alignment: Alignment = Alignment.Center, layoutSize: DpSize? = null, content: @Composable (Card) -> Unit) {
     val shown = remember { mutableStateOf(card) }
     val outgoing = remember { mutableStateOf<Card?>(null) }
     val fade = remember { Animatable(1f) }
     val arrive by rememberUpdatedState(motionSpec<Float>(tween(Motion.arrive, easing = Motion.standard)))
     val latest by rememberUpdatedState(card)
     val density = LocalDensity.current
-    var floor by remember { mutableStateOf(0.dp) }
+    var floor by remember(layoutSize, density) { mutableStateOf(0.dp) }
     LaunchedEffect(Unit) {
         snapshotFlow { latest }.conflate().collect { next ->
             if (cardLookupKey(next) == cardLookupKey(shown.value)) { shown.value = next; return@collect }

@@ -14,7 +14,6 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
 import org.viptv.app.features.details.PhoneDetailHero
-import org.viptv.app.features.home.CardPreview
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.Card
@@ -30,28 +29,6 @@ class DetailsSheetSemanticsTest {
 
     private val card = Card(MediaIdentity("tt797", "movie", emptyList()), provider_id = "addon:4",
         title = "Details Sheet Title", badges = emptyList())
-
-    @Test fun thePhoneDetailsSheetNamesPlayMyListAndMoreInfo() {
-        val scene = scene {
-            CardPreview(card, saved = false, onPlay = {}, onSave = {}, onInfo = {}, onHoverChanged = {})
-        }
-        try {
-            frames(scene)
-            assertNamed(scene, "Play", "Play")
-            assertNamed(scene, "My List", "Add to My List")
-            assertNamed(scene, "More info", "More info")
-        } finally { scene.close() }
-    }
-
-    @Test fun aSavedTitleOnThePhoneDetailsSheetNamesTheMyListActionAsRemoving() {
-        val scene = scene {
-            CardPreview(card, saved = true, onPlay = {}, onSave = {}, onInfo = {}, onHoverChanged = {})
-        }
-        try {
-            frames(scene)
-            assertNamed(scene, "My List", "Remove from My List")
-        } finally { scene.close() }
-    }
 
     @Test fun thePhoneDetailsHeroNamesItsMyListAction() {
         val unsaved = scene { PhoneDetailHero(card, play = {}, saved = false) }

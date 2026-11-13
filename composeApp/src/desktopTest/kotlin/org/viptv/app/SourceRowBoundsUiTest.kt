@@ -27,6 +27,7 @@ import org.viptv.app.features.sources.LanguageChip
 import org.viptv.app.features.sources.SourceRow
 import org.viptv.app.features.sources.TvSourceInfo
 import org.viptv.app.features.sources.TvSourceRow
+import org.viptv.app.features.sources.rowAudioSubs
 import org.viptv.app.features.sources.audioChips
 import org.viptv.app.features.sources.cacheChip
 import org.viptv.app.features.sources.factItems
@@ -123,7 +124,7 @@ class SourceRowBoundsUiTest {
         tv(sources, capturePath = "tv-1440")
     }
 
-    @Test fun cacheChipVariantsRenderTheirLabels() {
+    @Test fun pointerRowsOmitCacheServiceBadges() {
         val sources = listOf(
             SourceCandidate("c1", "addon:20", "[TB+] Torrentio\n1080p", detail = "[EMBER] S01E03.mkv\n👤 10 💾 481.6 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 10, presentation = SourcePresentation(provider_name = "Torrentio", size_label = "481.6 MB")),
             SourceCandidate("c2", "addon:20", "🕵️ [RD⏳] MediaFusion", detail = "[sorrow] S01E03.mkv\n👤 5 💾 876.66 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 5, presentation = SourcePresentation(provider_name = "MediaFusion", size_label = "876.66 MB")),
@@ -133,9 +134,7 @@ class SourceRowBoundsUiTest {
         try {
             frames(scene, 4)
             val present = unmerged(scene).map { text(it) }.toSet()
-            assertTrue("⚡ Instant · TorBox" in present)
-            assertTrue("Not cached · Real-Debrid" in present)
-            assertTrue("⚡ Instant" in present)
+            assertFalse(present.any { "Instant" in it || "TorBox" in it || "Not cached" in it })
             capture(scene, "cache-chips")
         } finally { scene.close() }
     }
@@ -180,8 +179,10 @@ class SourceRowBoundsUiTest {
         sources.forEach { source ->
             assertTrue(source.releaseGroupLabel() in present, "$where: missing release group ${source.releaseGroupLabel()}")
             source.qualityLabel()?.let { assertTrue(it in present, "$where: missing quality $it") }
-            source.audioChips()?.forEach { chip -> assertTrue(chip.label in present, "$where: missing audio chip ${chip.label}") }
-            source.subtitleChips()?.filter { it.label != "Subs" }?.forEach { chip -> assertTrue(chip.label in present, "$where: missing subs chip ${chip.label}") }
+            if (where == "tv") {
+                source.audioChips()?.forEach { chip -> assertTrue(chip.label in present, "$where: missing audio chip ${chip.label}") }
+                source.subtitleChips()?.filter { it.label != "Subs" }?.forEach { chip -> assertTrue(chip.label in present, "$where: missing subs chip ${chip.label}") }
+            } else assertTrue(source.rowAudioSubs() in present, "$where: missing plain audio/subtitle details")
             source.factItems(null).filter { it != "Season pack" }.forEach { fact -> assertTrue(present.any { fact in it }, "$where: missing fact $fact") }
         }
         println("=== $where text nodes ===")

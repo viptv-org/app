@@ -23,7 +23,7 @@ private val vodMatchTypeOptions = listOf(SelectOption("movie", "Movies"), Select
 @Composable
 internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?) -> Unit, typeChanged: (String?) -> Unit,
     search: (String) -> Unit, loadMore: () -> Unit, retry: () -> Unit, openForm: (VodMatchRow) -> Unit,
-    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit, compact: Boolean = false) {
+    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit, compact: Boolean = false, canManage: Boolean = true) {
     val providers = remember(state.providers) { state.providers.map { SelectOption(it.id.toString(), it.name) } }
     val pane = settingsPanePadding(compact)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = pane,
@@ -56,7 +56,7 @@ internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?)
             }
         }
         items(state.rows, key = { it.vodId }) { row ->
-            VodMatchCard(row, state.providerName(row.providerId), state.saving) { openForm(row) }
+            VodMatchCard(row, state.providerName(row.providerId), state.saving || !canManage) { openForm(row) }
         }
         if (state.nextCursor != null) {
             item { OutlinedButton({ loadMore() }, enabled = !state.loading) { Text("Load more titles") } }
@@ -70,14 +70,14 @@ internal fun VodMatchesSettings(state: VodMatchesState, providerChanged: (Long?)
                     Text(form.name, fontWeight = FontWeight.SemiBold)
                     Text(listOfNotNull(vodMatchTypeLabel(form.type), form.providerName).joinToString(" · "),
                         color = Palette.secondary)
-                    AppTextField(form.metadataId, { changeMetadata(it) }, label = "Metadata ID", enabled = !state.saving, modifier = Modifier.fillMaxWidth())
+                    AppTextField(form.metadataId, { changeMetadata(it) }, label = "Metadata ID", enabled = !state.saving && canManage, modifier = Modifier.fillMaxWidth())
                     Text("For example tt0111161 or tmdb:550.", color = Palette.secondary,
                         style = MaterialTheme.typography.bodySmall)
                     state.error?.let { Text(it, color = Palette.danger) }
                 }
             },
             confirmButton = {
-                TextButton({ save() }, enabled = !state.saving && form.metadataId.isNotBlank()) {
+                TextButton({ save() }, enabled = !state.saving && canManage && form.metadataId.isNotBlank()) {
                     Text(if (state.saving) "Saving…" else "Save match")
                 }
             },

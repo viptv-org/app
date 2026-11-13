@@ -76,9 +76,9 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     val visible = offered.filter { (quality == null || it.qualityLabel() == quality) && (provider == null || it.sourceFilterId() == provider) }
     val producer = sourceProducerFor(producers, provider)
     val notice = sourceProducerNotice(producer, discoveryPending = loadingMore && !opening, hasRows = visible.isNotEmpty())
-    LaunchedEffect(sources, producers, hiddenAddons) {
+    LaunchedEffect(sources, hiddenAddons) {
         val id = provider ?: return@LaunchedEffect
-        if (offered.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
+        if (offered.none { it.sourceFilterId() == id }) provider = null
     }
     val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
     val listState = rememberLazyListState()
@@ -144,7 +144,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 SourceSummary(summaryLine, pending, fontSize = if (television) 20.sp else 13.sp)
                 banner?.let { SourceFallbackBanner(it, if (television) 20.sp else 13.sp, Modifier.fillMaxWidth()) }
             }
-            SourceFilters(offered, quality, provider, { quality = it }, { provider = it }, producers = producers)
+            SourceFilters(offered, quality, provider, { quality = it }, { provider = it })
             if (busy || loadingMore) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             KeepSourceListPosition(listState, rows, focusedSource, headerHeight,
                 leading = (if (error != null) 1 else 0) + (if (notice != null) 1 else 0))

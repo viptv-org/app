@@ -5,6 +5,11 @@ on:
   push:
     branches: [edge]
   workflow_dispatch:
+    inputs:
+      validate_integration_contract:
+        description: Validate the scoped integration permission design contract
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -57,6 +62,25 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0'
+      - name: Set up Python for scoped integration contract validation
+        if: github.event_name == 'workflow_dispatch' && inputs.validate_integration_contract
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Check out the immutable integration permission contract
+        if: github.event_name == 'workflow_dispatch' && inputs.validate_integration_contract
+        uses: actions/checkout@v7
+        with:
+          repository: viptv-org/design
+          ref: 468a1afd3b5f5232171a673e823fa87863a641bb
+          path: .ci-integration-design
+          persist-credentials: false
+      - name: Validate the scoped integration permission contract
+        if: github.event_name == 'workflow_dispatch' && inputs.validate_integration_contract
+        timeout-minutes: 12
+        run: |
+          python3 -m pip install --disable-pip-version-check Pillow==13.0.0 numpy==2.2.6
+          python3 .ci-integration-design/scripts/validate.py
       - name: Compile Wasm JS main
         run: ./gradlew --max-workers=2 :composeApp:compileKotlinWasmJs
   compile-ios:
