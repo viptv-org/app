@@ -53,12 +53,15 @@ def native_key(inputs, image, architecture):
 def prepare(root, output, raw):
     requested, filters = select_classes(raw, classes_in(root))
     inputs = {path: git(root, "rev-parse", f"HEAD:{path}") for path in NATIVE_INPUTS}
+    torrent_commit = git(root, "show", "HEAD:TORRENT_RUNTIME_REF")
+    if not re.fullmatch(r"[0-9a-f]{40}", torrent_commit):
+        raise ValueError("The torrent runtime must be pinned to a full commit SHA.")
     metadata = {
         "source": git(root, "rev-parse", "HEAD"),
         "requested": requested,
         "filters": filters,
         "native_inputs": inputs,
-        "torrent_commit": git(root, "show", "HEAD:TORRENT_RUNTIME_REF"),
+        "torrent_commit": torrent_commit,
         "native_key": native_key(inputs, os.environ.get("ImageOS"), os.environ.get("RUNNER_ARCH")),
         "qualification": "targeted desktop regression only",
     }

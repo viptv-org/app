@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 spec = importlib.util.spec_from_file_location("regression", Path(__file__).parents[1] / "desktop-regression.py")
@@ -39,6 +40,16 @@ class SelectionTest(unittest.TestCase):
 
 
 class NativeIdentityTest(unittest.TestCase):
+    def test_rejects_a_floating_native_revision_before_writing_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "evidence"
+            with patch.object(regression, "classes_in", return_value={"org.viptv.app.FlowTest"}), \
+                    patch.object(regression, "git", side_effect=lambda _root, *args: "main" if args[0] == "show" else "a" * 40):
+                with self.assertRaises(ValueError):
+                    regression.prepare(root, output, "org.viptv.app.FlowTest")
+            self.assertFalse(output.exists())
+
     def test_source_and_platform_changes_invalidate_native_outputs(self):
         inputs = {"native/core": "a" * 40, "tools/build_engine.py": "b" * 40}
         key = regression.native_key(inputs, "ubuntu24", "X64")
