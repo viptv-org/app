@@ -71,14 +71,15 @@ def main():
                 context = browser.new_context(ignore_https_errors=True)
                 page = context.new_page()
                 pending = []
-                page.add_init_script("window.addEventListener('viptv-first-frame', () => { window.__viptvFirstFrame = document.querySelectorAll('canvas').length; });")
+                page.add_init_script("window.addEventListener('viptv-first-frame', () => { window.__viptvFirstFrame = true; });")
                 page.route('**/composeApp.js', lambda route: pending.append(route))
                 try:
                     page.goto(f'https://127.0.0.1:{bundle_server.server_port}', wait_until='commit')
                     expect(page.get_by_role('status', name='Starting VIPTV')).to_be_visible()
                     assert page.evaluate('window.__viptvFirstFrame === undefined')
                     pending.pop().continue_()
-                    page.wait_for_function('window.__viptvFirstFrame > 0', timeout=60000)
+                    page.wait_for_function('window.__viptvFirstFrame === true', timeout=60000)
+                    expect(page.locator('#viptv-ui-layer canvas')).to_have_count(1)
                     expect(page.locator('#viptv-startup')).to_have_count(0)
                     print('PASS actual-bundle-first-frame')
                 finally:
