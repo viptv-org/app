@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [edge, main]
   push:
-    branches: [edge]
+    branches: [edge, main]
   workflow_dispatch:
     inputs:
       validate_integration_contract:
