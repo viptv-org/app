@@ -488,7 +488,10 @@ open class RemoteConnection(
     private suspend fun adoptStoredRotation() {
         val stored = try { sessionStore.savedConnection() }
         catch (error: CancellationException) { throw error }
-        catch (_: Exception) { throw LocalFailure("Secure storage is unavailable. Try again.") }
+        catch (_: Exception) {
+            if (storedRefreshToken == null) return
+            throw LocalFailure("Secure storage is unavailable. Try again.")
+        }
         if (stored == SavedConnection.None) {
             if (storedRefreshToken != null) throw LocalFailure("The saved connection changed. Choose your connection again.")
             return

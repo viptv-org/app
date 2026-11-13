@@ -93,6 +93,19 @@ class SharedSessionRotationTest {
         } finally { active.close() }
     }
 
+    @Test fun aNeverPersistedLoginCanRefreshItsExclusivelyHeldTokenWhenStorageIsUnavailable() = runBlocking<Unit> {
+        val fixture = Fixture().apply { store.failReads = true; store.failWrites = true }
+        val active = fixture.remote()
+        try {
+            active.login("fixture", "fixture-password")
+            fixture.expire(); active.bootstrap()
+            fixture.expire(); active.bootstrap()
+            assertEquals(listOf("r1", "r2"), fixture.submitted)
+            assertNull(fixture.store.saved)
+            assertNotNull(active.persistenceWarning)
+        } finally { active.close() }
+    }
+
     @Test fun unreadableStorageNeverSendsAPotentiallyConsumedToken() = runBlocking<Unit> {
         val fixture = Fixture()
         val active = fixture.remote()
