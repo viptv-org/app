@@ -25,10 +25,11 @@ class BrowserDeviceCodeInputTest {
 
     @Test fun browserPairingFieldHasAnInteractiveNativeInputArea() {
         var size = IntSize.Zero
+        var measured = false
         val host = object : DomTextHost {
             @Composable override fun Field(spec: DomTextSpec, modifier: Modifier,
                 decoration: @Composable (input: @Composable (Modifier) -> Unit) -> Unit) {
-                Box(modifier.focusable().onSizeChanged { size = it }) {
+                Box(modifier.focusable().onSizeChanged { size = it; measured = true }) {
                     decoration { inputModifier -> Box(inputModifier) }
                 }
             }
@@ -39,7 +40,7 @@ class BrowserDeviceCodeInputTest {
             }
         }
         try {
-            repeat(3) { scene.render(it * 16_666_667L).close() }
+            scene.renderUntil(what = "browser input measurement") { measured }
             assertTrue(size.width >= 200 && size.height >= 39,
                 "Browser device-code input must cover its visible slots, got $size")
         } finally { scene.close() }
