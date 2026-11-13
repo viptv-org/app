@@ -206,6 +206,22 @@ class PhoneAddonSettingsUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun requestingSettingsInventoryDoesNotMakeAnUnreadListEmpty() = onEdt {
+        var loaded by mutableStateOf(false)
+        var requested by mutableStateOf(false)
+        val scene = scene {
+            SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
+                initialSection = "Add-ons", addonsRequested = { requested = true }, addonsLoaded = loaded,
+                addonsManageable = false)
+        }
+        try {
+            val frame = scene.renderUntil { requested && nodes(scene).any { text(it) == "Add-on management is not available on this connection." } }
+            assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
+            loaded = true
+            scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "No add-ons installed." } }
+        } finally { scene.close() }
+    }
+
     @Test fun busyControllerRejectsStalePhonePropsWithoutLeavingTheNewSheetLatched() = onEdt {
         val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var commits = 0
