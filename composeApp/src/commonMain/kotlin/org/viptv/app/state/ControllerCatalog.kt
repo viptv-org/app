@@ -377,6 +377,7 @@ fun ApplicationController.retrySources() {
     if (state.screen != Screen.Sources) return
     val card = state.sourceTitle ?: return
     sourcesScrolled = false
+    updateState { it.copy(findingSources = true) }
     run { discoverSources(card) }
 }
 
@@ -663,8 +664,9 @@ internal fun ApplicationController.beginDetails() {
 }
 
 fun ApplicationController.showMatchingSources() {
-    if (!mutable.value.findingSources || mutable.value.sourceTitle == null) return
-    sourcesScrolled = true
-    sourcesManualSelection = true
-    updateState { it.copy(screen = Screen.Sources) }
+    val state = mutable.value
+    if (!state.findingSources) return
+    val card = state.sourceTitle ?: return
+    clearPendingAction()
+    playTitle(card, manualSelection = true)
 }
