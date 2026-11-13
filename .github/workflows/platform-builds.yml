@@ -22,7 +22,7 @@ permissions:
   actions: read
 concurrency:
   group: kmp-platforms-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !inputs.android_only }}
 jobs:
   desktop:
     if: ${{ !inputs.android_only }}
