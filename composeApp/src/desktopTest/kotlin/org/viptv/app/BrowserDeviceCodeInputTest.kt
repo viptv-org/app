@@ -25,6 +25,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalComposeUiApi::class)
 class BrowserDeviceCodeInputTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun browserPairingFieldHasAnInteractiveNativeInputArea() {
         var size = IntSize.Zero
