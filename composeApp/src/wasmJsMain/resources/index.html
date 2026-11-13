@@ -13,6 +13,12 @@
         html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0B0B0C; }
         #viptv-video-layer { position: fixed; inset: 0; z-index: 0; background: #000; pointer-events: none; }
         #viptv-ui-layer { position: absolute; inset: 0; z-index: 1; }
+        #viptv-startup { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: #0B0B0C; color: #DAD8D3;
+            font: 400 18px/1.5 system-ui, sans-serif; text-align: center; padding: 24px; }
+        #viptv-startup button { font: inherit; color: inherit; background: #232326; border: 1px solid #DAD8D3;
+            border-radius: 8px; padding: 10px 20px; cursor: pointer; }
+        html.no-webgl2 #viptv-startup { display: none; }
         /*
          * Without WebGL2 Compose never creates its drawing surface and instead writes its
          * "requires WebGL2" notice into #viptv-ui-layer as plain text (app#104). The default
@@ -45,6 +51,33 @@
 <body>
     <div id="viptv-video-layer"></div>
     <div id="viptv-ui-layer"></div>
-    <script src="composeApp.js"></script>
+    <div id="viptv-startup" role="status" aria-label="Starting VIPTV">
+        <p id="viptv-startup-message">Getting VIPTV ready…</p>
+        <button type="button" hidden>Try again</button>
+    </div>
+    <script>
+        (function () {
+            var startup = document.getElementById('viptv-startup');
+            var retry = startup.querySelector('button');
+            function failed(event) {
+                if (event.type === 'error' && event.target !== document.getElementById('viptv-app-script') &&
+                    !(event instanceof ErrorEvent)) return;
+                startup.setAttribute('role', 'alert');
+                startup.removeAttribute('aria-label');
+                document.getElementById('viptv-startup-message').textContent = 'VIPTV could not start.';
+                retry.hidden = false;
+            }
+            function ready() {
+                window.removeEventListener('error', failed, true);
+                window.removeEventListener('unhandledrejection', failed);
+                startup.remove();
+            }
+            retry.addEventListener('click', function () { window.location.reload(); });
+            window.addEventListener('error', failed, true);
+            window.addEventListener('unhandledrejection', failed);
+            window.addEventListener('viptv-first-frame', ready, { once: true });
+        })();
+    </script>
+    <script id="viptv-app-script" src="composeApp.js"></script>
 </body>
 </html>

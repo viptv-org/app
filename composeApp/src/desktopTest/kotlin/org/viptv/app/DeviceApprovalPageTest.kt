@@ -48,9 +48,9 @@ class DeviceApprovalPageTest {
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
         respond(ByteReadChannel(body), status, headersOf(HttpHeaders.ContentType, "application/json"))
 
-    private fun engine(onApprove: () -> Unit = {}, onDeny: () -> Unit = {}): MockEngine = MockEngine { request ->
+    private fun engine(onApprove: () -> Unit = {}, onDeny: () -> Unit = {}, authenticated: Boolean = true): MockEngine = MockEngine { request ->
         when (request.url.encodedPath) {
-            "/api/auth/status" -> json("""{"authenticated":true}""")
+            "/api/auth/status" -> json("""{"authenticated":$authenticated}""")
             "/api/auth/me" -> json("""{"account":{"username":"approver"}}""")
             "/api/auth/device/lookup" -> json(pending)
             "/api/auth/device/approve" -> { onApprove(); json("""{"approved":true}""") }
@@ -60,17 +60,31 @@ class DeviceApprovalPageTest {
     }
 
     @Composable
-    private fun Fixture(onApprove: () -> Unit = {}, onDeny: () -> Unit = {}) {
+    private fun Fixture(onApprove: () -> Unit = {}, onDeny: () -> Unit = {}, authenticated: Boolean = true, openApp: ((String) -> Unit)? = null) {
         val scope = rememberCoroutineScope()
         val controller = remember {
             DeviceApprovalController(scope, connectionFactory = {
                 RemoteConnection("https://watch.example", store,
-                    HttpClient(engine(onApprove, onDeny)) { configureTransport() }, browserMode = true)
+                    HttpClient(engine(onApprove, onDeny, authenticated)) { configureTransport() }, browserMode = true)
             })
         }
         ViptvTheme { Surface(Modifier.fillMaxSize(), color = Palette.background) {
-            DeviceApprovalPage(compact = true, controller = controller, initialCode = "00428701")
+            DeviceApprovalPage(compact = true, controller = controller, initialCode = "00428701", openApp = openApp)
         } }
+    }
+
+    @Test fun signedOutBrowserCanOpenInstalledAppWithScannedCode() {
+        var opened: String? = null
+        val scene = ImageComposeScene(390, 844, Density(1f)) {
+            Fixture(authenticated = false, openApp = { opened = it })
+        }
+        val probe = Probe(scene)
+        try {
+            probe.await("sign in") { probe.has("Sign in to continue") }
+            probe.click("Open VIPTV app")
+            assertEquals("00428701", opened)
+            assertTrue(probe.has("Sign in to continue"))
+        } finally { scene.close() }
     }
 
     @Test fun deniedOffersAddAnotherDeviceAndReturnsToCodeEntry() {
