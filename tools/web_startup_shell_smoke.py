@@ -12,6 +12,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--resources', type=Path, default=Path('composeApp/src/wasmJsMain/resources'))
     parser.add_argument('--chromium', default='/usr/bin/chromium')
+    parser.add_argument('--bundle', type=Path, help='Also verify the first draw of an isolated built Wasm distribution')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as temporary, sync_playwright() as playwright:
         server = static_server(args.resources.resolve(), Path(temporary))
@@ -65,6 +66,26 @@ def main():
                     for route in pending:
                         route.abort()
                     context.close()
+            if args.bundle:
+                bundle_server = static_server(args.bundle.resolve(), Path(temporary))
+                context = browser.new_context(ignore_https_errors=True)
+                page = context.new_page()
+                pending = []
+                page.add_init_script("window.addEventListener('viptv-first-frame', () => { window.__viptvFirstFrame = document.querySelectorAll('canvas').length; });")
+                page.route('**/composeApp.js', lambda route: pending.append(route))
+                try:
+                    page.goto(f'https://127.0.0.1:{bundle_server.server_port}', wait_until='commit')
+                    expect(page.get_by_role('status', name='Starting VIPTV')).to_be_visible()
+                    assert page.evaluate('window.__viptvFirstFrame === undefined')
+                    pending.pop().continue_()
+                    page.wait_for_function('window.__viptvFirstFrame > 0', timeout=60000)
+                    expect(page.locator('#viptv-startup')).to_have_count(0)
+                    print('PASS actual-bundle-first-frame')
+                finally:
+                    for route in pending:
+                        route.abort()
+                    context.close()
+                    bundle_server.shutdown()
         finally:
             browser.close()
             server.shutdown()
