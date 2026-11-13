@@ -9,10 +9,15 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 test_dir="$root/composeApp/src/desktopTest/kotlin"
 durations_file="$root/tools/desktop-test-durations.txt"
 
+if [[ ! "$shards" =~ ^[1-9][0-9]*$ || ! "$shard" =~ ^[0-9]+$ ]] || (( shard >= shards )); then
+  echo "SHARDS must be positive and SHARD must be in [0, SHARDS)." >&2
+  exit 2
+fi
+
 mapfile -t classes < <(
   find "$test_dir" -name '*Test.kt' -printf '%P\n' \
     | sed 's#/#.#g; s#\.kt$##' \
-    | LC_ALL=C sort
+    | LC_ALL=C sort -u
 )
 
 assignment() {
@@ -63,6 +68,12 @@ case "$mode" in
     assignment | awk -v shards="$shards" -v total="${#classes[@]}" '
       { n[$1]++; seen[$2]++ }
       END {
+        assigned = 0
+        for (i = 0; i < shards; i++) {
+          assigned += n[i]
+          if (!n[i]) bad = 1
+        }
+        if (assigned != total || total == 0) bad = 1
         for (c in seen) if (seen[c] != 1) {
           printf "class assigned %d times: %s\n", seen[c], c
           bad = 1

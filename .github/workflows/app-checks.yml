@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [edge, main]
   push:
-    branches: [edge]
+    branches: [edge, main]
   workflow_dispatch:
     inputs:
       validate_integration_contract:
@@ -125,13 +125,25 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - name: Restore Android compiler and dependency caches
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-ndk
+            build/rust
+          key: android-check-compilers-${{ runner.os }}-${{ hashFiles('tools/android-toolchains.json', 'native/core/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: android-check-compilers-${{ runner.os }}-
       - name: Install pinned Android native toolchain
         shell: bash
         run: |
           rustup toolchain install 1.98.0 --profile minimal
           rustup default 1.98.0
           rustup target add x86_64-linux-android
-          cargo install cargo-ndk --version 4.1.2 --locked
+          if ! cargo ndk --version 2>/dev/null | grep -Fq '4.1.2'; then
+            cargo install cargo-ndk --version 4.1.2 --locked --force
+          fi
           sdkmanager 'ndk;28.2.13676358'
       - name: Compile Android app debug
         run: ./gradlew --max-workers=2 -Pviptv.torrentRuntime=false -Pviptv.abis=x86_64 :androidApp:compileDebugKotlin
@@ -150,48 +162,58 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Check CI coverage and native cache tooling
+        run: python3 -m unittest discover -s scripts/ci/tests
+      - name: Prepare exact native cache identity
+        id: selection
+        run: python3 scripts/ci/desktop-regression.py prepare-natives --output "$RUNNER_TEMP/natives"
+      - name: Restore exact desktop natives
+        id: natives
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            composeApp/build/nativeResources
+            composeApp/build/torrentResources
+          key: ${{ steps.selection.outputs.native_key }}
       - uses: actions/setup-go@v7
+        if: steps.natives.outputs.cache-hit != 'true'
         with:
           go-version: '1.25.11'
           cache: false
       - name: Compute the apt deb cache key
+        if: steps.natives.outputs.cache-hit != 'true'
         run: bash scripts/ci/apt-cache-key.sh >> "$GITHUB_ENV"
-      - name: Restore the apt deb cache
-        id: apt-debs
-        uses: actions/cache/restore@v6
+      - uses: actions/cache@v6
+        if: steps.natives.outputs.cache-hit != 'true'
         with:
           path: ~/.cache/apt-debs
           key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install native build dependencies
+        if: steps.natives.outputs.cache-hit != 'true'
         timeout-minutes: 12
-        shell: bash
         run: bash scripts/ci/install-apt-packages.sh
-      - name: Save the apt deb cache
-        if: always() && steps.apt-debs.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: ~/.cache/apt-debs
-          key: ${{ env.APT_DEB_CACHE_KEY }}
       - name: Install pinned Rust
-        shell: bash
-        run: |
-          rustup toolchain install 1.98.0 --profile minimal
-          rustup default 1.98.0
+        if: steps.natives.outputs.cache-hit != 'true'
+        run: rustup toolchain install 1.98.0 --profile minimal
       - uses: actions/cache@v6
+        if: steps.natives.outputs.cache-hit != 'true'
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cache/go-build
+            ~/go/pkg/mod
             build/rust
-          key: cargo-${{ runner.os }}-${{ hashFiles('native/core/Cargo.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
+          key: desktop-compilers-${{ runner.os }}-${{ steps.selection.outputs.native_key }}
+          restore-keys: desktop-compilers-${{ runner.os }}-
       - name: Check out the pinned torrent worker source
-        shell: bash
+        if: steps.natives.outputs.cache-hit != 'true'
         run: |
           git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
           git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Build the engine and desktop torrent worker
+        if: steps.natives.outputs.cache-hit != 'true'
         shell: bash
         run: |
           python3 tools/build_engine.py desktop &
@@ -202,6 +224,16 @@ jobs:
           wait "$engine" || status=1
           wait "$torrent" || status=1
           exit "$status"
+      - name: Verify exact native outputs
+        run: python3 scripts/ci/desktop-regression.py verify-natives --output "$RUNNER_TEMP/natives"
+      - name: Save exact desktop natives
+        if: steps.natives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            composeApp/build/nativeResources
+            composeApp/build/torrentResources
+          key: ${{ steps.selection.outputs.native_key }}
       - name: Package desktop natives
         shell: bash
         run: tar -czf desktop-natives.tar.gz -C composeApp/build nativeResources torrentResources
@@ -222,7 +254,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -277,18 +309,17 @@ jobs:
         env:
           VIPTV_NATIVE_PREBUILT: '1'
         run: |
+          mkdir -p "$RUNNER_TEMP/shard"
+          SHARDS=${{ strategy.job-total }} tools/desktop-test-shards.sh check
           total=$(tools/desktop-test-shards.sh count)
-          mapfile -t classes < <(SHARDS=${{ strategy.job-total }} SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list)
+          SHARDS=${{ strategy.job-total }} SHARD=${{ matrix.shard }} tools/desktop-test-shards.sh list > "$RUNNER_TEMP/shard/filters.txt"
+          mapfile -t classes < "$RUNNER_TEMP/shard/filters.txt"
+          test "${#classes[@]}" -gt 0
           printf 'shard %d: %d of %d desktop test classes\n' "${{ matrix.shard }}" "${#classes[@]}" "$total"
           args=()
           for class in "${classes[@]}"; do args+=(--tests "$class"); done
           ./gradlew --max-workers=2 :composeApp:desktopTest "${args[@]}"
-          python3 - "${{ matrix.shard }}" <<'PY'
-          import glob, sys, xml.etree.ElementTree as ET
-          shard = sys.argv[1]
-          cases = sum(int(ET.parse(p).getroot().get('tests', 0)) for p in glob.glob('composeApp/build/test-results/desktopTest/*.xml'))
-          print(f'shard {shard} ran {cases} test cases')
-          PY
+          python3 scripts/ci/desktop-regression.py verify-tests --output "$RUNNER_TEMP/shard"
       - name: Upload desktop test results (shard ${{ matrix.shard }})
         if: always()
         uses: actions/upload-artifact@v7
@@ -327,15 +358,10 @@ jobs:
     needs: [compile-android, compile-wasm, compile-ios, compile-android-app, native-prep, desktop-test, submodule-guard]
     if: always()
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Gate on every parallel job
-        shell: bash
-        run: |
-          results='${{ needs.compile-android.result }} ${{ needs.compile-wasm.result }} ${{ needs.compile-ios.result }} ${{ needs.compile-android-app.result }} ${{ needs.native-prep.result }} ${{ needs.desktop-test.result }} ${{ needs.submodule-guard.result }}'
-          echo "parallel jobs: $results"
-          for result in $results; do
-            # compile-android and submodule-guard are push-only; every other job must pass.
-            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-              echo "a parallel job did not succeed: $results" >&2
-              exit 1
-            fi
-          done
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: python3 scripts/ci/check-app-jobs.py
