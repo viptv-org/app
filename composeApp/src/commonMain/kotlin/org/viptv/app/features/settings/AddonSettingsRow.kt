@@ -33,7 +33,7 @@ internal const val ADDON_TARGET_ROW_TAG = "addon-target-row"
 @Composable
 internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, busy: Boolean, manageable: Boolean,
     toggle: (Boolean) -> Unit, remove: () -> Unit, logo: String? = null, highlighted: Boolean = false,
-    focusRequester: FocusRequester? = null, configurable: Boolean = false, reconfigure: () -> Unit = {}) {
+    focusRequester: FocusRequester? = null, configurable: Boolean = false, reconfigure: () -> Unit = {}, profileChangesAvailable: Boolean = manageable) {
     val pending = LocalPendingMutation.current.isPending(MutationTarget(MutationKind.Addon, addon.id))
     val shape = RoundedCornerShape(14.dp)
     Surface(color = if (highlighted) Palette.raised else Palette.surface, shape = shape,
@@ -50,7 +50,7 @@ internal fun AddonSettingsRow(addon: IntegrationConnection, enabled: Boolean, bu
             if (pending) MutationSpinner(20.dp, color = Palette.secondary)
             if (manageable && configurable) TextButton(onClick = reconfigure, enabled = !busy && !pending) { Text("Reconfigure", color = Palette.secondary) }
             if (manageable) TextButton(onClick = remove, enabled = !busy && !pending) { Text("Remove", color = Palette.secondary) }
-            if (manageable) Switch(enabled, toggle, colors = SwitchDefaults.colors(checkedTrackColor = Palette.accent, checkedThumbColor = Palette.background),
+            if (profileChangesAvailable) Switch(enabled, toggle, colors = SwitchDefaults.colors(checkedTrackColor = Palette.accent, checkedThumbColor = Palette.background),
                 enabled = !busy && !pending && addon.enabled && addon.capabilities.isNotEmpty(),
                 modifier = (if (focusRequester == null) Modifier else focusRequester.requestFocusWhenPlaced())
                     .semantics { contentDescription = "Enable ${addon.name} for this profile" })

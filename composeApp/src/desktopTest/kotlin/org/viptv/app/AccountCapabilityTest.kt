@@ -122,7 +122,7 @@ class AccountCapabilityTest {
 
     @Test fun anExplicitMemberIntegrationCapabilityOffersOwnAddonsWithoutAccountAdministration() {
         Host("""{"manage_account":false,"manage_integrations":true}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
-            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.controller.state.value.addons.isNotEmpty() && !ui.controller.state.value.busy }
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
             assertTrue(ui.shows("Owned add-on"))
             assertTrue(ui.shows("Add an add-on"))
             assertFalse(ui.shows("Add-on management is not available on this connection."))
@@ -133,7 +133,7 @@ class AccountCapabilityTest {
 
     @Test fun aReadOnlyMemberStillReadsOwnedAddonInventory() {
         Host("""{"manage_account":false,"manage_integrations":false}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
-            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.controller.state.value.addons.isNotEmpty() && !ui.controller.state.value.busy }
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
             assertTrue(ui.shows("Owned add-on"))
             assertFalse(ui.shows("No add-ons installed."))
             assertFalse(ui.shows("Add an add-on"))
@@ -168,6 +168,57 @@ class AccountCapabilityTest {
             assertEquals(2, server.paths.count { it == "/api/auth/me" })
             assertFalse(server.remote.accountManagementEnabled)
         }
+    }
+
+    @Test fun aProfileSwitchRejectsAnOlderInFlightIntegrationAuthorityRead(): Unit = runBlocking {
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val client = HttpClient(MockEngine { request ->
+            val body = when (request.url.encodedPath) {
+                "/api/auth/me" -> {
+                    entered.complete(Unit); release.await()
+                    """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","capabilities":{"manage_account":true,"manage_integrations":true}}"""
+                }
+                "/api/bootstrap" -> """{"identity":{"role":"device","profile_id":"2","profiles":[]},"capabilities":{"manage_account":false,"manage_integrations":false}}"""
+                else -> "{}"
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = false)
+        try {
+            val read = async { remote.accountIdentity() }
+            entered.await(); remote.switchProfile("2"); remote.bootstrap(); release.complete(Unit); read.await()
+            assertEquals("device", remote.accountRole)
+            assertEquals(false, remote.integrationManagementEnabled)
+        } finally { release.complete(Unit); remote.close() }
+    }
+
+    @Test fun aBrowserMemberOwnAddonWriteUsesTheFreshIdentityCsrfWithoutGlobalAuthority(): Unit = runBlocking {
+        var reads = 0
+        val client = HttpClient(MockEngine { request ->
+            val body = when (request.url.encodedPath) {
+                "/api/auth/me" -> {
+                    reads++
+                    """{"account":{"id":"1","username":"member","name":"Member","role":"member"},"role":"member","csrf_token":"csrf-$reads","capabilities":{"manage_account":false,"manage_integrations":true}}"""
+                }
+                "/api/addons" -> {
+                    assertEquals(HttpMethod.Post, request.method)
+                    assertEquals("csrf-2", request.headers["x-csrf-token"])
+                    """{"id":1}"""
+                }
+                else -> {
+                    if (request.method == HttpMethod.Put) assertEquals("csrf-2", request.headers["x-csrf-token"])
+                    ownedAddonConfiguration
+                }
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = true)
+        try {
+            remote.accountIdentity(); remote.accountIdentity()
+            remote.installAddon("1", "https://fixture.example/manifest.json")
+            assertFalse(remote.accountManagementEnabled)
+            assertEquals(true, remote.integrationManagementEnabled)
+        } finally { remote.close() }
     }
 
     @Test fun aPairedTelevisionCannotReadTheDeviceListSoTheRowIsAbsent() {

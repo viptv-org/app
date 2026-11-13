@@ -227,6 +227,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
+        manageIntegrations = connection?.integrationManagementEnabled,
         accountRole = connection?.accountRole ?: "member",
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
@@ -240,7 +241,8 @@ internal fun ApplicationController.refreshSnapshot(value: Bootstrap, busy: Boole
     updateState { next -> next.copy(busy = busy, profiles = value.profiles,
         profileManagement = value.profileManagement ?: next.profileManagement,
         selectedProfile = value.selected ?: next.selectedProfile, home = value.home,
-        preferences = value.preferences ?: next.preferences, policyRefreshNeeded = false) }
+        preferences = value.preferences ?: next.preferences, policyRefreshNeeded = false,
+        manageIntegrations = connection?.integrationManagementEnabled, accountAccess = null) }
     adoptSnapshot(value)
 }
 

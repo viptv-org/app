@@ -19,6 +19,20 @@ integrations, and send the observed configuration revision. They never PATCH the
 account-wide enabled flag. Account-disabled add-ons remain listed and cannot be
 enabled through a profile switch. Unknown capabilities remain unknown.
 
+Own-account authority follows the scoped
+[ACCOUNT-INTEGRATIONS-01 contract](https://github.com/viptv-org/design/blob/468a1afd3b5f5232171a673e823fa87863a641bb/specs/behavior/integration-permissions.md).
+`manage_integrations` controls account installation, removal, configuration,
+credentials and refresh, including owned IPTV matches and live-default selection.
+It is independent of global `manage_account` administration. Explicit denial wins;
+an omitted field retains only the legacy owner-plus-`manage_account` behavior.
+Members require explicit authority, paired devices cannot manage account
+connections, and known profile/parent restrictions remain in force. Existing
+profile activation has its separate scoped checks. Inventories remain visible
+without account writes; only a successfully loaded empty list claims that no
+add-ons are installed. Failed identity reads do not grant account writes.
+The visual baseline in DESIGN_REF is unchanged; this permission contract is the
+deliberate scoped behavior adoption.
+
 The server enforces account ownership, selected-profile scope and parent access.
 The backend owner aligned profile-configuration device policy with its existing
 account-shared settings policy and reports seven focused backend tests passing,

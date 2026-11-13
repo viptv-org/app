@@ -85,11 +85,16 @@ open class RemoteConnection(
         private set
     internal var accountAccessRead = false
         private set
+    internal var integrationManagementEnabled: Boolean? = null
+        private set
+    internal var accountAccessEpoch = 0L
+        private set
     internal val accountDashboardUrl: String get() = origin + "/"
 
-    internal fun recordAccountAccess(manageAccount: Boolean?, role: String) {
-        accountAccessRead = true
+    internal fun recordAccountAccess(manageAccount: Boolean?, role: String, manageIntegrations: Boolean? = null, identityRead: Boolean = true) {
+        if (identityRead) accountAccessRead = true
         manageAccount?.let { accountManagementEnabled = it }
+        integrationManagementEnabled = manageIntegrations
         accountRole = role
         accountOwner = role == "owner"
     }
@@ -199,6 +204,7 @@ open class RemoteConnection(
     internal val reuseAudioLanguages = mutableMapOf<String, String?>()
 
     suspend fun bootstrap(): Bootstrap {
+        val accessEpoch = accountAccessEpoch
         val value = call("/api/bootstrap").jsonObject
         return withWorker {
             preferredSourceDiscoverySupported = value["preferred_source_discovery_supported"]?.jsonPrimitive?.booleanOrNull == true
@@ -208,6 +214,13 @@ open class RemoteConnection(
                 ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
             val identity = value.getValue("identity").jsonObject
             csrf = identity["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+            val capabilities = value["capabilities"] as? JsonObject ?: identity["capabilities"] as? JsonObject
+            if (accessEpoch == accountAccessEpoch) {
+                if (capabilities != null) recordAccountAccess(capabilities["manage_account"]?.jsonPrimitive?.booleanOrNull,
+                    identity["role"]?.jsonPrimitive?.contentOrNull ?: "unknown",
+                    capabilities["manage_integrations"]?.jsonPrimitive?.booleanOrNull, identityRead = false)
+                else integrationManagementEnabled = null
+            }
             val profiles = identity["profiles"]?.jsonArray.orEmpty().map {
                 val p = it.jsonObject
                 Profile(p.getValue("id").jsonPrimitive.content, p.getValue("name").jsonPrimitive.content, p["avatar"]?.jsonPrimitive?.contentOrNull,
@@ -233,6 +246,9 @@ open class RemoteConnection(
     }
 
     suspend fun switchProfile(id: String, pin: String? = null) {
+        accountAccessEpoch++
+        integrationManagementEnabled = null
+        accountAccessRead = false
         call("/api/auth/profile", HttpMethod.Post, buildJsonObject {
             put("profile_id", id)
             pin?.let { put("pin", it) }
@@ -290,6 +306,12 @@ open class RemoteConnection(
 
     suspend fun call(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement {
         return decode(authenticatedResponse(path, method, body))
+    }
+
+    internal suspend fun identityCall(): JsonObject {
+        val value = call("/api/auth/me").jsonObject
+        csrf = value["csrf_token"]?.jsonPrimitive?.contentOrNull ?: csrf
+        return value
     }
 
     internal suspend fun accountCall(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonObject {

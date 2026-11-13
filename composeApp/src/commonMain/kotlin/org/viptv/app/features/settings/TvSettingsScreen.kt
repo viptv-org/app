@@ -44,6 +44,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
     xtream: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     vodMatches: (@Composable (FocusRequester, FocusRequester, Float) -> Unit)? = null,
     addonsManageable: Boolean = true,
+    addonsProfileChangesAvailable: Boolean = addonsManageable,
     addonTarget: String? = null,
     configurableAddons: Set<String> = emptySet(), configureAddon: (String) -> Unit = {},
     addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissAddonConfigure: () -> Unit = {},
@@ -112,7 +113,7 @@ internal fun TvSettingsScreen(local: Boolean, addons: List<IntegrationConnection
             // Add-ons and the approved-titles page own a LazyColumn: nesting it in the page's scrolling column hands the list an infinite height.
             if (section == TvSettingsSection.Addons && !failedPreferences) Box(Modifier.weight(1f).padding(start = 80.dp * scale, end = 96.dp * scale, top = 96.dp * scale)) {
                 TvAddonSettings(addons, enabled, local, busy, scale, first, sidebar, addonInfo, toggle,
-                    { installing = true }, placeholderQr, manage = addonsManageable, logos = addonLogos,
+                    { installing = true }, placeholderQr, manage = addonsManageable, profileChanges = addonsProfileChangesAvailable, logos = addonLogos,
                     initialAddonId = addonTarget, configurableAddons = configurableAddons, configure = configureAddon,
                     addonConfigure = addonConfigure, dismissConfigure = dismissAddonConfigure, remove = removeAddon)
             }

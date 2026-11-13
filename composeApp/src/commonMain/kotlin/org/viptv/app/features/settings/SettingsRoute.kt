@@ -37,10 +37,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         { back -> ChangePasswordScreen(connection, back, changed = { controller.passwordChanged() }, compact = compact) } }
     val accountRole = state.accountRole
     val ownerWrites = accountRole == "owner" || (state.accountIdentity != null && state.manageAccount)
+    val integrationWrites = if (state.localMode) ownerWrites else state.managesOwnIntegrations
+    val profileIntegrationWrites = if (state.localMode) ownerWrites else state.managesProfileIntegrations
     val accountSession = state.accountSession
-    // The identity loads after the page: until it does, leave the writes to the server rather than flashing an owner note at the owner.
-    val xtreamCanManage = state.accountIdentity == null || ownerWrites
-    val xtreamManageNote = if (ownerWrites) "Only the account owner can change connections." else xtreamManagedElsewhere
+    val xtreamCanManage = integrationWrites
+    val xtreamManageNote = xtreamManagedElsewhere
     val logos = remember(remote) { remote?.let { connection -> AddonLogoSource { connection.addonLogo(it) } } }
     CompositionLocalProvider(LocalAddonLogos provides logos) {
     val escapeReturns = returnsToPlayer && (desktop || browser) && !television
@@ -98,11 +99,11 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
         account = if (state.localMode) null else ({ AccountIdentityScreen(state.accountIdentity ?: state.accountDevices?.account,
             state.busy, state.error, controller::refreshAccounts, notice = state.passwordChangeNotice, compact = compact) }),
         sourceIntegrations = { first, sidebar, scale -> Column(verticalArrangement = Arrangement.spacedBy(24.dp * scale)) {
-            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale, left = sidebar)
+            BrowsingProviderSettings(state.browsingConfiguration, state.plugins, state.busy, controller::selectBrowsingProvider, tv = television, scale = scale, left = sidebar, canManage = profileIntegrationWrites)
             SourceIntegrationSettings(state.sourceIntegrations, state.busy, state.sourceIntegrationError,
             controller::refreshSourceIntegrations, controller::configureSourceIntegration, controller::removeSourceIntegration, television = television,
             profileName = state.profiles.find { it.id == state.selectedProfile }?.name,
-            origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar, canManage = ownerWrites) } },
+            origin = controller.connection?.accountDashboardUrl?.trimEnd('/'), tvScale = scale, first = first, left = sidebar, canManage = integrationWrites) } },
         xtreamConnections = if (state.localMode) null else ({ compact: Boolean, back: (() -> Unit)? ->
             XtreamConnectionsSettings(state.xtreamConnections, state.xtreamDefaultLive, state.busy, state.error, state.xtreamNotice,
                 canManage = xtreamCanManage, manageNote = xtreamManageNote, compact = compact, back = back,
@@ -136,7 +137,8 @@ internal fun SettingsRoute(state: ApplicationState, controller: ApplicationContr
             canSignOut = ownerWrites, retryable = state.devicesRetryable) }) else null,
         addDevice = if (accountSession) ({ compact, changeConnection -> AddDeviceScreen(controller.connection.takeUnless { state.localMode }, compact,
             deviceLink?.takeIf { it.delivered }?.code, controller::consumeDeviceCode, changeConnection) }) else null,
-        addonsManageable = ownerWrites,
+        addonsManageable = integrationWrites, addonsProfileChangesAvailable = profileIntegrationWrites,
+        addonsLoaded = state.addonsLoaded,
         addonLogos = state.addonLogos,
         stremioImport = if (stremioImportAvailable(state, television, desktop)) ({ compact, back, manageAddons ->
             StremioImportRoute(state, controller, compact, if (compact) back else null, manageAddons) }) else null,
@@ -195,7 +197,7 @@ private fun VodMatchesRoute(state: ApplicationState, controller: ApplicationCont
     else VodMatchesSettings(page, controller::updateVodMatchProvider, controller::updateVodMatchType,
         controller::searchVodMatches, controller::loadMoreVodMatches, controller::refreshVodMatches,
         controller::openVodMatchForm, controller::closeVodMatchForm, controller::changeVodMatchMetadata,
-        controller::saveVodMatch, compact = compact)
+        controller::saveVodMatch, compact = compact, canManage = state.managesOwnIntegrations)
 }
 
 @Composable
@@ -208,7 +210,7 @@ private fun TvVodMatchesRoute(state: ApplicationState, controller: ApplicationCo
     else TvVodMatchesSettings(page, scale, first, sidebar, controller::updateVodMatchProvider,
         controller::updateVodMatchType, controller::searchVodMatches, controller::openVodMatchForm,
         controller::loadMoreVodMatches, controller::refreshVodMatches, controller::closeVodMatchForm,
-        controller::changeVodMatchMetadata, controller::saveVodMatch)
+        controller::changeVodMatchMetadata, controller::saveVodMatch, canManage = state.managesOwnIntegrations)
 }
 
 @Composable
