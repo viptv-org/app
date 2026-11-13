@@ -93,10 +93,8 @@ open class MainActivity : ComponentActivity() {
 
     private fun offerDeviceCode(intent: Intent) {
         val link = intent.data ?: return
-        if (television || intent.action != Intent.ACTION_VIEW || link.scheme != "https" || link.path != "/device") return
-        val host = link.host ?: return
-        val code = link.getQueryParameter("code") ?: return
-        applicationModel?.controller?.offerDeviceCode("https://$host", code)
+        if (television || intent.action != Intent.ACTION_VIEW) return
+        applicationModel?.controller?.offerDeviceCodeLink(link.toString())
     }
 
     override fun onPause() {
