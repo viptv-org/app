@@ -112,6 +112,14 @@ class ReportTest(unittest.TestCase):
                       '<testcase classname="org.viptv.app.OtherTest"/>'):
             self.assertFalse(self.report(cases)["passed"])
 
+    def test_full_suite_preserves_opt_in_skips_but_rejects_missing_classes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "TEST-OptIn.xml").write_text('<testsuite><testcase classname="org.viptv.app.OptInTest"><skipped/></testcase></testsuite>')
+            self.assertTrue(regression.test_results(root, ["org.viptv.app.OptInTest"], allow_skipped_classes=True)["passed"])
+            self.assertFalse(regression.test_results(root, ["org.viptv.app.MissingTest"], allow_skipped_classes=True)["passed"])
+            self.assertFalse(regression.test_results(root, [], allow_skipped_classes=True)["passed"])
+
     def test_failure_and_error_are_not_green(self):
         for node in ("failure", "error"):
             result = self.report(f'<testcase classname="org.viptv.app.FlowTest"><{node}/></testcase>')

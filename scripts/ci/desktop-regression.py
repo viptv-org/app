@@ -98,7 +98,7 @@ def verify_natives(root, output):
     }, indent=2) + "\n")
 
 
-def test_results(directory, filters):
+def test_results(directory, filters, allow_skipped_classes=False):
     counts = {name: {"tests": 0, "skipped": 0, "failed": 0} for name in filters}
     unexpected = set()
     for path in directory.glob("TEST-*.xml"):
@@ -111,17 +111,17 @@ def test_results(directory, filters):
             count["tests"] += 1
             count["skipped"] += case.find("skipped") is not None
             count["failed"] += case.find("failure") is not None or case.find("error") is not None
-    passed = bool(counts) and not unexpected and all(c["tests"] > c["skipped"] and c["failed"] == 0 for c in counts.values())
+    passed = bool(counts) and not unexpected and all(c["tests"] > (0 if allow_skipped_classes else c["skipped"]) and c["failed"] == 0 for c in counts.values())
     return {"classes": counts, "unexpected_classes": sorted(str(n) for n in unexpected), "passed": passed}
 
 
 def verify_tests(root, output):
     filters = (output / "filters.txt").read_text().splitlines()
-    result = test_results(root / "composeApp/build/test-results/desktopTest", filters)
+    result = test_results(root / "composeApp/build/test-results/desktopTest", filters, allow_skipped_classes=True)
     (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
     if not result["passed"]:
-        raise ValueError("Desktop shard has missing, skipped-only, failed or unexpected cases.")
+        raise ValueError("Desktop shard has missing, failed or unexpected cases.")
 
 
 def report(root, output):
