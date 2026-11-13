@@ -40,6 +40,8 @@ class AccountCapabilityTest {
                 "/api/auth/me" -> respond("""{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$accountRole"},"role":"$sessionRole"""" +
                     (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}", headers = json)
                 "/api/account/devices" -> respond(devices.second, devices.first, headers = json)
+                "/api/profiles/1/integrations" -> respond(ownedAddonConfiguration, headers = json)
+                "/api/addons" -> respond("""{"items":[{"id":1,"name":"Owned add-on","enabled":true}],"next_cursor":null}""", headers = json)
                 else -> respond("{}", headers = json)
             }
         }) { configureTransport() }
@@ -48,12 +50,12 @@ class AccountCapabilityTest {
     }
 
     private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole,
-        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
+        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture, initialSection: String? = null) : AutoCloseable {
         val server = Server(capabilities, accountRole, sessionRole, browser = false, devices)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also {
             it.connection = server.remote
-            it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
+            it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1", settingsEntrySection = initialSection)
         }
         private var frame = 0L
         private val scene = ImageComposeScene(390, 1600, Density(1f)) {
@@ -115,6 +117,56 @@ class AccountCapabilityTest {
             assertTrue(ui.shows("Living room TV"))
             assertFalse(ui.shows("Sign out"), "A member has no device sign-out action")
             assertFalse(ui.shows("Sign out of all devices"))
+        }
+    }
+
+    @Test fun anExplicitMemberIntegrationCapabilityOffersOwnAddonsWithoutAccountAdministration() {
+        Host("""{"manage_account":false,"manage_integrations":true}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.controller.state.value.addons.isNotEmpty() && !ui.controller.state.value.busy }
+            assertTrue(ui.shows("Owned add-on"))
+            assertTrue(ui.shows("Add an add-on"))
+            assertFalse(ui.shows("Add-on management is not available on this connection."))
+            assertFalse(ui.controller.state.value.manageAccount)
+            assertFalse(ui.controller.state.value.accountOwner)
+        }
+    }
+
+    @Test fun aReadOnlyMemberStillReadsOwnedAddonInventory() {
+        Host("""{"manage_account":false,"manage_integrations":false}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.controller.state.value.addons.isNotEmpty() && !ui.controller.state.value.busy }
+            assertTrue(ui.shows("Owned add-on"))
+            assertFalse(ui.shows("No add-ons installed."))
+            assertFalse(ui.shows("Add an add-on"))
+            assertFalse(ui.shows("Remove"))
+        }
+    }
+
+    @Test fun ownIntegrationAuthorityIsExplicitAndDoesNotGrantGlobalAdministration(): Unit = runBlocking {
+        Server("""{"manage_account":false,"manage_integrations":true}""", "member", "member", browser = false).use { server ->
+            val access = server.remote.accountAccess()
+            assertTrue(access.managesSources)
+            assertFalse(access.manageAccount)
+        }
+        Server("""{"manage_account":true,"manage_integrations":false}""", "owner", "owner", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true}""", "owner", "owner", browser = false).use { server ->
+            assertTrue(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true}""", "member", "member", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true,"manage_integrations":true}""", "owner", "device", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+    }
+
+    @Test fun aBrowserMemberCanRefreshIdentityWithoutGlobalManagement(): Unit = runBlocking {
+        Server("""{"manage_account":false,"manage_integrations":true}""", "member", "member", browser = true).use { server ->
+            server.remote.accountIdentity()
+            server.remote.accountIdentity()
+            assertEquals(2, server.paths.count { it == "/api/auth/me" })
+            assertFalse(server.remote.accountManagementEnabled)
         }
     }
 
@@ -198,3 +250,5 @@ class AccountCapabilityTest {
         }
     }
 }
+
+private const val ownedAddonConfiguration = """{"configuration":{"scope":{"connection_id":"server","account_id":"1","profile_id":"1","revision":9},"mode":"Server","name":"Profile","browsing_plugin":"stremio","assignments":[]},"connections":[{"id":"addon:1","plugin_id":"stremio","account_id":"1","name":"Owned add-on","enabled":true,"revision":3,"capabilities":["Sources"]}]}"""
