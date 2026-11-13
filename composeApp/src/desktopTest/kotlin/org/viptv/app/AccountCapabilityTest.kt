@@ -50,8 +50,9 @@ class AccountCapabilityTest {
     }
 
     private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole,
-        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture, initialSection: String? = null) : AutoCloseable {
-        val server = Server(capabilities, accountRole, sessionRole, browser = false, devices)
+        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture, initialSection: String? = null,
+        private val browser: Boolean = false) : AutoCloseable {
+        val server = Server(capabilities, accountRole, sessionRole, browser = browser, devices)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also {
             it.connection = server.remote
@@ -60,7 +61,7 @@ class AccountCapabilityTest {
         private var frame = 0L
         private val scene = ImageComposeScene(390, 1600, Density(1f)) {
             val state by controller.state.collectAsState()
-            ViptvTheme { SettingsRoute(state, controller, browser = false, television = false, compact = true) }
+            ViptvTheme { SettingsRoute(state, controller, browser = browser, television = false, compact = true) }
         }
 
         fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
@@ -121,7 +122,7 @@ class AccountCapabilityTest {
     }
 
     @Test fun anExplicitMemberIntegrationCapabilityOffersOwnAddonsWithoutAccountAdministration() {
-        Host("""{"manage_account":false,"manage_integrations":true}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
+        Host("""{"manage_account":false,"manage_integrations":true}""", accountRole = "member", initialSection = "Add-ons", browser = true).use { ui ->
             ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
             assertTrue(ui.shows("Owned add-on"))
             assertTrue(ui.shows("Add an add-on"))
@@ -132,7 +133,7 @@ class AccountCapabilityTest {
     }
 
     @Test fun aReadOnlyMemberStillReadsOwnedAddonInventory() {
-        Host("""{"manage_account":false,"manage_integrations":false}""", accountRole = "member", initialSection = "Add-ons").use { ui ->
+        Host("""{"manage_account":false,"manage_integrations":false}""", accountRole = "member", initialSection = "Add-ons", browser = true).use { ui ->
             ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
             assertTrue(ui.shows("Owned add-on"))
             assertFalse(ui.shows("No add-ons installed."))
