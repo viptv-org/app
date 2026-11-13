@@ -108,27 +108,48 @@ dependencies {
     "debugImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 }
 
+fun nativeFingerprint(component: String) = providers.exec {
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "fingerprint", component, "--abis", selectedAbis.joinToString(","))
+}.standardOutput.asText.map(String::trim)
+
 val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_engine.py", "android", "--abis", selectedAbis.joinToString(","))
-    inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/*.c", "**/*.h", "**/*.patch", "**/source-manifest.json", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("native/core/THIRD_PARTY_LICENSES/webrtc-vad.txt"), rootProject.file("tools/build_engine.py"))
+    commandLine("python3", "tools/android_native.py", "build", "engine", "--abis", selectedAbis.joinToString(","))
+    inputs.property("nativeFingerprint", nativeFingerprint("engine"))
+    inputs.files(rootProject.fileTree("native/core") { exclude(".git", "target/**", "**/__pycache__/**") })
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(rootProject.file("tools/android_native.py"), rootProject.file("tools/build_engine.py"), rootProject.file("tools/macos_signing.py"), rootProject.file("tools/android-toolchains.json"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
     outputs.dir(layout.buildDirectory.dir("generated/subtitleLicenses"))
+    outputs.cacheIf { true }
 }
-tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
 
-// -Pviptv.torrentRuntime=false builds without it (no Go/playback-gateway); torrents then need a gateway.
 val torrentRuntime = providers.gradleProperty("viptv.torrentRuntime").orNull != "false"
 val buildTorrentRuntime by tasks.registering(Exec::class) {
     onlyIf { torrentRuntime }
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_torrent_runtime.py", "--abis", selectedAbis.joinToString(","))
-    inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+    commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
+    inputs.property("nativeFingerprint", nativeFingerprint("torrent"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/android_native.py"), rootProject.file("tools/android-toolchains.json"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
+    outputs.cacheIf { true }
 }
-tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }
+
+val verifyAndroidEngine by tasks.registering(Exec::class) {
+    dependsOn(buildAndroidEngine)
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "build", "engine", "--abis", selectedAbis.joinToString(","))
+}
+val verifyTorrentRuntime by tasks.registering(Exec::class) {
+    dependsOn(buildTorrentRuntime)
+    onlyIf { torrentRuntime }
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
+}
+tasks.named("preBuild") { dependsOn(verifyAndroidEngine, verifyTorrentRuntime) }
 
 // Guard: the debug APK packages exactly the selected ABIs (all shipped ABIs without viptv.abis).
 val checkDebugApkAbis by tasks.registering(Exec::class) {

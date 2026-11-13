@@ -28,7 +28,7 @@ if not abis or unknown:
     parser.error(f"--abis: unknown ABI {', '.join(unknown) or '(empty)'}; supported: {', '.join(ANDROID_ABIS)}")
 abis = [abi for abi in ANDROID_ABIS if abi in abis]
 
-GO_TOOLCHAIN = "go1.25.11"
+GO_TOOLCHAIN = "go" + json.loads((Path(__file__).resolve().parent / "android-toolchains.json").read_text())["go"]
 root = Path(__file__).resolve().parents[1]
 revision = (root / "TORRENT_RUNTIME_REF").read_text().strip()
 output = root / "androidApp/build/generated/torrentRuntime"
@@ -56,7 +56,8 @@ def ndk_home(env):
     properties = root / "local.properties"
     if not sdk and properties.exists():
         sdk = next((v.split("=", 1)[1] for v in properties.read_text().splitlines() if v.startswith("sdk.dir=")), None)
-    ndks = sorted((Path(sdk) / "ndk").iterdir(), key=lambda p: [int(x) for x in p.name.split(".")]) if sdk else []
+    pin = json.loads((root / "tools/android-toolchains.json").read_text())["ndk"]
+    ndks = [Path(sdk) / "ndk" / pin] if sdk and (Path(sdk) / "ndk" / pin).is_dir() else []
     if not ndks:
         raise SystemExit("Android NDK is missing")
     return str(ndks[-1])

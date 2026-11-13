@@ -1,0 +1,219 @@
+name: Android release
+on:
+  workflow_dispatch:
+    inputs:
+      default_server:
+        description: Optional HTTPS sign-in origin
+        type: string
+        default: ''
+      cache_experiment:
+        description: Cache verification scenario
+        type: choice
+        options: [none, cold, kotlin, native, corrupt]
+        default: none
+  workflow_call:
+    inputs:
+      default_server:
+        type: string
+        default: ''
+      cache_experiment:
+        type: string
+        default: none
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: 1.98.0
+      LC_ALL: C
+      DEFAULT_SERVER: ${{ inputs.default_server }}
+      CACHE_EXPERIMENT: ${{ inputs.cache_experiment || 'none' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Reclaim hosted runner space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-write-only: ${{ inputs.cache_experiment == 'cold' }}
+          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch && github.event_name != 'workflow_dispatch' }}
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.0 platforms;android-37.2'
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: ''
+          go-version: '1.25.11'
+          cache: false
+      - name: Restore compiler and dependency caches
+        if: inputs.cache_experiment != 'cold'
+        id: compiler
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-ndk
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            build/rust
+          key: android-compilers-${{ runner.os }}-${{ hashFiles('tools/android-toolchains.json', 'native/core/Cargo.lock', 'TORRENT_RUNTIME_REF') }}-${{ github.sha }}
+          restore-keys: android-compilers-${{ runner.os }}-
+      - name: Prepare pinned native toolchains
+        id: toolchains
+        shell: bash
+        run: |
+          started=$SECONDS
+          rustup toolchain install 1.98.0 --profile minimal
+          rustup target add --toolchain 1.98.0 armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+          if ! cargo ndk --version 2>/dev/null | grep -q '4.1.2'; then
+            cargo install cargo-ndk --version 4.1.2 --locked
+          fi
+          sdkmanager 'ndk;28.2.13676358'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
+      - name: Check out pinned torrent source
+        run: |
+          git clone --quiet https://github.com/viptv-org/playback-gateway.git "$RUNNER_TEMP/playback-gateway"
+          git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
+          echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
+      - name: Native cache seam tests
+        run: python3 -m unittest discover -s tools/tests -p 'test_android_native.py'
+      - name: Apply cache verification scenario
+        shell: bash
+        run: |
+          case "$CACHE_EXPERIMENT" in
+            none|cold|corrupt) ;;
+            kotlin) echo 'private const val androidCacheProbe = "benchmark"' >> composeApp/src/commonMain/kotlin/org/viptv/app/App.kt ;;
+            native) echo ' ' >> native/core/crates/viptv-core/src/lib.rs ;;
+            *) exit 1 ;;
+          esac
+      - name: Fingerprint native inputs
+        id: native-key
+        run: |
+          engine=$(python3 tools/android_native.py fingerprint engine)
+          torrent=$(python3 tools/android_native.py fingerprint torrent)
+          echo "key=android-native-v1-${RUNNER_OS}-${engine}-${torrent}" >> "$GITHUB_OUTPUT"
+      - name: Restore exact native outputs
+        if: inputs.cache_experiment != 'cold'
+        id: natives
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            androidApp/build/generated/rustJni
+            androidApp/build/generated/subtitleLicenses
+            androidApp/build/generated/torrentRuntime
+          key: ${{ steps.native-key.outputs.key }}
+      - name: Damage restored library for validation probe
+        if: inputs.cache_experiment == 'corrupt'
+        run: |
+          test '${{ steps.natives.outputs.cache-hit }}' = true
+          truncate -s 20 androidApp/build/generated/rustJni/arm64-v8a/libviptv_core.so
+      - name: Validate or rebuild native outputs
+        id: native-build
+        shell: bash
+        run: |
+          started=$SECONDS
+          python3 tools/android_native.py build engine > "$RUNNER_TEMP/engine.log" 2>&1 &
+          engine=$!
+          python3 tools/android_native.py build torrent > "$RUNNER_TEMP/torrent.log" 2>&1 &
+          torrent=$!
+          result=0
+          wait "$engine" || result=1
+          wait "$torrent" || result=1
+          cat "$RUNNER_TEMP/engine.log" "$RUNNER_TEMP/torrent.log"
+          echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
+          exit "$result"
+      - name: Save exact native outputs
+        if: steps.natives.outputs.cache-hit != 'true' && (github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch')
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            androidApp/build/generated/rustJni
+            androidApp/build/generated/subtitleLicenses
+            androidApp/build/generated/torrentRuntime
+          key: ${{ steps.native-key.outputs.key }}
+      - name: Build optimized universal release and host tests
+        id: release
+        shell: bash
+        run: |
+          started=$SECONDS
+          ./gradlew --build-cache --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process "-Pviptv.defaultServer=$DEFAULT_SERVER" :androidApp:assembleRelease :composeApp:testAndroidHostTest --console=plain | tee "$RUNNER_TEMP/gradle.log"
+          echo "seconds=$((SECONDS-started))" >> "$GITHUB_OUTPUT"
+      - name: Verify APK native libraries and release profile
+        run: |
+          python3 tools/check_apk_abis.py androidApp/build/outputs/apk/release/androidApp-release.apk armeabi-v7a,arm64-v8a,x86_64
+          python3 tools/android_native.py validate engine
+          python3 tools/android_native.py validate torrent
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          with ZipFile('androidApp/build/outputs/apk/release/androidApp-release.apk') as apk:
+              names = set(apk.namelist())
+              assert 'assets/dexopt/baseline.prof' in names, 'Release baseline profile missing'
+              for abi in ['armeabi-v7a', 'arm64-v8a', 'x86_64']:
+                  for library in ['libtorrent_runtime.so', 'libtorrent_runtime_jni.so']:
+                      assert f'lib/{abi}/{library}' in names
+              assert 'assets/licenses/webrtc-vad.LICENSE' in names
+              assert 'assets/torrent-runtime/PROVENANCE.md' in names
+          PY
+      - name: Save compiler and dependency caches
+        if: github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-ndk
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            build/rust
+          key: android-compilers-${{ runner.os }}-${{ hashFiles('tools/android-toolchains.json', 'native/core/Cargo.lock', 'TORRENT_RUNTIME_REF') }}-${{ github.sha }}
+      - name: Release build measurements
+        if: always()
+        env:
+          NATIVE_HIT: ${{ steps.natives.outputs.cache-hit }}
+          COMPILER_HIT: ${{ steps.compiler.outputs.cache-hit }}
+          TOOLCHAIN_SECONDS: ${{ steps.toolchains.outputs.seconds }}
+          NATIVE_SECONDS: ${{ steps.native-build.outputs.seconds }}
+          RELEASE_SECONDS: ${{ steps.release.outputs.seconds }}
+        run: |
+          {
+            echo '| Measurement | Result |'
+            echo '| --- | --- |'
+            echo "| Scenario | $CACHE_EXPERIMENT |"
+            echo "| Exact native cache hit | ${NATIVE_HIT:-false} |"
+            echo "| Exact compiler cache hit | ${COMPILER_HIT:-false} |"
+            echo "| Toolchain preparation seconds | $TOOLCHAIN_SECONDS |"
+            echo "| Native validation/build seconds | $NATIVE_SECONDS |"
+            echo "| Gradle release + tests seconds | $RELEASE_SECONDS |"
+            echo "| Gradle tasks restored | $(grep -c FROM-CACHE "$RUNNER_TEMP/gradle.log" || true) |"
+            echo "| Gradle tasks up to date | $(grep -c UP-TO-DATE "$RUNNER_TEMP/gradle.log" || true) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-release-evidence
+          path: |
+            androidApp/build/outputs/apk/release/*.apk
+            androidApp/build/outputs/mapping/release/mapping.txt
+            composeApp/build/reports/tests/testAndroidHostTest
+            ${{ runner.temp }}/engine.log
+            ${{ runner.temp }}/torrent.log
+            ${{ runner.temp }}/gradle.log
+          if-no-files-found: warn

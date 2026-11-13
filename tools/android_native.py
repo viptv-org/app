@@ -29,7 +29,7 @@ def fingerprint(root, component, abis, toolchains):
                   'tools/playback_gateway.py', 'androidApp/src/main/java/org/playbackgateway/runtime/NativeRuntime.java']]
     files = {str(p.relative_to(root)): digest(p) for p in sorted(paths) if p.is_file()}
     environment = {key: value for key, value in os.environ.items()
-                   if key.startswith(('CARGO_PROFILE_', 'CARGO_TARGET_', 'CGO_', 'CC_', 'CXX_'))
+                   if (key != 'CARGO_TARGET_DIR' and key.startswith(('CARGO_PROFILE_', 'CARGO_TARGET_', 'CGO_', 'CC_', 'CXX_')))
                    or key in {'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'GOFLAGS', 'GOEXPERIMENT'}}
     payload = {'schema': 1, 'component': component, 'abis': abis, 'files': files,
                'toolchains': toolchains, 'environment': environment}
