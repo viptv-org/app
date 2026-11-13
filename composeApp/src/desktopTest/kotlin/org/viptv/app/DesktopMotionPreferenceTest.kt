@@ -12,6 +12,7 @@ import kotlin.test.*
 @OptIn(ExperimentalComposeUiApi::class)
 class DesktopMotionPreferenceTest {
     @get:Rule val uiThread = UiThreadRule()
+    @get:Rule val deterministicImages = DeterministicImageLoaderRule()
 
     @Test fun aPreferenceCreatedDuringCompositionPublishesAnImmediateResult() {
         repeat(10) {
