@@ -188,7 +188,9 @@ class AccountCapabilityTest {
         val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = false)
         try {
             val read = async { remote.accountIdentity() }
-            entered.await(); remote.switchProfile("2"); remote.bootstrap(); release.complete(Unit); read.await()
+            entered.await(); remote.switchProfile("2")
+            assertEquals(false, remote.integrationManagementEnabled, "A pending profile cannot use the legacy-owner fallback")
+            remote.bootstrap(); release.complete(Unit); read.await()
             assertEquals("device", remote.accountRole)
             assertEquals(false, remote.integrationManagementEnabled)
             remote.call("/api/profiles/2/integrations", HttpMethod.Put)

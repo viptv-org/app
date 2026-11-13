@@ -247,7 +247,7 @@ open class RemoteConnection(
 
     suspend fun switchProfile(id: String, pin: String? = null) {
         accountAccessEpoch++
-        integrationManagementEnabled = null
+        integrationManagementEnabled = false
         accountAccessRead = false
         call("/api/auth/profile", HttpMethod.Post, buildJsonObject {
             put("profile_id", id)
