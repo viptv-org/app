@@ -112,10 +112,12 @@ def report(root, output):
     selection = json.loads((output / "selection.json").read_text())
     result = test_results(root / "composeApp/build/test-results/desktopTest", selection["filters"])
     result.update(source=selection["source"], qualification=selection["qualification"],
-                  native_cache=os.environ.get("NATIVE_CACHE_HIT", "unknown"))
+                  native_cache=os.environ.get("NATIVE_CACHE_HIT") or "no exact hit")
     (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     summary = ["## Targeted desktop regression", "", f"Source: `{selection['source']}`", "",
                "This result does not replace full PR or edge qualification.", "",
+               "Requested: " + ", ".join(f"`{name}`" for name in selection["requested"]), "",
+               "Repository scan/guard classes are included automatically.", "",
                f"Native cache hit: `{result['native_cache']}`; native inputs are recorded in selection.json.", "",
                "| Class | Cases | Skipped | Failed |", "| --- | ---: | ---: | ---: |"]
     summary += [f"| `{name}` | {c['tests']} | {c['skipped']} | {c['failed']} |" for name, c in result["classes"].items()]
