@@ -22,8 +22,8 @@ class ManualSourceDiscoveryTest {
     private val movie = Card(MediaIdentity("movie", "movie", emptyList()), provider_id = "catalog", title = "Movie", badges = emptyList())
 
     @Test fun openingThePickerReplacesPreferredDiscoveryAndKeepsAllProviderBatches() = runTest {
-        val requests = mutableListOf<JsonObject>()
-        val cancelled = mutableListOf<String>()
+        val requests = EngineRequests<JsonObject>()
+        val cancelled = EngineRequests<String>()
         val preferredPending = CompletableDeferred<Unit>()
         val late = CompletableDeferred<Unit>()
         var playbackRequests = 0
