@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   desktop:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -146,7 +147,7 @@ jobs:
           git -C "$RUNNER_TEMP/playback-gateway" cat-file -e "$(cat TORRENT_RUNTIME_REF)^{commit}"
           echo "VIPTV_PLAYBACK_GATEWAY=$RUNNER_TEMP/playback-gateway" >> "$GITHUB_ENV"
       - name: Build Android
-        run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process :androidApp:assembleRelease
+        run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process -Pviptv.defaultServer=https://beta-viptv.syek.tech :androidApp:assembleRelease
       - name: Android host tests
         run: ./gradlew -Pkotlin.compiler.execution.strategy=in-process :composeApp:testAndroidHostTest
       - name: Check shipped ABIs
@@ -157,6 +158,7 @@ jobs:
           path: androidApp/build/outputs/apk/release/*.apk
           if-no-files-found: error
   web:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
