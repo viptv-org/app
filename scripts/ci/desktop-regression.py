@@ -50,28 +50,32 @@ def native_key(inputs, image, architecture):
     return "desktop-regression-native-v1-" + hashlib.sha256(data).hexdigest()
 
 
-def prepare(root, output, raw):
-    requested, filters = select_classes(raw, classes_in(root))
+def prepare_natives(root, output):
     inputs = {path: git(root, "rev-parse", f"HEAD:{path}") for path in NATIVE_INPUTS}
     torrent_commit = git(root, "show", "HEAD:TORRENT_RUNTIME_REF")
     if not re.fullmatch(r"[0-9a-f]{40}", torrent_commit):
         raise ValueError("The torrent runtime must be pinned to a full commit SHA.")
     metadata = {
         "source": git(root, "rev-parse", "HEAD"),
-        "requested": requested,
-        "filters": filters,
         "native_inputs": inputs,
         "torrent_commit": torrent_commit,
         "native_key": native_key(inputs, os.environ.get("ImageOS"), os.environ.get("RUNNER_ARCH")),
-        "qualification": "targeted desktop regression only",
     }
     output.mkdir(parents=True, exist_ok=True)
     (output / "selection.json").write_text(json.dumps(metadata, indent=2) + "\n")
-    (output / "filters.txt").write_text("\n".join(filters) + "\n")
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
             stream.write(f"native_key={metadata['native_key']}\n")
     print(json.dumps(metadata, indent=2))
+    return metadata
+
+
+def prepare(root, output, raw):
+    requested, filters = select_classes(raw, classes_in(root))
+    metadata = prepare_natives(root, output)
+    metadata.update(requested=requested, filters=filters, qualification="targeted desktop regression only")
+    (output / "selection.json").write_text(json.dumps(metadata, indent=2) + "\n")
+    (output / "filters.txt").write_text("\n".join(filters) + "\n")
 
 
 def verify_natives(root, output):
@@ -107,8 +111,17 @@ def test_results(directory, filters):
             count["tests"] += 1
             count["skipped"] += case.find("skipped") is not None
             count["failed"] += case.find("failure") is not None or case.find("error") is not None
-    passed = not unexpected and all(c["tests"] > c["skipped"] and c["failed"] == 0 for c in counts.values())
+    passed = bool(counts) and not unexpected and all(c["tests"] > c["skipped"] and c["failed"] == 0 for c in counts.values())
     return {"classes": counts, "unexpected_classes": sorted(str(n) for n in unexpected), "passed": passed}
+
+
+def verify_tests(root, output):
+    filters = (output / "filters.txt").read_text().splitlines()
+    result = test_results(root / "composeApp/build/test-results/desktopTest", filters)
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps(result, indent=2))
+    if not result["passed"]:
+        raise ValueError("Desktop shard has missing, skipped-only, failed or unexpected cases.")
 
 
 def report(root, output):
@@ -136,13 +149,17 @@ def report(root, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "verify-natives", "report"))
+    parser.add_argument("action", choices=("prepare", "prepare-natives", "verify-natives", "verify-tests", "report"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     try:
         if args.action == "prepare":
             prepare(root, args.output, os.environ.get("REGRESSION_CLASSES", ""))
+        elif args.action == "prepare-natives":
+            prepare_natives(root, args.output)
+        elif args.action == "verify-tests":
+            verify_tests(root, args.output)
         elif args.action == "verify-natives":
             verify_natives(root, args.output)
         else:
