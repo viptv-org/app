@@ -1,4 +1,6 @@
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -49,6 +51,31 @@ class NativeIdentityTest(unittest.TestCase):
     def test_requires_hosted_platform_identity(self):
         with self.assertRaises(ValueError):
             regression.native_key({}, None, "X64")
+
+    def test_rejects_wrong_revision_and_modified_worker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "evidence"
+            output.mkdir()
+            (output / "selection.json").write_text(json.dumps({"torrent_commit": "a" * 40,
+                "native_inputs": {"native/core": "b" * 40}, "native_key": "fixture-key"}))
+            core = root / "composeApp/build/nativeResources/linux-x86-64/libviptv_core.so"
+            core.parent.mkdir(parents=True)
+            core.write_bytes(b"fixture core")
+            worker = root / "composeApp/build/torrentResources/torrent-runtime/linux-x86-64/torrent-worker"
+            worker.parent.mkdir(parents=True)
+            worker.write_bytes(b"fixture worker")
+            worker.chmod(0o755)
+            manifest = {"protocol": 2, "qualification_only": False, "revision": "a" * 40,
+                        "sha256": hashlib.sha256(worker.read_bytes()).hexdigest()}
+            manifest_path = worker.with_name("worker.json")
+            manifest_path.write_text(json.dumps(manifest))
+            regression.verify_natives(root, output)
+            self.assertEqual("b" * 40, json.loads((output / "native.json").read_text())["core_commit"])
+            for field, wrong in (("revision", "c" * 40), ("sha256", "tampered"), ("qualification_only", True)):
+                manifest_path.write_text(json.dumps({**manifest, field: wrong}))
+                with self.subTest(field=field), self.assertRaises(ValueError):
+                    regression.verify_natives(root, output)
 
 
 class ReportTest(unittest.TestCase):

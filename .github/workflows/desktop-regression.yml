@@ -88,9 +88,7 @@ jobs:
           python3 tools/build_engine.py desktop
           python3 tools/build_desktop_torrent.py
       - name: Verify native outputs
-        run: |
-          test -s composeApp/build/nativeResources/linux-x86-64/libviptv_core.so
-          test -x composeApp/build/torrentResources/torrent-runtime/linux-x86-64/torrent-worker
+        run: python3 scripts/ci/desktop-regression.py verify-natives --output "$RUNNER_TEMP/regression"
       - name: Save built native prerequisites before running regressions
         if: steps.natives.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6

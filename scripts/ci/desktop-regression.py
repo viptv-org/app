@@ -58,6 +58,7 @@ def prepare(root, output, raw):
         "requested": requested,
         "filters": filters,
         "native_inputs": inputs,
+        "torrent_commit": git(root, "show", "HEAD:TORRENT_RUNTIME_REF"),
         "native_key": native_key(inputs, os.environ.get("ImageOS"), os.environ.get("RUNNER_ARCH")),
         "qualification": "targeted desktop regression only",
     }
@@ -68,6 +69,26 @@ def prepare(root, output, raw):
         with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
             stream.write(f"native_key={metadata['native_key']}\n")
     print(json.dumps(metadata, indent=2))
+
+
+def verify_natives(root, output):
+    selection = json.loads((output / "selection.json").read_text())
+    build = root / "composeApp/build"
+    core = build / "nativeResources/linux-x86-64/libviptv_core.so"
+    worker_dir = build / "torrentResources/torrent-runtime/linux-x86-64"
+    worker = worker_dir / "torrent-worker"
+    if not core.is_file() or not core.stat().st_size or not worker.is_file() or not os.access(worker, os.X_OK):
+        raise ValueError("Native prerequisites are missing or not executable.")
+    manifest = json.loads((worker_dir / "worker.json").read_text())
+    worker_sha = hashlib.sha256(worker.read_bytes()).hexdigest()
+    if (manifest.get("protocol") != 2 or manifest.get("qualification_only") is not False or
+            manifest.get("revision") != selection["torrent_commit"] or manifest.get("sha256") != worker_sha):
+        raise ValueError("Torrent worker does not match the pinned native inputs.")
+    (output / "native.json").write_text(json.dumps({
+        "cache_key": selection["native_key"], "core_commit": selection["native_inputs"]["native/core"],
+        "core_sha256": hashlib.sha256(core.read_bytes()).hexdigest(),
+        "torrent_commit": manifest["revision"], "torrent_sha256": worker_sha,
+    }, indent=2) + "\n")
 
 
 def test_results(directory, filters):
@@ -110,13 +131,15 @@ def report(root, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "report"))
+    parser.add_argument("action", choices=("prepare", "verify-natives", "report"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     try:
         if args.action == "prepare":
             prepare(root, args.output, os.environ.get("REGRESSION_CLASSES", ""))
+        elif args.action == "verify-natives":
+            verify_natives(root, args.output)
         else:
             raise SystemExit(report(root, args.output))
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
