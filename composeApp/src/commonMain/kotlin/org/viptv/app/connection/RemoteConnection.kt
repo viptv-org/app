@@ -502,10 +502,11 @@ open class RemoteConnection(
         }
     }
 
-    private suspend fun clearStoredSession(token: String) {
-        val saved = sessionStore.read() ?: return
+    private suspend fun clearStoredSession(token: String?, priorToken: String? = null) {
+        val saved = (sessionStore.savedConnection() as? SavedConnection.Remote)?.session ?: return
         if (remoteOriginOrNull(saved.origin) == origin &&
-            (saved.refreshToken == token || (sessionId != null && saved.sessionId == sessionId))) sessionStore.clear()
+            (saved.refreshToken == token || saved.refreshToken == priorToken ||
+                (sessionId != null && saved.sessionId == sessionId))) sessionStore.clear()
     }
 
     private suspend fun adoptStoredRotation() {
@@ -572,6 +573,7 @@ open class RemoteConnection(
             withContext(NonCancellable) {
                 try {
                     withTimeout(50_000) {
+                        val priorToken = refreshToken
                         try {
                             if (browser) refreshBrowser() else if (refreshToken != null) refreshDevice()
                             refreshVersion++
@@ -579,7 +581,7 @@ open class RemoteConnection(
                         } catch (error: RemoteFailure) {
                             if (error.status != 401) throw error
                         }
-                        try { sessionStore.clear() }
+                        try { if (browser) sessionStore.clear() else clearStoredSession(refreshToken, priorToken) }
                         catch (error: CancellationException) { throw error }
                         catch (_: Exception) { }
                         accessToken = null; refreshToken = null; csrf = null; sessionId = null; storedRefreshToken = null
@@ -603,7 +605,7 @@ open class RemoteConnection(
 
     internal suspend fun forgetDeletedAccount() {
         authSession {
-            try { sessionStore.clear() }
+            try { if (browser) sessionStore.clear() else clearStoredSession(refreshToken) }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) { }
             accessToken = null; refreshToken = null; csrf = null; sessionId = null; storedRefreshToken = null
