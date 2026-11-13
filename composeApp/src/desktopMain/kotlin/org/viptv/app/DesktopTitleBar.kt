@@ -2,7 +2,6 @@ package org.viptv.app
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -12,7 +11,11 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
+import java.awt.event.MouseEvent
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import com.composables.icons.lucide.Lucide
@@ -52,6 +55,7 @@ import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.responseSpec
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun DesktopTitleBar(
     state: ApplicationState,
@@ -78,7 +82,10 @@ internal fun DesktopTitleBar(
     val focusManager = LocalFocusManager.current
     val currentDoubleClick by rememberUpdatedState(onDoubleClick)
     BoxWithConstraints(Modifier.fillMaxWidth().height(barHeight).background(Palette.background).then(dragModifier)
-        .pointerInput(Unit) { detectTapGestures(onDoubleTap = { currentDoubleClick() }) }) {
+        .onPointerEvent(PointerEventType.Release) { event ->
+            if (event.button == PointerButton.Primary && event.changes.none { it.isConsumed } &&
+                (event.nativeEvent as? MouseEvent)?.clickCount == 2) currentDoubleClick()
+        }) {
         val narrow = maxWidth < DesktopBreakpoints.narrowMax
         val mini = maxWidth < DesktopBreakpoints.miniMax
         Row(Modifier.align(Alignment.CenterStart).fillMaxHeight().padding(start = if (simple) 14.dp else 8.dp),
