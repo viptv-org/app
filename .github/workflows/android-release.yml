@@ -23,7 +23,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: android-release-${{ github.ref }}
+  group: android-release-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
   cancel-in-progress: false
 jobs:
   android:

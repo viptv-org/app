@@ -33,8 +33,9 @@ class NativeCacheTest(unittest.TestCase):
             root = Path(directory)
             (root / 'native/core').mkdir(parents=True)
             key = native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.98'})
-            with patch.dict(os.environ, {'CFLAGS': '-DNEW_BUILD=1'}):
-                self.assertNotEqual(key, native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.98'}))
+            for name, value in [('CFLAGS', '-DNEW_BUILD=1'), ('CRATE_CC_NO_DEFAULTS', '1')]:
+                with patch.dict(os.environ, {name: value}):
+                    self.assertNotEqual(key, native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.98'}))
             self.assertNotEqual(key, native.fingerprint(root, 'engine', ['arm64-v8a'], {'rust': '1.98'}))
             self.assertNotEqual(key, native.fingerprint(root, 'engine', ['x86_64'], {'rust': '1.99'}))
 

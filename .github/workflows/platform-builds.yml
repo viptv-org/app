@@ -21,7 +21,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: kmp-platforms-${{ github.ref }}
+  group: kmp-platforms-${{ inputs.android_only && github.run_id || github.ref }}
   cancel-in-progress: ${{ !inputs.android_only }}
 jobs:
   desktop:

@@ -22,6 +22,7 @@ def fingerprint(root, component, abis, toolchains):
     paths = [root / 'tools/android_native.py', root / 'tools/android-toolchains.json']
     if component == 'engine':
         paths += [root / 'tools/build_engine.py', root / 'tools/macos_signing.py']
+        paths += list((root / '.cargo').rglob('*')) if (root / '.cargo').exists() else []
         paths += [p for p in (root / 'native/core').rglob('*')
                   if p.is_file() and not set(p.relative_to(root / 'native/core').parts) & {'.git', 'target', '__pycache__'}]
     else:
@@ -29,7 +30,8 @@ def fingerprint(root, component, abis, toolchains):
                   'tools/playback_gateway.py', 'androidApp/src/main/java/org/playbackgateway/runtime/NativeRuntime.java']]
     files = {str(p.relative_to(root)): digest(p) for p in sorted(paths) if p.is_file()}
     prefixes = ('CARGO_', 'RUST', 'GO', 'CGO_', 'CC', 'CXX', 'CFLAGS', 'CPPFLAGS',
-                'AR', 'LD', 'LDFLAGS', 'TARGET_', 'HOST_', 'BINDGEN_')
+                'AR', 'LD', 'LDFLAGS', 'TARGET_', 'HOST_', 'BINDGEN_', 'CRATE_CC_',
+                'RANLIB', 'PKG_CONFIG', 'RING_', 'OPENSSL_', 'LIBCLANG_', 'CLANG_', 'CMAKE_')
     locations = {'CARGO_HOME', 'CARGO_TARGET_DIR', 'RUSTUP_HOME', 'GOPATH', 'GOCACHE', 'GOMODCACHE'}
     environment = {key: value for key, value in os.environ.items()
                    if key not in locations and key.startswith(prefixes)}
@@ -66,6 +68,9 @@ def toolchains(root, component):
     ndk = Path(os.environ.get('ANDROID_NDK_HOME') or str(Path(sdk or '') / 'ndk' / pins['ndk']))
     actual = {'pins': pins, 'ndk': (ndk / 'source.properties').read_text()}
     if component == 'engine':
+        cargo_home = Path(env.get('CARGO_HOME', str(Path.home() / '.cargo')))
+        actual['cargo-config'] = {name: digest(cargo_home / name) for name in ['config', 'config.toml']
+                                  if (cargo_home / name).is_file()}
         actual['rust'] = subprocess.check_output([env.get('RUSTC', 'rustc'), '-vV'], text=True, env=env).strip()
         actual['cargo'] = subprocess.check_output(['cargo', '--version'], text=True, env=env).strip()
         actual['cargo-ndk'] = subprocess.check_output(['cargo', 'ndk', '--version'], text=True, env=env).strip()
