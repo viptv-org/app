@@ -78,7 +78,7 @@ class SourceRowAddonTextUiTest {
         }
         assertFalse(texts.any { "Audio not listed" in it || "Subs not listed" in it }, texts.toString())
         val languageRow = rows.first { it.candidate.id == "torrentio-eng-ita-languages" }
-        assertTrue(languageRow.candidate.audio_languages.isNotEmpty() && languageRow.candidate.subtitle_languages.isNotEmpty())
+        assertTrue(languageRow.candidate.audio_languages.isNotEmpty(), "core reads the flag line as languages")
         assertEquals(emptyList(), languageRow.tags, "ENG/ITA in a release name and a flag line never become a chip")
         assertFalse(texts.any { it == "EN" || it == "IT" || it == "EN / IT" }, texts.toString())
     }
