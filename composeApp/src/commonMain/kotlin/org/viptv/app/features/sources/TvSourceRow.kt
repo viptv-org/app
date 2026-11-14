@@ -50,10 +50,11 @@ private val TvQualitySize = 30.sp
 private val TvQualityLine = 36.sp
 private val TvQualityColumn = 110.dp
 private val TvQualityWidths = listOf("1080p", "4K", "—")
-private val TvSublineSize = 18.sp
 private val TvNameSize = 26.sp
 private val TvNameLine = 34.sp
 private val TvDetailSize = 18.sp
+private val TvDetailLine = 24.sp
+private val TvTagHeight = 30.dp
 private val TvSourceRowHeight = 112.dp
 
 @Composable
@@ -91,11 +92,10 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
                 Column(Modifier.width(tvQualityColumnWidth(scale))) {
                     Text(info?.quality ?: "—", color = color, fontSize = (TvQualitySize.value * scale).sp, lineHeight = (TvQualityLine.value * scale).sp,
                         fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
-                    source.releaseTypeLabel()?.let { Text(it, maxLines = 1, softWrap = false, color = color.copy(alpha = 0.55f), fontSize = (TvSublineSize.value * scale).sp, fontWeight = FontWeight.SemiBold) }
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp * scale), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
-                        Text(source.releaseGroupLabel(), fontSize = (TvNameSize.value * scale).sp, lineHeight = (TvNameLine.value * scale).sp,
+                        Text(source.providerLabel(), fontSize = (TvNameSize.value * scale).sp, lineHeight = (TvNameLine.value * scale).sp,
                             fontWeight = FontWeight.SemiBold, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         source.cacheStatus()?.let { SourceCacheChip(it, (16 * scale).sp, (14 * scale).dp, (9 * scale).dp, (4 * scale).dp, (6 * scale).dp, (5 * scale).dp) }
                         if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else color.copy(alpha = 0.16f), RoundedCornerShape(6.dp * scale)).padding(horizontal = 10.dp * scale, vertical = 4.dp * scale),
@@ -103,8 +103,10 @@ internal fun TvSourceRow(source: SourceCandidate, info: TvSourceInfo?, scale: Fl
                         if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger,
                             fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     }
-                    SourceAudioSubsLine(source, color, (TvDetailSize.value * scale).sp, (15 * scale).sp, (16 * scale).dp, (8 * scale).dp, (28 * scale).dp, (10 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
-                    SourceFactsRow(source, null, color, (TvDetailSize.value * scale).sp, (16 * scale).dp)
+                    SourceTextWindow(source.addonText(), active = focused,
+                        style = LocalTextStyle.current.merge(TextStyle(fontSize = (TvDetailSize.value * scale).sp, lineHeight = (TvDetailLine.value * scale).sp,
+                            color = color.copy(alpha = .75f))))
+                    SourceTagLine(source, color, (15 * scale).sp, TvTagHeight * scale, (10 * scale).dp, (8 * scale).dp, (1.5 * scale).dp, (6 * scale).dp)
                 }
                 if (source.isPlayPending()) PendingActionSpinner(Modifier.size(28.dp * scale), size = 28.dp * scale, strokeWidth = 3.dp * scale, color = color)
                 else if (inverted) Box(Modifier.size(28.dp * scale).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {

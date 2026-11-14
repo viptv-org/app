@@ -98,9 +98,10 @@ class TvEntryAndSourcesUiTest {
             assertEquals(2, rows.size)
             assertEquals(1, rows.map { it.boundsInRoot.height }.distinct().size, "the static row keeps every row one height")
             val labels = scene.semanticsOwners.flatMap { flatten(it.unmergedRootSemanticsNode) }
-            val name = labels.single { text(it) == "LongGroup" }
-            assertEquals(1, layout(name).lineCount, "the source name keeps its single line")
-            assertTrue(name.boundsInRoot.top >= rows.first().boundsInRoot.top, "the source name stays inside its row")
+            assertEquals(1, labels.count { text(it) == long.detail }, "the whole add-on text stays in the tree once")
+            val window = labels.single { text(it) == long.detail }
+            assertTrue(window.boundsInRoot.height <= 48f, "the description keeps its two-line window: ${window.boundsInRoot}")
+            assertTrue(window.boundsInRoot.top >= rows.first().boundsInRoot.top, "the description stays inside its row")
             capture(scene, "sources")
         } finally { scene.close() }
     }

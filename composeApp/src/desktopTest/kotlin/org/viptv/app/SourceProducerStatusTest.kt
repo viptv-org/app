@@ -83,7 +83,7 @@ class SourceProducerStatusTest {
         scene.pick("Torrentio")
         assertTrue(scene.allTexts().any { it == "Still checking sources" }, "Other providers may still finish")
         scene.render(rows = listOf(torrentio), producers = listOf(comet, unsupported), pending = false)
-        assertTrue(scene.allTexts().any { it == "Stream a1" })
+        assertTrue(scene.allTexts().any { it == "[Stream a1] Release a1" }, scene.allTexts().toString())
         assertFalse(scene.allTexts().any { it == "No playable sources from Comet" })
     }
 
@@ -96,7 +96,7 @@ class SourceProducerStatusTest {
         assertEquals("Source: Comet", scene.triggers().map(scene::nodeText).last())
         scene.render(rows = listOf(torrentio), producers = listOf(comet), pending = false)
         assertEquals("Source: All sources", scene.triggers().map(scene::nodeText).last(), "Producer completion must not retain an empty filter")
-        assertTrue(scene.allTexts().any { it == "Stream a1" })
+        assertTrue(scene.allTexts().any { it == "[Stream a1] Release a1" }, scene.allTexts().toString())
     }
 
     private class Scene : AutoCloseable {

@@ -1,51 +1,38 @@
 package org.viptv.app.features.sources
 
-import org.viptv.engine.wire.SourceCandidate
 import org.viptv.app.connection.seasonNumber
+import org.viptv.engine.wire.SourceCandidate
 
 internal fun SourceCandidate.sourceFilterId(): String = provider_id + ":" + presentation?.source_id.orEmpty()
 internal fun SourceCandidate.providerLabel(): String = presentation?.provider_name?.takeIf { it.isNotBlank() } ?: provider_id
 internal fun SourceCandidate.qualityLabel(): String? = quality_height?.let { if (it == 2160L) "4K" else "${it}p" } ?: presentation?.quality
-internal fun SourceCandidate.formatLabel(): String? = presentation?.let { it.container ?: it.delivery_format?.takeIf { format -> format.equals("hls", true) }?.uppercase() }
 
-internal fun SourceCandidate.releaseTypeLabel(): String? = when (release_type) {
-    "web_dl" -> "WEB-DL"; "webrip" -> "WEBRip"; "bluray" -> "BluRay"; "remux" -> "Remux"
-    "hdtv" -> "HDTV"; "dvd" -> "DVD"; "other_rip" -> "Rip"; "cam" -> "CAM"; else -> null
-}
+internal fun SourceCandidate.addonText(): String? = detail?.trim()?.takeIf(String::isNotEmpty)
 
-internal fun SourceCandidate.dynamicRangeLabel(): String? = when {
-    "dv" in dynamic_range -> "DV"
-    "hdr10_plus" in dynamic_range -> "HDR10+"
-    dynamic_range.any { it == "hdr10" || it == "hdr" || it == "hlg" } -> "HDR"
-    else -> null
-}
+internal class SourceTag(val label: String, val shown: (SourceCandidate) -> Boolean)
 
-internal fun SourceCandidate.audioFlagLabel(): String? = when {
-    "dual" in audio_flags -> "Dual audio"
-    "multi" in audio_flags -> "Multi audio"
-    "dubbed" in audio_flags -> "Dubbed"
-    else -> null
-}
+internal val SOURCE_TAGS = listOf(
+    SourceTag("Dubbed") { "dubbed" in it.audio_flags },
+    SourceTag("Multi audio") { "multi" in it.audio_flags || "dual" in it.audio_flags },
+    SourceTag("HDR") { candidate -> candidate.dynamic_range.any { it == "hdr10" || it == "hdr10_plus" || it == "hdr" || it == "hlg" } },
+    SourceTag("Dolby Vision") { "dv" in it.dynamic_range },
+    SourceTag("Remux") { it.release_type == "remux" },
+    SourceTag("3D") { it.three_d },
+    SourceTag("CAM") { it.release_type == "cam" },
+)
 
-internal fun SourceCandidate.qualitySubline(): String? = dynamicRangeLabel() ?: releaseTypeLabel()
+internal fun SourceCandidate.sourceTags(): List<String> = SOURCE_TAGS.filter { it.shown(this) }.map { it.label }
 
-internal fun SourceCandidate.sizeLabel(): String? = presentation?.let { value ->
-    value.size_label ?: value.size_bytes?.let { bytes ->
-        if (bytes >= 1_073_741_824) "${(bytes / 107_374_182L) / 10.0} GB" else "${bytes / 1_048_576} MB"
-    }
-}
+private val ADDON_SIZE = Regex("""💾\s*([0-9][0-9.,]*\s*(?:[KMGT]i?B))""", RegexOption.IGNORE_CASE)
 
-internal fun SourceCandidate.codecLabel(): String? = presentation?.video_codec?.takeIf { it.isNotBlank() }?.let { codec ->
-    bitDepthLabel()?.takeUnless { depth -> codec.contains(depth, ignoreCase = true) }?.let { "$codec $it" } ?: codec
-}
+internal fun SourceCandidate.sizeLabel(): String? = presentation?.size_bytes?.let(::sizeFromBytes)
+    ?: ADDON_SIZE.find(detail.orEmpty())?.groupValues?.get(1)?.replace(',', '.')?.trim()?.takeIf(String::isNotEmpty)
 
-internal fun SourceCandidate.trackerLabel(): String? = parseTracker(detail)
-
-internal fun SourceCandidate.seasonPack(): Boolean = detail?.let { SEASON_PACK.containsMatchIn(it) } == true
+internal fun sizeFromBytes(bytes: Long): String =
+    if (bytes >= 1_073_741_824) "${(bytes / 107_374_182L) / 10.0} GB" else "${bytes / 1_048_576} MB"
 
 internal enum class CacheKind { Instant, NotCached }
 internal data class CacheChip(val kind: CacheKind, val service: String?)
-internal data class LanguageChip(val label: String, val dashed: Boolean)
 
 internal fun SourceCandidate.cacheStatus(): CacheChip? = cacheChip(label, delivery)
 
@@ -59,100 +46,13 @@ internal fun cacheChip(label: String, delivery: String?): CacheChip? {
     return CacheChip(kind, service)
 }
 
-internal fun SourceCandidate.releaseGroupLabel(): String = parseReleaseGroup(detail) ?: providerLabel()
-
-internal fun SourceCandidate.rowAudioSubs(): String {
-    fun labels(values: List<String>) = values.map { it.trim().uppercase() }.filter(String::isNotEmpty).take(3).joinToString("/")
-    val audio = labels(audio_languages).takeIf(String::isNotEmpty)?.let { "Audio $it" } ?: "Audio not listed"
-    val subtitles = labels(subtitle_languages).takeIf(String::isNotEmpty)?.let { "Subs $it" }
-        ?: if (subbed) "Subs" else "Subs not listed"
-    return "$audio · $subtitles"
-}
-
-internal fun SourceCandidate.audioChips(): List<LanguageChip>? {
-    val codes = languageTags(audio_languages)
-    if (codes.isEmpty()) return audioFlagLabel()?.let { listOf(LanguageChip(it, dashed = true)) }
-    val chips = mutableListOf<LanguageChip>()
-    if ("EN" in codes) chips += LanguageChip(if ("dubbed" in audio_flags) "EN dub" else "EN", dashed = false)
-    codes.filter { it != "EN" }.forEach { chips += LanguageChip(it, dashed = false) }
-    return chips
-}
-
-internal fun SourceCandidate.subtitleChips(): List<LanguageChip>? {
-    val codes = languageTags(subtitle_languages)
-    if (codes.isNotEmpty()) return codes.map { LanguageChip(it, dashed = false) }
-    return if (subbed) listOf(LanguageChip("Subs", dashed = true)) else null
-}
-
-internal fun SourceCandidate.factItems(addon: String? = null): List<String> = listOfNotNull(
-    sizeLabel(),
-    codecLabel(),
-    seeders?.let { "↑$it" },
-    trackerLabel(),
-    addon?.takeIf { it.isNotBlank() } ?: presentation?.provider_name?.takeIf { it.isNotBlank() },
-    SEASON_PACK_LABEL.takeIf { seasonPack() },
-).distinct()
-
-internal fun SourceCandidate.factBadges(): List<String> = listOfNotNull(
-    releaseTypeLabel(),
-    dynamicRangeLabel(),
-    audioFlagLabel(),
-    languageBadge(audio_languages),
-    subtitleBadge(),
-    "3D".takeIf { three_d },
-)
-
-private val LEADING_GROUP = Regex("""^\[\s*([^\[\]]+?)\s*]""")
-private val TRAILING_EXTENSION = Regex("""\.\w{2,5}$""")
-private val TRAILING_GROUP = Regex("""-([A-Za-z][A-Za-z0-9._-]*)$""")
-private val BIT_DEPTH = Regex("""(?i)\b10[ ._-]*bit""")
-private val SEASON_PACK = Regex(
-    """(?i)\[batch]|\(batch\)|"batch"|\bs\d{1,2}\s*[-:.]?\s*complete\b|\bseason\s*\d{1,2}\s*-\s*\d{1,2}\b|\bs\d{1,2}e\d{1,3}\s*-\s*e?\d{1,3}\b|\bseason\s*(?:pack|full|complete)\b"""
-)
-internal const val SEASON_PACK_LABEL = "Season pack"
-private val DEBRID_TAG = Regex("""\[(TB|RD|AD|PM|DL)\s*([^\]]*?)]""")
-private val DEBRID_SERVICES = mapOf(
-    "TB" to "TorBox", "RD" to "Real-Debrid", "AD" to "AllDebrid", "PM" to "Premiumize", "DL" to "Debrid-Link",
-)
-
-internal fun parseReleaseGroup(text: String?): String? {
-    val lines = text.orEmpty().lineSequence().map { it.trim() }.filter { it.isNotEmpty() }
-    for (line in lines) LEADING_GROUP.find(line)?.let { return it.groupValues[1].trim().takeIf(String::isNotBlank) }
-    val last = lines.lastOrNull() ?: return null
-    return TRAILING_GROUP.find(last.replace(TRAILING_EXTENSION, ""))?.let { it.groupValues[1].trim().takeIf(String::isNotBlank) }
-}
-
-internal fun parseTracker(text: String?): String? =
-    text.orEmpty().lineSequence().firstOrNull { '⚙' in it }?.let { line ->
-        line.split(' ', '|', '\t').lastOrNull { w -> w.isNotBlank() && '⚙' !in w }?.trim()
-    }
-
-internal fun SourceCandidate.bitDepthLabel(): String? = detail?.takeIf { BIT_DEPTH.containsMatchIn(it) }?.let { "10-bit" }
-
-private const val LANGUAGE_BADGE_LIMIT = 3
-private fun languageTags(tags: List<String>): List<String> = tags.map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct()
-private fun languageBadge(tags: List<String>): String? = languageTags(tags).takeIf { it.isNotEmpty() }?.let { shown ->
-    shown.take(LANGUAGE_BADGE_LIMIT).joinToString(" / ") + if (shown.size > LANGUAGE_BADGE_LIMIT) " +${shown.size - LANGUAGE_BADGE_LIMIT}" else ""
-}
-private fun SourceCandidate.subtitleBadge(): String? = languageBadge(subtitle_languages)?.let { "Subs $it" } ?: "Subs".takeIf { subbed }
-internal fun SourceCandidate.releaseDetail(): String? = detail?.takeIf {
-    it.isNotBlank() && it.trim() != label.trim() && it.trim() != technicalDetail()?.trim()
-}
-internal fun SourceCandidate.descriptionText(): String? =
-    listOfNotNull(releaseDetail(), technicalDetail()).distinct().takeIf { it.isNotEmpty() }?.joinToString(" · ")
-
-internal fun SourceCandidate.technicalDetail(): String? {
-    val fallback = detail?.takeUnless { it.trim() == qualityLabel() }
-    val value = presentation ?: return fallback
-    val parts = listOfNotNull(value.container, value.video_codec, value.audio_codecs.takeIf { it.isNotEmpty() }?.joinToString(" / "),
-        value.size_label ?: value.size_bytes?.let { bytes ->
-            if (bytes >= 1_073_741_824) "${(bytes / 107_374_182L) / 10.0} GB" else "${bytes / 1_048_576} MB"
-        })
-    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: fallback
-}
-
 internal fun sourceHeading(title: org.viptv.engine.wire.Card?, detail: org.viptv.engine.wire.DetailSnapshot?): String? {
     val episode = title?.identity?.episode ?: return title?.title
     val name = detail?.item?.title ?: return title.title
     return "$name · S${episode.seasonNumber()} E${episode.episode}"
 }
+
+private val DEBRID_TAG = Regex("""\[(TB|RD|AD|PM|DL)\s*([^\]]*?)]""")
+private val DEBRID_SERVICES = mapOf(
+    "TB" to "TorBox", "RD" to "Real-Debrid", "AD" to "AllDebrid", "PM" to "Premiumize", "DL" to "Debrid-Link",
+)

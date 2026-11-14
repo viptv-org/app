@@ -48,67 +48,19 @@ class ReleaseFactsTest {
         assertNull(bare.release_type); assertFalse(bare.three_d); assertTrue(bare.dynamic_range.isEmpty()); assertNull(bare.seeders)
         val full = json.decodeFromString<SourceCandidate>("""{"id":"a","provider_id":"p","label":"A","release_type":"web_dl",
             "three_d":false,"dynamic_range":["hdr10_plus"],"audio_flags":["multi","dubbed"],"seeders":null,"delivery":"direct","dv_base_layer":"hdr10"}""")
-        assertEquals(listOf("WEB-DL", "HDR10+", "Multi audio"), full.factBadges())
+        assertEquals(listOf("Dubbed", "Multi audio", "HDR"), full.sourceTags())
         assertEquals("direct", full.delivery)
     }
 
-    @Test fun badgesFollowTheSpecOrderAndPrecedence() {
+    @Test fun theRowShowsOnlyTheFixedTagSet() {
         val base = SourceCandidate("a", "p", "A")
-        assertEquals(emptyList(), base.factBadges())
-        mapOf("web_dl" to "WEB-DL", "webrip" to "WEBRip", "bluray" to "BluRay", "remux" to "Remux", "hdtv" to "HDTV",
-            "dvd" to "DVD", "other_rip" to "Rip", "cam" to "CAM").forEach { (value, label) ->
-            assertEquals(listOf(label), base.copy(release_type = value).factBadges())
-        }
-        assertEquals(emptyList(), base.copy(release_type = "unknown").factBadges())
-        assertEquals(listOf("DV"), base.copy(dynamic_range = listOf("hdr10", "hdr10_plus", "dv")).factBadges())
-        assertEquals(listOf("HDR10+"), base.copy(dynamic_range = listOf("hdr10", "hdr10_plus")).factBadges())
-        assertEquals(listOf("HDR"), base.copy(dynamic_range = listOf("hdr10")).factBadges())
-        assertEquals(listOf("HDR"), base.copy(dynamic_range = listOf("hlg")).factBadges())
-        assertEquals(listOf("Dual audio"), base.copy(audio_flags = listOf("dubbed", "multi", "dual")).factBadges())
-        assertEquals(listOf("Multi audio"), base.copy(audio_flags = listOf("dubbed", "multi")).factBadges())
-        assertEquals(listOf("Dubbed"), base.copy(audio_flags = listOf("dubbed")).factBadges())
-        assertEquals(listOf("BluRay", "DV", "Dubbed", "3D"),
-            base.copy(release_type = "bluray", dynamic_range = listOf("dv"), audio_flags = listOf("dubbed"), three_d = true).factBadges())
-    }
-
-    @Test fun customSourceLanguageAndSubtitleMetadataBecomesBadges() {
-        val base = SourceCandidate("a", "p", "A")
-        assertEquals(listOf("JA"), base.copy(audio_languages = listOf("ja")).factBadges())
-        assertEquals(listOf("EN / PT-BR"), base.copy(audio_languages = listOf("en", " pt-BR ", "EN", "")).factBadges())
-        assertEquals(listOf("EN / JA / FR +1"), base.copy(audio_languages = listOf("en", "ja", "fr", "de")).factBadges())
-        assertEquals(listOf("Subs"), base.copy(subbed = true).factBadges())
-        assertEquals(listOf("Subs EN / FR"), base.copy(subbed = true, subtitle_languages = listOf("en", "fr")).factBadges())
-        assertEquals(listOf("Subs EN"), base.copy(subtitle_languages = listOf("en")).factBadges())
-        assertEquals(emptyList(), base.copy(audio_languages = listOf(" ", ""), subtitle_languages = listOf("")).factBadges())
-        assertEquals(listOf("BluRay", "Dubbed", "JA", "Subs EN", "3D"),
-            base.copy(release_type = "bluray", audio_flags = listOf("dubbed"), audio_languages = listOf("ja"),
-                subtitle_languages = listOf("en"), three_d = true).factBadges())
-    }
-
-    @Test fun serverCardsCarryLanguageAndSubtitleMetadataOnlyWhenDeclared() {
-        val (full, bare, odd) = streams(
-            """{"id":"a","name":"A","audio_languages":["ja"],"audio_flags":["dubbed"],"subbed":true,"subtitle_languages":["en","fr"]}""",
-            """{"id":"b","name":"B","quality_height":1080}""",
-            """{"id":"c","name":"C","subbed":null,"subtitle_languages":"en"}""")
-        assertEquals(listOf("Dubbed", "JA", "Subs EN / FR"), full.factBadges())
-        assertTrue(full.subbed); assertEquals(listOf("en", "fr"), full.subtitle_languages)
-        assertFalse(bare.subbed); assertTrue(bare.subtitle_languages.isEmpty()); assertEquals(emptyList(), bare.factBadges())
-        assertFalse(odd.subbed); assertTrue(odd.subtitle_languages.isEmpty()); assertEquals(emptyList(), odd.factBadges())
-    }
-
-    @Test fun serializedCandidatesDecodeWithAndWithoutSubtitleMetadata() {
-        val json = Json { ignoreUnknownKeys = true }
-        val old = json.decodeFromString<SourceCandidate>("""{"id":"a","provider_id":"p","label":"A"}""")
-        assertFalse(old.subbed); assertTrue(old.subtitle_languages.isEmpty())
-        val full = json.decodeFromString<SourceCandidate>("""{"id":"a","provider_id":"p","label":"A","subbed":true,"subtitle_languages":["en"]}""")
-        assertTrue(full.subbed); assertEquals(listOf("Subs EN"), full.factBadges())
-    }
-
-    @Test fun narrowRowsDropTrailingBadgesWhole() {
-        assertEquals(listOf(0, 1, 2), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 128))
-        assertEquals(listOf(0, 1), sourceFactBadgesThatFit(listOf(40, 30, 50), 4, 127))
-        assertEquals(listOf(0), sourceFactBadgesThatFit(listOf(40, 90, 10), 4, 60))
-        assertEquals(emptyList(), sourceFactBadgesThatFit(listOf(80), 4, 60))
+        assertEquals(emptyList(), base.sourceTags())
+        assertEquals(listOf("Dubbed", "Multi audio"), base.copy(audio_flags = listOf("multi", "dubbed")).sourceTags())
+        assertEquals(listOf("HDR", "Dolby Vision", "Remux", "3D"),
+            base.copy(dynamic_range = listOf("dv", "hdr10_plus", "hdr10"), release_type = "remux", three_d = true).sourceTags())
+        assertEquals(listOf("CAM"), base.copy(release_type = "cam").sourceTags())
+        assertEquals(emptyList(), base.copy(release_type = "bluray", audio_languages = listOf("ja"), subbed = true, subtitle_languages = listOf("en")).sourceTags(),
+            "languages and release types are not tags")
     }
 
     @Test fun displayHeightsSnapToVideoTiers() {
