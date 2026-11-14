@@ -20,23 +20,15 @@ import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
 import org.junit.Rule
-import org.viptv.app.connection.withReleaseFacts
 import org.viptv.app.features.sources.CacheChip
 import org.viptv.app.features.sources.CacheKind
-import org.viptv.app.features.sources.LanguageChip
 import org.viptv.app.features.sources.SourceRow
 import org.viptv.app.features.sources.TvSourceInfo
 import org.viptv.app.features.sources.TvSourceRow
-import org.viptv.app.features.sources.rowAudioSubs
-import org.viptv.app.features.sources.audioChips
+import org.viptv.app.features.sources.addonText
 import org.viptv.app.features.sources.cacheChip
-import org.viptv.app.features.sources.factItems
-import org.viptv.app.features.sources.parseReleaseGroup
-import org.viptv.app.features.sources.parseTracker
+import org.viptv.app.features.sources.providerLabel
 import org.viptv.app.features.sources.qualityLabel
-import org.viptv.app.features.sources.releaseGroupLabel
-import org.viptv.app.features.sources.seasonPack
-import org.viptv.app.features.sources.subtitleChips
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
@@ -45,18 +37,6 @@ import org.viptv.engine.wire.SourcePresentation
 class SourceRowBoundsUiTest {
     @get:Rule val uiThread = UiThreadRule()
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
-
-    @Test fun releaseGroupIsParsedFromTheLeadingBracketOrTrailingGroup() {
-        assertEquals("EMBER", parseReleaseGroup("[EMBER] The Genius Prince's Guide (Batch)\nS01E03.mkv"))
-        assertEquals("Tsundere-Raws", parseReleaseGroup("Show.S01E03.1080p-Tsundere-Raws.mkv"))
-        assertNull(parseReleaseGroup("S01E03-A Marriage as a Pretext [EA9B5806].mkv"))
-        assertNull(parseReleaseGroup(null))
-    }
-
-    @Test fun trackerIsParsedFromTheSeederLine() {
-        assertEquals("NyaaSi", parseTracker("S01E03.mkv\n👤 62 💾 481.6 MB ⚙️ NyaaSi"))
-        assertNull(parseTracker("S01E03.mkv"))
-    }
 
     @Test fun cacheChipReadsDebridTagsThenDelivery() {
         assertEquals(CacheChip(CacheKind.Instant, "TorBox"), cacheChip("[TB+] Torrentio\n1080p", "direct"))
@@ -72,51 +52,6 @@ class SourceRowBoundsUiTest {
         assertNull(cacheChip("TorrentsDB\nbdrip", "torrent"))
     }
 
-    @Test fun seasonPackMatchesBatchAndFullSeasonMarkers() {
-        fun packs(detail: String?) = SourceCandidate("a", "p", "A", detail = detail).seasonPack()
-        assertTrue(packs("Tensai Ouji no Akaji (2022) [Batch]"))
-        assertTrue(packs("Tensai Ouji no Akaji (2022) (Batch)"))
-        assertTrue(packs("Tensai Ouji no Akaji (2022) \"Batch\""))
-        assertTrue(packs("Tensai Ouji no Akaji S01 complete"))
-        assertTrue(packs("Tensai Ouji no Akaji Season 1-12"))
-        assertTrue(packs("Tensai Ouji no Akaji S01E01-E12"))
-        assertFalse(packs("Tensai Ouji no Akaji S01E03"))
-        assertFalse(packs("Oak Street (2022)"))
-    }
-
-    @Test fun audioAndSubtitleChipsKeepLanguageEvidenceSeparate() {
-        val source = SourceCandidate("a", "p", "Relax")
-        assertNull(source.audioChips())
-        assertNull(source.subtitleChips())
-        assertEquals(listOf(LanguageChip("Dual audio", true)),
-            source.copy(audio_flags = listOf("dual", "dubbed")).audioChips())
-        assertEquals(listOf(LanguageChip("Dubbed", true)), source.copy(audio_flags = listOf("dubbed")).audioChips())
-        assertEquals(listOf(LanguageChip("Multi audio", true)), source.copy(audio_flags = listOf("multi")).audioChips())
-        assertEquals(listOf(LanguageChip("FR", false)),
-            source.copy(label = "Johnny English", audio_languages = listOf("fr"), audio_flags = listOf("dual", "dubbed")).audioChips())
-        assertNull(source.copy(label = "Johnny English", subtitle_languages = listOf("en")).audioChips())
-        assertEquals(listOf(LanguageChip("RU", false)),
-            source.copy(audio_languages = listOf("ru")).audioChips())
-        assertEquals(listOf(LanguageChip("EN dub", false), LanguageChip("JA", false)),
-            source.copy(audio_languages = listOf("en", "ja"), audio_flags = listOf("dual", "dubbed")).audioChips())
-        assertEquals(listOf(LanguageChip("EN", false)), source.copy(audio_languages = listOf("en")).audioChips())
-        assertEquals(listOf(LanguageChip("EN", false)), source.copy(audio_languages = listOf("en"), audio_flags = listOf("dual")).audioChips())
-        assertEquals(listOf(LanguageChip("EN dub", false)), source.copy(audio_languages = listOf("en"), audio_flags = listOf("dual", "dubbed")).audioChips())
-        assertEquals(listOf(LanguageChip("EN", false), LanguageChip("ES", false)),
-            source.copy(subtitle_languages = listOf("en", "es")).subtitleChips())
-        assertEquals(listOf(LanguageChip("Subs", true)), source.copy(subbed = true).subtitleChips())
-    }
-
-    @Test fun factsOmitMissingFactsAndKeepTheReleaseGroup() {
-        val full = torrent()
-        assertEquals(listOf("481.6 MB", "HEVC 10-bit", "↑62", "NyaaSi", "Torrentio", "Season pack"), full.factItems())
-        val bare = full.copy(release_type = null, seeders = null, detail = null,
-            presentation = SourcePresentation(provider_name = "Torrentio"))
-        assertEquals(listOf("Torrentio"), bare.factItems())
-        assertEquals("Torrentio", bare.releaseGroupLabel())
-        assertEquals("EMBER", full.releaseGroupLabel())
-    }
-
     @Test fun sourceRowsRenderEveryExpectedTextNode() {
         val sources = fixtureSources()
         phone(sources, capturePath = "phone-390")
@@ -126,15 +61,16 @@ class SourceRowBoundsUiTest {
 
     @Test fun pointerRowsOmitCacheServiceBadges() {
         val sources = listOf(
-            SourceCandidate("c1", "addon:20", "[TB+] Torrentio\n1080p", detail = "[EMBER] S01E03.mkv\n👤 10 💾 481.6 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 10, presentation = SourcePresentation(provider_name = "Torrentio", size_label = "481.6 MB")),
-            SourceCandidate("c2", "addon:20", "🕵️ [RD⏳] MediaFusion", detail = "[sorrow] S01E03.mkv\n👤 5 💾 876.66 MB ⚙️ NyaaSi", quality_height = 1080, delivery = "direct", seeders = 5, presentation = SourcePresentation(provider_name = "MediaFusion", size_label = "876.66 MB")),
-            SourceCandidate("c3", "addon:20", "⚡ AniKage • English DUB", detail = "[Group] S01E03.mkv", quality_height = 1080, delivery = "direct", audio_flags = listOf("dubbed"), audio_languages = listOf("en"), presentation = SourcePresentation(provider_name = "vSources ⚡")),
+            SourceCandidate("c1", "addon:20", "[TB+] Torrentio\n1080p", detail = "Show 2024 1080p\n👤 10 💾 481.6 MB ⚙️ Site", quality_height = 1080, delivery = "direct", presentation = SourcePresentation(provider_name = "Torrentio")),
+            SourceCandidate("c2", "addon:20", "🕵️ [RD⏳] MediaFusion", detail = "Show 2024 1080p\n👤 5 💾 876.66 MB ⚙️ Site", quality_height = 1080, delivery = "direct", presentation = SourcePresentation(provider_name = "MediaFusion")),
+            SourceCandidate("c3", "addon:20", "⚡ AniKage • English DUB", detail = "Show S01E03 1080p\n👤 3 💾 300 MB ⚙️ Site", quality_height = 1080, delivery = "direct", audio_flags = listOf("dubbed"), presentation = SourcePresentation(provider_name = "vSources ⚡")),
         )
         val scene = scene(390, 700) { Column(Modifier.width(390.dp)) { sources.forEach { SourceRow(it, false, {}) } } }
         try {
             frames(scene, 4)
             val present = unmerged(scene).map { text(it) }.toSet()
             assertFalse(present.any { "Instant" in it || "TorBox" in it || "Not cached" in it })
+            sources.forEach { assertTrue(it.addonText()!! in present, "missing the add-on text of ${it.id}") }
             capture(scene, "cache-chips")
         } finally { scene.close() }
     }
@@ -175,28 +111,16 @@ class SourceRowBoundsUiTest {
     private fun assertEverySourceIsVisible(scene: ImageComposeScene, sources: List<SourceCandidate>, where: String) {
         val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
         assertEquals(sources.size, rows.size, "$where: one clickable row per source")
+        assertEquals(1, rows.map { it.boundsInRoot.height }.distinct().size, "$where: one row height")
         val present = unmerged(scene).map { text(it) }.toSet()
         sources.forEach { source ->
-            assertTrue(source.releaseGroupLabel() in present, "$where: missing release group ${source.releaseGroupLabel()}")
+            assertTrue(source.addonText()!! in present, "$where: missing the add-on text of ${source.id}")
+            assertTrue(source.providerLabel() in present, "$where: missing the provider of ${source.id}")
             source.qualityLabel()?.let { assertTrue(it in present, "$where: missing quality $it") }
-            if (where == "tv") {
-                source.audioChips()?.forEach { chip -> assertTrue(chip.label in present, "$where: missing audio chip ${chip.label}") }
-                source.subtitleChips()?.filter { it.label != "Subs" }?.forEach { chip -> assertTrue(chip.label in present, "$where: missing subs chip ${chip.label}") }
-            } else assertTrue(source.rowAudioSubs() in present, "$where: missing plain audio/subtitle details")
-            source.factItems(null).filter { it != "Season pack" }.forEach { fact -> assertTrue(present.any { fact in it }, "$where: missing fact $fact") }
         }
         println("=== $where text nodes ===")
         unmerged(scene).filter { text(it).isNotBlank() }.map { text(it) }.distinct().sorted().forEach { println("  $it") }
     }
-
-    private fun torrent() = SourceCandidate(
-        id = "t", provider_id = "addon:20", label = "Torrentio\n1080p",
-        detail = "[EMBER] The Genius Prince's Guide to Raising a Nation Out of Debt (2022) (Batch)\n" +
-            "S01E03-A Marriage as a Pretext [EA9B5806] 10-bit.mkv\n👤 62 💾 481.6 MB ⚙️ NyaaSi",
-        quality_height = 1080L, release_type = "bluray", seeders = 62, delivery = "direct",
-        audio_flags = listOf("dual", "dubbed"),
-        presentation = SourcePresentation(provider_name = "Torrentio", quality = "1080p", size_label = "481.6 MB", video_codec = "HEVC", container = "mkv"),
-    )
 
     private fun fixtureSources(): List<SourceCandidate> {
         val file = File("/tmp/sources-raw-redacted.json")
@@ -215,20 +139,26 @@ class SourceRowBoundsUiTest {
                     label = s.str("name") ?: s.str("title") ?: "Source",
                     detail = s.str("detail") ?: s.str("description") ?: s.str("title"),
                     quality_height = s["quality_height"]?.jsonPrimitive?.longOrNull,
-                    audio_languages = s.strs("audio_languages"),
                     presentation = s["presentation"]?.takeUnless { it is JsonNull }?.let { json.decodeFromJsonElement<SourcePresentation>(it) },
-                ).withReleaseFacts(s)
+                )
             }
         }.take(6)
     }
 
     private fun fallbackSources(): List<SourceCandidate> = listOf(
-        torrent(),
-        torrent().copy(id = "t2", label = "[TB download] Torrentio\n1080p", delivery = "torrent", seeders = 5),
-        torrent().copy(id = "t3", label = "⚡ AniKage • English DUB", delivery = "direct", audio_flags = listOf("dubbed"), audio_languages = listOf("en"), detail = null, seeders = null, presentation = SourcePresentation(provider_name = "vSources ⚡", quality = "1080p")),
-        torrent().copy(id = "t4", label = "Torrentio\n720p", quality_height = 720, release_type = "webrip", audio_flags = emptyList(), audio_languages = listOf("ru"), subbed = true, subtitle_languages = listOf("en")),
-        torrent().copy(id = "t5", label = "Torrentio\n1080p", audio_flags = emptyList(), audio_languages = emptyList(), detail = null, seeders = null, release_type = null, presentation = SourcePresentation(provider_name = "Torrentio")),
-        torrent().copy(id = "t6", label = "🕵️ [RD⏳] MediaFusion", delivery = "direct", audio_flags = emptyList(), audio_languages = emptyList(), subbed = true, subtitle_languages = listOf("ja")),
+        SourceCandidate("t1", "addon:20", "Torrentio\n1080p", detail = "[EMBER] Show S01E03 1080p\nShow.S01E03.mkv\n👤 62 💾 481.6 MB ⚙️ Site",
+            quality_height = 1080, release_type = "bluray", delivery = "direct", audio_flags = listOf("dual", "dubbed"), dynamic_range = listOf("hdr"),
+            presentation = SourcePresentation(provider_name = "Torrentio", quality = "1080p")),
+        SourceCandidate("t2", "addon:20", "[TB+] Torrentio\n1080p", detail = "[EMBER] Show S01E03 1080p\nShow.S01E03.mkv\n👤 10 💾 481.6 MB ⚙️ Site",
+            quality_height = 1080, release_type = "remux", delivery = "direct", three_d = true,
+            presentation = SourcePresentation(provider_name = "Torrentio", quality = "1080p")),
+        SourceCandidate("t3", "addon:21", "⚡ AniKage • English DUB", detail = "Show S01E03\n👤 3 💾 300 MB ⚙️ Site",
+            quality_height = 1080, delivery = "direct", audio_flags = listOf("dubbed"), presentation = SourcePresentation(provider_name = "vSources ⚡")),
+        SourceCandidate("t4", "addon:22", "Comet\n720p", detail = "Show S01E03 720p WEB\n👤 5 💾 120 MB ⚙️ Site",
+            quality_height = 720, release_type = "webrip", audio_languages = listOf("ru"), subbed = true, subtitle_languages = listOf("en"),
+            presentation = SourcePresentation(provider_name = "Comet", quality = "720p")),
+        SourceCandidate("t5", "addon:23", "MediaFusion", detail = "Show S01E03 1080p\n👤 4 💾 900 MB ⚙️ Site",
+            quality_height = 1080, release_type = "cam", presentation = SourcePresentation(provider_name = "MediaFusion")),
     )
 
     private fun scene(width: Int, height: Int, television: Boolean = false, content: @Composable () -> Unit) =
@@ -255,5 +185,3 @@ class SourceRowBoundsUiTest {
 
 private fun JsonObject.str(key: String): String? =
     (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
-private fun JsonObject.strs(key: String): List<String> =
-    (this[key] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.takeIf { v -> v.isString }?.content }

@@ -62,7 +62,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     configureSource: (String) -> Unit = {}) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
-            info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel(), format = it.formatLabel(), addon = it.providerLabel().takeUnless { name -> name == it.label }) },
+            info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel()) },
             detail = detail,
             loadingMore = loadingMore, selectedSource = selectedSource, torrentOnlyProviders = torrentOnlyProviders, openingStage = openingStage,
             groups = groups, producers = producers, banner = banner, failed = failed, opening = opening, retry = retry, manageAddons = manageAddons,

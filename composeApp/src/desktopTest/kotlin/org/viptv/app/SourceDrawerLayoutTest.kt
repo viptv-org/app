@@ -42,6 +42,11 @@ class SourceDrawerLayoutTest {
         } finally { scene.close() }
     }
 
+    private fun subtreeTexts(node: SemanticsNode): List<String> =
+        (listOf(node) + node.children.flatMap(::subtreeNodes)).flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty().map { text -> text.text } }
+
+    private fun subtreeNodes(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::subtreeNodes)
+
     private fun texts(nodes: List<SemanticsNode>) = nodes.flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
     private fun drawerWidth(nodes: List<SemanticsNode>) = nodes.first { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Choose a source" }.boundsInRoot.width
 
@@ -94,21 +99,22 @@ class SourceDrawerLayoutTest {
         }
     }
 
-    @Test fun theFactsLineStaysOnOneLineRatherThanWrapping() {
+    @Test fun aLongAddOnTextKeepsOneRowHeightAndStaysWholeForAssistiveTech() {
+        val short = SourceCandidate("short", "addon:torrentio", "Torrentio\n2160p", detail = "Oak Street 2026",
+            quality_height = 2160, presentation = SourcePresentation(provider_name = "Torrentio"))
         val long = SourceCandidate(
             "long", "addon:torrentio", "[TB+] Torrentio\n2160p",
-            detail = "Oak.Street.2026.2160p.WEB-DL.DV.HDR10.HEVC.10bit (Batch)\n👤 412 💾 14.2 GB ⚙️ ThePirateBay",
-            quality_height = 2160, release_type = "web_dl", seeders = 412, delivery = "direct",
-            presentation = SourcePresentation(provider_name = "A.Very.Long.Provider.Name", size_label = "14.2 GB", video_codec = "HEVC"),
+            detail = "Oak.Street.2026.2160p.WEB-DL.DV.HDR10.HEVC.10bit (Batch)\n👤 412 💾 14.2 GB ⚙️ Site\n🇬🇧 / 🇮🇹",
+            quality_height = 2160, release_type = "web_dl", dynamic_range = listOf("dv", "hdr"), delivery = "direct",
+            presentation = SourcePresentation(provider_name = "A.Very.Long.Provider.Name"),
         )
         for (width in listOf(800, 1440)) {
-            render(width, 900, rows = listOf(long)) { nodes ->
-                val facts = nodes.first { node ->
-                    node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.contains("14.2 GB") && it.text.contains("ThePirateBay") }
-                }
-                val result = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
-                assertTrue(facts.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(result))
-                assertEquals(1, result.single().lineCount, "the facts line stays on one line at $width")
+            render(width, 900, rows = listOf(short, long)) { nodes ->
+                val rows = nodes.filter { node -> node.config.contains(SemanticsActions.OnClick) && subtreeTexts(node).any { it == short.detail || it == long.detail } }
+                assertEquals(2, rows.size, "both rows at $width")
+                assertEquals(1, rows.map { it.boundsInRoot.height }.distinct().size, "one row height at $width")
+                assertTrue(nodes.any { node -> subtreeTexts(node).any { it == long.detail } },
+                    "the full add-on text stays available to assistive technology at $width")
             }
         }
     }

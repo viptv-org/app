@@ -1,0 +1,470 @@
+{
+  "description": "Real Stremio stream responses captured from public add-ons with no account or debrid key: Torrentio (movie and series episode), TorrentsDB (movie), Peerflix (movie and series episode) and Jackettio (an add-on that is not configured). Only the descriptive text is kept: name, title, description and behaviorHints.filename. infoHash, url, tracker and source arrays, binge groups and provider hosts are removed, and the site named after ⚙️/🌐 and inside Peerflix filenames is replaced by 'Site' and 'release'. candidate is the SourceCandidate the engine serves for that stream (detail is the stream's own lines joined with newlines, the rest are the normalized release facts), expect is what the row must show.",
+  "rows": [
+    {
+      "id": "torrentio-movie-4k-hdr",
+      "addon": "Torrentio",
+      "captured": "movie stream response, first row",
+      "stream": {
+        "name": "Torrentio\n4k HDR",
+        "title": "The Shawshank Redemption 1994 2160p BluRay\n👤 199 💾 6.91 GB ⚙️ Site",
+        "behaviorHints": {
+          "filename": "The.Shawshank.Redemption.1994.2160p.4K.BluRay.x265.10bit.HDR.AAC5.1-[YTS.MX].mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-movie-4k-hdr",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n4k HDR",
+        "quality_height": 2160,
+        "release_type": "bluray",
+        "dynamic_range": [
+          "hdr"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "container": "mkv",
+          "size_label": "6.91 GB"
+        },
+        "detail": "The Shawshank Redemption 1994 2160p BluRay\n👤 199 💾 6.91 GB ⚙️ Site\nThe.Shawshank.Redemption.1994.2160p.4K.BluRay.x265.10bit.HDR.AAC5.1-[YTS.MX].mkv"
+      },
+      "expect": {
+        "tags": [
+          "HDR"
+        ],
+        "size": "6.91 GB"
+      }
+    },
+    {
+      "id": "torrentio-movie-bdremux-dv",
+      "addon": "Torrentio",
+      "captured": "movie stream response, hybrid remux row",
+      "stream": {
+        "name": "Torrentio\n4k DV | HDR",
+        "title": "Побег из Шоушенка / The Shawshank Redemption [1994 UHD BDRemux 2160p HDR10 Dolby Vision] [Hybrid] 2x Dub + 6x MVO + 4x DVO + 9x AVO + Original (Eng) + Sub (Rus Eng)\n👤 96 💾 78.61 GB"
+      },
+      "candidate": {
+        "id": "torrentio-movie-bdremux-dv",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n4k DV | HDR",
+        "quality_height": 2160,
+        "release_type": "remux",
+        "dynamic_range": [
+          "dv",
+          "hdr10",
+          "hdr"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "audio_codecs": [
+            "EAC3"
+          ]
+        },
+        "detail": "Побег из Шоушенка / The Shawshank Redemption [1994 UHD BDRemux 2160p HDR10 Dolby Vision] [Hybrid] 2x Dub + 6x MVO + 4x DVO + 9x AVO + Original (Eng) + Sub (Rus Eng)\n👤 96 💾 78.61 GB"
+      },
+      "expect": {
+        "tags": [
+          "HDR",
+          "Dolby Vision",
+          "Remux"
+        ],
+        "size": "78.61 GB"
+      }
+    },
+    {
+      "id": "torrentio-episode-flags",
+      "addon": "Torrentio",
+      "captured": "series episode stream response, Rutracker row with a flag line",
+      "stream": {
+        "name": "Torrentio\n4k DV | HDR",
+        "title": "Игра престолов / Game of Thrones / Сезон: 1 / Серии: 1-10 из 10 [2011 HEVC HDR10 Dolby Vision WEB-DL 2160p 4k] [Hybrid] Dub + Original (Eng)+ Sub (Rus Eng)\nИгра престолов.S01E01.WEB-DL.2160p.mkv\n👤 120 💾 9.52 GB ⚙️ Site\n🇬🇧 / 🇷🇺",
+        "behaviorHints": {
+          "filename": "Игра престолов.S01E01.WEB-DL.2160p.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-episode-flags",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n4k DV | HDR",
+        "quality_height": 2160,
+        "release_type": "web_dl",
+        "dynamic_range": [
+          "dv",
+          "hdr10",
+          "hdr"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "container": "mkv"
+        },
+        "detail": "Игра престолов / Game of Thrones / Сезон: 1 / Серии: 1-10 из 10 [2011 HEVC HDR10 Dolby Vision WEB-DL 2160p 4k] [Hybrid] Dub + Original (Eng)+ Sub (Rus Eng)\nИгра престолов.S01E01.WEB-DL.2160p.mkv\n👤 120 💾 9.52 GB ⚙️ Site\n🇬🇧 / 🇷🇺"
+      },
+      "expect": {
+        "tags": [
+          "HDR",
+          "Dolby Vision"
+        ],
+        "size": "9.52 GB"
+      }
+    },
+    {
+      "id": "torrentio-episode-multi",
+      "addon": "Torrentio",
+      "captured": "series episode stream response, MULTi VFI row",
+      "stream": {
+        "name": "Torrentio\n4k HDR",
+        "title": "Game of Thrones - Integrale MULTI HDTV 2160p x265 2011-2019\nGame of Thrones S01 (2011) MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ/Game of Thrones S01E01 MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ.mkv\n👤 14 💾 4.78 GB ⚙️ Site\nMulti Audio / 🇫🇷",
+        "behaviorHints": {
+          "filename": "Game of Thrones S01E01 MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-episode-multi",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n4k HDR",
+        "quality_height": 2160,
+        "release_type": "hdtv",
+        "dynamic_range": [
+          "hdr"
+        ],
+        "audio_flags": [
+          "multi"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "audio_codecs": [
+            "TrueHD",
+            "Atmos"
+          ]
+        },
+        "detail": "Game of Thrones - Integrale MULTI HDTV 2160p x265 2011-2019\nGame of Thrones S01 (2011) MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ/Game of Thrones S01E01 MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ.mkv\n👤 14 💾 4.78 GB ⚙️ Site\nMulti Audio / 🇫🇷\nGame of Thrones S01E01 MULTi VFI 2160p 10bit 4KLight HDR BluRay TrueHD Atmos 7.1 x265-QTZ.mkv"
+      },
+      "expect": {
+        "tags": [
+          "Multi audio",
+          "HDR"
+        ],
+        "size": "4.78 GB"
+      }
+    },
+    {
+      "id": "torrentio-anime-multidub",
+      "addon": "Torrentio",
+      "captured": "anime series episode stream response, Multi-Dub row",
+      "stream": {
+        "name": "Torrentio\n4k",
+        "title": "[Dubs-Empire] Jujutsu Kaisen (2020) S01 v3 [2160p][B-Global][H.264][Multi-Dub][Multi-Sub][Frixy-Subs]\nJujutsu Kaisen (2020) S01E01.4k.h264.mkv\n👤 63 💾 1.26 GB ⚙️ Site\nDubbed / Multi Audio / Multi Subs",
+        "behaviorHints": {
+          "filename": "Jujutsu Kaisen (2020) S01E01.4k.h264.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-anime-multidub",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n4k",
+        "quality_height": 2160,
+        "audio_flags": [
+          "multi",
+          "dubbed"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "AVC",
+          "container": "mkv"
+        },
+        "detail": "[Dubs-Empire] Jujutsu Kaisen (2020) S01 v3 [2160p][B-Global][H.264][Multi-Dub][Multi-Sub][Frixy-Subs]\nJujutsu Kaisen (2020) S01E01.4k.h264.mkv\n👤 63 💾 1.26 GB ⚙️ Site\nDubbed / Multi Audio / Multi Subs"
+      },
+      "expect": {
+        "tags": [
+          "Dubbed",
+          "Multi audio"
+        ],
+        "size": "1.26 GB"
+      }
+    },
+    {
+      "id": "torrentio-anime-dual-audio",
+      "addon": "Torrentio",
+      "captured": "anime series episode stream response, Dual Audio row",
+      "stream": {
+        "name": "Torrentio\n1080p HDR",
+        "title": "[Salieri] Jujutsu Kaisen S1 BD (1080p) (HDR) [Dual Audio]\n[Salieri] Jujutsu Kaisen S1 - 01 (BDRip 1080p) (HDR) [Dual Audio].mkv\n👤 7 💾 1.33 GB ⚙️ Site\nDubbed / Dual Audio",
+        "behaviorHints": {
+          "filename": "[Salieri] Jujutsu Kaisen S1 - 01 (BDRip 1080p) (HDR) [Dual Audio].mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-anime-dual-audio",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n1080p HDR",
+        "quality_height": 1080,
+        "release_type": "bluray",
+        "dynamic_range": [
+          "hdr"
+        ],
+        "audio_flags": [
+          "dual",
+          "dubbed"
+        ],
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "1080p",
+          "video_codec": "HEVC",
+          "container": "mkv"
+        },
+        "detail": "[Salieri] Jujutsu Kaisen S1 BD (1080p) (HDR) [Dual Audio]\n[Salieri] Jujutsu Kaisen S1 - 01 (BDRip 1080p) (HDR) [Dual Audio].mkv\n👤 7 💾 1.33 GB ⚙️ Site\nDubbed / Dual Audio"
+      },
+      "expect": {
+        "tags": [
+          "Dubbed",
+          "Multi audio",
+          "HDR"
+        ],
+        "size": "1.33 GB"
+      }
+    },
+    {
+      "id": "torrentio-episode-3d",
+      "addon": "Torrentio",
+      "captured": "series episode stream response, 3D SBS row",
+      "stream": {
+        "name": "Torrentio\n1080p 3D SBS",
+        "title": "Game.of.Thrones.S01.1080p.3D.FULL-SBS.HEVC.SBS-SUB.ENG-HUN.iFA-AI3D\nGame.of.Thrones.S01E01.Winter.is.Coming.1080p.3D.FULL-SBS.HEVC.SBS-SUB.ENG-HUN.iFA-AI3D.mkv\n👤 10 💾 7.3 GB ⚙️ Site\n🇬🇧 / 🇭🇺",
+        "behaviorHints": {
+          "filename": "Game.of.Thrones.S01E01.Winter.is.Coming.1080p.3D.FULL-SBS.HEVC.SBS-SUB.ENG-HUN.iFA-AI3D.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-episode-3d",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n1080p 3D SBS",
+        "quality_height": 1080,
+        "three_d": true,
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "1080p",
+          "video_codec": "HEVC",
+          "container": "mkv"
+        },
+        "detail": "Game.of.Thrones.S01.1080p.3D.FULL-SBS.HEVC.SBS-SUB.ENG-HUN.iFA-AI3D\nGame.of.Thrones.S01E01.Winter.is.Coming.1080p.3D.FULL-SBS.HEVC.SBS-SUB.ENG-HUN.iFA-AI3D.mkv\n👤 10 💾 7.3 GB ⚙️ Site\n🇬🇧 / 🇭🇺"
+      },
+      "expect": {
+        "tags": [
+          "3D"
+        ],
+        "size": "7.3 GB"
+      }
+    },
+    {
+      "id": "torrentsdb-remux",
+      "addon": "TorrentsDB",
+      "captured": "movie stream response, REMUX row",
+      "stream": {
+        "name": "TorrentsDB\n2160p",
+        "title": "The.Shawshank.Redemption.1994.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.5.1-FGT\n👤 93 💾 57.98 GB ⚙️ Site",
+        "behaviorHints": {
+          "filename": "The.Shawshank.Redemption.1994.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.5.1-FGT.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentsdb-remux",
+        "provider_id": "addon:torrentsdb",
+        "label": "TorrentsDB\n2160p",
+        "quality_height": 2160,
+        "release_type": "remux",
+        "presentation": {
+          "provider_name": "TorrentsDB",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "container": "mkv"
+        },
+        "detail": "The.Shawshank.Redemption.1994.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.5.1-FGT\n👤 93 💾 57.98 GB ⚙️ Site\nThe.Shawshank.Redemption.1994.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.5.1-FGT.mkv"
+      },
+      "expect": {
+        "tags": [
+          "Remux"
+        ],
+        "size": "57.98 GB"
+      }
+    },
+    {
+      "id": "peerflix-movie-hdr",
+      "addon": "Peerflix",
+      "captured": "movie stream response, Spanish 4K row (declared quality/languages/size)",
+      "stream": {
+        "name": "Peerflix 4K",
+        "description": "Cadena perpetua [4Kreescaldo][2160p][HDR10][AC3 5.1 Castellano-AC3 5.1-Ingles+Subs][ES-EN]\nCadena perpetua 4Kreescalado2160.release.mkv\n🇪🇸\n👤 8 💾 59.61 GB 🌐 Peerflix"
+      },
+      "candidate": {
+        "id": "peerflix-movie-hdr",
+        "provider_id": "addon:peerflix",
+        "label": "Peerflix 4K",
+        "quality_height": 2160,
+        "dynamic_range": [
+          "hdr10",
+          "hdr"
+        ],
+        "audio_languages": [
+          "es"
+        ],
+        "presentation": {
+          "provider_name": "Peerflix",
+          "quality": "4K",
+          "container": "mkv",
+          "audio_codecs": [
+            "AC3"
+          ]
+        },
+        "detail": "Cadena perpetua [4Kreescaldo][2160p][HDR10][AC3 5.1 Castellano-AC3 5.1-Ingles+Subs][ES-EN]\nCadena perpetua 4Kreescalado2160.release.mkv\n🇪🇸\n👤 8 💾 59.61 GB 🌐 Peerflix"
+      },
+      "expect": {
+        "tags": [
+          "HDR"
+        ],
+        "size": "59.61 GB"
+      }
+    },
+    {
+      "id": "peerflix-episode-bdremux",
+      "addon": "Peerflix",
+      "captured": "series episode stream response, Spanish BDremux row",
+      "stream": {
+        "name": "Peerflix 1080p",
+        "description": "Juego de tronos Temporada 1 completa [BDremux 1080p][DTS 5.1 Castellano-DTS 5.1 Ingles+Subs][ES-EN]\nJuego de tronos 1x01 Se acerca el invierno BDR1080.release.mkv\n🇪🇸\n👤 3 💾 12.18 GB 🌐 Peerflix"
+      },
+      "candidate": {
+        "id": "peerflix-episode-bdremux",
+        "provider_id": "addon:peerflix",
+        "label": "Peerflix 1080p",
+        "quality_height": 1080,
+        "release_type": "remux",
+        "audio_languages": [
+          "es"
+        ],
+        "presentation": {
+          "provider_name": "Peerflix",
+          "quality": "1080p",
+          "container": "mkv",
+          "audio_codecs": [
+            "DTS"
+          ]
+        },
+        "detail": "Juego de tronos Temporada 1 completa [BDremux 1080p][DTS 5.1 Castellano-DTS 5.1 Ingles+Subs][ES-EN]\nJuego de tronos 1x01 Se acerca el invierno BDR1080.release.mkv\n🇪🇸\n👤 3 💾 12.18 GB 🌐 Peerflix"
+      },
+      "expect": {
+        "tags": [
+          "Remux"
+        ],
+        "size": "12.18 GB"
+      }
+    },
+    {
+      "id": "jackettio-unconfigured",
+      "addon": "Jackettio",
+      "captured": "stream response from an add-on that is not configured",
+      "stream": {
+        "name": "Jackettio | ElfHosted",
+        "title": "ℹ Kindly configure this addon to access streams."
+      },
+      "candidate": {
+        "id": "jackettio-unconfigured",
+        "provider_id": "addon:jackettio",
+        "label": "Jackettio | ElfHosted",
+        "detail": "ℹ Kindly configure this addon to access streams."
+      },
+      "expect": {
+        "tags": [],
+        "size": null
+      }
+    },
+    {
+      "id": "torrentio-debrid-tagged",
+      "addon": "Torrentio",
+      "captured": "movie stream response, name carrying a debrid tag as Torrentio writes it for a configured service",
+      "stream": {
+        "name": "[TB+] Torrentio\n4k HDR",
+        "title": "The Shawshank Redemption 1994 2160p BluRay\n👤 199 💾 6.91 GB ⚙️ Site",
+        "behaviorHints": {
+          "filename": "The.Shawshank.Redemption.1994.2160p.4K.BluRay.x265.10bit.HDR.AAC5.1-[YTS.MX].mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-debrid-tagged",
+        "provider_id": "addon:torrentio",
+        "label": "[TB+] Torrentio\n4k HDR",
+        "quality_height": 2160,
+        "release_type": "bluray",
+        "dynamic_range": [
+          "hdr"
+        ],
+        "delivery": "direct",
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "4K",
+          "video_codec": "HEVC",
+          "container": "mkv",
+          "size_label": "6.91 GB"
+        },
+        "detail": "The Shawshank Redemption 1994 2160p BluRay\n👤 199 💾 6.91 GB ⚙️ Site\nThe.Shawshank.Redemption.1994.2160p.4K.BluRay.x265.10bit.HDR.AAC5.1-[YTS.MX].mkv"
+      },
+      "expect": {
+        "tags": [
+          "HDR"
+        ],
+        "size": "6.91 GB"
+      }
+    },
+    {
+      "id": "torrentio-eng-ita-languages",
+      "addon": "Torrentio",
+      "captured": "movie stream response whose release name spells ENG and ITA and whose add-on line lists both flags",
+      "stream": {
+        "name": "Torrentio\n1080p",
+        "title": "Oak Street 2024 1080p WEB-DL DL.ENG.Atmos.ITA.DDP5.1.H264-TBK\nOak.Street.2024.1080p.mkv\n👤 42 💾 1.9 GB ⚙️ Site\n🇬🇧 / 🇮🇹",
+        "behaviorHints": {
+          "filename": "Oak.Street.2024.1080p.mkv"
+        }
+      },
+      "candidate": {
+        "id": "torrentio-eng-ita-languages",
+        "provider_id": "addon:torrentio",
+        "label": "Torrentio\n1080p",
+        "quality_height": 1080,
+        "release_type": "web_dl",
+        "audio_languages": [
+          "en",
+          "it"
+        ],
+        "subtitle_languages": [
+          "en",
+          "it"
+        ],
+        "subbed": true,
+        "presentation": {
+          "provider_name": "Torrentio",
+          "quality": "1080p",
+          "video_codec": "AVC",
+          "audio_codecs": [
+            "EAC3",
+            "Atmos"
+          ],
+          "container": "mkv"
+        },
+        "detail": "Oak Street 2024 1080p WEB-DL DL.ENG.Atmos.ITA.DDP5.1.H264-TBK\nOak.Street.2024.1080p.mkv\n👤 42 💾 1.9 GB ⚙️ Site\n🇬🇧 / 🇮🇹"
+      },
+      "expect": {
+        "tags": [],
+        "size": "1.9 GB"
+      }
+    }
+  ]
+}
