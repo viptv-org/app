@@ -40,6 +40,17 @@ class SelectionTest(unittest.TestCase):
 
 
 class NativeIdentityTest(unittest.TestCase):
+    def test_native_only_preparation_does_not_require_a_test_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "evidence"
+            with patch.object(regression, "git", return_value="a" * 40), \
+                    patch.dict(regression.os.environ, {"ImageOS": "ubuntu24", "RUNNER_ARCH": "X64"}):
+                metadata = regression.prepare_natives(Path(directory), output)
+            self.assertEqual("a" * 40, metadata["torrent_commit"])
+            self.assertTrue(metadata["native_key"].startswith("desktop-regression-native-v1-"))
+            self.assertFalse((output / "filters.txt").exists())
+
+
     def test_rejects_a_floating_native_revision_before_writing_selection(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -100,6 +111,14 @@ class ReportTest(unittest.TestCase):
         for cases in ("", '<testcase classname="org.viptv.app.FlowTest"><skipped/></testcase>',
                       '<testcase classname="org.viptv.app.OtherTest"/>'):
             self.assertFalse(self.report(cases)["passed"])
+
+    def test_full_suite_preserves_opt_in_skips_but_rejects_missing_classes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "TEST-OptIn.xml").write_text('<testsuite><testcase classname="org.viptv.app.OptInTest"><skipped/></testcase></testsuite>')
+            self.assertTrue(regression.test_results(root, ["org.viptv.app.OptInTest"], allow_skipped_classes=True)["passed"])
+            self.assertFalse(regression.test_results(root, ["org.viptv.app.MissingTest"], allow_skipped_classes=True)["passed"])
+            self.assertFalse(regression.test_results(root, [], allow_skipped_classes=True)["passed"])
 
     def test_failure_and_error_are_not_green(self):
         for node in ("failure", "error"):
