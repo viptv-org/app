@@ -26,6 +26,9 @@ import org.viptv.app.features.sources.providerLabel
 import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.features.sources.sizeLabel
 import org.viptv.app.features.sources.sourceTags
+import org.viptv.app.features.sources.sourceTextScroll
+import org.viptv.app.features.sources.TEXT_DWELL_MILLIS
+import org.viptv.app.features.sources.TEXT_LINE_STEP_MILLIS
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
 import org.viptv.engine.wire.SourceCandidate
@@ -78,6 +81,39 @@ class SourceRowAddonTextUiTest {
         assertTrue(languageRow.candidate.audio_languages.isNotEmpty() && languageRow.candidate.subtitle_languages.isNotEmpty())
         assertEquals(emptyList(), languageRow.tags, "ENG/ITA in a release name and a flag line never become a chip")
         assertFalse(texts.any { it == "EN" || it == "IT" || it == "EN / IT" }, texts.toString())
+    }
+
+    @Test fun theFocusedRowsTextScrollsInsideItsTwoLineWindow() {
+        val line = 24f
+        val max = line * 2
+        assertEquals(0f, sourceTextScroll(0, max, line), "the row starts at its first line")
+        assertEquals(0f, sourceTextScroll(TEXT_DWELL_MILLIS - 1, max, line), "it dwells 1.5 s at the top")
+        assertEquals(line / 2, sourceTextScroll(TEXT_DWELL_MILLIS + TEXT_LINE_STEP_MILLIS / 2, max, line), "then one line per 1.5 s")
+        assertEquals(max, sourceTextScroll(TEXT_DWELL_MILLIS + TEXT_LINE_STEP_MILLIS * 2, max, line), "it stops at the last line")
+        val cycle = TEXT_DWELL_MILLIS * 2 + TEXT_LINE_STEP_MILLIS * 2
+        assertEquals(max, sourceTextScroll(cycle - 1, max, line), "it dwells at the bottom")
+        assertEquals(0f, sourceTextScroll(cycle, max, line), "then resets to the top")
+        assertEquals(0f, sourceTextScroll(5_000, 0f, line), "a two-line text never moves")
+
+        val source = SourceCandidate("scroll", "addon:torrentio", "Torrentio\n2160p",
+            detail = "Line one of the release\nLine two of the release\nLine three of the release\nLine four of the release",
+            quality_height = 2160, presentation = SourcePresentation(provider_name = "Torrentio"))
+        val scene = ImageComposeScene(390, 200, Density(1f)) {
+            ViptvTheme(false) { Box(Modifier.fillMaxSize().background(Palette.background)) {
+                Column(Modifier.width(390.dp)) { SourceRow(source, television = false, choose = {}) }
+            } }
+        }
+        fun textTop(): Float = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
+            .first { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == source.detail } }.positionInRoot.y
+        try {
+            var frame = 0L
+            repeat(4) { scene.render(frame++ * 16_666_667L).close() }
+            val atRest = textTop()
+            scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
+                .first { it.config.contains(SemanticsActions.RequestFocus) }.config[SemanticsActions.RequestFocus].action!!.invoke()
+            repeat(180) { scene.render(frame++ * 16_666_667L).close() }
+            assertTrue(textTop() < atRest, "a focused row moves its text up inside the stationary window: ${textTop()} vs $atRest")
+        } finally { scene.close() }
     }
 
     @Test fun tagsComeOnlyFromTheNormalizedReleaseFacts() {
