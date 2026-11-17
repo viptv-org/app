@@ -33,9 +33,7 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
             val selected = group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null)
             if (type == C.TRACK_TYPE_TEXT) embeddedSubtitleTrack(id, ordinal + 1, format.label, language, selected,
                 format.selectionFlags and C.SELECTION_FLAG_FORCED != 0, format.selectionFlags and C.SELECTION_FLAG_DEFAULT != 0)
-            else PlaybackTrack(id, listOfNotNull(format.label?.takeIf { it.isNotBlank() }, language,
-                format.channelCount.takeIf { it > 0 }?.let { "${it} channels" }).distinct().joinToString(" · ")
-                .ifBlank { "Audio track ${index + 1}" }, selected, language)
+            else audioTrack(id, ordinal + 1, format.label, language, format.channelCount.takeIf { it != Format.NO_VALUE }, selected)
         }
         val audio = options(C.TRACK_TYPE_AUDIO)
         val text = options(C.TRACK_TYPE_TEXT)

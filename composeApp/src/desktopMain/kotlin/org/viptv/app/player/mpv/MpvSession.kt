@@ -126,7 +126,7 @@ internal class MpvSession(input: PlaybackInput) {
             val selected = track["selected"]?.jsonPrimitive?.booleanOrNull == true
             if (type == "sub") embeddedSubtitleTrack(id, ordinal + 1, title, language, selected,
                 track["forced"]?.jsonPrimitive?.booleanOrNull == true, track["default"]?.jsonPrimitive?.booleanOrNull == true)
-            else PlaybackTrack(id, title?.takeIf { it.isNotBlank() } ?: language ?: "$type $id", selected, language)
+            else audioTrack(id, ordinal + 1, title, language, track["demux-channel-count"]?.jsonPrimitive?.intOrNull, selected)
         }
         val buffering = text("paused-for-cache") == "yes"
         return MpvState(loaded, ((number("time-pos") ?: 0.0) * 1000).toLong(), ((number("video-pts") ?: number("time-pos") ?: 0.0) * 1000).toLong(),

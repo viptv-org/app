@@ -23,25 +23,27 @@ class BrowserSubtitleDecisionTest {
 
     @Test fun twoAudioRenditionsBothList() {
         val tracks = PlaybackTracks(audio = listOf(
-            browserAudioTrack(0, "English", "eng", false),
-            browserAudioTrack(1, "Japanese description", "jpn", true),
+            audioTrack(0, 1, "English", "eng", 2, false),
+            audioTrack(1, 2, "Japanese description", "jpn", 6, true),
         ))
-        assertEquals(listOf("English", "Japanese description"), tracks.audio.map { it.label })
+        assertEquals(listOf("English · Stereo", "Japanese description · Japanese · 5.1"), tracks.audio.map { it.label })
+        assertEquals(listOf("English", "Japanese description"), tracks.audio.map { it.name })
+        assertEquals(listOf("Stereo", "Japanese · 5.1"), tracks.audio.map { it.detail })
         assertEquals(listOf("eng", "jpn"), tracks.audio.map { it.language })
         assertEquals(listOf(false, true), tracks.audio.map { it.selected })
     }
 
     @Test fun unnamedRenditionUsesTheLanguageDisplayName() {
         val tracks = PlaybackTracks(audio = listOf(
-            browserAudioTrack(0, null, "eng", false),
-            browserAudioTrack(1, "", "jpn", true),
+            audioTrack(0, 1, null, "eng", null, false),
+            audioTrack(1, 2, "", "jpn", null, true),
         ))
         assertEquals(listOf("English", "Japanese"), tracks.audio.map { it.label })
         assertEquals(listOf("eng", "jpn"), tracks.audio.map { it.language })
     }
 
     @Test fun unnamedRenditionFallsBackToOrdinalAndUnknownLanguageIsNull() {
-        val tracks = PlaybackTracks(audio = listOf(browserAudioTrack(3, "", "und", false)))
+        val tracks = PlaybackTracks(audio = listOf(audioTrack(3, 4, "", "und", null, false)))
         assertEquals("Audio track 4", tracks.audio.single().label)
         assertNull(tracks.audio.single().language)
     }
