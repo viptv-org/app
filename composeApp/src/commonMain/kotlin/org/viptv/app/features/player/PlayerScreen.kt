@@ -116,7 +116,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
     val activeSkip = tvExtras.skips.firstOrNull { position in it.startMillis until it.endMillis }
-    val creditsReached = tvExtras.skips.firstOrNull { !it.automatic }?.let { position >= it.startMillis } == true
+    val creditsReached = tvExtras.skips.endCreditsReached(position, tvExtras.skipCredits, duration)
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
     val openEpisodes = if (seriesEpisode) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++; Unit }) else null
     val nextEnabled = next != null && playEpisode != null
@@ -189,8 +189,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
     fun skipSegment(range: TvSkipRange) { if (seekTarget == null) seekTo(range.endMillis, reveal = false) }
-    LaunchedEffect(rendering, position, tvExtras.skips, tvExtras.skipIntros, paused) {
-        val due = autoSkip.due(rendering, position, tvExtras.skips) { tvExtras.skipIntros && it.automatic }
+    LaunchedEffect(rendering, position, tvExtras.skips, tvExtras.skipIntros, tvExtras.skipCredits, paused) {
+        val nextOffered = seriesEpisode && next != null && playEpisode != null
+        val due = autoSkip.due(rendering, position, tvExtras.skips) { it.skipsItself(tvExtras.skipIntros, tvExtras.skipCredits, duration, nextOffered) }
         if (due != null && !paused && seekTarget == null) { seekTo(due.endMillis, reveal = false, automatic = true); autoSkip.skipped(due) }
     }
     LaunchedEffect(autoSkip.notice) { if (autoSkip.notice != null) { frameDelay(skippedNoticeMillis); autoSkip.notice = null } }

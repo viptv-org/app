@@ -80,15 +80,16 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     val audioPromptActive = audioPrompt != null && nextSource != null
     val audioRequester = remember { FocusRequester() }
     LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }
-    val creditsReached = extras.skips.firstOrNull { !it.automatic }?.let { state.position >= it.startMillis } == true
+    val creditsReached = extras.skips.endCreditsReached(state.position, extras.skipCredits, state.duration)
     LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, state.failed, creditsReached) {
         state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
     }
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
     }
-    LaunchedEffect(rendering, state.position, extras.skips, extras.skipIntros, paused) {
-        if (!paused) state.autoSkip(rendering, extras.skips, { extras.skipIntros && it.automatic }, previewCommand)
+    LaunchedEffect(rendering, state.position, extras.skips, extras.skipIntros, extras.skipCredits, paused) {
+        val nextOffered = extras.nextEpisode != null && playEpisode != null
+        if (!paused) state.autoSkip(rendering, extras.skips, { it.skipsItself(extras.skipIntros, extras.skipCredits, state.duration, nextOffered) }, previewCommand)
     }
     val skippedNotice = state.autoSkip.notice
     LaunchedEffect(skippedNotice) { if (skippedNotice != null) { frameDelay(skippedNoticeMillis); state.autoSkip.notice = null } }

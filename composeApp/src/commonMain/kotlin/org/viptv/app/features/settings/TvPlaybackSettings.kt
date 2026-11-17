@@ -36,6 +36,8 @@ internal fun TvPlaybackSettings(name: String?, prefs: TvSettingsPreferences, sca
                 }
                 skipIntrosRow -> TvSettingsRow(skipIntrosRow, skipIntrosDescription, scale, checked = prefs.skipIntros,
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(skipIntros = !prefs.skipIntros), row) }
+                skipCreditsRow -> TvSettingsRow(skipCreditsRow, skipCreditsDescription, scale, checked = prefs.skipCredits,
+                    requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(skipCredits = !prefs.skipCredits), row) }
                 rememberedSourceRow -> TvSettingsRow(rememberedSourceRow, rememberedSourceDescription, scale, checked = prefs.rememberSource,
                     requester = requester, left = sidebar, pending = mutations.isPending(preferenceTarget(row))) { change(prefs.copy(rememberSource = !prefs.rememberSource), row) }
                 crossTitleSourceRow -> profileId?.let { profile ->

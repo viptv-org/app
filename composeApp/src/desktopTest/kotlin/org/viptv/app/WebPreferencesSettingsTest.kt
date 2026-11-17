@@ -62,7 +62,9 @@ class WebPreferencesSettingsTest {
             val nextEpisode = ui.switch("Next episode button")
             assertEquals(ToggleableState.On, nextEpisode.config[SemanticsProperties.ToggleableState])
             val skipIntros = ui.switch("Skip intros and recaps automatically")
-            assertEquals(ToggleableState.Off, skipIntros.config[SemanticsProperties.ToggleableState])
+            assertEquals(ToggleableState.On, skipIntros.config[SemanticsProperties.ToggleableState])
+            val skipCredits = ui.switch("Skip credits and outros automatically")
+            assertEquals(ToggleableState.On, skipCredits.config[SemanticsProperties.ToggleableState])
             val rememberSources = ui.switch("Remember source choices")
             assertEquals(ToggleableState.On, rememberSources.config[SemanticsProperties.ToggleableState])
         }

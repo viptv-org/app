@@ -11,7 +11,7 @@ import org.viptv.app.features.player.TvSkipRange
 private data class SegmentsBody(val segments: List<Segment> = emptyList())
 
 @Serializable
-private data class Segment(val kind: String = "", @SerialName("start_ms") val startMillis: Long = 0, @SerialName("end_ms") val endMillis: Long = 0)
+private data class Segment(val kind: String = "", @SerialName("start_ms") val startMillis: Long = 0, @SerialName("end_ms") val endMillis: Long = 0, val mixed: Boolean = false)
 
 private val segmentsCodec = Json { ignoreUnknownKeys = true }
 
@@ -25,6 +25,6 @@ internal suspend fun RemoteConnection.playbackSegments(playbackId: String): List
             "credits" -> TvSkipKind.Credits
             else -> return@mapNotNull null
         }
-        TvSkipRange(segment.startMillis, segment.endMillis, kind).takeIf { it.endMillis > it.startMillis }
+        TvSkipRange(segment.startMillis, segment.endMillis, kind, segment.mixed).takeIf { it.endMillis > it.startMillis }
     }
 }

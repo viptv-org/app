@@ -15,14 +15,14 @@ data class TvPlaybackExtras(
     val failureDescription: String? = null,
     val creditsLabel: String? = null,
     val skipIntros: Boolean = false,
+    val skipCredits: Boolean = false,
 )
-data class TvSkipRange(val startMillis: Long, val endMillis: Long, val kind: TvSkipKind = TvSkipKind.Intro) {
+data class TvSkipRange(val startMillis: Long, val endMillis: Long, val kind: TvSkipKind = TvSkipKind.Intro, val mixed: Boolean = false) {
     val label: String get() = when (kind) {
         TvSkipKind.Intro -> "Skip intro"
         TvSkipKind.Recap -> "Skip recap"
         TvSkipKind.Credits -> "Skip credits"
     }
-    val automatic: Boolean get() = kind != TvSkipKind.Credits
 }
 enum class TvSkipKind { Intro, Recap, Credits }
 data class TvScrubThumbnail(val startMillis: Long, val endMillis: Long, val image: String)

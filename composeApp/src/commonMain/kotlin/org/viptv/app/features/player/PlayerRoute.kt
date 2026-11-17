@@ -11,6 +11,7 @@ import org.viptv.app.state.*
 import org.viptv.app.state.ApplicationState
 import org.viptv.engine.wire.Card
 import org.viptv.app.connection.seasonNumber
+import org.viptv.app.connection.skipCredits
 import org.viptv.engine.wire.SourceCandidate
 
 @Composable
@@ -38,7 +39,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.providerLabel(),
             sourceQuality = state.playingSource?.qualityLabel(), episodes = episodes,
-            skips = state.playbackSegments, skipIntros = preferences?.skip_intros == true,
+            skips = state.playbackSegments, skipIntros = preferences?.skip_intros != false, skipCredits = preferences?.skipCredits != false,
             nextEpisode = nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = controller::playEpisode,
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,

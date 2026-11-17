@@ -37,6 +37,7 @@ class SkipSegmentsUiTest {
     private val intro = TvSkipRange(30_000, 60_000, TvSkipKind.Intro)
     private val recap = TvSkipRange(0, 30_000, TvSkipKind.Recap)
     private val credits = TvSkipRange(1_290_000, 1_380_000, TvSkipKind.Credits)
+    private val endCredits = TvSkipRange(1_710_000, 1_795_000, TvSkipKind.Credits)
 
     @Test fun phoneShowsTheSkipActionInsideItsSegmentAndHidesItAtTheEnd() {
         val player = Player(phone = true, skips = listOf(intro, credits), position = 20_000)
@@ -164,12 +165,65 @@ class SkipSegmentsUiTest {
         } finally { player.close() }
     }
 
-    @Test fun creditsAreNeverSkippedAutomatically() {
+    @Test fun creditsPlayWhenTheirSettingIsOff() {
         val player = Player(television = true, skips = listOf(credits), position = 1_280_000, skipIntros = true, paused = false)
         try {
             player.frames()
             player.facts(PlayerFact.Progress(1_295_000, 1_800_000))
             assertTrue(player.seeks.isEmpty())
+            assertTrue(player.hasText("Skip credits"))
+        } finally { player.close() }
+    }
+
+    @Test fun tvCreditsWithASceneAfterThemSkipToItAndHoldUpNextForTheEnd() {
+        val player = Player(television = true, skips = listOf(credits), position = 1_280_000, next = episode(25), skipCredits = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(1_291_000, 1_800_000))
+            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(1_380_000, automatic = true)), player.seeks)
+            assertTrue(player.hasText("Skipped credits"))
+            assertFalse(player.hasText("Play next episode"), "Up next waits for the media's end")
+        } finally { player.close() }
+    }
+
+    @Test fun phoneCreditsWithASceneAfterThemSkipToIt() {
+        val player = Player(phone = true, skips = listOf(credits), position = 1_280_000, next = episode(25), skipCredits = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(1_291_000, 1_800_000))
+            assertTrue(player.hasText("Skipped credits"))
+            assertFalse(player.hasText("Up next"))
+        } finally { player.close() }
+    }
+
+    @Test fun creditsThatRunToTheEndHandOverToUpNext() {
+        val played = mutableListOf<Card>()
+        val player = Player(phone = true, skips = listOf(endCredits), position = 1_700_000, next = episode(25), skipCredits = true, paused = false,
+            play = { played += it })
+        try {
+            player.facts(PlayerFact.Progress(1_711_000, 1_800_000))
+            assertFalse(player.hasText("Skipped credits"), "Credits within 10 s of the end are the end")
+            assertTrue(player.hasText("Up next"))
+            assertTrue(played.isEmpty())
+        } finally { player.close() }
+    }
+
+    @Test fun aFinalesEndCreditsSkipToTheirEnd() {
+        val player = Player(television = true, skips = listOf(endCredits), position = 1_700_000, skipCredits = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(1_711_000, 1_800_000))
+            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(1_795_000, automatic = true)), player.seeks)
+        } finally { player.close() }
+    }
+
+    @Test fun mixedSegmentsOnlyOfferTheirSkip() {
+        val mixedIntro = intro.copy(mixed = true)
+        val mixedCredits = credits.copy(mixed = true)
+        val player = Player(television = true, skips = listOf(mixedIntro, mixedCredits), position = 20_000, skipIntros = true, skipCredits = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(31_000, 1_800_000))
+            assertTrue(player.seeks.isEmpty(), "Story plays over a mixed intro")
+            assertTrue(player.hasText("Skip intro"))
+            player.facts(PlayerFact.Progress(1_291_000, 1_800_000))
+            assertTrue(player.seeks.isEmpty(), "Story plays over a mixed ending")
             assertTrue(player.hasText("Skip credits"))
         } finally { player.close() }
     }
@@ -201,7 +255,7 @@ class SkipSegmentsUiTest {
     }
 
     private inner class Player(phone: Boolean = false, television: Boolean = false, val skips: List<TvSkipRange>, position: Long,
-        next: Card? = null, skipIntros: Boolean = false, paused: Boolean = true, play: (Card) -> Unit = {}) {
+        next: Card? = null, skipIntros: Boolean = false, skipCredits: Boolean = false, paused: Boolean = true, play: (Card) -> Unit = {}) {
         val seeks = mutableListOf<PlayerCommand>()
         var toggles = 0
         private val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 16)
@@ -210,11 +264,11 @@ class SkipSegmentsUiTest {
         val scene = ImageComposeScene(if (television) 1920 else 844, if (television) 1080 else 390, Density(1f)) { ViptvTheme(television = television) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 if (television) TvPlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24),
-                    TvPlaybackExtras(skips = skips, skipIntros = skipIntros, episodes = listOf(episode(24)), nextEpisode = next),
+                    TvPlaybackExtras(skips = skips, skipIntros = skipIntros, skipCredits = skipCredits, episodes = listOf(episode(24)), nextEpisode = next),
                     null, play, null, { back = it }, scene = TvPlayerScene.Skip, externalFacts = facts, previewCommand = { seeks += it },
                     playbackKey = "current")
                 else PlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24), phone = phone, canvasColor = Color.Transparent,
-                    externalFacts = facts, tvExtras = TvPlaybackExtras(skips = skips, skipIntros = skipIntros, episodes = listOf(episode(24)),
+                    externalFacts = facts, tvExtras = TvPlaybackExtras(skips = skips, skipIntros = skipIntros, skipCredits = skipCredits, episodes = listOf(episode(24)),
                         nextEpisode = next), playEpisode = play, backChanged = { back = it }, playbackKey = "current",
                     controlInsets = WindowInsets(0, 0, 0, 0))
             }

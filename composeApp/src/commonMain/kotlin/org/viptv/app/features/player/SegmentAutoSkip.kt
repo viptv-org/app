@@ -6,6 +6,18 @@ import androidx.compose.runtime.setValue
 import org.viptv.app.player.PlaybackInput
 
 internal const val skippedNoticeMillis = 5_000L
+internal const val creditsTailMillis = 10_000L
+
+internal fun TvSkipRange.skipsItself(intros: Boolean, credits: Boolean, durationMillis: Long?, nextEpisode: Boolean): Boolean = !mixed && when (kind) {
+    TvSkipKind.Intro, TvSkipKind.Recap -> intros
+    TvSkipKind.Credits -> credits && (scenesFollow(durationMillis) || !nextEpisode)
+}
+
+internal fun List<TvSkipRange>.endCreditsReached(position: Long, credits: Boolean, durationMillis: Long?): Boolean =
+    firstOrNull { it.kind == TvSkipKind.Credits && !(credits && !it.mixed && it.scenesFollow(durationMillis)) }
+        ?.let { position >= it.startMillis } == true
+
+private fun TvSkipRange.scenesFollow(durationMillis: Long?) = durationMillis != null && durationMillis - endMillis > creditsTailMillis
 
 internal class SegmentAutoSkip {
     var notice by mutableStateOf<TvSkipRange?>(null)

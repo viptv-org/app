@@ -25,17 +25,21 @@ class PlaybackTogglePreferencesTest {
         try {
             frames(scene)
             assertState(scene, nextEpisodeButtonRow, ToggleableState.On)
-            assertState(scene, skipIntrosRow, ToggleableState.Off)
+            assertState(scene, skipIntrosRow, ToggleableState.On)
+            assertState(scene, skipCreditsRow, ToggleableState.On)
             toggle(scene, nextEpisodeButtonRow); frames(scene, 20)
             toggle(scene, skipIntrosRow); frames(scene, 20)
+            toggle(scene, skipCreditsRow); frames(scene, 20)
             assertTrue(saved.isEmpty())
             click(scene, "Save preferences")
             val body = saved.single()
             assertEquals(false, body.next_episode_button)
-            assertEquals(true, body.skip_intros)
+            assertEquals(false, body.skip_intros)
+            assertEquals(false, body.skip_credits)
             val wire = profilePreferencesWire(body)
             assertEquals(false, wire.getValue("next_episode_button").jsonPrimitive.boolean)
-            assertEquals(true, wire.getValue("skip_intros").jsonPrimitive.boolean)
+            assertEquals(false, wire.getValue("skip_intros").jsonPrimitive.boolean)
+            assertEquals(false, wire.getValue("skip_credits").jsonPrimitive.boolean)
         } finally { scene.close() }
     }
 
@@ -47,18 +51,22 @@ class PlaybackTogglePreferencesTest {
         try {
             frames(scene)
             assertState(scene, nextEpisodeButtonRow, ToggleableState.On)
-            assertState(scene, skipIntrosRow, ToggleableState.Off)
+            assertState(scene, skipIntrosRow, ToggleableState.On)
+            assertState(scene, skipCreditsRow, ToggleableState.On)
             toggle(scene, nextEpisodeButtonRow); frames(scene, 20)
             assertState(scene, nextEpisodeButtonRow, ToggleableState.Off)
             toggle(scene, skipIntrosRow); frames(scene, 20)
+            toggle(scene, skipCreditsRow); frames(scene, 20)
             assertTrue(saved.isEmpty())
             click(scene, "Save preferences")
             val body = saved.single()
             assertEquals(false, body.next_episode_button)
-            assertEquals(true, body.skip_intros)
+            assertEquals(false, body.skip_intros)
+            assertEquals(false, body.skip_credits)
             val wire = profilePreferencesWire(body)
             assertEquals(false, wire.getValue("next_episode_button").jsonPrimitive.boolean)
-            assertEquals(true, wire.getValue("skip_intros").jsonPrimitive.boolean)
+            assertEquals(false, wire.getValue("skip_intros").jsonPrimitive.boolean)
+            assertEquals(false, wire.getValue("skip_credits").jsonPrimitive.boolean)
         } finally { scene.close() }
     }
 
