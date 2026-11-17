@@ -47,14 +47,13 @@ class ListPageStatesScanTest {
     }
 
     @Test fun continueWatchingReadsItsOwnLoadErrorAndDrawsTheSharedBlock() {
-        val route = source("features/continuewatching/ContinueWatchingRoute.kt")
-        assertTrue(route.contains("continueWatchingError"), "the page reads its own load failure")
-        assertFalse(route.contains("state.error"), "an action's failure never becomes the page state")
-        for (screen in listOf("features/continuewatching/ContinueWatchingScreen.kt",
-            "features/continuewatching/TvContinueWatchingScreen.kt")) {
-            val text = source(screen)
-            assertTrue(text.contains("ContinueWatchingState("), "$screen draws the shared page state block")
-            assertFalse(text.contains("page.error?.let"), "$screen prints the request's message once, as the block's body")
+        val route = source("features/library/LibraryRoute.kt")
+        assertTrue(route.contains("continueWatchingError"), "the segment reads its own load failure")
+        assertFalse(route.contains("error = state.error"), "an action's failure never becomes the page state")
+        for (page in listOf("features/library/LibraryScreen.kt", "features/library/TvLibraryScreen.kt")) {
+            val text = source(page)
+            assertTrue(text.contains("ContinueWatchingState("), "$page draws the shared page state block")
+            assertFalse(text.contains("section?.page?.error?.takeIf"), "$page prints the request's message once, as the block's body")
         }
     }
 
@@ -105,13 +104,14 @@ class ListPageStatesScanTest {
         }
     }
 
-    @Test fun continueWatchingStatesComeFromTheSharedRule() {
+    @Test fun theContinueWatchingSegmentComesFromTheSharedRule() {
         val page = source("features/continuewatching/ContinueWatchingRoute.kt")
         assertTrue(page.contains("val state get() = listPageState("), "the page state is the shared rule")
-        for (screen in listOf("features/continuewatching/ContinueWatchingScreen.kt",
-            "features/continuewatching/TvContinueWatchingScreen.kt")) {
+        for (screen in listOf("features/library/LibraryScreen.kt", "features/library/TvLibraryScreen.kt")) {
             val text = source(screen)
-            assertFalse(Regex("""\bpage\.(loading|empty)\b""").containsMatchIn(text), "$screen reads the shared state, not its own flags")
+            assertTrue(text.contains("section?.page?.state"), "$screen draws the segment from the shared state")
+            assertFalse(Regex("""\bsection\?\.page\?\.(loading|empty)\b""").containsMatchIn(text),
+                "$screen reads the shared state, not its own flags")
         }
     }
 }

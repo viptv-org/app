@@ -36,7 +36,6 @@ import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
@@ -120,7 +119,7 @@ class BottomClearanceUiTest {
             LiveScreen(channels, false, null, null, {})
         })
         add(Case("Continue watching") {
-            ContinueWatchingScreen(ContinueWatchingPage(movies, loaded = true), {}, {}, null, {}, {}, {})
+            ContinueWatchingSegment(ContinueWatchingPage(movies, loaded = true), {}, {}, null, {}, {})
         })
         add(Case("Details") {
             val show = Card(MediaIdentity("tt1111111", "series", emptyList()), provider_id = "addon:1",

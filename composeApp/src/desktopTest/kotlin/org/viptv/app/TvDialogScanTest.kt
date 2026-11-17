@@ -31,7 +31,6 @@ class TvDialogScanTest {
     // Every surface that can draw on TV and owns a confirmation names the panel it uses.
     private val tvPanels = mapOf(
         "components/ListRemoval.kt" to "TvConfirmDialog(",
-        "features/continuewatching/TvContinueWatchingScreen.kt" to "television = true",
         "features/library/TvLibraryScreen.kt" to "television = true",
         "features/details/EpisodeJump.kt" to "TvDialogPanel(",
         "features/details/EpisodeUpcomingDialog.kt" to "TvNoticeDialog(",

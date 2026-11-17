@@ -15,6 +15,7 @@ fun ApplicationController.libraryMore() = run {
     loadLibraryPage(mutable.value.libraryQuery.copy(offset = offset), append = true)
 }
 fun ApplicationController.refreshLibraryPage() = run { loadLibraryPage(refresh = true) }
+internal fun ApplicationController.ensureLibraryPage() { if (mutable.value.libraryPage == null) refreshLibraryPage() }
 // A My List write re-reads the page it is showing in place: the pages already loaded stay, and the title the
 // write un-saved leaves them.
 internal suspend fun ApplicationController.reloadMyListAfterWrite(unsaved: Card? = null) {
