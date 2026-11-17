@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +49,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -617,15 +619,27 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         ChoiceMark(checked, multiple, enabled, onLight = false,
             box = 18.dp, mark = 16.dp, radius = 4.dp, border = 1.5.dp, glyph = 12.dp)
-        Column(Modifier.weight(1f)) {
-            Text(buildAnnotatedString {
-                append(label)
-                if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
-            }, fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                color = if (enabled) Palette.text else Palette.tertiary)
-            note?.let { Text(it, fontSize = 11.sp, lineHeight = 14.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        val title = buildAnnotatedString {
+            append(label)
+            if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
         }
-        trailing?.let { Text(it, Modifier.widthIn(max = 120.dp), fontSize = 12.sp, color = Palette.tertiary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        val titleStyle = LocalTextStyle.current.merge(TextStyle(fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium))
+        val trailingStyle = LocalTextStyle.current.merge(TextStyle(fontSize = 12.sp))
+        val measurer = rememberTextMeasurer()
+        BoxWithConstraints(Modifier.weight(1f)) {
+            val gap = with(LocalDensity.current) { 10.dp.roundToPx() }
+            val inline = trailing == null || measurer.measure(title, titleStyle, maxLines = 1).size.width + gap +
+                measurer.measure(trailing, trailingStyle, maxLines = 1).size.width <= constraints.maxWidth
+            val second = listOfNotNull(note, trailing.takeUnless { inline }).joinToString(" · ").ifEmpty { null }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = titleStyle, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = if (enabled) Palette.text else Palette.tertiary)
+                    second?.let { Text(it, fontSize = 11.sp, lineHeight = 14.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                }
+                if (inline) trailing?.let { Text(it, style = trailingStyle, color = Palette.tertiary, maxLines = 1) }
+            }
+        }
     }
 }
 
