@@ -75,7 +75,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     LaunchedEffect(externalFacts, state) { externalFacts.collect { noteSlate(it); state.observe(it) } }
     LaunchedEffect(state.controlError) { state.controlError?.let { frameDelay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
-    val skipActive = activeSkip != null && !state.visible
+    val skipActive = (activeSkip != null || state.autoSkip.notice != null) && !state.visible
     val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable && error == null }
     val audioPromptActive = audioPrompt != null && nextSource != null
     val audioRequester = remember { FocusRequester() }
@@ -87,10 +87,12 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
     }
-    LaunchedEffect(state.position, extras.skips, extras.skipIntros, paused) {
-        if (extras.skipIntros && !paused) extras.skips.firstOrNull { it.automatic && state.position in it.startMillis until it.endMillis }
-            ?.let { state.skip(it, automatic = true, previewCommand) }
+    LaunchedEffect(rendering, state.position, extras.skips, extras.skipIntros, paused) {
+        if (!paused) state.autoSkip(rendering, extras.skips, { extras.skipIntros && it.automatic }, previewCommand)
     }
+    val skippedNotice = state.autoSkip.notice
+    LaunchedEffect(skippedNotice) { if (skippedNotice != null) { frameDelay(skippedNoticeMillis); state.autoSkip.notice = null } }
+    LaunchedEffect(state.visible) { if (state.visible) state.autoSkip.notice = null }
     LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive, audioPromptActive) {
         if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes && !audioPromptActive) {
             val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
@@ -162,7 +164,8 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                         toggle = toggle, previewCommand = previewCommand, chooseSources = chooseSources, playEpisode = playEpisode)
                 }
                 val skip = activeSkip
-                if (!state.visible && skip != null) TvSkipPrompt(skip, state.position, scale) { state.skip(skip, automatic = false, previewCommand) }
+                if (!state.visible && skippedNotice != null) TvSkippedNotice(skippedNotice, scale) { state.undoSkip(skippedNotice, previewCommand) }
+                else if (!state.visible && skip != null) TvSkipPrompt(skip, state.position, scale) { state.skip(skip, previewCommand) }
             }
         }
         if (state.hasPresented && (state.buffering || input == null && rendering != null))

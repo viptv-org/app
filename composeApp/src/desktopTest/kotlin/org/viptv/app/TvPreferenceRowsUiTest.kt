@@ -38,10 +38,10 @@ class TvPreferenceRowsUiTest {
             frames(scene)
             val rows = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }.map(::text)
                 .mapNotNull { label -> tvPlaybackRows(false).firstOrNull { label.startsWith(it) } }
-            assertEquals(listOf("Next episode button", "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality", "HDR and Dolby Vision"), rows)
+            assertEquals(listOf("Next episode button", "Skip intros and recaps automatically", "Remember source choices", "Default source", "Preferred quality", "HDR and Dolby Vision"), rows)
             assertFalse(nodes(scene).any { text(it).startsWith("Start with subtitles") })
             assertFocused(scene, "Next episode button")
-            press(scene, Key.DirectionDown); assertFocused(scene, "Skip intros and recaps")
+            press(scene, Key.DirectionDown); assertFocused(scene, "Skip intros and recaps automatically")
             press(scene, Key.Enter); frames(scene, 20)
             assertTrue(prefs.skipIntros, "Enter toggles the switch")
             press(scene, Key.DirectionDown); assertFocused(scene, "Remember source choices")

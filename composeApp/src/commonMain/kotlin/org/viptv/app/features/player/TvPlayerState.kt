@@ -39,7 +39,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var pendingAudio by mutableStateOf<Int?>(null)
     var audioError by mutableStateOf<Int?>(null)
     var undecodable by mutableStateOf(false)
-    private val skipped = mutableSetOf<TvSkipRange>()
+    val autoSkip = SegmentAutoSkip()
     private var lastPosition = position
     private var advancingTicks = 0
     init { initial.forEach(::observe) }
@@ -101,6 +101,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         if (command is PlayerCommand.Seek) {
             seekTarget = command.positionMillis; position = command.positionMillis
             seekStarted = TimeSource.Monotonic.markNow()
+            if (!command.automatic) autoSkip.seeked(command.positionMillis)
         }
         commands.tryEmit(command); preview?.invoke(command); interaction++; if (!command.isAutomatic) controlError = null
     }
@@ -130,10 +131,18 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         reveal()
         send(PlayerCommand.Seek((position + deltaMillis).coerceIn(0, length)), preview)
     }
-    fun skip(range: TvSkipRange, automatic: Boolean, preview: ((PlayerCommand) -> Unit)? = null) {
-        if (seekTarget != null) return
-        if (!skipped.add(range) && automatic) return
-        send(PlayerCommand.Seek(range.endMillis, automatic), preview)
+    fun skip(range: TvSkipRange, preview: ((PlayerCommand) -> Unit)? = null) {
+        if (seekTarget == null) send(PlayerCommand.Seek(range.endMillis), preview)
+    }
+    fun autoSkip(input: PlaybackInput?, segments: List<TvSkipRange>, enabled: (TvSkipRange) -> Boolean, preview: ((PlayerCommand) -> Unit)?) {
+        val due = autoSkip.due(input, position, segments, enabled) ?: return
+        if (seekTarget != null || live) return
+        send(PlayerCommand.Seek(due.endMillis, automatic = true), preview)
+        autoSkip.skipped(due)
+    }
+    fun undoSkip(range: TvSkipRange, preview: ((PlayerCommand) -> Unit)?) {
+        autoSkip.undo(range)
+        send(PlayerCommand.Seek(range.startMillis), preview)
     }
     fun back(close: () -> Unit): Boolean {
         when {
@@ -142,6 +151,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             showNext -> keepWatching()
             scrub != null -> { scrub = null; reveal() }
             visible && !failed -> visible = false
+            autoSkip.notice != null -> autoSkip.notice = null
             else -> { close(); return false }
         }
         interaction++

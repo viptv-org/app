@@ -61,7 +61,7 @@ class WebPreferencesSettingsTest {
             assertEquals(listOf("Default source: Always ask", "Preferred quality: ${autoQualityLabel(deviceMaxVideoHeight())}", "HDR and Dolby Vision: No preference"), triggers)
             val nextEpisode = ui.switch("Next episode button")
             assertEquals(ToggleableState.On, nextEpisode.config[SemanticsProperties.ToggleableState])
-            val skipIntros = ui.switch("Skip intros and recaps")
+            val skipIntros = ui.switch("Skip intros and recaps automatically")
             assertEquals(ToggleableState.Off, skipIntros.config[SemanticsProperties.ToggleableState])
             val rememberSources = ui.switch("Remember source choices")
             assertEquals(ToggleableState.On, rememberSources.config[SemanticsProperties.ToggleableState])

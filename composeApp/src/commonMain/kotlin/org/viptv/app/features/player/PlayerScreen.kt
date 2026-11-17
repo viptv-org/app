@@ -81,6 +81,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekPending by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
+    val autoSkip = remember(playbackKey) { SegmentAutoSkip() }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
     val rendering = input ?: retainedInput
@@ -183,19 +184,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
+        if (!automatic) autoSkip.seeked(target)
         if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
-    val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
-    fun skipSegment(range: TvSkipRange, automatic: Boolean) {
-        if (seekTarget != null) return
-        if (!skipped.add(range) && automatic) return
-        seekTo(range.endMillis, reveal = false, automatic = automatic)
+    fun skipSegment(range: TvSkipRange) { if (seekTarget == null) seekTo(range.endMillis, reveal = false) }
+    LaunchedEffect(rendering, position, tvExtras.skips, tvExtras.skipIntros, paused) {
+        val due = autoSkip.due(rendering, position, tvExtras.skips) { tvExtras.skipIntros && it.automatic }
+        if (due != null && !paused && seekTarget == null) { seekTo(due.endMillis, reveal = false, automatic = true); autoSkip.skipped(due) }
     }
-    LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
-        if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }
-            ?.let { skipSegment(it, automatic = true) }
-    }
+    LaunchedEffect(autoSkip.notice) { if (autoSkip.notice != null) { frameDelay(skippedNoticeMillis); autoSkip.notice = null } }
+    fun undoSkip(range: TvSkipRange) { autoSkip.undo(range); seekTo(range.startMillis, reveal = false) }
     fun applyFact(fact: PlayerFact) {
         seekPending?.let { target -> if (fact.settlesSeek(target) || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) seekPending = null }
         when (fact) {
@@ -355,8 +354,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (!stopped && slateNotice && phonePanel == null && !showTracks)
                     PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
                 else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
-                if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
-                    PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
+                val skippedNotice = autoSkip.notice
+                if (!locked && phonePanel == null && !showTracks && !failed && error == null) {
+                    val promptBottom = maxOf(panelBottomInset, 104.dp)
+                    if (skippedNotice != null) PlayerSkippedNotice(skippedNotice, controlInsets, promptBottom) { undoSkip(skippedNotice) }
+                    else if (activeSkip != null) PlayerSkipPrompt(activeSkip, controlInsets, promptBottom) { skipSegment(activeSkip) }
+                }
             }
         }
     }
