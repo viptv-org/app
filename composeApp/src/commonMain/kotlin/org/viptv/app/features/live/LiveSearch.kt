@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import org.viptv.app.components.frameDelay
 import org.viptv.app.components.TvTextField
 import org.viptv.app.features.search.SearchField
 
@@ -41,7 +41,7 @@ internal fun rememberLiveSearchDraft(search: String, changed: (String) -> Unit):
     LaunchedEffect(search) { if (search != draft.asked) { draft.asked = search; draft.text = search } }
     LaunchedEffect(draft.text) {
         if (!draft.typing) return@LaunchedEffect
-        delay(LIVE_SEARCH_SETTLE_MILLIS)
+        frameDelay(LIVE_SEARCH_SETTLE_MILLIS)
         draft.ask()
     }
     return draft
