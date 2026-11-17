@@ -135,6 +135,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var crashReportChecked = false
     internal var startupDatabase: String? = null
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
+    internal val fillerCache = mutableMapOf<String, Map<Long, org.viptv.app.connection.FillerKind>>()
+    internal var episodeFillerJob: Job? = null
 
     // The quiet lane and Back wait on the controller's operation job, so a write that must not be reloaded under
     // hands claims it instead of leaving it pointing at nothing; the write then owns the busy its claim replaced.

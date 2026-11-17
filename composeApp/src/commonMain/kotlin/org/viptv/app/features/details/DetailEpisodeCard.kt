@@ -83,6 +83,7 @@ private fun EpisodeArtwork(episode: Card, modifier: Modifier, comingUp: Boolean)
         val art = episode.landscape ?: episode.poster
         if (art != null && !GoneArtwork.contains(art)) AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
             onError = { error -> if (error.result.throwable.isGoneArtwork()) GoneArtwork.record(art) })
+        EpisodeFillerTag(episode)
         if (episode.isPlayPending()) {
             PendingActionSpinner(Modifier.size(30.dp), size = 30.dp, strokeWidth = 3.dp, color = Palette.text)
         } else if (!comingUp) Box(Modifier.size(30.dp).background(Palette.background.copy(alpha = .55f), CircleShape)

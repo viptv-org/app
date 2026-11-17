@@ -152,12 +152,16 @@ fun App(
         repeat(2) { withFrameNanos { } }
         if (!appHasFocus) focusManager.moveFocus(FocusDirection.Down)
     }
+    val detailKey = state.detail?.item?.let { org.viptv.app.connection.cardLookupKey(it) }
+    LaunchedEffect(detailKey) { controller.loadEpisodeFiller() }
+    val episodeFiller = remember(state.detail, state.episodeFiller) { EpisodeFillerLabels.of(state.detail, state.episodeFiller) }
     CompositionLocalProvider(LocalTvDisplayState provides tvDisplay, LocalReducedMotion provides reduceMotion,
         LocalAccent provides accent, LocalShowRatings provides ratings,
         LocalTvTextScale provides textScale, LocalFitToScreen provides fitScreen,
         LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
         LocalPendingAction provides state.pendingAction,
-        org.viptv.app.components.LocalPendingMutation provides pendingMutation) {
+        org.viptv.app.components.LocalPendingMutation provides pendingMutation,
+        org.viptv.app.features.details.LocalEpisodeFiller provides episodeFiller) {
     ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.

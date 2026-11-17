@@ -133,6 +133,7 @@ data class ApplicationState(
     val detailFailure: String? = null,
     val detailRetryable: Boolean = true,
     val detail: DetailSnapshot? = null,
+    val episodeFiller: EpisodeFiller? = null,
     val detailFailures: List<AddonFailure> = emptyList(),
     val detailShell: Boolean = false,
     val detailFocus: DetailFocus? = null,

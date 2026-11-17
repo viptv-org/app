@@ -59,6 +59,7 @@ internal fun TvAboutSettings(local: Boolean, address: String?, profileName: Stri
         TvSettingsRow("Open-source licences", scale = scale, left = sidebar) { panel = TvAboutPanel.Licences }
         Column(Modifier.padding(top = 16.dp * scale), verticalArrangement = Arrangement.spacedBy(10.dp * scale)) {
             Text("Show and episode data from Simkl.", color = Palette.tertiary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
+            Text(FILLER_CREDIT, color = Palette.tertiary, fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
             Text("This product uses the TMDB API but is not endorsed or certified by TMDB.", color = Palette.tertiary,
                 fontSize = (22 * scale).sp, lineHeight = (32 * scale).sp)
         }
