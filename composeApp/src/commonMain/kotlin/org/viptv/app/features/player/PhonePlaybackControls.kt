@@ -7,7 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
 import org.jetbrains.compose.resources.painterResource
@@ -39,6 +41,23 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
         }
     }
 }
+
+internal val TransportChromeGap = 12.dp
+internal const val PlayerChromeTag = "player-chrome"
+
+@Composable
+internal fun CentredClearOfChrome(chromeHeight: Dp, insets: WindowInsets, modifier: Modifier = Modifier, content: @Composable () -> Unit) =
+    Layout(content, modifier) { measurables, constraints ->
+        val placeable = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val centred = (constraints.maxHeight - placeable.height) / 2
+        val clear = constraints.maxHeight - chromeHeight.roundToPx() - TransportChromeGap.roundToPx() - placeable.height
+        val left = insets.getLeft(this, layoutDirection)
+        val right = constraints.maxWidth - insets.getRight(this, layoutDirection) - placeable.width
+        val x = ((constraints.maxWidth - placeable.width) / 2).coerceAtMost(right).coerceAtLeast(left)
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            placeable.place(x, if (chromeHeight > 0.dp) minOf(centred, clear) else centred)
+        }
+    }
 
 private val ToolRowWidthNeedingNoWrap = 342.dp
 
