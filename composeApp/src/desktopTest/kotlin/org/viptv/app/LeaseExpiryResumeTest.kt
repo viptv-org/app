@@ -29,10 +29,11 @@ class LeaseExpiryResumeTest {
         metadata_origin = MetadataOrigin("stremio", "addon:4", "incarnation"))
     private val android = buildJsonObject { put("platform", "android"); put("can_play_direct", true) }
 
-    private data class Stream(val label: String, val detail: String, val binge: String, val size: Long)
+    private data class Stream(val label: String, val detail: String, val binge: String, val size: Long, val fingerprint: String = detail.hashCode().toString())
     private val animeTime = Stream("Torrentio\n1080p", "[Anime Time] Hidden Dungeon - 11 [Dual Audio][BD][1080p]", "torrentio|anime-time|1080p", 1_400_000_000)
     private val animeTimeV2 = Stream("Torrentio\n1080p", "[Anime Time] Hidden Dungeon - 11v2 [Dual Audio][BD][1080p]", "torrentio|anime-time|1080p", 1_410_000_000)
     private val subsPlease = Stream("Torrentio\n1080p", "[SubsPlease] Hidden Dungeon - 11 (1080p)", "torrentio|subsplease|1080p", 1_300_000_000)
+    private val animeTimeRelabelled = Stream("Torrentio+\n1080p BD", "Hidden Dungeon S01E11 1080p", "torrentio|renamed|1080p", 1_400_000_001, animeTime.fingerprint)
     private val other = Stream("Torrentio\n720p", "[Other] Hidden Dungeon - 11 [720p]", "torrentio|other|720p", 700_000_000)
 
     private inner class Server(var offered: List<Stream>) {
@@ -52,7 +53,7 @@ class LeaseExpiryResumeTest {
             discoveries++
             val issued = offered.mapIndexed { index, stream -> "grant-$discoveries-$index".also { grants[it] = stream } to stream }
             return issued.joinToString(",") { (id, s) ->
-                """{"id":"$id","name":"${s.label.replace("\n", "\\n")}","detail":"${s.detail}","source_binge_group":"${s.binge}",${if (fingerprints) "\"source_fingerprint\":\"${s.detail.hashCode()}\"," else ""}"presentation":{"size_bytes":${s.size}}}"""
+                """{"id":"$id","name":"${s.label.replace("\n", "\\n")}","detail":"${s.detail}","source_binge_group":"${s.binge}",${if (fingerprints) "\"source_fingerprint\":\"${s.fingerprint}\"," else ""}"presentation":{"size_bytes":${s.size}}}"""
             }
         }
     }
@@ -187,6 +188,21 @@ class LeaseExpiryResumeTest {
 
         assertEquals(animeTimeV2, server.grants[server.opens.last().getValue("stream_id").jsonPrimitive.content])
         assertEquals(300.0, server.opens.last().getValue("position").jsonPrimitive.double)
+        controller.closePlayer()
+    }
+
+    @Test fun theSourceFingerprintOnTheCandidateFindsARelabelledStream() = runTest {
+        val server = Server(listOf(other, animeTime))
+        val controller = controller(server)
+        discoverAndPlay(controller, server, animeTime, 450_000)
+        assertEquals(animeTime.fingerprint, controller.state.value.playingSource?.source_fingerprint)
+        leaveForAnHour(controller, server)
+        server.offered = listOf(other, animeTimeRelabelled)
+        server.bestMatch = other
+        returnToApp(controller)
+
+        assertEquals(animeTimeRelabelled, server.grants[server.opens.last().getValue("stream_id").jsonPrimitive.content])
+        assertEquals(450.0, server.opens.last().getValue("position").jsonPrimitive.double)
         controller.closePlayer()
     }
 
