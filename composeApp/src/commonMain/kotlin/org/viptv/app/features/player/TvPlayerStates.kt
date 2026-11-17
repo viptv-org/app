@@ -42,6 +42,23 @@ internal fun BoxScope.TvSkipPrompt(skip: TvSkipRange, position: Long, scale: Flo
     }
 }
 
+@Composable
+internal fun BoxScope.TvSkippedNotice(skip: TvSkipRange, scale: Float, undo: () -> Unit) {
+    val initial = remember { FocusRequester() }
+    LaunchedEffect(skip) { initial.requestFocus() }
+    Row(Modifier.align(Alignment.BottomEnd).padding(end = 96.dp * scale, bottom = 112.dp * scale).height(72.dp * scale)
+        .clip(RoundedCornerShape(12.dp * scale)).tvBackdropBlur(24.dp * scale).background(Palette.text.copy(alpha = .16f)),
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(skip.skippedLabel, Modifier.padding(horizontal = 28.dp * scale), color = Palette.text,
+            fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
+        TvAction(Modifier.fillMaxHeight().widthIn(min = 160.dp * scale), scale, primary = true, requester = initial, activate = undo,
+            contentPadding = PaddingValues(horizontal = 28.dp * scale)) {
+            Icon(Lucide.Undo2, null, Modifier.size(26.dp * scale), it); Spacer(Modifier.width(12.dp * scale))
+            Text(undoSkipLabel, color = it, fontSize = (26 * scale).sp, lineHeight = (37.7f * scale).sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
 // The blurred video is a layer behind the action, not in its modifier chain: any clip in front of it cuts the focus ring.
 @Composable
 internal fun TvGlassAction(modifier: Modifier, scale: Float,

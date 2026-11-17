@@ -14,7 +14,8 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val requiredAudioIndex: Int? = null,
     val title: String? = null,
     // Loopback media of this device's torrent runtime: reads wait on peers, not a server.
-    val localTorrent: Boolean = false) {
+    val localTorrent: Boolean = false,
+    val startChosen: Boolean = false) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
     internal var selectedAudioLanguage: String? = null
     var positionMillis: Long = positionMillis
