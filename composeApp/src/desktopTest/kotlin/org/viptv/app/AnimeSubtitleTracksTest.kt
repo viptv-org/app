@@ -5,6 +5,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.features.player.groupSubtitleTracks
+import org.viptv.app.features.settings.subtitleModeChoices
+import org.viptv.app.features.settings.subtitleModeNote
+import org.viptv.app.features.settings.subtitleModeValue
 import org.viptv.app.player.*
 import org.viptv.app.player.mpv.MpvSession
 import java.io.File
@@ -38,7 +41,29 @@ class AnimeSubtitleTracksTest {
         val tracks = listOf(SubtitleModeTrack(1, "eng", forced = true, name = "Signs & Songs", default = true),
             SubtitleModeTrack(2, "eng", name = "Full Subtitles"))
         assertEquals(2, subtitleModeChoice("foreign", "en", "en", "jpn", tracks)?.key)
-        assertNull(subtitleModeChoice("foreign", "en", "en", "eng", tracks))
+        assertEquals(1, subtitleModeChoice("foreign", "en", "en", "eng", tracks)?.key, "A dub starts Signs & Songs")
+    }
+
+    @Test fun aDubStartsTheSignsTrackAndForeignAudioTheFullOne() {
+        val tracks = listOf(track(1, "Signs & Songs", forced = true, default = true), track(2, "Full Subtitles"))
+        assertEquals(1, dubSignsSubtitle(tracks, "foreign", "en", "en", "eng"))
+        assertEquals(1, dubSignsSubtitle(tracks, "foreign", null, null, "en-US"), "No preferences means English audio and subtitles")
+        assertNull(dubSignsSubtitle(tracks, "foreign", "en", "en", "jpn"), "Foreign audio is not a dub")
+        assertEquals(2, fullDialogueSubtitle(tracks, "en"))
+        assertNull(dubSignsSubtitle(tracks, "always", "en", "en", "eng"), "Always keeps full dialogue")
+        assertNull(dubSignsSubtitle(tracks, "never", "en", "en", "eng"))
+        assertNull(dubSignsSubtitle(tracks, "foreign", "en", "en", "und"), "Untagged audio is not a dub")
+        assertNull(dubSignsSubtitle(listOf(track(2, "Full Subtitles")), "foreign", "en", "en", "eng"), "No signs track stays off")
+        assertNull(dubSignsSubtitle(tracks, "foreign", "en", "es", "eng"), "Signs only in the subtitle language")
+        val two = listOf(track(1, "Signs"), track(2, "Songs", default = true), track(3, "Full Subtitles"))
+        assertEquals(2, dubSignsSubtitle(two, "foreign", "en", "en", "eng"))
+    }
+
+    @Test fun onlyTheForeignOptionCarriesTheDubNote() {
+        assertEquals("Signs & songs on dubs", subtitleModeNote("foreign"))
+        assertNull(subtitleModeNote("always"))
+        assertNull(subtitleModeNote("never"))
+        assertEquals("foreign", subtitleModeValue(subtitleModeChoices("en")[1].second))
     }
 
     @Test fun eachEmbeddedTrackShowsItsNameWithTheLanguageUnderIt() {
@@ -66,6 +91,9 @@ class AnimeSubtitleTracksTest {
             assertEquals(listOf("Japanese" to "Mono", "English" to "Mono"), state.audio.map { it.name to it.detail })
             assertEquals(listOf(true, false), state.subtitles.map { it.default })
             assertEquals(state.subtitles.single { it.name == "Full Subtitles" }.id, fullDialogueSubtitle(state.subtitles, "en"))
+            assertEquals(state.subtitles.single { it.name == "Signs & Songs" }.id,
+                dubSignsSubtitle(state.subtitles, "foreign", "en", "en", state.audio.single { it.name == "English" }.language))
+            assertNull(dubSignsSubtitle(state.subtitles, "foreign", "en", "en", state.audio.single { it.name == "Japanese" }.language))
         } finally { session.closeAfterRenderer(); withTimeout(5_000) { session.closed.await() }; file.delete() }
     }
 }
