@@ -50,7 +50,7 @@ class EpisodeFillerTest {
     }
 
     @Test fun theDetailTitlesAskTheServerOnceAndLandInState() = runBlocking<Unit> {
-        val queries = mutableListOf<String>()
+        val queries = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("/api/anime/filler", request.url.encodedPath)
             queries += request.url.parameters.getAll("title").orEmpty().joinToString("|")
