@@ -5,7 +5,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.Card
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.TimeSource
+import kotlin.time.Duration.Companion.seconds
 
 internal fun ApplicationController.releaseRemotePlayback(): Job? {
     cancelNextEpisode()
@@ -71,6 +71,8 @@ internal suspend fun ApplicationController.closeForExit(timeoutMillis: Long, onE
 internal data class ProgressWrite(val sequence: Long, val input: PlaybackInput, val card: Card, val positionMillis: Long, val durationMillis: Long?,
     val completed: Boolean, val remote: RemoteConnection?, val store: LocalConnection?)
 
+internal val PROGRESS_SAVE_INTERVAL = 15.seconds
+
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
     if (input.live) return null
@@ -86,7 +88,7 @@ internal fun ApplicationController.saveProgress(completed: Boolean, final: Boole
     val position=if(completed && snapshot.durationMillis!=null) snapshot.durationMillis else snapshot.positionMillis
     if(position<=0)return null
     val write=ProgressWrite(++progressSequence, input, title, position, snapshot.durationMillis, completed, remote, store)
-    progressSavedAt=TimeSource.Monotonic.markNow()
+    progressSavedAt=freshness.time.markNow()
     return scope.launch(start = if (final) CoroutineStart.UNDISPATCHED else CoroutineStart.DEFAULT) {
         withContext(if (final) NonCancellable else currentCoroutineContext()) { settleProgress(write) }
     }.also { progressJob=it }
