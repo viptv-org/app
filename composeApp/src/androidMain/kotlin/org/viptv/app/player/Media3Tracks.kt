@@ -18,22 +18,22 @@ internal class Media3Tracks(private val player: ExoPlayer, private val input: Pl
         references.clear()
         var selectedProvider: String? = providerSelection
         fun options(type: Int): List<PlaybackTrack> = player.currentTracks.groups.filter { it.type == type }.flatMap { group ->
-            (0 until group.length).filter { group.isTrackSupported(it) }.mapNotNull { index ->
-                val format = group.getTrackFormat(index)
-                val external = format.id?.takeIf { it.startsWith(PROVIDER_PREFIX) }?.removePrefix(PROVIDER_PREFIX)
-                if (external != null) {
-                    if (group.isTrackSelected(index)) selectedProvider = external
-                    null
-                } else {
-                    val key = Key(group.mediaTrackGroup, index)
-                    val id = keys.getOrPut(key) { next++ }
-                    references[id] = key
-                    val language = format.language?.takeUnless { it == "und" }
-                    val label = listOfNotNull(format.label?.takeIf { it.isNotBlank() }, language,
-                        format.channelCount.takeIf { type == C.TRACK_TYPE_AUDIO && it > 0 }?.let { "${it} channels" }).distinct().joinToString(" · ")
-                    PlaybackTrack(id, label.ifBlank { if (type == C.TRACK_TYPE_AUDIO) "Audio track ${index+1}" else "Subtitle ${index+1}" }, group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null), language)
-                }
+            (0 until group.length).filter { group.isTrackSupported(it) }.map { group to it }
+        }.mapIndexedNotNull { ordinal, (group, index) ->
+            val format = group.getTrackFormat(index)
+            val external = format.id?.takeIf { it.startsWith(PROVIDER_PREFIX) }?.removePrefix(PROVIDER_PREFIX)
+            if (external != null) {
+                if (group.isTrackSelected(index)) selectedProvider = external
+                return@mapIndexedNotNull null
             }
+            val key = Key(group.mediaTrackGroup, index)
+            val id = keys.getOrPut(key) { next++ }
+            references[id] = key
+            val language = format.language?.takeUnless { it == "und" }
+            val selected = group.isTrackSelected(index) && (type != C.TRACK_TYPE_TEXT || providerSelection == null)
+            if (type == C.TRACK_TYPE_TEXT) embeddedSubtitleTrack(id, ordinal + 1, format.label, language, selected,
+                format.selectionFlags and C.SELECTION_FLAG_FORCED != 0, format.selectionFlags and C.SELECTION_FLAG_DEFAULT != 0)
+            else audioTrack(id, ordinal + 1, format.label, language, format.channelCount.takeIf { it != Format.NO_VALUE }, selected)
         }
         val audio = options(C.TRACK_TYPE_AUDIO)
         val text = options(C.TRACK_TYPE_TEXT)

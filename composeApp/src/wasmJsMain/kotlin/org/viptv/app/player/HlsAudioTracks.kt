@@ -7,13 +7,14 @@ internal fun readHlsAudioTracks(hls: Hls): List<PlaybackTrack> {
     val array = Json.parseToJsonElement(hlsAudioTracksJson(hls)).jsonArray
     return array.map { track ->
         val item = track.jsonObject
-        browserAudioTrack(item.getValue("id").jsonPrimitive.int, item["name"]?.jsonPrimitive?.contentOrNull,
-            item["lang"]?.jsonPrimitive?.contentOrNull, item.getValue("current").jsonPrimitive.boolean)
+        val id = item.getValue("id").jsonPrimitive.int
+        audioTrack(id, id + 1, item["name"]?.jsonPrimitive?.contentOrNull, item["lang"]?.jsonPrimitive?.contentOrNull,
+            item["channels"]?.jsonPrimitive?.contentOrNull?.substringBefore('/')?.toIntOrNull(), item.getValue("current").jsonPrimitive.boolean)
     }
 }
 
 @JsFun("""(hls) => { const tracks = hls.audioTracks || []; const current = hls.audioTrack;
- return JSON.stringify(tracks.map((t, i) => ({ id: i, name: t.name || null, lang: t.lang || null, current: i === current }))); }""")
+ return JSON.stringify(tracks.map((t, i) => ({ id: i, name: t.name || null, lang: t.lang || null, channels: t.channels || null, current: i === current }))); }""")
 internal external fun hlsAudioTracksJson(hls: Hls): String
 
 @JsFun("""(hls, id) => { hls.audioTrack = id; }""")

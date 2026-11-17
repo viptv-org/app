@@ -51,7 +51,7 @@ internal class AVProviderSubtitles(private val player: AVPlayer, private val inp
                 automaticDecision = decision
                 val choice = subtitleModeChoice(preferences.subtitleMode, preferences.preferred_audio_language,
                     preferences.preferred_subtitle_language, selectedAudio?.extendedLanguageTag,
-                    embedded.map { track -> SubtitleModeTrack(track.id, track.language) })
+                    embedded.map { track -> SubtitleModeTrack(track.id, track.language, name = track.label) })
                 group(PlaybackTrackKind.Subtitle)?.let { group -> item.selectMediaOption(choice?.key?.let { group.options[it] as AVMediaSelectionOption }, group) }
                 val eligible = subtitleModeEnabled(preferences.subtitleMode, preferences.preferred_audio_language, selectedAudio?.extendedLanguageTag)
                 if (choice == null && eligible && provider != null && provider.id !in attempted) attach(provider.id, false)
@@ -65,7 +65,9 @@ internal class AVProviderSubtitles(private val player: AVPlayer, private val inp
         val selected = item.currentMediaSelection.selectedMediaOptionInMediaSelectionGroup(group)
         return group.options.mapIndexed { index, value ->
             val option = value as AVMediaSelectionOption
-            PlaybackTrack(index, option.displayName, selected == option && (kind == PlaybackTrackKind.Audio || desired == null), option.extendedLanguageTag)
+            val chosen = selected == option && (kind == PlaybackTrackKind.Audio || desired == null)
+            if (kind == PlaybackTrackKind.Audio) audioTrack(index, index + 1, option.displayName, option.extendedLanguageTag, null, chosen)
+            else PlaybackTrack(index, option.displayName, chosen, option.extendedLanguageTag)
         }
     }
 
