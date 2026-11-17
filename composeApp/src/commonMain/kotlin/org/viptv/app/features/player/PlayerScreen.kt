@@ -23,6 +23,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import org.viptv.app.connection.cardLookupKey
 import org.viptv.app.connection.ProfilePreferences
 import com.composables.icons.lucide.*
@@ -280,11 +281,10 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                             title?.subtitle?.let { Text(it, fontSize = 12.sp, color = Palette.secondary) }
                         }
                     }
-                    if (phone) Box(Modifier.align(Alignment.TopCenter).fillMaxHeight().padding(bottom = chromeHeight).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)),
-                        contentAlignment = Alignment.Center) {
+                    if (phone) CentredClearOfChrome(chromeHeight, controlInsets, Modifier.fillMaxSize()) {
                         PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
                     }
-                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().testTag(PlayerChromeTag)
                         .onGloballyPositioned { chromeTopPx = it.positionInRoot().y }
                         .windowInsetsPadding(controlInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))) {
                         val gutter = if (!phone && maxWidth < CompactButtonsBelow) 12.dp else 24.dp
