@@ -72,6 +72,21 @@ class SearchableSelectTest {
         }
     }
 
+    @Test fun aLongSelectedLabelStaysWholeAndCurrentMovesUnderIt() {
+        val modes = listOf(SelectOption("always", "Always"), SelectOption("foreign", "When audio isn’t English"), SelectOption("never", "Never"))
+        for ((selected, label, below) in listOf(Triple("foreign", "When audio isn’t English", true), Triple("always", "Always", false))) {
+            Ui(800, 700) { SearchableSelect("Subtitles", modes, listOf(selected), {}, anyLabel = null) }.use {
+                it.open("Subtitles: $label", search = false)
+                fun flat(n: SemanticsNode): List<SemanticsNode> = listOf(n) + n.children.flatMap(::flat)
+                val nodes = it.scene.semanticsOwners.flatMap { owner -> flat(owner.unmergedRootSemanticsNode) }
+                    .filter { n -> n.config.getOrNull(SemanticsProperties.Role) != Role.DropdownList }
+                val title = nodes.last { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text == label } == true }
+                val current = nodes.last { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { t -> t.text == "Current" } == true }
+                assertEquals(below, current.boundsInRoot.top >= title.boundsInRoot.bottom - 1, "$label: Current ${current.boundsInRoot} title ${title.boundsInRoot}")
+            }
+        }
+    }
+
     @Test fun aTextChipAppliesOnEnterOnlyAndAnyClearsIt() {
         val applied = mutableListOf<String>()
         var value by mutableStateOf("")
