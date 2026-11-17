@@ -1,6 +1,28 @@
 package org.viptv.app.player
 
-internal data class SubtitleModeTrack<T>(val key: T, val language: String?, val forced: Boolean = false)
+import org.viptv.app.features.settings.languageChoices
+
+internal data class SubtitleModeTrack<T>(val key: T, val language: String?, val forced: Boolean = false,
+    val name: String? = null, val default: Boolean = false)
+
+private val signsWords = Regex("""(?<![\p{L}\p{N}])(signs?|songs?|forced|s&s)(?![\p{L}\p{N}])""", RegexOption.IGNORE_CASE)
+private val fullWords = Regex("""(?<![\p{L}\p{N}])(full|dialogue|dialog)(?![\p{L}\p{N}])""", RegexOption.IGNORE_CASE)
+
+internal fun signsOnlySubtitle(name: String?, forced: Boolean): Boolean =
+    forced || name != null && signsWords.containsMatchIn(name) && !fullWords.containsMatchIn(name)
+
+internal fun subtitleLanguageName(language: String?): String? {
+    val code = subtitleModeLanguage(language) ?: return null
+    return languageChoices.firstOrNull { it.first == code }?.second ?: code
+}
+
+internal fun embeddedSubtitleTrack(id: Int, ordinal: Int, name: String?, language: String?, selected: Boolean,
+    forced: Boolean, default: Boolean): PlaybackTrack {
+    val languageName = subtitleLanguageName(language)
+    val title = name?.trim()?.takeIf { it.isNotEmpty() && (languageName == null || subtitleModeLanguage(it) != subtitleModeLanguage(language)) }
+    val label = listOfNotNull(title, languageName).joinToString(" · ").ifEmpty { "Subtitle $ordinal" }
+    return PlaybackTrack(id, label, selected, language?.takeUnless { subtitleModeLanguage(it) == null }, title, forced, default)
+}
 
 private val unknownLanguages = setOf("", "und", "mul", "zxx", "mis")
 
@@ -43,7 +65,12 @@ internal fun <T> subtitleModeChoice(mode: String, preferredAudio: String?, prefe
     tracks: List<SubtitleModeTrack<T>>): SubtitleModeTrack<T>? {
     if (mode == "never") return null
     if (mode == "foreign" && !audioIsForeign(audioLanguage, preferredAudio)) return null
-    val usable = tracks.filterNot { it.forced }
+    val usable = tracks.filterNot { signsOnlySubtitle(it.name, it.forced) }
     val wanted = subtitleModeLanguage(preferredSubtitle) ?: return usable.singleOrNull()
-    return usable.firstOrNull { subtitleModeLanguage(it.language) == wanted }
+    val matching = usable.filter { subtitleModeLanguage(it.language) == wanted }
+    return matching.firstOrNull { it.default } ?: matching.firstOrNull()
 }
+
+internal fun fullDialogueSubtitle(embedded: List<PlaybackTrack>, preferredSubtitle: String?): Int? =
+    subtitleModeChoice("always", null, preferredSubtitle, null,
+        embedded.map { SubtitleModeTrack(it.id, it.language, it.forced, it.name, it.default) })?.key

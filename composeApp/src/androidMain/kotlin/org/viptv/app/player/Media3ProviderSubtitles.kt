@@ -84,10 +84,31 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         if (closed || touched || player.currentTracks.isEmpty || player.currentMediaItem == null) return
         if (input.preferences.subtitleMode == "foreign") { foreignAudio(values); return }
         if (desired != null || pending != null) return
-        val language = input.preferences.preferred_subtitle_language
-        if (player.currentTracks.groups.any { group -> group.type == C.TRACK_TYPE_TEXT &&
-                (0 until group.length).any { group.isTrackSelected(it) && group.getTrackFormat(it).language == language } }) return
+        val preferences = input.preferences
+        val embedded = embeddedText()
+        val full = subtitleModeChoice(preferences.subtitleMode, preferences.preferred_audio_language,
+            preferences.preferred_subtitle_language, null, embedded)
+        if (full != null) { if (!full.key.selected) selectEmbedded(full.key); return }
+        if (embedded.any { it.key.selected && !signsOnlySubtitle(it.name, it.forced) }) return
         preferredProviderSubtitle(input, values)?.let(::attach)
+    }
+
+    private class EmbeddedText(val group: TrackGroup, val index: Int, val selected: Boolean)
+
+    private fun embeddedText(): List<SubtitleModeTrack<EmbeddedText>> =
+        player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }.flatMap { group ->
+            (0 until group.length).filter { group.isTrackSupported(it) }.mapNotNull { index ->
+                val format = group.getTrackFormat(index)
+                if (format.id?.startsWith(Media3Tracks.PROVIDER_PREFIX) == true) null
+                else SubtitleModeTrack(EmbeddedText(group.mediaTrackGroup, index, group.isTrackSelected(index)), format.language,
+                    format.selectionFlags and C.SELECTION_FLAG_FORCED != 0, format.label,
+                    format.selectionFlags and C.SELECTION_FLAG_DEFAULT != 0)
+            }
+        }
+
+    private fun selectEmbedded(track: EmbeddedText) {
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT)
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setOverrideForType(TrackSelectionOverride(track.group, listOf(track.index))).build()
     }
 
     // "When audio isn't …" is decided again whenever the selected audio language changes, until the viewer picks a subtitle or Off.
@@ -102,19 +123,10 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
         if (!decided || audio != decidedAudio) { decided = true; decidedAudio = audio; foreignSatisfied = false; automaticOff() }
         if (foreignSatisfied) return
         val preferences = input.preferences
-        val embedded = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }.flatMap { group ->
-            (0 until group.length).filter { group.isTrackSupported(it) }.mapNotNull { index ->
-                val format = group.getTrackFormat(index)
-                if (format.id?.startsWith(Media3Tracks.PROVIDER_PREFIX) == true) null
-                else SubtitleModeTrack(group.mediaTrackGroup to index, format.language, format.selectionFlags and C.SELECTION_FLAG_FORCED != 0)
-            }
-        }
-        val track = subtitleModeChoice("foreign", preferences.preferred_audio_language, preferences.preferred_subtitle_language, audio, embedded)
+        val track = subtitleModeChoice("foreign", preferences.preferred_audio_language, preferences.preferred_subtitle_language, audio, embeddedText())
         if (track != null) {
             foreignSatisfied = true
-            val (group, index) = track.key
-            player.trackSelectionParameters = player.trackSelectionParameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_TEXT)
-                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setOverrideForType(TrackSelectionOverride(group, listOf(index))).build()
+            selectEmbedded(track.key)
             return
         }
         if (!audioIsForeign(audio, preferences.preferred_audio_language) || desired != null || pending != null) return
