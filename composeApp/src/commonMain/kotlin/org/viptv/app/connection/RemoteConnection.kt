@@ -207,6 +207,7 @@ open class RemoteConnection(
     internal var sourceReuseSupported = false
     internal var providerAffinitySupported = true
     internal val reuseAudioLanguages = mutableMapOf<String, String?>()
+    internal val sourceFingerprints = mutableMapOf<String, String>()
 
     suspend fun bootstrap(): Bootstrap {
         val accessEpoch = accountAccessEpoch
@@ -214,6 +215,7 @@ open class RemoteConnection(
         return withWorker {
             preferredSourceDiscoverySupported = value["preferred_source_discovery_supported"]?.jsonPrimitive?.booleanOrNull == true
             reuseAudioLanguages.clear()
+            sourceFingerprints.clear()
             providerAffinitySupported = true
             requiredAudioIndexSupported = value["playback_capabilities"]?.jsonObject
                 ?.get("required_audio_index")?.jsonPrimitive?.booleanOrNull == true
