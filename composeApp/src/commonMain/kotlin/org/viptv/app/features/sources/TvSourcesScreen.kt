@@ -74,9 +74,9 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
             val producer = sourceProducerFor(producers, provider)
             val pending = loadingMore && !opening
             val notice = sourceProducerNotice(producer, discoveryPending = pending, hasRows = visible.isNotEmpty())
-            LaunchedEffect(offered, producers) {
+            LaunchedEffect(offered) {
                 val id = provider ?: return@LaunchedEffect
-                if (offered.none { it.sourceFilterId() == id } && producers.none { sourceProducerFilterId(it.providerId) == id }) provider = null
+                if (offered.none { it.sourceFilterId() == id }) provider = null
             }
             val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
             val firstRowFocus = rows.firstOrNull()?.source?.id?.let { rowFocus.getOrPut(it) { FocusRequester() } }
@@ -145,7 +145,7 @@ internal fun TvSourcesScreen(title: Card?, sources: List<SourceCandidate>, busy:
                         CompositionLocalProvider(LocalTvScale provides scale) {
                             SourceFilters(offered, quality, provider,
                                 { quality = it; navigated = true }, { provider = it; navigated = true },
-                                Modifier.fillMaxWidth(), gutter = 0.dp, producers = producers, down = firstRowFocus)
+                                Modifier.fillMaxWidth(), gutter = 0.dp, down = firstRowFocus)
                         }
                     }
                 }

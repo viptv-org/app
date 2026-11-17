@@ -134,19 +134,21 @@ val buildDesktopEngine by tasks.registering(Exec::class) {
     commandLine("python3", "tools/build_engine.py", "desktop")
     inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"), rootProject.file("tools/macos_signing.py"))
     outputs.dir(layout.buildDirectory.dir("nativeResources"))
-    onlyIf { providers.environmentVariable("VIPTV_NATIVE_PREBUILT").orNull == null }
+    val nativePrebuilt = providers.environmentVariable("VIPTV_NATIVE_PREBUILT")
+    onlyIf { !nativePrebuilt.isPresent }
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopEngine) }
 val buildDesktopTorrent by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/build_desktop_torrent.py")
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"), rootProject.file("tools/playback_gateway.py"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_desktop_torrent.py"), rootProject.file("tools/playback_gateway.py"), rootProject.file("tools/source_archive.py"))
     inputs.property("candidate", providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orElse(""))
     providers.environmentVariable("VIPTV_TORRENT_CANDIDATE").orNull?.let {
         inputs.files(fileTree(it) { include("**/*.go", "go.mod", "go.sum") })
     }
     outputs.dir(layout.buildDirectory.dir("torrentResources"))
-    onlyIf { providers.environmentVariable("VIPTV_NATIVE_PREBUILT").orNull == null }
+    val nativePrebuilt = providers.environmentVariable("VIPTV_NATIVE_PREBUILT")
+    onlyIf { !nativePrebuilt.isPresent }
 }
 tasks.matching { it.name == "desktopProcessResources" }.configureEach { dependsOn(buildDesktopTorrent) }
 // Same Java version can have different native dependencies across JDK vendors.

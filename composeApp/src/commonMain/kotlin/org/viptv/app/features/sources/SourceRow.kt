@@ -7,7 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +34,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +48,7 @@ import org.viptv.app.components.OwnFocusTreatment
 import org.viptv.app.components.holdMenu
 import org.viptv.app.components.hoverFill
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.pointerHovered
 import org.viptv.app.components.pressScale
 import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.components.PendingActionSpinner
@@ -54,15 +57,16 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
 private val RowQualityFont = 18.sp
-private val RowQualitySubline = 11.sp
-private val RowNameFont = 15.sp
+private val RowNameFont = 16.sp
 private val RowDetailFont = 12.sp
-private val RowQualityColumn = 57.dp
+private val RowDetailLine = 16.sp
+private val RowQualityColumn = 70.dp
+private val RowTagHeight = 20.dp
 
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
     header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {},
-    details: ((SourceCandidate) -> Unit)? = null, requester: FocusRequester? = null, addon: String? = null,
+    details: ((SourceCandidate) -> Unit)? = null, requester: FocusRequester? = null,
     menu: SourceRowMenuActions? = null) {
     var focused by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -77,28 +81,27 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
         .pointerClickable(interaction, indication = null, enabled = enabled, onClick = { choose(source) })
         .holdMenu(menu != null && enabled && !pointer && !television) { menuOpen = true }) {
         header?.let { SourceGroupHeader(it, if (television) 16.sp else 11.sp, Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp), measured = headerMeasured) }
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(if (inverted) Palette.text else if (television) Palette.raised else Palette.surface)
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(0.dp)).heightIn(min = 72.dp)
+            .background(if (inverted) Palette.text else if (television) Palette.raised else Color(0xFF222222))
             .indication(interaction, LocalIndication.current)
             .padding(horizontal = if (television) 28.dp else 16.dp, vertical = if (television) 14.dp else 10.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp else 13.dp)) {
+            verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(if (television) 20.dp else 13.dp)) {
             Column(Modifier.width(RowQualityColumn)) {
-                Text(source.qualityLabel() ?: "—", fontSize = RowQualityFont, fontWeight = FontWeight.ExtraBold, color = foreground,
+                Text(source.qualityLabel() ?: "—", fontSize = RowQualityFont, lineHeight = 22.sp, fontWeight = FontWeight.ExtraBold, color = foreground,
                     maxLines = 1, softWrap = false)
-                source.releaseTypeLabel()?.let { Text(it, fontSize = RowQualitySubline, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, color = foreground.copy(alpha = .55f)) }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(source.releaseGroupLabel(), fontSize = RowNameFont, fontWeight = FontWeight.SemiBold,
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(source.providerLabel(), Modifier.weight(1f, fill = false), fontSize = RowNameFont, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold,
                         color = foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    source.cacheStatus()?.let { SourceCacheChip(it, 11.sp, 12.dp, 7.dp, 3.dp, 5.dp, 4.dp) }
-                    if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = .16f), RoundedCornerShape(5.dp)).padding(horizontal = 7.dp, vertical = 3.dp),
-                        color = if (inverted) Palette.text else Palette.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-                    if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp,
+                    if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = .16f), RoundedCornerShape(0.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
+                        color = if (inverted) Palette.text else Palette.accent, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                    if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp, lineHeight = 14.sp,
                         fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 }
-                SourceAudioSubsLine(source, foreground, RowDetailFont, 11.sp, 12.dp, 6.dp, 20.dp, 6.dp, 1.dp, 4.dp)
-                SourceFactsRow(source, addon, foreground, RowDetailFont, 12.dp)
+                SourceTextWindow(source.addonText(), active = focused || (pointer && interaction.pointerHovered()),
+                    style = LocalTextStyle.current.merge(TextStyle(fontSize = RowDetailFont, lineHeight = RowDetailLine, color = foreground.copy(alpha = .7f))))
+                SourceTagLine(source, foreground, 11.sp, RowTagHeight, 7.dp, 6.dp, 1.dp, 4.dp)
             }
             if (source.isPlayPending()) PendingActionSpinner(Modifier.size(22.dp), size = 22.dp, strokeWidth = 2.dp, color = foreground)
             else if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {

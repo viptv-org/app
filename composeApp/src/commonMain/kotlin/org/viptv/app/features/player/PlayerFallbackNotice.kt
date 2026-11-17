@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.Button
 import org.viptv.app.components.TvAction
-import org.viptv.app.features.sources.factBadges
+import org.viptv.app.features.sources.sourceTags
 import org.viptv.app.features.sources.providerLabel
 import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.theme.Palette
@@ -30,7 +30,7 @@ data class PlayerFallbackNotice(val reason: String, val nextLabel: String, val n
 }
 
 internal fun SourceCandidate.fallbackFacts(): String = listOfNotNull(
-    qualityLabel(), factBadges().joinToString(" · ").takeIf { it.isNotEmpty() }, providerLabel(),
+    qualityLabel(), sourceTags().joinToString(" · ").takeIf { it.isNotEmpty() }, providerLabel(),
 ).joinToString(" · ")
 
 @Composable

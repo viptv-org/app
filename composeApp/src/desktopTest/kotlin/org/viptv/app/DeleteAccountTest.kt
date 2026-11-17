@@ -31,6 +31,14 @@ class DeleteAccountTest {
         val store = Store()
         val bodies = EngineRequests<JsonObject>()
         val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/api/auth/device/refresh" -> return@MockEngine respond(
+                    """{"access_token":"fixture-access","refresh_token":"fixture-rotated","session_id":"fixture-family"}""",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/bootstrap" -> return@MockEngine respond(
+                    """{"identity":{"profiles":[],"profile_id":null},"home":null}""",
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }
             assertEquals("/api/auth/account", request.url.encodedPath)
             assertEquals(HttpMethod.Delete, request.method)
             bodies += Json.parseToJsonElement(request.body.toByteArray().decodeToString()).jsonObject
@@ -39,6 +47,7 @@ class DeleteAccountTest {
         val remote = RemoteConnection("https://watch.example", store, client, browserMode = false)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
+            remote.restore(requireNotNull(store.saved))
             val controller = ApplicationController(scope, store)
             controller.connection = remote
             controller.mutable.value = ApplicationState(screen = Screen.Settings, accountIdentity = identity,

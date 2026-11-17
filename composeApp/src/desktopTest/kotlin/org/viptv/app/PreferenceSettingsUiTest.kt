@@ -60,6 +60,32 @@ class PreferenceSettingsUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun crossShowChoiceIsOffByDefaultAndItsToggleBelongsToTheDeviceProfile() {
+        var profile by mutableStateOf("one")
+        var saves = 0
+        val scene = ImageComposeScene(390, 1100, Density(1f)) { ViptvTheme {
+            PhoneProfilePreferences("Playback", PreferencesSnapshot(9, original), false, null, {}, { saves++ }, profileId = profile)
+        } }
+        var frame = 0L
+        fun row() = nodes(scene).single { text(it).startsWith(crossTitleSourceRow) && it.config.contains(SemanticsActions.OnClick) }
+        fun awaitToggle(value: androidx.compose.ui.state.ToggleableState) {
+            frame = scene.renderUntil(from = frame, what = "the profile's cross-show choice") {
+                nodes(scene).any { text(it).startsWith(crossTitleSourceRow) &&
+                    it.config.getOrNull(SemanticsProperties.ToggleableState) == value }
+            }
+        }
+        try {
+            awaitToggle(androidx.compose.ui.state.ToggleableState.Off)
+            assertTrue(row().config[SemanticsActions.OnClick].action!!.invoke())
+            awaitToggle(androidx.compose.ui.state.ToggleableState.On)
+            profile = "two"
+            awaitToggle(androidx.compose.ui.state.ToggleableState.Off)
+            profile = "one"
+            awaitToggle(androidx.compose.ui.state.ToggleableState.On)
+            assertEquals(0, saves)
+        } finally { scene.close() }
+    }
+
     @Test fun phonePlaybackDraftUsesActualSourceQualityAndPreservesOtherFieldsUntilSave() {
         val saved = mutableListOf<ProfilePreferences>()
         val scene = phone("Playback", save = { saved += it })

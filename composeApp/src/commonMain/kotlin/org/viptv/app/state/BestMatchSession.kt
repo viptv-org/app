@@ -20,6 +20,9 @@ data class BestMatchSession(
     val demoted: List<String> = emptyList(),
     val playingId: String? = null,
     val exhausted: Boolean = false,
+    val reuseContext: org.viptv.app.connection.RankingContext? = null,
+    val expanded: Boolean = false,
+    val reuseAudioLanguages: Map<String, String> = emptyMap(),
 )
 
 // The 2 s notice between a failed start and the next attempt.
@@ -54,7 +57,10 @@ internal val PlaybackFailure.reason: String get() = when (this) {
 }
 
 internal fun ApplicationState.sourcesBanner(): String? =
-    bestMatch?.takeIf { it.exhausted }?.failed?.size?.let(::failedSourcesNotice)
+    bestMatch?.takeIf { it.exhausted }?.let {
+        if (it.reuseContext != null) "No matching source could start. Choose a source."
+        else failedSourcesNotice(it.failed.size)
+    }
 
 internal fun ApplicationState.failedSources(): List<String> = bestMatch?.failed.orEmpty()
 

@@ -52,10 +52,11 @@ internal val LocalTvDisplayState = staticCompositionLocalOf<TvDisplayState?> { n
 internal val LocalSystemReducedMotion = staticCompositionLocalOf<Boolean?> { null }
 
 @Composable
-internal fun rememberSystemReducedMotion(): Boolean {
+internal fun rememberSystemReducedMotion(read: @Composable (coil3.PlatformContext) -> Boolean = { systemReducedMotion(it) }): Boolean {
     val context = LocalPlatformContext.current
     val provided = LocalSystemReducedMotion.current
-    return remember(context, provided) { provided ?: systemReducedMotion(context) }
+    if (provided != null) return provided
+    return read(context)
 }
 
 @Composable
@@ -66,7 +67,7 @@ internal fun rememberReducedMotion(): Boolean {
 
 @Composable
 internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initial: FocusRequester, sidebar: FocusRequester,
-    choose: (String, List<String>, (String) -> Unit) -> Unit, change: (TvDisplayPreferences) -> Unit) {
+    choose: (String, List<String>, String?, (String) -> Unit) -> Unit, change: (TvDisplayPreferences) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp * scale)) {
         TvSettingsHeading("Display", scale)
         TvDisplayAccentRow(prefs, scale, initial, sidebar, change)
@@ -74,10 +75,10 @@ internal fun TvDisplaySettings(prefs: TvDisplayPreferences, scale: Float, initia
             change(prefs.copy(ratings = !prefs.ratings))
         }
         TvSettingsRow("Text size", scale = scale, value = prefs.textSize, left = sidebar) {
-            choose("Text size", listOf("Default", "Large", "Larger")) { change(prefs.copy(textSize = it)) }
+            choose("Text size", listOf("Default", "Large", "Larger"), prefs.textSize) { change(prefs.copy(textSize = it)) }
         }
         TvSettingsRow("Reduce motion", scale = scale, value = prefs.reduceMotion, left = sidebar) {
-            choose("Reduce motion", listOf("Follow TV", "On", "Off")) { change(prefs.copy(reduceMotion = it)) }
+            choose("Reduce motion", listOf("Follow TV", "On", "Off"), prefs.reduceMotion) { change(prefs.copy(reduceMotion = it)) }
         }
         TvSettingsRow("Fit to screen", "Use if the edges of the picture are cut off", scale, left = sidebar) {
             change(prefs.copy(fitToScreen = !prefs.fitToScreen))

@@ -19,7 +19,7 @@ import org.viptv.app.components.FilterChip
 
 @Composable
 internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plugins: List<PluginDescriptor>, busy: Boolean,
-    select: (String) -> Unit, tv: Boolean = false, scale: Float = 1f, left: androidx.compose.ui.focus.FocusRequester? = null) {
+    select: (String) -> Unit, tv: Boolean = false, scale: Float = 1f, left: androidx.compose.ui.focus.FocusRequester? = null, canManage: Boolean = true) {
     if (configuration == null) return
     val choices = (plugins.filter { Capability.DISCOVERY in it.capabilities }.map { it.id }
         + configuration.profile.browsing_plugin).distinct()
@@ -32,13 +32,13 @@ internal fun BrowsingProviderSettings(configuration: BrowsingConfiguration?, plu
             val available = selected || configuration.connections.any { it.plugin_id == plugin && it.enabled && Capability.DISCOVERY in it.capabilities }
             if (choices.size == 1) Text(name)
             else if (tv) TvAction(Modifier.fillMaxWidth().heightIn(min = 64.dp * scale), scale,
-                enabled = available && !busy, left = left, activate = { select(plugin) }, arrangement = Arrangement.Start,
+                enabled = available && !busy && canManage, left = left, activate = { select(plugin) }, arrangement = Arrangement.Start,
                 contentPadding = PaddingValues(horizontal = 24.dp * scale)) { tint ->
                 Icon(if (selected) Lucide.CircleCheck else Lucide.Circle, null, Modifier.size(24.dp * scale), tint)
                 Spacer(Modifier.width(14.dp * scale))
                 Text(name, color = tint, fontSize = (24 * scale).sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
             }
-            else FilterChip(selected, { select(plugin) }, enabled = available && !busy, label = { Text(name) })
+            else FilterChip(selected, { select(plugin) }, enabled = available && !busy && canManage, label = { Text(name) })
         }
     }
 }

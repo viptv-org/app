@@ -80,7 +80,7 @@ internal fun LivePreview(channel: LiveChannel, program: LiveProgram?, now: Int?,
                 favourite?.let { save -> Button(save, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {
                     if (favoritePending) MutationSpinner(16.dp, color = Palette.text)
                     else FavouriteStar(channel.favorite, 16.dp, Palette.text)
-                    Spacer(Modifier.width(8.dp)); Text(if (favoritePending) "Saving…" else if (channel.favorite) "Favourited" else "Favourite")
+                    Spacer(Modifier.width(8.dp)); Text(if (favoritePending) "Saving…" else favouriteActionLabel(channel.favorite))
                 } }
                 if (guide != null) Button(guide, shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.raised, contentColor = Palette.text)) {

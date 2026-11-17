@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -36,10 +37,11 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
     BoxWithConstraints(Modifier.fillMaxWidth().padding(
         top = if (short) 12.dp else if (browser) 57.dp else 28.dp,
         bottom = if (short) 16.dp else if (browser) 88.dp else 80.dp)) {
+        val layoutSize = DpSize(maxWidth, viewportHeight ?: Dp.Unspecified)
         if (maxWidth < rowMin) {
             Column(verticalArrangement = Arrangement.spacedBy(if (short) 14.dp else 22.dp)) {
                 HeroArtwork(card, Modifier.fillMaxWidth(), artHeight, carousel)
-                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short, label, null)
+                FeaturedSummary(card, open, play, save, saved, Modifier.fillMaxWidth(), carousel, short, label, null, layoutSize)
             }
         } else {
             val gap = if (short) 32.dp else 48.dp
@@ -51,7 +53,7 @@ internal fun DesktopHero(card: Card, open: (Card) -> Unit, play: (Card) -> Unit,
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 FeaturedSummary(card, open, play, save, saved, Modifier.width(copyWidth), carousel, short, label,
-                    artHeight ?: (artWidth * 9f / 16f))
+                    artHeight ?: (artWidth * 9f / 16f), layoutSize)
                 HeroArtwork(card, Modifier.width(artWidth), artHeight, carousel)
             }
         }
@@ -69,12 +71,12 @@ private fun HeroArtwork(card: Card, modifier: Modifier, height: Dp?, carousel: H
 }
 
 @Composable
-private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean, label: String, floor: Dp?) {
+private fun FeaturedSummary(card: Card, open: (Card) -> Unit, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean, modifier: Modifier, carousel: HeroCarousel?, short: Boolean, label: String, floor: Dp?, layoutSize: DpSize) {
     val spacing = if (short) 12.dp else 14.dp
     val framed = if (floor != null) modifier.heightIn(min = floor) else modifier
     Box(framed.testTag(HERO_SUMMARY_TAG), contentAlignment = Alignment.CenterStart) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
-            HeroCopyFade(card, Modifier.fillMaxWidth(), Alignment.BottomStart) { shown ->
+            HeroCopyFade(card, Modifier.fillMaxWidth(), Alignment.BottomStart, layoutSize) { shown ->
                 Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
                     Text(if (carousel != null && carousel.count > 1) "$label · ${carousel.index + 1} of ${carousel.count}" else label,
                         fontSize = 13.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold, color = Palette.secondary)

@@ -50,12 +50,11 @@ class ProviderAffinityTest {
         controller.local = device.device
         controller.capability = { DeviceCapability() }
         controller.sourceMemory = SourceMemoryBook(memory)
-        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true,
+        controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
         try {
-            controller.chooseSource(movie)
+            controller.playTitle(movie)
             runCurrent()
-            advanceTimeBy(1_500); runCurrent()
             check(controller, device, memory)
         } finally { fixture.close(controller) }
     }

@@ -42,19 +42,26 @@ internal object PreviewData {
         title = "The Long Way Home", subtitle = "S1 E3 · The Long Way Home")
     val playerEpisodes = listOf(playerTitle, playerNextEpisode)
     val detail = DetailSnapshot(item = hero.copy(subtitle = "Movie · " + hero.subtitle), episodes = emptyList())
-    val sources = listOf(SourceCandidate("source-1", "preview", "LordStreams", "WEB-DL · HEVC · 5.1 · 18.4 GB"),
-        SourceCandidate("source-2", "preview", "Provider 2", "BluRay · HEVC · 5.1 · 22.1 GB"))
+    val sources = listOf(
+        SourceCandidate("source-1", "preview", "Torrentio\n4k HDR", "Oak Street 2026 2160p BluRay\n👤 199 💾 18.4 GB ⚙️ Site",
+            quality_height = 2160, release_type = "bluray", dynamic_range = listOf("hdr"),
+            presentation = SourcePresentation(provider_name = "Torrentio")),
+        SourceCandidate("source-2", "preview", "Comet\n1080p", "Oak.Street.2026.1080p.WEB-DL.DDP5.1.H.264-GRP\n👤 88 💾 6.2 GB ⚙️ Site",
+            quality_height = 1080, release_type = "web_dl", audio_flags = listOf("multi"),
+            presentation = SourcePresentation(provider_name = "Comet")))
     val filterSources = listOf(2160L to "Torrentio", 1080L to "Torrentio", 1080L to "Comet", 720L to "MediaFusion", 2160L to "Comet",
         1080L to "Orion", 480L to "Torrentio", 1080L to "MediaFusion", 2160L to "Torrentio", 720L to "Comet", 360L to "Orion", 1080L to "Torrentio")
         .mapIndexed { index, (height, addon) ->
-            SourceCandidate("filter-${index + 1}", "addon:${addon.lowercase()}", "$addon ${if (height == 2160L) "4K" else "${height}p"} #${index + 1}",
-                "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265 · ${(4 + index * 1.7).toInt()} GB", quality_height = height,
+            SourceCandidate("filter-${index + 1}", "addon:${addon.lowercase()}", "$addon\n${if (height == 2160L) "4k" else "${height}p"}",
+                "Oak Street 2026 ${height}p WEB-DL\n👤 ${40 + index} 💾 ${(4 + index * 1.7).toInt()} GB ⚙️ Site", quality_height = height,
+                release_type = "web_dl", dynamic_range = if (height == 2160L) listOf("hdr") else emptyList(),
                 presentation = SourcePresentation(provider_name = addon, source_id = addon.lowercase()))
         }
     val chipSources = listOf(1080L to "Torrentio 4K RD+ | ElfHosted", 720L to "MediaFusion | ElfHosted Debrid", 1080L to "MediaFusion | ElfHosted Debrid")
         .mapIndexed { index, (height, addon) ->
-            SourceCandidate("chip-${index + 1}", "addon:${addon.substringBefore(" ").lowercase()}", "${addon.substringBefore(" ")} ${height}p #${index + 1}",
-                "Oak.Street.2026.${height}p.WEB-DL.DDP5.1.H.265", quality_height = height,
+            SourceCandidate("chip-${index + 1}", "addon:${addon.substringBefore(" ").lowercase()}", "[TB+] ${addon.substringBefore(" ")}",
+                "Oak Street 2026 ${height}p WEB-DL\n👤 ${20 + index} 💾 ${(1 + index * 2.5).toInt()} GB ⚙️ Site", quality_height = height,
+                release_type = "web_dl", audio_flags = listOf("dubbed"), delivery = "direct",
                 presentation = SourcePresentation(provider_name = addon, source_id = addon.substringBefore(" ").lowercase()))
         }
     val history = watching.mapIndexed { index, card ->

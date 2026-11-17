@@ -10,18 +10,13 @@ internal const val NEXT_EPISODE_PROMOTE_TIMEOUT_MILLIS = 60_000L
 private const val NEXT_EPISODE_HEARTBEAT_RETRY_MILLIS = 60_000L
 private const val NEXT_EPISODE_HEARTBEAT_MAX_RETRY_MILLIS = 15_000L
 
-internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources)
+internal data class PreparedNextSource(val source: SourceCandidate, val ranked: RankedSources, val context: RankingContext? = null)
 
 internal fun interface NextEpisodeDeliveryPreparer {
     suspend fun prepare(remote: RemoteConnection?, source: SourceCandidate, profile: String): PreparedPlaybackLease?
 
     companion object {
-        val Server = NextEpisodeDeliveryPreparer { remote, source, profile ->
-            if (remote == null) null
-            else try { remote.preparePlayback(source, profile) }
-                catch (error: CancellationException) { throw error }
-                catch (_: Exception) { null }
-        }
+        val SourceOnly = NextEpisodeDeliveryPreparer { _, _, _ -> null }
     }
 }
 
@@ -32,19 +27,24 @@ internal fun interface NextSourcePreparer {
     companion object {
         val Device = NextSourcePreparer { remote, local, profile, card, remembered, context ->
             val ranked = coroutineScope {
+                var phase: String? = null
                 val ranking = ProgressiveSourceRanking(this,
-                    rank = { rows -> local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context) },
+                    rank = { rows -> (local?.rankSources(profile, rows, context) ?: requireNotNull(remote).rankSources(profile, rows, context)).copy(discoveryPhase = phase) },
                     show = {})
-                val observed: (SourcesOutcome) -> Unit = { ranking.arrived(it.candidates) }
-                val outcome = local?.sources(profile, card, observed) ?: requireNotNull(remote).sources(card, observed)
+                val observed: (SourcesOutcome) -> Unit = { phase = it.discoveryPhase ?: phase; ranking.arrived(it.candidates) }
+                val outcome = local?.discoverSources(profile, card, context, observed) ?: requireNotNull(remote).sources(card, context.reuse, context.device, publish = observed)
+                phase = outcome.discoveryPhase ?: phase
                 ranking.arrived(outcome.candidates)
-                ranking.finish()
+                ranking.finish()?.copy(discoveryPhase = phase)
             }
             val matched = ranked ?: return@NextSourcePreparer null
             // A remembered choice decides alone: a row in another audio never stands in for it, so Next asks like the unprepared path does.
-            val target = if (remembered != null) matched.matchingSource(remembered)
+            val target = if (remembered != null) {
+                if (matched.reuseSupported) matched.reuseIds.firstOrNull()?.let { id -> matched.rows.find { it.id == id } }
+                else if (local != null) matched.matchingSource(remembered) else null
+            }
                 else matched.takeIf { it.bestMatchFullyMatches }?.autoplayTarget()
-            target?.let { PreparedNextSource(it, matched) }
+            target?.let { PreparedNextSource(it, matched, context) }
         }
     }
 }
@@ -54,7 +54,7 @@ internal fun ApplicationController.maintainNextEpisodePreparation(positionMillis
     val target = state.nextEpisodePreparationTarget()
     if (target == null) { cancelNextEpisodePreparation(); return }
     val key = preparationKeyFor(target, state)
-    if (key == nextEpisodePreparationKey) return
+    if (key == nextEpisodePreparationKey && state.nextEpisodePreparation?.preparedAtMillis?.let { clockMillis() - it >= NEXT_PREPARED_SOURCE_TTL_MILLIS } != true) return
     cancelNextEpisodePreparation()
     if (nextEpisodePreparationDue(positionMillis, durationMillis)) startNextEpisodePreparation(target, key)
 }
@@ -67,8 +67,9 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
     val device = local
     nextEpisodePreparationJob = scope.launch {
         val remembered = if (mutable.value.preferences.rememberedSourceReuseEnabled())
-            sourceMemory.entry(key.profile, card) else null
-        val context = rankingContext(seriesMemoryOf(key.profile, card), sourceMemory.affinity(key.profile), capability)
+            sourceMemory.choice(key.profile, card) else null
+        val context = rankingContext(seriesMemoryOf(key.profile, card), sourceMemory.affinity(key.profile), capability).copy(
+            reuse = if (remembered != null) sourceMemory.context(key.profile, card) else SourceReuseContext())
         val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) {
             nextSourcePreparer.prepare(remote, device, key.profile, card, remembered, context) } }
         catch (error: CancellationException) { throw error }
@@ -80,7 +81,8 @@ private fun ApplicationController.startNextEpisodePreparation(card: Card, key: N
         updateState { latest ->
             val current = latest.nextEpisodePreparation?.takeIf { cardLookupKey(it.card) == cardLookupKey(card) } ?: return@updateState latest
             latest.copy(nextEpisodePreparation = current.copy(source = prepared?.source, ranked = prepared?.ranked,
-                status = if (prepared?.source != null) NextEpisodePreparationStatus.Ready else NextEpisodePreparationStatus.Unavailable))
+                status = if (prepared?.source != null) NextEpisodePreparationStatus.Ready else NextEpisodePreparationStatus.Unavailable,
+                preparedAtMillis = prepared?.source?.let { clockMillis() }, rankingContext = prepared?.context))
         }
         if (lease != null) keepPreparedPlaybackLease(lease)
     }
@@ -132,9 +134,9 @@ internal fun ApplicationController.cancelNextEpisodePreparation(): Job? = clearN
 
 internal fun ApplicationController.startPreparedNextEpisode(card: Card): Boolean {
     val state = mutable.value
-    if (!state.preferences.rememberedSourceReuseEnabled()) return false
     val prepared = state.nextEpisodePreparation?.takeIf {
         it.status == NextEpisodePreparationStatus.Ready && it.source != null &&
+            (it.preparedAtMillis == null || clockMillis() - it.preparedAtMillis < NEXT_PREPARED_SOURCE_TTL_MILLIS) &&
             it.profile == state.selectedProfile && cardLookupKey(it.card) == cardLookupKey(card) &&
             preparationKeyFor(it.card, state) == nextEpisodePreparationKey
     } ?: return false
@@ -151,11 +153,11 @@ private fun ApplicationController.handOffToPreparedNextEpisode(prepared: NextEpi
     updateState { it.copy(sourceTitle = prepared.card, sources = ranked.rows, sourceGroups = ranked.groups,
         torrentOnlySources = 0, playTapTitle = null, detailFailure = null, detailRetryable = true, error = null, errorCode = null) }
     if (lease != null) promotePreparedNextEpisode(source, ranked, lease, prepared.card)
-    else startBestMatch(ranked, source)
+    else startBestMatch(ranked, source, prepared.rankingContext ?: stateContextFor(prepared.card))
 }
 
 private fun ApplicationController.promotePreparedNextEpisode(source: SourceCandidate, ranked: RankedSources, lease: PreparedPlaybackLease, card: Card) {
-    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows, tried = listOf(source.id), playingId = source.id),
+    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows.filter { !ranked.reuseSupported || it.id in ranked.reuseIds }, tried = listOf(source.id), playingId = source.id, reuseContext = stateContextFor(card)?.takeIf { ranked.reuseSupported }, reuseAudioLanguages = ranked.reuseAudioLanguages),
         fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
     run { promotePreparedDelivery(source, ranked, lease, card) }
 }
@@ -185,7 +187,15 @@ private suspend fun ApplicationController.promotePreparedDelivery(source: Source
 }
 
 private suspend fun ApplicationController.fallbackPreparedHandoff(source: SourceCandidate, ranked: RankedSources) {
-    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows, tried = listOf(source.id), playingId = source.id),
+    updateState { it.copy(bestMatch = BestMatchSession(ranked.rows.filter { !ranked.reuseSupported || it.id in ranked.reuseIds }, tried = listOf(source.id), playingId = source.id, reuseContext = mutable.value.sourceTitle?.let(::stateContextFor)?.takeIf { ranked.reuseSupported }, reuseAudioLanguages = ranked.reuseAudioLanguages),
         fallbackNotice = null, audioNotice = null, playingSource = source, openingSource = source) }
     openSourceNow(source, forceGateway = false, positionMillis = null, pausedAfterOpen = false, choice = SourceChoice.None)
+}
+
+private fun ApplicationController.stateContextFor(card: Card): RankingContext? {
+    val state = mutable.value
+    val profile = state.selectedProfile ?: return null
+    if (!state.preferences.rememberedSourceReuseEnabled()) return null
+    val reuse = sourceMemory.context(profile, card)
+    return RankingContext(reuse = reuse).takeIf { reuse.present }
 }

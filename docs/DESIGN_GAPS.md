@@ -355,9 +355,9 @@ search typography; dedicated supplied boards for these combinations are absent.
 Discovery/filter redesign is deferred. The requested Anime destination reuses the
 current browse screen and provider-declared controls.
 
-Source rows keep the existing design with one fixed height: the title is one
-ellipsized line, the fact badges yield to it, and the description takes a fixed
-two-line window (SRC-OVERFLOW-001, GAP-066).
+Source rows keep one fixed height per picker: the quality badge, the provider,
+the add-on's own text in a two-line window (SRC-OVERFLOW-001, GAP-066) and the
+tag chips of SRC-ROW-TEXT-001. The chips and the taller row have no board.
 
 ### GAP-060 — Account entry and household controls
 

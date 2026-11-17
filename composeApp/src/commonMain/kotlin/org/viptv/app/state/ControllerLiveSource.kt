@@ -9,9 +9,10 @@ fun ApplicationController.loadLiveAccountAccess() {
     if (state.localMode || state.accountAccess != null) return
     val remote = connection ?: return
     val owner = generation
+    val profile = state.selectedProfile
     scope.launch {
         val access = try { remote.accountAccess() } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { return@launch }
-        if (connection === remote && generation == owner) updateState { next -> next.copy(accountAccess = access) }
+        if (connection === remote && generation == owner && mutable.value.selectedProfile == profile) updateState { next -> next.copy(accountAccess = access) }
     }
 }
 

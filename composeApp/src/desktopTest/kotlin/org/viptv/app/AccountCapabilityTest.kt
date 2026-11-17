@@ -40,6 +40,8 @@ class AccountCapabilityTest {
                 "/api/auth/me" -> respond("""{"account":{"id":"1","username":"viewer","name":"Viewer","role":"$accountRole"},"role":"$sessionRole"""" +
                     (capabilities?.let { ""","capabilities":$it""" } ?: "") + "}", headers = json)
                 "/api/account/devices" -> respond(devices.second, devices.first, headers = json)
+                "/api/profiles/1/integrations" -> respond(ownedAddonConfiguration, headers = json)
+                "/api/addons" -> respond("""{"items":[{"id":1,"name":"Owned add-on","enabled":true}],"next_cursor":null}""", headers = json)
                 else -> respond("{}", headers = json)
             }
         }) { configureTransport() }
@@ -48,17 +50,18 @@ class AccountCapabilityTest {
     }
 
     private class Host(capabilities: String?, accountRole: String = "owner", sessionRole: String = accountRole,
-        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture) : AutoCloseable {
-        val server = Server(capabilities, accountRole, sessionRole, browser = false, devices)
+        devices: Pair<HttpStatusCode, String> = HttpStatusCode.OK to accountFixture, initialSection: String? = null,
+        private val browser: Boolean = false) : AutoCloseable {
+        val server = Server(capabilities, accountRole, sessionRole, browser = browser, devices)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val controller = ApplicationController(scope, NoSavedSession).also {
             it.connection = server.remote
-            it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
+            it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1", settingsEntrySection = initialSection)
         }
         private var frame = 0L
         private val scene = ImageComposeScene(390, 1600, Density(1f)) {
             val state by controller.state.collectAsState()
-            ViptvTheme { SettingsRoute(state, controller, browser = false, television = false, compact = true) }
+            ViptvTheme { SettingsRoute(state, controller, browser = browser, television = false, compact = true) }
         }
 
         fun render(times: Int = 12) = repeat(times) { scene.render(frame++ * 16_666_667L).close() }
@@ -66,7 +69,9 @@ class AccountCapabilityTest {
         fun waitFor(condition: () -> Boolean) {
             val deadline = System.currentTimeMillis() + 5_000
             while (!condition()) {
-                if (System.currentTimeMillis() > deadline) fail("timed out waiting for ${server.paths.joinToString()}")
+                if (System.currentTimeMillis() > deadline) fail("timed out waiting for ${server.paths.joinToString()}; " +
+                    "identity=${controller.state.value.accountIdentity}, loaded=${controller.state.value.addonsLoaded}, " +
+                    "busy=${controller.state.value.busy}, addons=${controller.state.value.addons.map { it.name }}")
                 render(2)
             }
         }
@@ -116,6 +121,148 @@ class AccountCapabilityTest {
             assertFalse(ui.shows("Sign out"), "A member has no device sign-out action")
             assertFalse(ui.shows("Sign out of all devices"))
         }
+    }
+
+    @Test fun anExplicitMemberIntegrationCapabilityOffersOwnAddonsWithoutAccountAdministration() {
+        Host("""{"manage_account":false,"manage_integrations":true}""", accountRole = "member", initialSection = "Add-ons", browser = true).use { ui ->
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
+            assertTrue(ui.shows("Owned add-on"))
+            assertTrue(ui.shows("Add an add-on"))
+            assertFalse(ui.shows("Add-on management is not available on this connection."))
+            assertFalse(ui.controller.state.value.manageAccount)
+            assertFalse(ui.controller.state.value.accountOwner)
+        }
+    }
+
+    @Test fun aReadOnlyMemberStillReadsOwnedAddonInventory() {
+        Host("""{"manage_account":false,"manage_integrations":false}""", accountRole = "member", initialSection = "Add-ons", browser = true).use { ui ->
+            ui.waitFor { ui.controller.state.value.accountIdentity != null && ui.shows("Owned add-on") && !ui.controller.state.value.busy }
+            assertTrue(ui.shows("Owned add-on"))
+            assertFalse(ui.shows("No add-ons installed."))
+            assertFalse(ui.shows("Add an add-on"))
+            assertFalse(ui.shows("Remove"))
+        }
+    }
+
+    @Test fun ownIntegrationAuthorityIsExplicitAndDoesNotGrantGlobalAdministration(): Unit = runBlocking {
+        Server("""{"manage_account":false,"manage_integrations":true}""", "member", "member", browser = false).use { server ->
+            val access = server.remote.accountAccess()
+            assertTrue(access.managesSources)
+            assertFalse(access.manageAccount)
+        }
+        Server("""{"manage_account":true,"manage_integrations":false}""", "owner", "owner", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true}""", "owner", "owner", browser = false).use { server ->
+            assertTrue(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true}""", "member", "member", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+        Server("""{"manage_account":true,"manage_integrations":true}""", "owner", "device", browser = false).use { server ->
+            assertFalse(server.remote.accountAccess().managesSources)
+        }
+    }
+
+    @Test fun aBrowserMemberCanRefreshIdentityWithoutGlobalManagement(): Unit = runBlocking {
+        Server("""{"manage_account":false,"manage_integrations":true}""", "member", "member", browser = true).use { server ->
+            server.remote.accountIdentity()
+            server.remote.accountIdentity()
+            assertEquals(2, server.paths.count { it == "/api/auth/me" })
+            assertFalse(server.remote.accountManagementEnabled)
+        }
+    }
+
+    @Test fun anInventoryRefreshCannotDiscardCurrentAccountAuthority(): Unit = runBlocking {
+        withTimeout(10_000) {
+            val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+            val inventoryRead = CompletableDeferred<Unit>()
+            val client = HttpClient(MockEngine { request ->
+                val body = when (request.url.encodedPath) {
+                    "/api/auth/me" -> {
+                        entered.complete(Unit); release.await()
+                        """{"account":{"id":"1","username":"member","name":"Member","role":"member"},"role":"member","capabilities":{"manage_account":false,"manage_integrations":true}}"""
+                    }
+                    "/api/profiles/1/integrations" -> ownedAddonConfiguration
+                    "/api/addons" -> {
+                        inventoryRead.complete(Unit)
+                        """{"items":[{"id":1,"name":"Owned add-on","enabled":true}],"next_cursor":null}"""
+                    }
+                    else -> "{}"
+                }
+                respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }) { configureTransport() }
+            val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = true)
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+            val controller = ApplicationController(scope, NoSavedSession).also {
+                it.connection = remote
+                it.mutable.value = ApplicationState(screen = Screen.Settings, selectedProfile = "1")
+            }
+            try {
+                controller.refreshAccountAccess(); entered.await()
+                controller.refreshAddons(); inventoryRead.await()
+                release.complete(Unit)
+                scope.coroutineContext[Job]!!.children.toList().joinAll()
+                assertNotNull(controller.state.value.accountIdentity)
+                assertTrue(controller.state.value.managesOwnIntegrations)
+                assertFalse(controller.state.value.manageAccount)
+            } finally { release.complete(Unit); scope.cancel(); remote.close() }
+        }
+    }
+
+    @Test fun aProfileSwitchRejectsAnOlderInFlightIntegrationAuthorityRead(): Unit = runBlocking {
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val client = HttpClient(MockEngine { request ->
+            val body = when (request.url.encodedPath) {
+                "/api/auth/me" -> {
+                    entered.complete(Unit); release.await()
+                    """{"account":{"id":"1","username":"owner","name":"Owner","role":"owner"},"role":"owner","csrf_token":"older-profile-csrf","capabilities":{"manage_account":true,"manage_integrations":true}}"""
+                }
+                "/api/bootstrap" -> """{"identity":{"role":"device","profile_id":"2","profiles":[],"csrf_token":"current-profile-csrf"},"capabilities":{"manage_account":false,"manage_integrations":false}}"""
+                "/api/profiles/2/integrations" -> { assertEquals("current-profile-csrf", request.headers["x-csrf-token"]); "{}" }
+                else -> "{}"
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = false)
+        try {
+            val read = async { remote.accountIdentity() }
+            entered.await(); remote.switchProfile("2")
+            assertEquals(false, remote.integrationManagementEnabled, "A pending profile cannot use the legacy-owner fallback")
+            remote.bootstrap(); release.complete(Unit); read.await()
+            assertEquals("device", remote.accountRole)
+            assertEquals(false, remote.integrationManagementEnabled)
+            remote.call("/api/profiles/2/integrations", HttpMethod.Put)
+        } finally { release.complete(Unit); remote.close() }
+    }
+
+    @Test fun aBrowserMemberOwnAddonWriteUsesTheFreshIdentityCsrfWithoutGlobalAuthority(): Unit = runBlocking {
+        var reads = 0
+        val client = HttpClient(MockEngine { request ->
+            val body = when (request.url.encodedPath) {
+                "/api/auth/me" -> {
+                    reads++
+                    """{"account":{"id":"1","username":"member","name":"Member","role":"member"},"role":"member","csrf_token":"csrf-$reads","capabilities":{"manage_account":false,"manage_integrations":true}}"""
+                }
+                "/api/addons" -> {
+                    assertEquals(HttpMethod.Post, request.method)
+                    assertEquals("csrf-2", request.headers["x-csrf-token"])
+                    """{"id":1}"""
+                }
+                else -> {
+                    if (request.method == HttpMethod.Put) assertEquals("csrf-2", request.headers["x-csrf-token"])
+                    ownedAddonConfiguration
+                }
+            }
+            respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { configureTransport() }
+        val remote = RemoteConnection("https://watch.example", NoSavedSession, client, browserMode = true)
+        try {
+            remote.accountIdentity(); remote.accountIdentity()
+            remote.installAddon("1", "https://fixture.example/manifest.json")
+            assertFalse(remote.accountManagementEnabled)
+            assertEquals(true, remote.integrationManagementEnabled)
+        } finally { remote.close() }
     }
 
     @Test fun aPairedTelevisionCannotReadTheDeviceListSoTheRowIsAbsent() {
@@ -198,3 +345,5 @@ class AccountCapabilityTest {
         }
     }
 }
+
+private const val ownedAddonConfiguration = """{"configuration":{"scope":{"connection_id":"server","account_id":"1","profile_id":"1","revision":9},"mode":"Server","name":"Profile","browsing_plugin":"stremio","assignments":[]},"connections":[{"id":"addon:1","plugin_id":"stremio","account_id":"1","name":"Owned add-on","enabled":true,"revision":3,"capabilities":["Sources"]}]}"""

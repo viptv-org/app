@@ -1,11 +1,11 @@
 package org.viptv.app.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -91,14 +91,14 @@ private fun PageStateActionButton(action: PageStateAction, layout: PageStateLayo
         return
     }
     val phone = layout == PageStateLayout.Phone
-    Button(action.activate, Modifier.height(if (phone) 44.dp else 38.dp), enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        border = if (action.primary) null else BorderStroke(1.dp, Palette.text.copy(alpha = .14f)),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (action.primary) Palette.text else Color.Transparent,
-            contentColor = if (action.primary) Palette.background else Palette.text),
-        contentPadding = PaddingValues(horizontal = if (phone) 18.dp else 16.dp)) {
-        action.icon?.let { Icon(it, null, Modifier.size(17.dp)); Spacer(Modifier.width(7.dp)) }
-        Text(action.label, fontSize = (if (phone) 15 else 14).sp, fontWeight = FontWeight.Bold, maxLines = 1)
+    val ink = if (action.primary) Palette.background else Palette.text
+    Box(Modifier.pointerClickable(enabled = enabled, onClickLabel = action.label, role = Role.Button, shape = RoundedCornerShape(12.dp), onClick = action.activate)) {
+        Row(Modifier.height(if (phone) 44.dp else 38.dp)
+            .background(if (action.primary) Palette.text else Color.Transparent, RoundedCornerShape(12.dp))
+            .then(if (action.primary) Modifier else Modifier.border(1.dp, Palette.text.copy(alpha = .14f), RoundedCornerShape(12.dp)))
+            .padding(horizontal = if (phone) 18.dp else 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            action.icon?.let { Icon(it, null, Modifier.size(17.dp), tint = ink); Spacer(Modifier.width(7.dp)) }
+            Text(action.label, color = ink, fontSize = (if (phone) 15 else 14).sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
     }
 }

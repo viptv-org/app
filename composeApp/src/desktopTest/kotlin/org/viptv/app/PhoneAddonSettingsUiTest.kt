@@ -174,6 +174,57 @@ class PhoneAddonSettingsUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun aReadOnlyAccountInventoryCanStillActivateItsAuthorizedProfileAddon() = onEdt {
+        val toggles = mutableListOf<Pair<String, Boolean>>()
+        val scene = scene {
+            AddonSettings(false, fixtures.take(1), emptySet(), false, null, null, {}, { id, enabled -> toggles += id to enabled }, {},
+                managementAvailable = false, profileChangesAvailable = true)
+        }
+        try {
+            scene.renderUntil { nodes(scene).any { text(it) == "Fixture A" } }
+            assertTrue(actions(scene, "Add an add-on").isEmpty()); assertTrue(actions(scene, "Remove").isEmpty())
+            invoke(descriptionAction(scene, "Enable Fixture A for this profile"))
+            assertEquals(listOf("addon:a" to true), toggles)
+        } finally { scene.close() }
+    }
+
+    @Test fun aFailedOrUnreadInventoryNeverClaimsThatNoAddonsAreInstalled() = onEdt {
+        var loaded by mutableStateOf(false)
+        var error by mutableStateOf<String?>("Could not load add-ons. Try again.")
+        val scene = scene {
+            AddonSettings(false, emptyList(), emptySet(), false, error, null, {}, { _, _ -> }, {},
+                managementAvailable = false, inventoryLoaded = loaded)
+        }
+        try {
+            var frame = scene.renderUntil { nodes(scene).any { text(it) == error } }
+            assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
+            error = null
+            frame = scene.renderUntil(from = frame) { nodes(scene).any { it.config.contains(SemanticsProperties.ProgressBarRangeInfo) } }
+            assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
+            loaded = true
+            scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "No add-ons installed." } }
+        } finally { scene.close() }
+    }
+
+    @Test fun requestingSettingsInventoryDoesNotMakeAnUnreadListEmpty() = onEdt {
+        var loaded by mutableStateOf(false)
+        var requested by mutableStateOf(false)
+        val scene = scene {
+            Column {
+                Text(if (requested) "Inventory requested" else "Waiting for inventory request")
+                SettingsScreen(false, emptyList(), emptySet(), false, null, null, {}, { _, _ -> }, {}, {}, {},
+                    initialSection = "Add-ons", addonsRequested = { requested = true }, addonsLoaded = loaded,
+                    addonsManageable = false)
+            }
+        }
+        try {
+            val frame = scene.renderUntil { nodes(scene).any { text(it) == "Inventory requested" } }
+            assertFalse(nodes(scene).any { text(it) == "No add-ons installed." })
+            loaded = true
+            scene.renderUntil(from = frame) { nodes(scene).any { text(it) == "No add-ons installed." } }
+        } finally { scene.close() }
+    }
+
     @Test fun busyControllerRejectsStalePhonePropsWithoutLeavingTheNewSheetLatched() = onEdt {
         val fixture = LocalSetupFixture(); val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         var commits = 0

@@ -1,0 +1,21 @@
+{
+  "rawHostVersion": "0029",
+  "noCodingNamespaceListener": true,
+  "package": "org.viptv.subtitleprobe",
+  "nativeSoSha256": "eccaff086fa206d0d2e43c661be88283f4f482ecb19a082d50e874a5ca88c009",
+  "nativeSoBytes": 34451320,
+  "nativeNoticePackaged": true,
+  "apkSha256": "56d8f12b24625d221d206cb4906721b468201f99f2db2e83ef21c2ea485e2311",
+  "finalDevices": [
+    {
+      "id": "phone",
+      "status": "error"
+    },
+    {
+      "id": "tv",
+      "status": "stopped"
+    }
+  ],
+  "cleanupVerified": false,
+  "scope": "Corrected APK verified; runtime not reached because the Phone boot deadline elapsed. Stop was requested, but final Phone status is error. This is not classifier evidence."
+}

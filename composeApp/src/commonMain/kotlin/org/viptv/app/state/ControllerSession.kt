@@ -36,7 +36,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
     val restored = launchRestore(operation, connect = {
         try { remoteFactory(saved.origin, sessionStore) }
         catch (_: IllegalArgumentException) {
-            withNativeSessionStoreLock {
+            withNativeSessionStoreLock(sessionStore) {
                 if (sessionStore.savedConnection() == savedConnection) sessionStore.clear()
             }
             null
@@ -118,7 +118,7 @@ fun ApplicationController.connect(origin: String, username: String, password: St
             remote.close()
             throw error
         }
-        try { withNativeSessionStoreLock {
+        try { withNativeSessionStoreLock(sessionStore) {
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         } }
         catch (error: CancellationException) { throw error }
@@ -134,12 +134,12 @@ internal fun ApplicationController.startLocal(path: String) {
     disconnect()
     run {
         priorRemote?.retire()
-        try { withNativeSessionStoreLock { sessionStore.clear() } }
+        try { withNativeSessionStoreLock(sessionStore) { sessionStore.clear() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { }
         val bootstrap = openLocalConnection(path)
         // Finish the connection choice before publishing Profiles, or a quick profile selection cancels its pending vault write.
-        try { withNativeSessionStoreLock { sessionStore.rememberLocalConnection() } }
+        try { withNativeSessionStoreLock(sessionStore) { sessionStore.rememberLocalConnection() } }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { localPersistenceWarning = "This connection could not be remembered. Choose local mode again after restarting." }
         accept(bootstrap)
@@ -162,7 +162,7 @@ private suspend fun ApplicationController.openLocalConnection(path: String): Boo
 fun ApplicationController.leaveLocal() {
     if (mutable.value.busy) return
     run {
-        withNativeSessionStoreLock {
+        withNativeSessionStoreLock(sessionStore) {
             if (sessionStore.savedConnection() == SavedConnection.Local) sessionStore.clear()
         }
         disconnect()
@@ -227,6 +227,7 @@ internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = nu
         profiles = value.profiles, profileManagement = value.profileManagement, selectedProfile = value.selected, home = value.home,
         localMode = local != null, sessionNotice = connection?.persistenceWarning,
         manageAccount = connection?.accountManagementEnabled == true, accountOwner = connection?.accountOwner == true,
+        manageIntegrations = connection?.integrationManagementEnabled,
         accountRole = connection?.accountRole ?: "member",
         plugins = value.plugins, addons = value.addons, enabledAddonIds = value.enabledAddonIds, preferences = value.preferences)
     if (switchesProfile) value.selected?.let { startBrowsingConfiguration(it) }
@@ -240,7 +241,8 @@ internal fun ApplicationController.refreshSnapshot(value: Bootstrap, busy: Boole
     updateState { next -> next.copy(busy = busy, profiles = value.profiles,
         profileManagement = value.profileManagement ?: next.profileManagement,
         selectedProfile = value.selected ?: next.selectedProfile, home = value.home,
-        preferences = value.preferences ?: next.preferences, policyRefreshNeeded = false) }
+        preferences = value.preferences ?: next.preferences, policyRefreshNeeded = false,
+        manageIntegrations = connection?.integrationManagementEnabled, accountAccess = null) }
     adoptSnapshot(value)
 }
 

@@ -1,11 +1,11 @@
 package org.viptv.app.features.entry
 
-import org.viptv.app.components.AppTextField
+import org.viptv.app.components.CredentialForm
+import org.viptv.app.components.CredentialFields
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +16,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +39,7 @@ internal fun DeviceApprovalPage(
     compact: Boolean,
     controller: DeviceApprovalController,
     initialCode: String = "",
+    openApp: ((String) -> Unit)? = null,
 ) {
     var step by remember { mutableStateOf(DeviceApprovalStep.Restore) }
     var code by remember { mutableStateOf(initialCode.filter(Char::isDigit).take(8)) }
@@ -110,6 +109,9 @@ internal fun DeviceApprovalPage(
     fun startOver() { code = ""; device = null; error = null; step = DeviceApprovalStep.Code }
 
     DeviceCard(compact) {
+        if (openApp != null && code.length == 8 && step in setOf(DeviceApprovalStep.Restore, DeviceApprovalStep.SignIn, DeviceApprovalStep.Code)) {
+            DeviceSecondaryButton("Open VIPTV app") { openApp(code) }
+        }
         when (step) {
             DeviceApprovalStep.Restore -> {
                 DeviceTile()
@@ -279,44 +281,16 @@ private fun DeviceSignInCard(busy: Boolean, error: String?, signIn: (String, Str
     DeviceSubtitle("Approve the TV with your VIPTV account.")
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    DeviceField(username, { username = it }, "Username", !busy, autocomplete = "username")
-    DeviceField(password, { password = it }, "Password", !busy, PasswordVisualTransformation(), KeyboardOptions(keyboardType = KeyboardType.Password), autocomplete = "current-password")
-    error?.let { DeviceError(it) }
-    DevicePrimaryButton("Sign in", !busy && username.isNotBlank() && password.isNotBlank(), busy) {
-        signIn(username.trim(), password)
-    }
-}
-
-@Composable
-private fun DeviceField(
-    value: String,
-    changed: (String) -> Unit,
-    label: String,
-    enabled: Boolean,
-    transformation: androidx.compose.ui.text.input.VisualTransformation? = null,
-    options: KeyboardOptions = KeyboardOptions.Default,
-    autocomplete: String = "off",
-) {
-    AppTextField(
-        value,
-        changed,
-        label = label,
-        enabled = enabled,
-        visualTransformation = transformation ?: androidx.compose.ui.text.input.VisualTransformation.None,
-        keyboardOptions = options,
-        autocomplete = autocomplete,
-        shape = RoundedCornerShape(10.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Palette.text,
-            unfocusedBorderColor = Color(0x24FFFFFF),
-            focusedTextColor = Palette.text,
-            unfocusedTextColor = Palette.body,
-            focusedLabelColor = Palette.text,
-            unfocusedLabelColor = Palette.secondary,
-            cursorColor = Palette.text,
-        ),
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = Palette.text),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+    CredentialForm(
+        fields = CredentialFields.signIn(username, password),
+        submitLabel = if (busy) "Signing in…" else "Sign in",
+        valid = username.isNotBlank() && password.isNotBlank(),
+        busy = busy,
+        error = error,
+        onChange = { index, value -> if (index == 0) username = value else password = value },
+        onSubmit = { if (!busy && username.isNotBlank() && password.isNotBlank()) signIn(username.trim(), password) },
+        modifier = Modifier.fillMaxWidth(),
+        storePasswordOnSuccess = true,
     )
 }
 

@@ -96,7 +96,6 @@ fun ApplicationController.saveVodMatch() {
         catch (error: Exception) {
             if (request != vodMatchesRequest || connection !== remote) return@launch
             updateState { next -> next.copy(vodMatches = next.vodMatches?.copy(saving = false, error = when {
-                error is RemoteFailure && error.status == 403 -> "Only the account owner can change matches."
                 error is RemoteFailure && error.status == 404 -> "That title is no longer in the provider catalog."
                 error is RemoteFailure && error.status == 422 -> "This title cannot be matched to that metadata ID."
                 error is RemoteFailure -> error.message
@@ -131,7 +130,7 @@ private fun ApplicationController.loadVodMatches(providers: Boolean = false, cur
         catch (error: Exception) {
             if (request != vodMatchesRequest || connection !== remote) return@launch
             updateState { next -> next.copy(vodMatches = next.vodMatches?.copy(loading = false, loaded = true, error = when {
-                error is RemoteFailure && error.status == 403 -> "VOD matches aren’t available for this profile. Unlock parental controls or use the account owner’s profile."
+                error is RemoteFailure && error.status == 403 -> "VOD matches aren’t available for this profile. Unlock parental controls and try again."
                 error is RemoteFailure && error.status == 404 -> "This server doesn’t support VOD matches. Update the server and try again."
                 error is RemoteFailure -> error.message
                 else -> "Could not load VOD matches. Try again."
