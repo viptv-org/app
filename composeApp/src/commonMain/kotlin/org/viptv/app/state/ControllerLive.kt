@@ -62,6 +62,12 @@ fun ApplicationController.filterLive(group: String?) = run {
     updateState { next -> next.copy(liveFavoritesOnly = false) }
     loadLive(mutable.value.liveQuery.copy(group_id = group, offset = 0))
 }
+fun ApplicationController.searchLive(term: String) = run {
+    val search = term.trim().takeIf { it.isNotEmpty() }
+    if (search == mutable.value.liveQuery.search) return@run
+    loadLive(mutable.value.liveQuery.copy(search = search, offset = 0))
+}
+
 fun ApplicationController.filterLiveFavorites() = run {
     if (!mutable.value.liveFavoritesAvailable) return@run
     updateState { next -> next.copy(liveFavoritesOnly = true) }

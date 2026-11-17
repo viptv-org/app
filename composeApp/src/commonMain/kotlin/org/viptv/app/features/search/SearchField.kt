@@ -27,17 +27,18 @@ import org.viptv.app.components.IconButton
 internal const val SEARCH_PLACEHOLDER = "Search movies and series"
 
 @Composable
-internal fun SearchField(term: String, query: (String) -> Unit) {
+internal fun SearchField(term: String, query: (String) -> Unit, modifier: Modifier = Modifier,
+    placeholder: String = SEARCH_PLACEHOLDER, label: String = "Search", autoFocus: Boolean = true) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { withFrameNanos { }; runCatching { focus.requestFocus() } }
-    AppBasicTextField(term, query, modifier = Modifier.fillMaxWidth().height(44.dp).focusRequester(focus), label = "Search",
+    if (autoFocus) LaunchedEffect(Unit) { withFrameNanos { }; runCatching { focus.requestFocus() } }
+    AppBasicTextField(term, query, modifier = modifier.fillMaxWidth().height(44.dp).then(if (autoFocus) Modifier.focusRequester(focus) else Modifier), label = label,
         textStyle = TextStyle(color = Palette.text, fontSize = 16.sp), cursorBrush = SolidColor(Palette.accent),
         decorationBox = { input ->
             Row(Modifier.fillMaxSize().background(Palette.raised, RoundedCornerShape(12.dp)).padding(start = 12.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Lucide.Search, "Search", Modifier.size(18.dp), tint = Palette.text)
+                Icon(Lucide.Search, label, Modifier.size(18.dp), tint = Palette.text)
                 Box(Modifier.weight(1f)) {
-                    if (term.isEmpty()) Text(SEARCH_PLACEHOLDER, fontSize = 14.sp, color = Palette.secondary)
+                    if (term.isEmpty()) Text(placeholder, fontSize = 14.sp, color = Palette.secondary)
                     input()
                 }
                 IconButton(onClick = { query("") }, modifier = Modifier.size(44.dp), enabled = term.isNotEmpty()) {

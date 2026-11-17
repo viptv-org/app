@@ -21,7 +21,8 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 LiveProgram(program.id, program.title, clock.minute(program.start_millis), clock.minute(program.end_millis), program.description)
             })
     }
-    val filtered = state.liveFavoritesOnly || state.liveQuery.group_id != null
+    val search = state.liveQuery.search.orEmpty()
+    val filtered = state.liveFavoritesOnly || state.liveQuery.group_id != null || search.isNotBlank()
     val spread = liveSpread(state.livePage, state.busy, filtered)
     if (spread == LiveSpread.NoSource) {
         LiveNoSourcePage(television, state.accountAccess, state.localMode, state.liveSetupReturnFocus,
@@ -57,7 +58,8 @@ internal fun LiveRoute(state: ApplicationState, controller: ApplicationControlle
                 sourceChanged = controller::selectLiveConnection, spread = spread,
                 noChannelsReason = emptyReason,
                 noChannelsRetry = retry, sourceIntegrations = if (mayManageSources) ({ controller.openLiveSetup(LiveSourceIntegrationsSection) }) else null,
-                statusNotice = notice, noticeRetry = retry, pageError = state.livePageError)
+                statusNotice = notice, noticeRetry = retry, pageError = state.livePageError,
+                search = search, searchChanged = controller::searchLive)
             if (state.busy || state.liveGuideLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
         }
     }

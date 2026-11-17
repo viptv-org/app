@@ -18,6 +18,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.skia.Bitmap
 import org.viptv.app.connection.*
 import org.viptv.app.features.live.*
+import org.viptv.app.components.PAGE_STATE_TAG
 import org.viptv.app.images.ConfigureImageLoading
 import org.viptv.app.state.*
 import org.viptv.app.theme.Palette
@@ -578,6 +580,79 @@ class LiveUiTest {
         val row = nodes(scene).single { it.config.getOrNull(SemanticsProperties.Role) in listOf(Role.RadioButton, Role.Checkbox) && text(it).startsWith(label) }
         assertTrue(row.config[SemanticsActions.OnClick].action!!.invoke()); frames(scene)
     }
+    @Test fun everyLayoutOffersChannelSearchThatSetsTheQuery() {
+        for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
+            val terms = mutableListOf<String>()
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(listOf(channel()), television, null, null, {}, groupLabels = mapOf("news" to "News"),
+                        groupChanged = {}, search = "", searchChanged = { terms += it })
+                } }
+            }
+            try {
+                frames(scene)
+                val field = nodes(scene).firstOrNull { it.config.contains(SemanticsActions.SetText) }
+                    ?: fail("$width px: no channel search field; texts=" + nodes(scene).map(::text).filter(String::isNotBlank))
+                assertTrue(field.boundsInRoot.width > 0f, "$width px: the field is drawn")
+                field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("news"))
+                val deadline = System.nanoTime() + 3_000_000_000L
+                var frame = 0L
+                while (terms.isEmpty() && System.nanoTime() < deadline) {
+                    Thread.sleep(20); scene.render(frame++ * 16_666_667L).close()
+                }
+                assertEquals(listOf("news"), terms, "$width px: typing reaches the page's query")
+            } finally { scene.close() }
+        }
+    }
+
+    @Test fun typingNarrowsTheLoadedChannelsInTheSameFrameWithoutClaimingNoMatch() {
+        val rows = listOf(
+            LiveChannel(Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "BBC One", badges = emptyList()), id = "one", connectionId = "m3u:1"),
+            LiveChannel(Card(MediaIdentity("two", "live", emptyList()), provider_id = "m3u:1", title = "Sky News", badges = emptyList()), id = "two", connectionId = "m3u:1"))
+        for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(rows, television, null, null, {}, groupLabels = mapOf("news" to "News"),
+                        groupChanged = {}, search = "", searchChanged = {})
+                } }
+            }
+            try {
+                frames(scene)
+                val field = nodes(scene).first { it.config.contains(SemanticsActions.SetText) }
+                field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("bbc"))
+                scene.render(400_000_000L).close()
+                val labels = nodes(scene).map(::text)
+                assertTrue(labels.none { it.contains("Sky News") }, "$width px: a loaded channel the term rules out leaves at once; texts=$labels")
+                assertTrue(labels.any { it.contains("BBC One") }, "$width px: the matching channel stays")
+                field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("zzz"))
+                scene.render(420_000_000L).close()
+                assertTrue(nodes(scene).map(::text).none { it == LiveNoSearchMatch }, "$width px: no-match waits for the server's answer")
+            } finally { scene.close() }
+        }
+    }
+
+    @Test fun aSearchThatMatchesNothingDrawsThePageStateWithTheChipRow() {
+        for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
+            var cleared = 0
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(emptyList(), television, null, null, {}, groupLabels = mapOf("news" to "News"),
+                        groupChanged = {}, search = "news", searchChanged = { if (it.isEmpty()) cleared++ }, spread = LiveSpread.Filtered)
+                } }
+            }
+            try {
+                frames(scene)
+                val labels = nodes(scene).map(::text)
+                assertTrue(labels.any { it == "No channels match your search." }, "$width px: copy.md's search line; texts=$labels")
+                assertTrue(labels.any { it.startsWith("Group:") }, "$width px: the filter row stays visible")
+                assertTrue(nodes(scene).any { it.config.getOrNull(SemanticsProperties.TestTag) == PAGE_STATE_TAG },
+                    "$width px: the empty search is the shared page state block")
+                assertTrue(clickable(scene, "Clear search").config[SemanticsActions.OnClick].action!!.invoke())
+                assertEquals(1, cleared, "$width px: Clear search asks for the whole directory")
+            } finally { scene.close() }
+        }
+    }
+
     private fun frames(scene: ImageComposeScene) = repeat(20) { scene.render(it * 16_666_667L).close() }
     private fun nodes(scene: ImageComposeScene): List<SemanticsNode> = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
     private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)

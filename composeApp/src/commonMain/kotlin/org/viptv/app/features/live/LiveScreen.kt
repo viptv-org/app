@@ -25,15 +25,18 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
     favoritesOnly: Boolean = false, favoritesFilter: (() -> Unit)? = null, sources: Map<String, String> = emptyMap(), selectedSource: String? = null,
     sourceChanged: ((String) -> Unit)? = null, spread: LiveSpread = LiveSpread.Channels,
     noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null, sourceIntegrations: (() -> Unit)? = null,
-    statusNotice: String? = null, noticeRetry: (() -> Unit)? = null, pageError: String? = null) {
+    statusNotice: String? = null, noticeRetry: (() -> Unit)? = null, pageError: String? = null,
+    search: String = "", searchChanged: ((String) -> Unit)? = null) {
     val restore = rememberPageRestore("live")
-    if (television) { TvLiveScreen(channels, start, now, watch, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore, pageError = pageError); return }
+    if (television) { TvLiveScreen(channels, start, now, watch, groupLabels = groupLabels, groupChanged = groupChanged, guideRequested = guideRequested, more = more, busy = busy, favoriteChanged = favoriteChanged, favoritesOnly = favoritesOnly, favoritesFilter = favoritesFilter, sources = sources, selectedSource = selectedSource, sourceChanged = sourceChanged, spread = spread, noChannelsReason = noChannelsReason, noChannelsRetry = noChannelsRetry, sourceIntegrations = sourceIntegrations, restore = restore, pageError = pageError, search = search, searchChanged = searchChanged); return }
     var fullGuide by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
     var selected by remember { mutableStateOf(channels.firstOrNull()) }
     var selectedProgram by remember { mutableStateOf<LiveProgram?>(null) }
-    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || category == AllGroups || (it.groupId ?: it.category) == category) }
+    val draft = searchChanged?.let { rememberLiveSearchDraft(search, it) }
+    val typing = draft?.typing == true
+    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || category == AllGroups || (it.groupId ?: it.category) == category) && draft?.matches(it) != false }
     val entrance = rememberListEntrance(visible.isNotEmpty())
     LaunchedEffect(category, favoritesOnly, channels) {
         selected = visible.find { it.id == selected?.id && it.connectionId == selected?.connectionId } ?: visible.firstOrNull()
@@ -52,8 +55,10 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
         val reset: () -> Unit = { chooseGroup(null) }
         val chipsOnly = spread.showsChannelRows()
         val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
+        val searchable = draft != null && (spread == LiveSpread.Channels || spread == LiveSpread.Filtered)
         Column(Modifier.fillMaxSize().padding(horizontal = gutter, vertical = if (phone) 8.dp else 28.dp * scale),
             verticalArrangement = Arrangement.spacedBy(16.dp * scale)) {
+            if (searchable) draft?.let { LiveSearchField(it, maxWidth = !phone) }
             if (hasFilters) LiveFilters(if (chipsOnly) emptyMap() else groups, if (chipsOnly) null else category.takeUnless { it == AllGroups }, chooseGroup,
                 favoritesOnly, if (chipsOnly) null else favoritesFilter, reset,
                 sources, selectedSource, sourceChanged, gutter = gutter)
@@ -66,12 +71,14 @@ fun LiveScreen(channels: List<LiveChannel>, television: Boolean, start: Int?, no
             if (!fullGuide) selected?.let { channel -> LivePreview(channel, selectedProgram ?: channel.current(now), now, phone, television, scale,
                 { watch(channel) }, favoriteChanged?.let { save -> { save(channel) } }, if (!phone && start != null) ({ fullGuide = true }) else null) }
             if (fullGuide) TextButton(onClick = { fullGuide = false }) { Text("Show preview") }
-            if (visible.isEmpty() && spread == LiveSpread.Loading) {
+            if (visible.isEmpty() && (spread == LiveSpread.Loading || typing)) {
                 Box(Modifier.weight(1f)) { LiveChannelSkeletons(false, scale, phone) }
             } else if (visible.isEmpty() && spread == LiveSpread.NoChannels) {
                 LiveNoChannels(false, scale, phone, noChannelsReason, noChannelsRetry, sourceIntegrations)
             } else if (visible.isEmpty() && spread == LiveSpread.Failed) {
                 LiveLoadFailed(false, scale, phone, noChannelsReason, noChannelsRetry, sourceIntegrations)
+            } else if (visible.isEmpty() && search.isNotBlank() && draft != null) {
+                Box(Modifier.weight(1f)) { LiveSearchEmpty(television, scale, phone, Modifier.fillMaxSize(), draft::clear) }
             } else if (visible.isEmpty()) {
                 LiveFilteredEmpty(television, scale, phone, favoritesOnly, busy, sources[selectedSource]) { chooseGroup(null) }
             } else if (!phone && start != null && visible.any { it.programs.isNotEmpty() }) {
