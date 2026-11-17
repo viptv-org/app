@@ -15,8 +15,8 @@ import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Rule
 import org.viptv.app.preview.UiPreview
 import org.viptv.app.state.Screen
@@ -38,7 +38,20 @@ class TvRowRightEdgeTest {
 
     private var focusManager: FocusManager? = null
     private var frame = 0L
-    private suspend fun settle(scene: ImageComposeScene) = repeat(4) { repeat(8) { scene.render(frame++ * 16_666_667L).close() }; delay(20) }
+    private fun snapshot(scene: ImageComposeScene) = focused(scene)?.let { text(it) to it.boundsInRoot }
+    private suspend fun settle(scene: ImageComposeScene) {
+        var last = snapshot(scene)
+        var stable = 0
+        repeat(64) {
+            scene.render(frame++ * 16_666_667L).close()
+            yield()
+            val now = snapshot(scene)
+            stable = if (now == last) stable + 1 else 0
+            last = now
+            if (now != null && (stable >= 6 || stable >= 2 && !scene.hasInvalidations())) return
+        }
+        fail("focus never settled: last $last")
+    }
     private suspend fun press(scene: ImageComposeScene, key: Key) {
         val consumed = scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)); scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp))
         val direction = when (key) {
@@ -63,7 +76,8 @@ class TvRowRightEdgeTest {
                 val start = requireNotNull(focused(scene)) { "nothing focused on row $row" }
                 assertTrue(start.boundsInRoot.top >= contentTop, "row $row: focused '${text(start)}' at ${start.boundsInRoot}")
                 val visited = mutableListOf(text(start))
-                repeat(40) {
+                while (visited.size < 3 || visited.takeLast(3).toSet().size > 1) {
+                    assertTrue(visited.size <= 40, "row $row: Right never stopped at a last item after ${visited.size - 1} presses")
                     press(scene, Key.DirectionRight)
                     val node = requireNotNull(focused(scene)) { "row $row: focus lost after ${visited.size} Right presses" }
                     assertTrue(node.boundsInRoot.top >= contentTop, "row $row: Right left the content for '${text(node)}' at ${node.boundsInRoot} after '${visited.last()}'")
