@@ -119,11 +119,14 @@ internal class MpvSession(input: PlaybackInput) {
     }
     private fun snapshot(): MpvState {
         val tracks = (node("track-list") as? JsonArray)?.mapNotNull { it as? JsonObject } ?: emptyList()
-        fun list(type: String) = tracks.filter { it["type"]?.jsonPrimitive?.content == type }.mapNotNull { track ->
-            val id = track["id"]?.jsonPrimitive?.intOrNull ?: return@mapNotNull null
-            PlaybackTrack(id, track["title"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
-                ?: track["lang"]?.jsonPrimitive?.contentOrNull ?: "$type $id", track["selected"]?.jsonPrimitive?.booleanOrNull == true,
-                track["lang"]?.jsonPrimitive?.contentOrNull)
+        fun list(type: String) = tracks.filter { it["type"]?.jsonPrimitive?.content == type }.mapIndexedNotNull { ordinal, track ->
+            val id = track["id"]?.jsonPrimitive?.intOrNull ?: return@mapIndexedNotNull null
+            val title = track["title"]?.jsonPrimitive?.contentOrNull
+            val language = track["lang"]?.jsonPrimitive?.contentOrNull
+            val selected = track["selected"]?.jsonPrimitive?.booleanOrNull == true
+            if (type == "sub") embeddedSubtitleTrack(id, ordinal + 1, title, language, selected,
+                track["forced"]?.jsonPrimitive?.booleanOrNull == true, track["default"]?.jsonPrimitive?.booleanOrNull == true)
+            else PlaybackTrack(id, title?.takeIf { it.isNotBlank() } ?: language ?: "$type $id", selected, language)
         }
         val buffering = text("paused-for-cache") == "yes"
         return MpvState(loaded, ((number("time-pos") ?: 0.0) * 1000).toLong(), ((number("video-pts") ?: number("time-pos") ?: 0.0) * 1000).toLong(),
