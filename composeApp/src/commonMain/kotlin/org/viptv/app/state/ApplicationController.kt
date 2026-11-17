@@ -14,7 +14,6 @@ import org.viptv.app.crash.CrashFacts
 import org.viptv.app.crash.CrashReportStore
 import kotlinx.coroutines.sync.Mutex
 import kotlin.concurrent.Volatile
-import kotlin.time.TimeSource
 
 class ApplicationController(internal val scope: CoroutineScope, internal val sessionStore: RemoteSessionStore = remoteSessionStore(),
     internal val playbackDiagnostics: ((String) -> Unit)? = null,
@@ -123,7 +122,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var backgroundPlayback: org.viptv.app.player.PlaybackInput? = null
     internal var completionSeen = false
     internal var playerVisitTracks: ServerTracks? = null
-    internal var progressSavedAt = TimeSource.Monotonic.markNow()
+    internal var progressSavedAt = freshness.time.markNow()
     internal var quietJob: Job? = null
     internal var quietOwner: QuietOwner? = null
     internal var quietPending: QuietWork? = null

@@ -10,8 +10,6 @@ import org.viptv.app.player.PlayerFact
 import org.viptv.app.crash.CrashFacts
 import org.viptv.app.crash.playbackAttempt
 import org.viptv.app.features.player.PlaybackWaitingStatuses
-import kotlin.time.TimeSource
-import kotlin.time.Duration.Companion.seconds
 
 internal const val PLAYBACK_STALL_WINDOW_MILLIS = 30_000L
 
@@ -98,7 +96,7 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     if (lease != null) keepPlaybackLease(lease, source, forceGateway, input)
     lastProgress=null
     completionSeen=false
-    progressSavedAt=TimeSource.Monotonic.markNow()
+    progressSavedAt=freshness.time.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
     updateState { next -> next.copy(playback = input, playingSource = source, paused = pausedAfterOpen, presentation = null, screen = screen, error = null, playbackFailure = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
@@ -143,7 +141,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
     keepPlaybackLease(lease, source, forceGateway = false, input)
     lastProgress = null
     completionSeen = false
-    progressSavedAt = TimeSource.Monotonic.markNow()
+    progressSavedAt = freshness.time.markNow()
     val screen = if (mutable.value.inPlayerSettings()) Screen.Settings else Screen.Player
     updateState { next -> next.copy(playback = input, playingSource = source, paused = false, presentation = null, screen = screen, error = null, playbackFailure = null, navForward = emptyList(), audioNotice = null, pendingAction = null) }
     armStartDeadline(input, source)
@@ -228,7 +226,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         lastProgress=fact
         // ON_STOP pauses the renderer after the controller suspends: flush this last sample even if the 15s timer just ran.
         if (finalBackgroundSample && !completionSeen) saveProgress(false, final = true)
-        else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=15.seconds) saveProgress(false)
+        else if (fact.positionMillis>0 && progressSavedAt.elapsedNow()>=PROGRESS_SAVE_INTERVAL) saveProgress(false)
         maintainNextEpisodePreparation(fact.positionMillis, fact.durationMillis)
     }
     if (fact is PlayerFact.Status && fact.name in listOf("Playing", "Paused") && mutable.value.playback != null) {
