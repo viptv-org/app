@@ -36,6 +36,20 @@ class SubtitleRenderingTest {
 
     private fun glyphRows(cues: List<Cue>, width: Int = 2400, height: Int = 1080,
         preferences: ProfilePreferences = ProfilePreferences(), scale: Float = 1f, capture: String? = null, stack: Boolean = true): GlyphRows {
+        val bitmap = drawn(cues, width, height, preferences, scale, capture, stack)
+        val row = IntArray(width)
+        var bands = 0; var inside = false; var gap = 0; var lowest = -1
+        for (y in 0 until height) {
+            bitmap.getPixels(row, 0, width, 0, y, width, 1)
+            // White glyph pixels only: a profile background box joins the lines.
+            if (row.any { it ushr 24 > 0x80 && it shr 16 and 0xFF > 0xC0 }) { if (!inside) bands++; inside = true; gap = 0; lowest = y }
+            else if (inside && ++gap > 3) inside = false
+        }
+        return GlyphRows(bands, lowest)
+    }
+
+    private fun drawn(cues: List<Cue>, width: Int = 2400, height: Int = 1080, preferences: ProfilePreferences = ProfilePreferences(),
+        scale: Float = 1f, capture: String? = null, stack: Boolean = true): Bitmap {
         val view = SubtitleView(RuntimeEnvironment.getApplication())
         val caption = Media3CaptionStyle(preferences)
         caption.attach(view)
@@ -51,15 +65,16 @@ class SubtitleRenderingTest {
             Canvas(framed).apply { drawColor(android.graphics.Color.DKGRAY); drawBitmap(bitmap, 0f, 0f, null) }
             File(dir, "$name.png").outputStream().use { framed.compress(Bitmap.CompressFormat.PNG, 100, it) }
         } }
+        return bitmap
+    }
+
+    private fun Bitmap.yellowRows(): IntRange? {
         val row = IntArray(width)
-        var bands = 0; var inside = false; var gap = 0; var lowest = -1
-        for (y in 0 until height) {
-            bitmap.getPixels(row, 0, width, 0, y, width, 1)
-            // White glyph pixels only: a profile background box joins the lines.
-            if (row.any { it ushr 24 > 0x80 && it shr 16 and 0xFF > 0xC0 }) { if (!inside) bands++; inside = true; gap = 0; lowest = y }
-            else if (inside && ++gap > 3) inside = false
+        val rows = (0 until height).filter { y ->
+            getPixels(row, 0, width, 0, y, width, 1)
+            row.any { it ushr 24 > 0x80 && it shr 16 and 0xFF > 0xC0 && it shr 8 and 0xFF > 0xC0 && it and 0xFF < 0x60 }
         }
-        return GlyphRows(bands, lowest)
+        return rows.firstOrNull()?.let { it..rows.last() }
     }
 
     @Test fun twoLineCueDrawsBothLines() {
@@ -103,6 +118,29 @@ class SubtitleRenderingTest {
         renderedLines(vtt, capture = "android-vtt-overlap-before", stack = false)
         renderedLines(vtt, capture = "android-vtt-overlap-after")
         renderedLines(fixture("multi-line-dialogue.srt").cuesAt(10_000_000), width = 1600, height = 720, scale = 1.5f, capture = "android-long-line-wraps")
+    }
+
+    @Test fun aSignsTrackKeepsEachSignWhereAndHowTheScriptDrawsIt() {
+        val cues = fixture("anime-signs-and-songs.ass").cuesAt(3_000_000)
+        val sign = cues.single { it.text.toString() == "Ramen Shop" }
+        assertEquals(480f / 1920, sign.position, .01f)
+        assertEquals(300f / 1080, sign.line, .01f)
+        assertEquals(Cue.ANCHOR_TYPE_START, sign.lineAnchor)
+        val song = cues.single { it.text.toString() == "Running toward the morning light" }
+        assertTrue(song.line < .1f, "An \\an8 song line sits at the top: ${song.line}")
+        val yellow = requireNotNull(drawn(cues, capture = "android-anime-signs-3s").yellowRows()) { "The sign keeps its yellow style colour" }
+        assertTrue(yellow.first >= 1080 * .25 && yellow.last < 1080 * .45, "The sign hangs from its \\pos point, not at the bottom: $yellow")
+        val corner = fixture("anime-signs-and-songs.ass").cuesAt(8_000_000).single()
+        assertEquals(100f / 1920, corner.position, .01f)
+        assertEquals(Cue.ANCHOR_TYPE_START, corner.positionAnchor)
+        assertEquals(Cue.ANCHOR_TYPE_START, corner.lineAnchor)
+    }
+
+    @Test fun theFullTrackDrawsDialogueAtTheBottomBesideTheSigns() {
+        val cues = fixture("anime-full.ass").cuesAt(3_000_000)
+        assertEquals(setOf("Ramen Shop", "Running toward the morning light", "Are you coming or not?"), cues.map { it.text.toString() }.toSet())
+        assertTrue(glyphRows(cues, capture = "android-anime-full-3s").lowest > 1080 * .8, "Dialogue stays at the bottom")
+        drawn(fixture("anime-full.ass").cuesAt(9_000_000), capture = "android-anime-full-9s")
     }
 
     @Test fun laterCueSitsAboveTheEarlierOneLikeMpvAndBrowsers() {

@@ -1,7 +1,7 @@
 package org.viptv.app.features.player
 
-import org.viptv.app.features.settings.languageChoices
 import org.viptv.app.player.PlaybackTrack
+import org.viptv.app.player.subtitleLanguageName
 import org.viptv.app.player.subtitleModeLanguage
 
 internal data class SubtitleGroup(val primary: String, val source: String?, val selected: Boolean, val ids: List<Int>)
@@ -19,13 +19,11 @@ internal fun groupSubtitleTracks(tracks: List<PlaybackTrack>): List<SubtitleGrou
         add(SubtitleGroup(displaySubtitleLanguage(entries.first().language, key),
             sources.joinToString(" · "), entries.any { it.selected }, entries.map { it.id }))
     }
-    for (track in plain) add(SubtitleGroup(track.label, null, track.selected, listOf(track.id)))
+    for (track in plain) add(SubtitleGroup(track.name ?: track.label, track.name?.let { subtitleLanguageName(track.language) },
+        track.selected, listOf(track.id)))
 }
 
 private fun providerKey(track: PlaybackTrack): String =
     subtitleModeLanguage(track.language) ?: track.label.substringBefore(" · ")
 
-private fun displaySubtitleLanguage(language: String?, key: String): String {
-    val code = subtitleModeLanguage(language)
-    return languageChoices.firstOrNull { it.first == code }?.second ?: code ?: key
-}
+private fun displaySubtitleLanguage(language: String?, key: String): String = subtitleLanguageName(language) ?: key
