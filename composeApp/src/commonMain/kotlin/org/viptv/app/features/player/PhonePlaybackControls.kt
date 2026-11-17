@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -25,7 +26,7 @@ import org.viptv.app.components.pressScale
 
 @Composable
 internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true) {
-    Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(48.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(enabled = seekEnabled, onClick = { skip(-10000) }, modifier = Modifier.size(56.dp), pressedScale = Motion.control) {
             PlaybackSkipIcon(false, 34.dp)
         }

@@ -59,6 +59,10 @@ class PhoneTransportCentreUiTest {
             }
             capture(scene, "phone-transport-${width}x$height")
             val play = assertNotNull(control(scene, "Play")).boundsInRoot
+            for (skip in listOf("Back 10 seconds", "Forward 10 seconds")) {
+                val bounds = assertNotNull(control(scene, skip), "No \"$skip\"").boundsInRoot
+                assertEquals(play.center.y, bounds.center.y, 1f, "${width}×$height: $skip at $bounds is off play's vertical centre $play")
+            }
             val chromeTop = assertNotNull(nodes(scene).firstOrNull { it.config.getOrNull(SemanticsProperties.TestTag) == PlayerChromeTag }).boundsInRoot.top
             check(play, chromeTop)
         } finally { scene.close() }
