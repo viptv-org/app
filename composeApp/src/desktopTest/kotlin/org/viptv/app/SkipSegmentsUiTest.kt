@@ -104,6 +104,56 @@ class SkipSegmentsUiTest {
         } finally { player.close() }
     }
 
+    @Test fun phoneSkipsAnIntroItRunsIntoAndUndoPlaysIt() {
+        val player = Player(phone = true, skips = listOf(intro), position = 20_000, skipIntros = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(30_500, 1_800_000))
+            assertTrue(player.hasText("Skipped intro"), "The skip says what it did")
+            assertFalse(player.hasText("Skip intro"))
+            player.click("Undo")
+            assertFalse(player.hasText("Skipped intro"))
+            player.facts(PlayerFact.Progress(31_000, 1_800_000))
+            assertTrue(player.hasText("Skip intro"), "Undo returns to the intro's start, which plays")
+            assertFalse(player.hasText("Skipped intro"), "An undone intro does not skip again")
+        } finally { player.close() }
+    }
+
+    @Test fun phoneSeekingIntoAnIntroPlaysIt() {
+        val player = Player(phone = true, skips = listOf(intro), position = 20_000, skipIntros = true, paused = false)
+        try {
+            val forward = player.nodes().first { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains("Forward 10 seconds") == true &&
+                it.config.contains(SemanticsActions.OnClick) }
+            assertTrue(forward.config[SemanticsActions.OnClick].action!!.invoke()); player.frames()
+            player.facts(PlayerFact.Progress(31_000, 1_800_000))
+            assertFalse(player.hasText("Skipped intro"))
+            assertTrue(player.hasText("Skip intro"), "A seek into the intro plays it")
+        } finally { player.close() }
+    }
+
+    @Test fun tvSkipsAnIntroItRunsIntoAndUndoSeeksBackToItsStart() {
+        val player = Player(television = true, skips = listOf(intro), position = 20_000, skipIntros = true, paused = false)
+        try {
+            player.facts(PlayerFact.Progress(30_500, 1_800_000))
+            assertTrue(player.hasText("Skipped intro"))
+            player.facts(PlayerFact.Progress(60_000, 1_800_000))
+            player.keyDown(Key.Enter); player.keyUp(Key.Enter); player.frames()
+            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(60_000, automatic = true), PlayerCommand.Seek(30_000)), player.seeks,
+                "Undo has focus and seeks to the intro's start on the viewer's command")
+            player.facts(PlayerFact.Progress(31_000, 1_800_000))
+            assertEquals(2, player.seeks.size, "An undone intro plays")
+            assertTrue(player.hasText("Skip intro"))
+        } finally { player.close() }
+    }
+
+    @Test fun tvSeekingIntoAnIntroPlaysIt() {
+        val player = Player(television = true, skips = listOf(intro), position = 20_000, skipIntros = true, paused = false)
+        try {
+            player.keyDown(Key.MediaFastForward); player.keyUp(Key.MediaFastForward); player.frames()
+            player.facts(PlayerFact.Progress(31_000, 1_800_000))
+            assertEquals(listOf<PlayerCommand>(PlayerCommand.Seek(30_000)), player.seeks, "A seek into the intro is never followed by a skip")
+        } finally { player.close() }
+    }
+
     @Test fun withThePreferenceOffNothingSkipsOnItsOwn() {
         val player = Player(television = true, skips = listOf(intro), position = 20_000, skipIntros = false, paused = false)
         try {

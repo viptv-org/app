@@ -81,6 +81,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var seekTarget by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekPending by remember(playbackKey) { mutableStateOf<Long?>(null) }
     var seekMark by remember(playbackKey) { mutableStateOf(kotlin.time.TimeSource.Monotonic.markNow()) }
+    val autoSkip = remember(playbackKey) { SegmentAutoSkip() }
     var retainedInput by remember(playbackKey) { mutableStateOf(input) }
     SideEffect { if (input != null) retainedInput = input }
     val rendering = input ?: retainedInput
@@ -183,19 +184,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
+        if (!automatic) autoSkip.seeked(target)
         if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
-    val skipped = remember(playbackKey) { mutableSetOf<TvSkipRange>() }
-    fun skipSegment(range: TvSkipRange, automatic: Boolean) {
-        if (seekTarget != null) return
-        if (!skipped.add(range) && automatic) return
-        seekTo(range.endMillis, reveal = false, automatic = automatic)
+    fun skipSegment(range: TvSkipRange) { if (seekTarget == null) seekTo(range.endMillis, reveal = false) }
+    LaunchedEffect(rendering, position, tvExtras.skips, tvExtras.skipIntros, paused) {
+        val due = autoSkip.due(rendering, position, tvExtras.skips) { tvExtras.skipIntros && it.automatic }
+        if (due != null && !paused && seekTarget == null) { seekTo(due.endMillis, reveal = false, automatic = true); autoSkip.skipped(due) }
     }
-    LaunchedEffect(position, tvExtras.skips, tvExtras.skipIntros, paused) {
-        if (tvExtras.skipIntros && !paused) tvExtras.skips.firstOrNull { it.automatic && position in it.startMillis until it.endMillis }
-            ?.let { skipSegment(it, automatic = true) }
-    }
+    LaunchedEffect(autoSkip.notice) { if (autoSkip.notice != null) { frameDelay(skippedNoticeMillis); autoSkip.notice = null } }
+    fun undoSkip(range: TvSkipRange) { autoSkip.undo(range); seekTo(range.startMillis, reveal = false) }
     fun applyFact(fact: PlayerFact) {
         seekPending?.let { target -> if (fact.settlesSeek(target) || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) seekPending = null }
         when (fact) {
@@ -233,6 +232,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(controlError) { if (controlError != null) { frameDelay(playbackControlErrorVisibleMillis); controlError = null } }
     LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
+    val waiting = buffering || seekPending != null || input == null && rendering != null
+    val controlsShown = visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null)
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
@@ -267,7 +268,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
                 }
-                AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null),
+                AnimatedVisibility(controlsShown,
                     modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
                     exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
                 Box(Modifier.fillMaxSize().onFocusChanged { controlsFocused = it.hasFocus }) {
@@ -282,7 +283,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         }
                     }
                     if (phone) CentredClearOfChrome(chromeHeight, controlInsets, Modifier.fillMaxSize()) {
-                        PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
+                        PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true,
+                            buffering = waiting && startup == null)
                     }
                     BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().testTag(PlayerChromeTag)
                         .onGloballyPositioned { chromeTopPx = it.positionInRoot().y }
@@ -347,16 +349,21 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         back = close, title = title, insets = controlInsets)
                     else -> {
                         if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp,
-                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion)
-                        else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion, backdrop = !phone,
+                            close = close, insets = controlInsets, desktop = !phone)
+                        else if (waiting && !(phone && controlsShown)) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }
                 if (!stopped && slateNotice && phonePanel == null && !showTracks)
                     PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
                 else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
-                if (activeSkip != null && !locked && phonePanel == null && !showTracks && !failed && error == null)
-                    PlayerSkipPrompt(activeSkip, controlInsets) { skipSegment(activeSkip, automatic = false) }
+                val skippedNotice = autoSkip.notice
+                if (!locked && phonePanel == null && !showTracks && !failed && error == null) {
+                    val promptBottom = maxOf(panelBottomInset, 104.dp)
+                    if (skippedNotice != null) PlayerSkippedNotice(skippedNotice, controlInsets, promptBottom) { undoSkip(skippedNotice) }
+                    else if (activeSkip != null) PlayerSkipPrompt(activeSkip, controlInsets, promptBottom) { skipSegment(activeSkip) }
+                }
             }
         }
     }

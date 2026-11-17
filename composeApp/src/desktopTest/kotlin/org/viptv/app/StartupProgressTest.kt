@@ -11,21 +11,24 @@ class StartupProgressTest {
         assertNull(startupProgress(null, StartupSignals(discovering = true)).let { startupProgress(it, StartupSignals()) })
     }
 
+    @Test fun theFirstFrameOfThisPlaybackEndsTheOpeningScreenForGood() {
+        val buffering = assertNotNull(startupProgress(null, StartupSignals(buffering = true)))
+        assertNull(startupProgress(buffering, StartupSignals(opening = true, buffering = true, presented = true)))
+        assertNull(startupProgress(null, StartupSignals(discovering = true, opening = true, presented = true)))
+    }
+
     @Test fun eachStageHoldsAtItsOwnFloorUntilTheNextOneArrives() {
         val discovery = assertNotNull(startupProgress(null, StartupSignals(discovering = true)))
         assertEquals(StartupStage.Discovery, discovery.stage)
         assertEquals(0f, discovery.fill)
-        assertTrue(discovery.holding)
 
         val opening = assertNotNull(startupProgress(discovery, StartupSignals(opening = true)))
         assertEquals(StartupStage.Opening, opening.stage)
         assertTrue(opening.fill > discovery.fill)
-        assertTrue(opening.holding)
 
         val buffering = assertNotNull(startupProgress(opening, StartupSignals(buffering = true)))
         assertEquals(StartupStage.Buffering, buffering.stage)
         assertTrue(buffering.fill > opening.fill)
-        assertTrue(buffering.holding, "a stage without a measured share holds")
     }
 
     @Test fun theBufferedShareMovesTheFillAndNeverBackwards() {
@@ -35,7 +38,6 @@ class StartupProgressTest {
         assertTrue(quarter.fill > start.fill)
         assertTrue(all.fill > quarter.fill)
         assertEquals(1f, all.fill)
-        assertFalse(all.holding)
 
         val regressed = assertNotNull(startupProgress(all, StartupSignals(buffering = true, bufferedFraction = 0.1f)))
         assertEquals(all.fill, regressed.fill, "a renderer that refills the cache never pulls the art back down")

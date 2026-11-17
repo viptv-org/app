@@ -79,7 +79,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId,
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
-        requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title,
+        requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title, startChosen = positionMillis != null,
         remoteSeek = if (lease?.reopensForSeek == true) { target ->
             if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
                 saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
@@ -213,6 +213,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         return
     }
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
+        presentedPlayback = mutable.value.presentedPlayback()
         updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
         mutable.value.selectedProfile?.let { profile ->

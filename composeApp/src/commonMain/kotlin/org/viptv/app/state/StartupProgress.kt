@@ -1,10 +1,12 @@
 package org.viptv.app.state
 
+import org.viptv.app.connection.cardLookupKey
+
 // The opening screen's stages, in the order a start passes through them.
 enum class StartupStage { Discovery, Opening, Buffering }
 
-// fill is the share of the title art drawn at full opacity, measured up from its bottom edge.
-data class StartupProgress(val stage: StartupStage, val fill: Float, val holding: Boolean, val status: String)
+// fill is the share of the title art drawn at full strength, measured from its left edge.
+data class StartupProgress(val stage: StartupStage, val fill: Float, val status: String)
 
 // Every value here is a signal the app already has; nothing is estimated.
 internal data class StartupSignals(
@@ -15,8 +17,9 @@ internal data class StartupSignals(
     val sourceLabel: String? = null,
     val buffering: Boolean = false,
     val bufferedFraction: Float? = null,
+    val presented: Boolean = false,
 ) {
-    val inFlight: Boolean get() = discovering || opening || buffering
+    val inFlight: Boolean get() = !presented && (discovering || opening || buffering)
 }
 
 // Where discovery hands over to the source opening, and the source opening to buffering. Discovery
@@ -24,7 +27,7 @@ internal data class StartupSignals(
 private const val OPENING_START = 1f / 3f
 private const val BUFFERING_START = 2f / 3f
 
-internal fun ApplicationState.startupSignals(bufferedFraction: Float?): StartupSignals = StartupSignals(
+internal fun ApplicationState.startupSignals(bufferedFraction: Float?, presented: PresentedPlayback?): StartupSignals = StartupSignals(
     discovering = findingSources,
     sourcesArrived = sources.isNotEmpty(),
     opening = openingSource != null && !(playback != null && presentation == null),
@@ -32,7 +35,12 @@ internal fun ApplicationState.startupSignals(bufferedFraction: Float?): StartupS
     sourceLabel = openingSource?.label ?: playingSource?.label,
     buffering = playback != null && presentation == null,
     bufferedFraction = bufferedFraction,
+    presented = presented != null && presented == presentedPlayback(),
 )
+
+internal data class PresentedPlayback(val title: String?, val source: String?)
+
+internal fun ApplicationState.presentedPlayback(): PresentedPlayback = PresentedPlayback(sourceTitle?.let(::cardLookupKey), playingSource?.id)
 
 internal fun startupProgress(previous: StartupProgress?, signals: StartupSignals): StartupProgress? {
     if (!signals.inFlight) return null
@@ -53,10 +61,6 @@ internal fun startupProgress(previous: StartupProgress?, signals: StartupSignals
     return StartupProgress(
         stage = stage,
         fill = fill,
-        holding = when (stage) {
-            StartupStage.Discovery, StartupStage.Opening -> true
-            StartupStage.Buffering -> signals.bufferedFraction == null
-        },
         status = when (stage) {
             StartupStage.Discovery -> if (signals.sourcesArrived) "Still checking sources" else "Finding sources"
             StartupStage.Opening -> signals.openingStage ?: signals.sourceLabel?.let { "Opening $it…" } ?: "Opening stream…"

@@ -46,6 +46,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
             val art = episode.landscape ?: episode.poster
             if (art != null && !GoneArtwork.contains(art)) AsyncImage(art, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
                 onError = { error -> if (error.result.throwable.isGoneArtwork()) GoneArtwork.record(art) })
+            EpisodeFillerTag(episode)
             if (episode.isPlayPending()) {
                 Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
                     PendingActionSpinner(Modifier.size(30.dp), size = 30.dp, strokeWidth = 3.dp, color = Palette.text)

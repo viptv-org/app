@@ -59,6 +59,7 @@ internal fun TvEpisodeCard(card: Card, scale: Float, play: (Card) -> Unit, onFoc
                 .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp * scale))
                 .padding(horizontal = 10.dp * scale, vertical = 4.dp * scale), color = Palette.text,
                 fontSize = (18 * scale).sp, lineHeight = (22 * scale).sp, fontWeight = FontWeight.SemiBold) }
+            EpisodeFillerTag(card, television = true, scale = scale)
             org.viptv.app.components.FocusOutline(focused, 12.dp * scale, 3.dp * scale, Modifier.matchParentSize())
             if (card.isPlayPending()) {
                 Box(Modifier.matchParentSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {

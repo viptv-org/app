@@ -29,7 +29,7 @@ class ParentTitlesTest {
 
     @Test fun nativeSessionsApproveAndRevokeTitlesThroughFakeHost() = runBlocking<Unit> {
         val row = ParentTitleRow("addon-7", "My addon", "stremio", 7, items = listOf(ParentTitleItem(card(), true)))
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val controller = controller(this, browser = false) { request ->
             val result = when {
                 request.url.encodedPath == "/api/parent/search" -> Json.encodeToString(ParentTitleSearch(listOf(row)))
@@ -207,7 +207,7 @@ class ParentTitlesTest {
     }
 
     @Test fun nativeSessionsBlockAndUnblockTitlesThroughFakeHost() = runBlocking<Unit> {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         var blocked = listOf<BlockedTitle>()
         val controller = controller(this, browser = false) { request ->
             val headers = headersOf(HttpHeaders.ContentType, "application/json")

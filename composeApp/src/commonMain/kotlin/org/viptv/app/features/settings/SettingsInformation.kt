@@ -17,6 +17,8 @@ import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.TextButton
 import org.viptv.app.updates.*
 
+internal const val FILLER_CREDIT = "Filler data: AnimeFillerList."
+
 @Composable
 internal fun SettingsInformation(section: String, local: Boolean, address: String?, compact: Boolean = false) {
     var license by remember { mutableStateOf<String?>(null) }
@@ -40,6 +42,7 @@ internal fun SettingsInformation(section: String, local: Boolean, address: Strin
                 TextButton({ license = "onest" }) { Text("Onest font license") }
                 TextButton({ license = "bricolage-grotesque" }) { Text("Bricolage Grotesque font license") }
                 TextButton({ license = "live-photography" }) { Text("Live sport photography") }
+                Text(FILLER_CREDIT, color = Palette.tertiary)
             }
         }
     } }
