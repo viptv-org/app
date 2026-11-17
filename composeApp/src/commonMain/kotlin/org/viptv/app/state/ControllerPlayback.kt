@@ -41,8 +41,9 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
     }
 }
 
-internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
+internal suspend fun ApplicationController.openSourceNow(requested: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
     choice: SourceChoice = SourceChoice.None, keepFinding: Boolean = false) {
+    var source = requested
     progressJob?.join()
     val stopping = releaseRemotePlayback()
     this.sourceChoice = choice
@@ -58,8 +59,16 @@ internal suspend fun ApplicationController.openSourceNow(source: SourceCandidate
     val reuseAudio = mutable.value.bestMatch?.reuseAudioLanguages?.get(source.id)
     val preferences = if (choice == SourceChoice.None && reuseAudio != null) profilePreferences.copy(preferred_audio_language = reuseAudio) else profilePreferences
     if (choice == SourceChoice.Manual) remote?.reuseAudioLanguages?.remove(source.id)
+    suspend fun lease(candidate: SourceCandidate) =
+        leaseOpener.open(requireNotNull(remote), candidate, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
     val lease = if (store == null) try {
-        leaseOpener.open(requireNotNull(remote), source, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
+        try { lease(source) }
+        catch (stale: RemoteFailure) {
+            if (!stale.expiredSourceGrant()) throw stale
+            source = rediscoveredSource(source) ?: throw stale
+            updateState { next -> next.copy(playingSource = source, openingSource = source) }
+            lease(source)
+        }
     } finally { updateState { next -> next.copy(openingStage = null) } } else null
     val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
     // An open outlives the picker that started it: another profile or title meanwhile owns the player.
