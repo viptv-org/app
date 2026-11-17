@@ -55,7 +55,7 @@ class NextEpisodePlaybackTest {
         val controller = fixture.controller { device }
         controller.local = device
         controller.mutable.value = ApplicationState(screen = Screen.Player, selectedProfile = "owner", localMode = true,
-            playback = playing(), sourceTitle = episode(24), detail = DetailSnapshot(parent, episodes = (1L..25L).map(::episode)),
+            playback = playing(), sourceTitle = episode(24), nextEpisode = episode(25), nextEpisodeStatus = ContinuationStatus.NEXT, detail = DetailSnapshot(parent, episodes = (1L..25L).map(::episode)),
             preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = selection)))
         try { block(controller, device) }
         finally { device.releasing.complete(Unit); fixture.close(controller) }
@@ -83,13 +83,13 @@ class NextEpisodePlaybackTest {
         assertEquals(Screen.Player, controller.state.value.screen)
     }
 
-    @Test fun disablingRememberedReuseMakesTheSuccessorAsk() = transition("ask") { controller, device ->
+    @Test fun disablingRememberedReuseStillStartsTheResolvedSuccessor() = transition("ask") { controller, device ->
         controller.mutable.value = controller.mutable.value.copy(preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "ask", remembered_source_reuse = false)))
         controller.playEpisode(episode(25))
         settle(controller)
-        assertTrue(device.opened.isEmpty(), "Disabling reuse restores manual source selection for a successor")
-        assertEquals(Screen.Sources, controller.state.value.screen)
-        assertNull(controller.state.value.playback)
+        assertEquals(listOf("best"), device.opened)
+        assertEquals(Screen.Player, controller.state.value.screen)
+        assertNotNull(controller.state.value.playback)
         assertEquals(episode(25), controller.state.value.sourceTitle)
     }
 

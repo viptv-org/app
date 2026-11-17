@@ -71,6 +71,21 @@ class ListPageStatesScanTest {
         assertFalse(block.contains("Surface("), "a page state is never a card")
     }
 
+    @Test fun theCalendarDrawsTheSharedBlockForItsPageStates() {
+        val block = source("features/calendar/CalendarStatus.kt")
+        assertTrue(block.contains("PageState("), "the Calendar's page state is the shared block")
+        assertFalse(block.contains("Surface("), "a page state is never a card")
+        for (page in listOf("features/calendar/CalendarScreen.kt", "features/calendar/TvCalendarScreen.kt")) {
+            val text = source(page)
+            assertTrue(text.contains("CalendarStatus("), "$page draws the shared page state block")
+            assertFalse(Regex("""Text\(if \(available\) CALENDAR_EMPTY_WEEK""").containsMatchIn(text),
+                "$page draws its own empty line and action")
+            assertFalse(text.contains("TextButton(manage)"), "$page keeps its own empty action")
+        }
+        val dayLine = source("features/calendar/TvCalendarScreen.kt")
+        assertTrue(dayLine.contains("calendarEmptyDay("), "an empty day inside a non-empty week keeps its inline line")
+    }
+
     @Test fun theOldHomeStatesAreGoneFromEverySource() {
         val old = listOf("Could not load Home", "Retry Home", "No catalogs configured", "Nothing to show yet",
             "Home isn’t available yet", "Your catalogs could not load", "Refreshing Home…")

@@ -21,6 +21,43 @@ class DeviceCodeLinkTest {
         return controller
     }
 
+    @Test fun incomingLinkPreservesThePortThroughSignInAndOnlyDeliversToThatOrigin() = runBlocking<Unit> {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val controller = controller(scope, Screen.Connect, origin = "https://watch.example:18445")
+            controller.offerDeviceCodeLink("https://watch.example:18445/device?code=00428701")
+            controller.deliverDeviceCode()
+            assertEquals("https://watch.example:18445", controller.deviceLink.value?.origin)
+            assertEquals("00428701", controller.deviceLink.value?.code)
+            assertEquals(Screen.Connect, controller.state.value.screen)
+            controller.mutable.value = ApplicationState(screen = Screen.Home)
+            controller.deliverDeviceCode()
+            assertEquals(Screen.Settings, controller.state.value.screen)
+            val otherPort = controller(scope, Screen.Home, origin = "https://watch.example")
+            otherPort.offerDeviceCodeLink("https://watch.example:18445/device?code=00428701")
+            otherPort.deliverDeviceCode()
+            assertNull(otherPort.deviceLink.value)
+            assertEquals(Screen.Home, otherPort.state.value.screen)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun incomingLinksRejectAmbiguousAuthoritiesPathsAndCodes() = runBlocking<Unit> {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val controller = controller(scope, Screen.Connect)
+            for (url in listOf("http://watch.example:18445/device?code=00428701",
+                "viptv://watch.example/device?code=00428701", "https://user@watch.example:18445/device?code=00428701",
+                "https://watch.example:0/device?code=00428701", "https://watch.example:65536/device?code=00428701",
+                "https://watch.example:18445/other?code=00428701", "https://watch.example:18445/device/extra?code=00428701",
+                "https://watch.example:18445/device?code=00428701&code=11111111",
+                "https://watch.example:18445/device?code=00428701#Intent;package=other;end",
+                "https://watch.example:18445/device?code=0042870x")) {
+                controller.offerDeviceCodeLink(url)
+                assertNull(controller.deviceLink.value, url)
+            }
+        } finally { scope.cancel() }
+    }
+
     @Test fun onlyAnHttpsServerAndAnEightDigitCodeAreAccepted() = runBlocking<Unit> {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {

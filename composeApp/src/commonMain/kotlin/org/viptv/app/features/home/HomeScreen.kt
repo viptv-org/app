@@ -46,8 +46,8 @@ fun HomeScreen(home: HomeSnapshot?, television: Boolean, open: (Card) -> Unit, r
         val continueRow = home?.rows?.firstOrNull { it.id == CONTINUE_ROW }
         var hoveredContinue by remember(home?.scope?.owner()) { mutableStateOf<String?>(null) }
         val preview = hoveredContinue?.let { key -> continueRow?.cards?.firstOrNull { cardLookupKey(it) == key } }
-        var heroFloor by remember(home?.scope?.owner()) { mutableIntStateOf(0) }
         val density = LocalDensity.current
+        var heroFloor by remember(home?.scope?.owner(), maxWidth, maxHeight, density) { mutableIntStateOf(0) }
         val carousel = rememberHeroCarousel(home?.featured.orEmpty().ifEmpty { listOfNotNull(home?.hero) }, heroRotates && preview == null, home?.scope?.owner())
         val scale = if (television) maxWidth / 1920.dp else 1f
         val gutter = pageGutter(television, tablet, browser, maxWidth)

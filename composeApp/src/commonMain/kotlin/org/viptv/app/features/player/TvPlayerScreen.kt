@@ -179,7 +179,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
                 }
             }, { state.showTracks = false; state.reveal() }, trackFocus,
             dismissChanged = { state.dismissTracks = it }, openSettings = openSettings,
-            pendingSubtitle = state.pendingSubtitle, subtitleError = state.subtitleError,
+            pendingSubtitle = state.pendingSubtitle, subtitleError = state.subtitleError, subtitleSync = rendering?.subtitleSync,
             pendingAudio = state.pendingAudio, audioError = state.audioError)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         if (slateNotice && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes)

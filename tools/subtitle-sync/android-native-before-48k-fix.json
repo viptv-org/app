@@ -1,0 +1,24 @@
+{
+  "source": "7288c9c8d40a8e1eabb79195f339b26ae8bdd382",
+  "equivalentPin": "a6c154ae2a4c776c655ea3566838d7cf5e0e03d4",
+  "pinDifference": "one trailing blank line in native.c",
+  "target": "x86_64-linux-android",
+  "minimumApi": 26,
+  "ndk": "27.2.12479018",
+  "features": [
+    "vsources-runtime",
+    "live-runtime",
+    "subtitle-vad"
+  ],
+  "sha256": "99a87a1dca0b204ad0143d09c6bf10cb1013b07b4d42cb06211383d5b3885bea",
+  "bytes": 34489440,
+  "kotlinSha256": "e40c803e55580facfaad62029c6753de2ae9d06d2ba7ff3d44680078c0de2a3d",
+  "loadAlignment": [
+    "0x4000",
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "classificationQualified": false,
+  "qualificationNote": "Superseded native build: original 48 kHz / 20 ms VAD ignored the second half of its input."
+}

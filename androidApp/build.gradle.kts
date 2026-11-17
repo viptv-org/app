@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -36,6 +38,10 @@ android {
         // Optional prefilled sign-in server for dev builds: -Pviptv.defaultServer=https://host
         val defaultServer = providers.gradleProperty("viptv.defaultServer").orNull.orEmpty()
         require(defaultServer.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?").matches(defaultServer)) { "viptv.defaultServer must be an https origin" }
+        val serverUri = defaultServer.takeIf(String::isNotEmpty)?.let(URI::create)
+        require(serverUri == null || (serverUri.host != null && (serverUri.port == -1 || serverUri.port in 1..65535))) {
+            "viptv.defaultServer must have a valid host and HTTPS port"
+        }
         buildConfigField("String", "DEFAULT_SERVER", "\"$defaultServer\"")
         buildConfigField("String", "BUILD_COMMIT", "\"${commitSha ?: "unknown"}\"")
         // Updates come from <signed-in server>/updates/android/update.json. -Pviptv.updateFeed=<url>
@@ -45,11 +51,17 @@ android {
             "viptv.updateFeed must be an https URL (plain http only on 127.0.0.1 or localhost)" }
         buildConfigField("String", "UPDATE_FEED", "\"$updateFeed\"")
         buildConfigField("boolean", "APP_UPDATES", "true")
-        // App Links (the sign-in QR opens the app): the default server's host. Android cannot verify a
-        // port, so those servers, and builds without one, get a host that matches nothing real.
-        manifestPlaceholders["viptvLinkHost"] = Regex("https://([A-Za-z0-9.-]+)").matchEntire(defaultServer)?.groupValues?.get(1) ?: "viptv-links.invalid"
+        manifestPlaceholders["viptvLinkHost"] = serverUri?.host?.lowercase() ?: "viptv-links.invalid"
     }
     buildFeatures { compose = true; buildConfig = true }
+    signingConfigs {
+        create("release") {
+            providers.environmentVariable("ANDROID_RELEASE_KEYSTORE_PATH").orNull?.let { storeFile = file(it) }
+            storePassword = providers.environmentVariable("ANDROID_RELEASE_STORE_PASSWORD").orNull
+            keyAlias = providers.environmentVariable("ANDROID_RELEASE_KEY_ALIAS").orNull
+            keyPassword = providers.environmentVariable("ANDROID_RELEASE_KEY_PASSWORD").orNull
+        }
+    }
     buildTypes {
         getByName("debug") {
             if (providers.gradleProperty("viptv.torrentQa").orNull == "true") {
@@ -61,11 +73,12 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         create("qa") {
             initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
     }
@@ -83,6 +96,7 @@ android {
     // Shared torrent runtime (TORRENT_RUNTIME_REF). Without it the app never advertises native torrents.
     sourceSets["main"].jniLibs.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/jniLibs").get().asFile)
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/torrentRuntime/assets").get().asFile)
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/subtitleLicenses").get().asFile)
 }
 dependencies {
     // Diagnostic semantics inspection must compile against the shared app's UI
@@ -103,26 +117,61 @@ dependencies {
     "debugImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 }
 
+fun nativeFingerprint(component: String) = providers.exec {
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "fingerprint", component, "--abis", selectedAbis.joinToString(","))
+}.standardOutput.asText.map(String::trim)
+
 val buildAndroidEngine by tasks.registering(Exec::class) {
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_engine.py", "android", "--abis", selectedAbis.joinToString(","))
-    inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.fileTree("native/core/crates") { include("**/*.rs", "**/Cargo.toml") }, rootProject.file("native/core/Cargo.lock"), rootProject.file("tools/build_engine.py"))
+    commandLine("python3", "tools/android_native.py", "build", "engine", "--abis", selectedAbis.joinToString(","))
+    inputs.property("nativeFingerprint", nativeFingerprint("engine"))
+    inputs.files(rootProject.fileTree("native/core") { exclude(".git", "target/**", "**/__pycache__/**") })
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(rootProject.file("tools/android_native.py"), rootProject.file("tools/build_engine.py"), rootProject.file("tools/macos_signing.py"), rootProject.file("tools/android-toolchains.json"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(layout.buildDirectory.dir("generated/rustJni"))
+    outputs.dir(layout.buildDirectory.dir("generated/subtitleLicenses"))
+    outputs.cacheIf { true }
 }
-tasks.named("preBuild") { dependsOn(buildAndroidEngine) }
 
-// -Pviptv.torrentRuntime=false builds without it (no Go/playback-gateway); torrents then need a gateway.
 val torrentRuntime = providers.gradleProperty("viptv.torrentRuntime").orNull != "false"
 val buildTorrentRuntime by tasks.registering(Exec::class) {
     onlyIf { torrentRuntime }
     workingDir(rootProject.projectDir)
-    commandLine("python3", "tools/build_torrent_runtime.py", "--abis", selectedAbis.joinToString(","))
-    inputs.property("abis", selectedAbis)
-    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+    commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
+    inputs.property("nativeFingerprint", nativeFingerprint("torrent"))
+    inputs.files(rootProject.file("TORRENT_RUNTIME_REF"), rootProject.file("tools/android_native.py"), rootProject.file("tools/android-toolchains.json"), rootProject.file("tools/build_torrent_runtime.py"), rootProject.file("tools/playback_gateway.py"), file("src/main/java/org/playbackgateway/runtime/NativeRuntime.java"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(layout.buildDirectory.dir("generated/torrentRuntime"))
+    outputs.cacheIf { true }
 }
-tasks.named("preBuild") { dependsOn(buildTorrentRuntime) }
+
+val verifyAndroidEngine by tasks.registering(Exec::class) {
+    dependsOn(buildAndroidEngine)
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "build", "engine", "--abis", selectedAbis.joinToString(","))
+}
+val verifyTorrentRuntime by tasks.registering(Exec::class) {
+    dependsOn(buildTorrentRuntime)
+    onlyIf { torrentRuntime }
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/android_native.py", "build", "torrent", "--abis", selectedAbis.joinToString(","))
+}
+tasks.named("preBuild") { dependsOn(verifyAndroidEngine, verifyTorrentRuntime) }
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    val missingCredentials = listOf(
+        "ANDROID_RELEASE_KEYSTORE_PATH",
+        "ANDROID_RELEASE_STORE_PASSWORD",
+        "ANDROID_RELEASE_KEY_ALIAS",
+        "ANDROID_RELEASE_KEY_PASSWORD",
+    ).filter { providers.environmentVariable(it).orNull.isNullOrBlank() }
+    doFirst {
+        check(missingCredentials.isEmpty()) {
+            "Missing release signing credentials: ${missingCredentials.joinToString()}"
+        }
+    }
+}
 
 // Guard: the debug APK packages exactly the selected ABIs (all shipped ABIs without viptv.abis).
 val checkDebugApkAbis by tasks.registering(Exec::class) {

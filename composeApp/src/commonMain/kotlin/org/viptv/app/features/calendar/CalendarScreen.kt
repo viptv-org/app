@@ -28,13 +28,13 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.ListPageState
 import org.viptv.app.components.PageRestore
 import org.viptv.app.components.ReleaseRowSkeleton
-import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageAnchor
 import org.viptv.app.components.rememberPageRestore
 import org.viptv.app.components.LocalReducedMotion
 import org.viptv.app.components.pageGutter
 import org.viptv.app.components.listItemEntrance
 import org.viptv.app.components.listPageState
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.rememberListEntrance
 import org.viptv.app.format.providerText
 
@@ -97,10 +97,9 @@ fun CalendarScreen(days: List<CalendarDay>, entries: List<CalendarEntry>, televi
             notice?.let { Text(it, color = Palette.secondary, fontSize = if (phone) 13.sp else 14.sp) }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
             if (pageState == ListPageState.Loading) ReleaseRowSkeleton(phone, Modifier.weight(1f))
-            else if (pageState == ListPageState.Empty) {
-                Text(if (available) CALENDAR_EMPTY_WEEK else CALENDAR_UNAVAILABLE, color = Palette.secondary)
-                TextButton(manage) { Text(CALENDAR_MANAGE) }
-            } else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
+            else if (pageState == ListPageState.Empty) CalendarStatus(available, manage, Modifier.weight(1f),
+                pageStateLayout(television = false, compact = phone), enabled = !busy)
+            else Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(44.dp * scale)) {
                 PageRestore(list, restore, target = { (if (phone) markedLine else markedEntry).takeIf { it >= 0 } })
                 LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(if (phone) 4.dp else 18.dp * scale)) {

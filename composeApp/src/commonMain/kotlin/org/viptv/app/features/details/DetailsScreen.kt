@@ -53,8 +53,8 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
         DetailUnavailable(error, back, retry)
         return
     }
-    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures, playFromStart = playFromStart); return }
-    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures, playFromStart = playFromStart); return }
+    if (tablet) { TabletDetailsScreen(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures, playFromStart = playFromStart, chooseSource = chooseSource); return }
+    if (browser) { BrowserDetailsDialog(detail, busy, error, back, sources, save = save, saved = saved, open = open, loadPage = loadPage, continuing = continuing, paging = paging, closeFocusOnOpen = closeFocusOnOpen, focus = focus, pageError = pageError, retryPage = retryPage, manageAddons = manageAddons, failures = failures, playFromStart = playFromStart, chooseSource = chooseSource); return }
     val seasons = remember(detail?.episodes, detail?.seasons) { detailSeasons(detail?.episodes.orEmpty(), detail?.seasons.orEmpty()) }
     val airDateNow = remember { epochMillis() }
     val latestReleased = remember(detail?.episodes) { lastReleasedOrder(detail?.episodes.orEmpty(), airDateNow) }
@@ -100,7 +100,7 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode, sourcePreview = sourcePreview, chooseSource = chooseSource,
                         playFromStart = playFromStart)
                     else Box(Modifier.padding(bottom = 20.dp)) {
-                        DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = sources,
+                        DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = chooseSource,
                             sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
                     }
                 }
@@ -132,9 +132,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                                 }
                             }
                             if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DetailEpisodeCard(resume.shown(episode), true, { sources(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                             } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DesktopEpisodeRow(resume.shown(episode), { sources(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                DesktopEpisodeRow(resume.shown(episode), { chooseSource(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
                             }
                         }
                         if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {

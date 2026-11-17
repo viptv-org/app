@@ -44,6 +44,11 @@ private fun NativeLocalConnection.reportsStreams(body: String): Boolean = try {
 } catch (_: Exception) { false }
 
 internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, card: Card,
+    publish: suspend (SourcesOutcome) -> Unit = {}): LocalSourcesOutcome =
+    fetchLocalSources(profile, card, null, publish = publish)
+
+internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, card: Card,
+    preferredProvider: String?, excludedProvider: String? = null,
     publish: suspend (SourcesOutcome) -> Unit = {}): LocalSourcesOutcome {
     var operation: String? = null
     try {
@@ -68,7 +73,10 @@ internal suspend fun NativeLocalConnection.fetchLocalSources(profile: String, ca
         }
         fun published() = SourcesOutcome(found, producers = producers.values.toList())
         coroutineScope {
-            request.getValue("requests").jsonArray.map { item -> async {
+            request.getValue("requests").jsonArray.filter { raw ->
+                val provider = raw.jsonObject.getValue("provider").jsonPrimitive.content
+                (preferredProvider == null || provider == preferredProvider) && provider != excludedProvider
+            }.map { item -> async {
                 val connection = item.jsonObject
                 val provider = connection.getValue("provider").jsonPrimitive.content
                 val body = try {

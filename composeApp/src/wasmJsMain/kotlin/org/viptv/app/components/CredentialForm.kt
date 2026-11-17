@@ -72,8 +72,10 @@ private fun ensureCredentialStyle() {
 }
 
 @JsFun("""(id, password) => {
-    if (typeof window.PasswordCredential !== 'function' || !navigator.credentials) return;
-    navigator.credentials.store(new window.PasswordCredential({ id, password }));
+    try {
+        if (typeof window.PasswordCredential !== 'function' || !navigator.credentials) return;
+        navigator.credentials.store(new window.PasswordCredential({ id, password })).catch(() => {});
+    } catch (_) {}
 }""")
 private external fun browserStorePassword(id: String, password: String)
 

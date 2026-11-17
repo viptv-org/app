@@ -88,15 +88,18 @@ class HeroMotionTest {
 
         fun dotSizes(): List<Size> {
             val row = dots() ?: return emptyList()
-            val pixels = image()
-            val sizes = mutableListOf<Size>()
-            var start = -1
-            for (x in row.left.toInt() until (row.left + 112f).toInt()) {
-                if (drawn(pixels, x, row.center.y.toInt())) { if (start < 0) start = x }
-                else if (start >= 0) { sizes += extent(pixels, start, x - 1, row); start = -1 }
+            return image().use { pixels ->
+                val sizes = mutableListOf<Size>()
+                val left = row.left.toInt().coerceIn(0, pixels.width)
+                val right = (row.left + 112f).toInt().coerceIn(left, pixels.width)
+                var start = -1
+                for (x in left until right) {
+                    if (drawn(pixels, x, row.center.y.toInt())) { if (start < 0) start = x }
+                    else if (start >= 0) { sizes += extent(pixels, start, x - 1, row); start = -1 }
+                }
+                if (start >= 0) sizes += extent(pixels, start, right - 1, row)
+                sizes
             }
-            if (start >= 0) sizes += extent(pixels, start, row.left.toInt() + 111, row)
-            return sizes
         }
 
         fun dotWidths(): List<Int> = dotSizes().map { it.width.toInt() }
@@ -110,9 +113,12 @@ class HeroMotionTest {
             return Size(to - from + 1f, (bottom - top + 1).toFloat())
         }
 
-        private fun drawn(pixels: Bitmap, x: Int, y: Int) = distance(pixels.getColor(x, y), Palette.background.toArgb()) > 6
+        private fun drawn(pixels: Bitmap, x: Int, y: Int) =
+            pixels.sample(x, y)?.let { distance(it, Palette.background.toArgb()) > 6 } ?: false
 
-        fun colour(rect: Rect): Int = image().getColor(rect.center.x.toInt(), rect.center.y.toInt())
+        fun colour(rect: Rect): Int = image().use { pixels ->
+            requireNotNull(pixels.sample(rect.center.x.toInt(), rect.center.y.toInt())) { "Colour sample is outside the rendered bitmap: $rect" }
+        }
 
         private fun image(): Bitmap = scene.render(frame++ * 16_666_667L).use { Bitmap.makeFromImage(it) }
 
@@ -187,6 +193,16 @@ class HeroMotionTest {
         }.build()
         SingletonImageLoader.setUnsafe(loader)
         try { block() } finally { loader.shutdown(); SingletonImageLoader.setUnsafe(previous) }
+    }
+
+    @Test fun pixelSamplesAreBoundedBeforeEnteringTheNativeBitmap() {
+        Bitmap().use { pixels ->
+            pixels.allocN32Pixels(2, 2)
+            pixels.erase(OtherArt)
+            for (x in -1..2) for (y in -1..2) {
+                assertEquals(if (x in 0..1 && y in 0..1) OtherArt else null, pixels.sample(x, y), "sample ($x, $y)")
+            }
+        }
     }
 
     @Test fun aSlideChangeCrossfadesTheCopyAndLeavesTheHeroWhereItIs() = withLoader {
@@ -351,3 +367,6 @@ private fun Rows() = Box(Modifier.fillMaxWidth().height(120.dp).background(Palet
 private fun near(actual: Int, expected: Int) = distance(actual, expected) <= 12
 
 private fun distance(a: Int, b: Int) = (0..2).maxOf { abs(((a shr (it * 8)) and 0xFF) - ((b shr (it * 8)) and 0xFF)) }
+
+private fun Bitmap.sample(x: Int, y: Int): Int? =
+    if (x in 0 until width && y in 0 until height) getColor(x, y) else null

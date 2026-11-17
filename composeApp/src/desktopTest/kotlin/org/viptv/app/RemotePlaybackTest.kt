@@ -11,10 +11,10 @@ import org.viptv.app.connection.*
 import org.viptv.engine.wire.SourceCandidate
 
 class RemotePlaybackTest {
-    private class Store : RemoteSessionStore {
-        override suspend fun read(): SavedRemoteSession? = null
-        override suspend fun save(session: SavedRemoteSession) { }
-        override suspend fun clear() { }
+    private class Store(private var saved: SavedRemoteSession? = null) : RemoteSessionStore {
+        override suspend fun read(): SavedRemoteSession? = saved
+        override suspend fun save(session: SavedRemoteSession) { saved = session }
+        override suspend fun clear() { saved = null }
     }
     private val facts = buildJsonObject {
         put("platform", "web"); put("can_play_direct", false)
@@ -257,8 +257,9 @@ class RemotePlaybackTest {
             }
             respond(body, headers = headersOf(HttpHeaders.ContentType, if (path.contains("subtitle-content")) "text/vtt" else "application/json"))
         }) { configureTransport() }
-        val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = false)
-        connection.restore(SavedRemoteSession("https://watch.example", "saved-refresh"))
+        val saved = SavedRemoteSession("https://watch.example", "saved-refresh")
+        val connection = RemoteConnection("https://watch.example", Store(saved), client, browserMode = false)
+        connection.restore(saved)
         assertTrue(connection.subtitleContent("opaque").startsWith("WEBVTT\n"))
         assertEquals(2, subtitleRequests)
         assertEquals(2, refreshes)

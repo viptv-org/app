@@ -57,7 +57,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
     install: () -> Unit, placeholderQr: Boolean = false, manage: Boolean = true, logos: Map<String, String> = emptyMap(),
     initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
     addonConfigure: org.viptv.app.state.AddonConfigureRequest? = null, dismissConfigure: () -> Unit = {},
-    remove: (String) -> Unit = {}) {
+    remove: (String) -> Unit = {}, profileChanges: Boolean = manage) {
     var query by remember { mutableStateOf("") }
     var provides by remember { mutableStateOf<AddonProvides?>(null) }
     var searching by remember { mutableStateOf(false) }
@@ -97,9 +97,9 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                             .focusProperties { left = sidebar }
                             .then(if (target) targetFocus.requestFocusWhenPlaced().targetRing(scale)
                                 else if (index == 0) Modifier.focusRequester(initial) else Modifier)
-                            .semantics { if (manage) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
+                            .semantics { if (profileChanges) { role = Role.Switch; toggleableState = if (addon.id in enabled) ToggleableState.On else ToggleableState.Off } }, scale, ring = false, enabled = !busy && !pending, keepFocus = true,
                             background = Color(0xFF191919), arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
-                            activate = { if (manage) toggle(addon.id, addon.id !in enabled) }) { tint ->
+                            activate = { if (profileChanges && addon.enabled && addon.capabilities.isNotEmpty()) toggle(addon.id, addon.id !in enabled) }) { tint ->
                             AddonLogoTile(logos[addon.id], Modifier.size(60.dp * scale).clip(RoundedCornerShape(14.dp * scale))
                                 .background(Color.White.copy(alpha = 0.08f)), Modifier.padding(6.dp * scale)) {
                                 Box(Modifier.fillMaxSize().background(Color(info[addon.id]?.color ?: 0xFF3D6C88)), contentAlignment = Alignment.Center) {
@@ -113,7 +113,7 @@ internal fun TvAddonSettings(addons: List<IntegrationConnection>, enabled: Set<S
                                 Text(info[addon.id]?.subtitle ?: if (!addon.enabled) "Disabled for this account" else addon.providesSummary(),
                                     color = tint.copy(alpha = 0.75f), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                            if (manage) {
+                            if (profileChanges) {
                                 if (pending) MutationSpinner(28.dp, scale = scale, strokeWidth = 3.dp, color = tint)
                                 else TvSettingsSwitch(addon.id in enabled, scale)
                             }

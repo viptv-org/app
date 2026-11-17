@@ -45,6 +45,7 @@ private suspend fun RemoteConnection.playbackAdmission(source: SourceCandidate, 
     val native = torrents?.takeIf { canPlayDirect && it.negotiate(this) }
     val request = buildJsonObject {
         put("request_id", requestId); put("stream_id", source.id)
+        if (preferredSourceDiscoverySupported) reuseAudioLanguages[source.id]?.let { put("audio_language", it) }
         put("client", if (native == null) negotiatedFacts else JsonObject(negotiatedFacts + ("native_torrent" to native.capability)))
         put("force_gateway", !canPlayDirect && (forceGateway || clientFacts["can_play_direct"]?.jsonPrimitive?.booleanOrNull != true))
         put("position", (positionMillis ?: 0).coerceAtLeast(0) / 1000.0); put("resume", positionMillis == null)
@@ -117,6 +118,7 @@ private suspend fun RemoteConnection.playbackLease(playbackId: String, profile: 
     if (kind == "native_torrent" && admission.native != null) {
         val local = admission.native.acquire(this, playbackId, admission.request, stage)
         val input = PlaybackInput(playbackId, local.mediaUrl, positionMillis = (local.positionSeconds * 1000).toLong(), profileId = profile, localTorrent = true)
+        input.selectedAudioLanguage = delivery.selectedAudioLanguage()
         return RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this,
             gateway = false, reopensForSeek = false, local = local)
     }
@@ -128,5 +130,11 @@ private suspend fun RemoteConnection.playbackLease(playbackId: String, profile: 
         timelineOffsetMillis = ((delivery["timeline_offset_seconds"]?.jsonPrimitive?.doubleOrNull ?: 0.0) * 1000).toLong(),
         durationMillis = delivery["duration"]?.jsonPrimitive?.doubleOrNull?.takeIf { it.isFinite() && it > 0 }?.let { (it * 1000).toLong() },
         requiredAudioIndex = if (kind == "direct") delivery.requiredAudioIndex() else null)
+    input.selectedAudioLanguage = delivery.selectedAudioLanguage()
     return RemotePlaybackLease(input, response["renew_after_seconds"]?.jsonPrimitive?.longOrNull ?: 20, this, gateway = kind == "gateway", reopensForSeek = kind == "gateway" && delivery["format"]?.jsonPrimitive?.contentOrNull != "mp4")
 }
+
+private fun JsonObject.selectedAudioLanguage(): String? =
+    get("audio_tracks")?.jsonArray.orEmpty().map { it.jsonObject }
+        .firstOrNull { it["selected"]?.jsonPrimitive?.booleanOrNull == true }
+        ?.get("language")?.jsonPrimitive?.contentOrNull

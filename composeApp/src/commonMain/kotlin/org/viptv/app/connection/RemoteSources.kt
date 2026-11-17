@@ -8,8 +8,18 @@ import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
 
 // The host's SDK producer spends up to 10s on metadata plus 45s on providers: poll through that whole interval.
-internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome = withTimeout(60_000) {
+internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome =
+    sources(card, SourceReuseContext(), publish = publish)
+
+internal suspend fun RemoteConnection.sources(card: Card, reuse: SourceReuseContext,
+    device: DeviceCapability = DeviceCapability(), excludePreferred: Boolean = false,
+    publish: (SourcesOutcome) -> Unit = {}): SourcesOutcome = withTimeout(60_000) {
     val started = call("/api/streams", HttpMethod.Post, buildJsonObject {
+        if (preferredSourceDiscoverySupported && reuse.present) {
+            reuse.json(true).forEach { (key, value) -> put(key, value) }
+            wireHeight(device.maxHeight)?.let { put("device_max_height", it) }
+            if (excludePreferred) put("exclude_preferred_source", true)
+        }
         put("type", card.identity.kind); put("id", card.identity.id)
         card.parent_identity?.takeIf { card.identity.kind == "series" }?.let { put("series_id", it.id) }
         card.metadataOriginFields().forEach { (key, value) -> put(key, value) }
@@ -25,8 +35,10 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutco
         val found = linkedMapOf<String, SourceCandidate>()
         val producers = linkedMapOf<String, SourceProducerOutcome>()
         var after = 0
+        var phase: String? = null
         while (true) {
             val page = call("/api/streams/$job?after=$after&wait_ms=10000").jsonObject
+            if (preferredSourceDiscoverySupported) phase = page["phase"]?.jsonPrimitive?.contentOrNull?.takeIf { it == "preferred" || it == "fallback" }
             val events = page.getValue("events").jsonArray
             events.forEach { raw ->
                 val event = raw.jsonObject
@@ -51,11 +63,11 @@ internal suspend fun RemoteConnection.sources(card: Card, publish: (SourcesOutco
                 }
             }
             after += events.size
-            if (events.isNotEmpty()) publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList()))
+            if (events.isNotEmpty()) publish(SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase))
             if (page["done"]?.jsonPrimitive?.boolean == true) { completed = true; break }
             if (events.isEmpty()) delay(500)
         }
-        SourcesOutcome(found.values.toList(), producers = producers.values.toList())
+        SourcesOutcome(found.values.toList(), producers = producers.values.toList(), discoveryPhase = phase)
     } finally {
         if (!completed) withContext(NonCancellable) {
             withTimeoutOrNull(2000) { try { call("/api/streams/$job", HttpMethod.Delete) }

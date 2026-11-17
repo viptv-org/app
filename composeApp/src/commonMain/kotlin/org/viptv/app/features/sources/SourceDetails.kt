@@ -71,7 +71,7 @@ internal fun SourceDetailsPanel(source: SourceCandidate, television: Boolean, sc
             Column(Modifier.heightIn(max = if (television) 420.dp * scale else 320.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(if (television) 16.dp * scale else 10.dp)) {
                 Text(source.label, fontSize = if (television) 28.sp * scale else 15.sp, fontWeight = FontWeight.SemiBold)
-                source.descriptionText()?.let { Text(it, fontSize = if (television) 24.sp * scale else 13.sp,
+                source.addonText()?.let { Text(it, fontSize = if (television) 24.sp * scale else 13.sp,
                     lineHeight = if (television) 34.sp * scale else 19.sp, color = Palette.secondary) }
             }
             TextButton(onClick = dismiss, modifier = Modifier.padding(top = if (television) 24.dp * scale else 16.dp)

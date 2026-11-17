@@ -11,6 +11,7 @@ import org.viptv.app.features.entry.TvPairingSession
 import org.viptv.app.features.entry.TvPairingSignIn
 import org.viptv.app.features.live.LiveChannel
 import org.viptv.app.features.live.LiveScreen
+import org.viptv.app.features.live.favouriteActionLabel
 import org.viptv.app.features.settings.SettingsScreen
 import org.viptv.app.theme.Palette
 import org.viptv.app.theme.ViptvTheme
@@ -41,7 +42,7 @@ class PlaceholderControlsTest {
         try {
             frames(savable)
             assertTrue(describes(savable, "Favourite channel"), "the star returns with a save handler")
-            assertEquals(true, clickables(savable, "Favourite").first().config[SemanticsActions.OnClick].action!!.invoke())
+            assertEquals(true, clickables(savable, favouriteActionLabel(false)).first().config[SemanticsActions.OnClick].action!!.invoke())
             assertEquals(1, saves)
         } finally { savable.close() }
     }

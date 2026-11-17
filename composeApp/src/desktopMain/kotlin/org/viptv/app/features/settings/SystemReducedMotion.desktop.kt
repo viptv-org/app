@@ -1,6 +1,10 @@
 package org.viptv.app.features.settings
 
 import coil3.PlatformContext
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.sun.jna.Native
 import com.sun.jna.Platform
 import com.sun.jna.ptr.IntByReference
@@ -10,7 +14,15 @@ import java.util.concurrent.TimeUnit
 private const val CLIENT_AREA_ANIMATION = 0x1042
 private const val QUERY_TIMEOUT_MILLIS = 500L
 
-internal actual fun systemReducedMotion(context: PlatformContext): Boolean = platformReducedMotion
+@Composable
+internal actual fun systemReducedMotion(context: PlatformContext): Boolean =
+    rememberDesktopMotion { platformReducedMotion }
+
+@Composable
+internal fun rememberDesktopMotion(query: () -> Boolean): Boolean =
+    produceState(true, query) {
+        value = withContext(Dispatchers.IO) { runCatching(query).getOrDefault(false) }
+    }.value
 
 private val platformReducedMotion: Boolean by lazy {
     runCatching {

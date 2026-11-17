@@ -32,7 +32,6 @@ internal fun ApplicationController.cancelPendingAction() {
     sourceDetailJob?.cancel(); sourceDetailJob = null
     generation++
     job?.cancel()
-    sourceOpenJob?.cancel(); sourceOpenJob = null
     updateState { it.copy(pendingAction = null, findingSources = false, openingSource = null, busy = false) }
 }
 

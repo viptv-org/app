@@ -149,7 +149,7 @@ internal fun TvDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: Stri
                     busy -> item(key = "skeleton") { TvDetailBelowSkeleton(scale) }
                     else -> {
                         if (detail.episodes.isNotEmpty()) item(key = "episodes") {
-                            TvEpisodeShelf(detail.item, detail.episodes, scale, sources,
+                            TvEpisodeShelf(detail.item, detail.episodes, scale, chooseSource,
                                 focused = { episodeMode = true; focusRow(TvDetailRow.Episodes) }, expanded = episodeMode,
                                 resume = resume,
                                 returnToHero = ::returnHero, seasonIndex = detail.seasons, nextCursor = detail.next_cursor,

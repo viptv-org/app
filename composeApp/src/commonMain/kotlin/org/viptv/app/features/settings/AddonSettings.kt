@@ -37,7 +37,8 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
     remove: (String) -> Unit, back: (() -> Unit)? = null, managementAvailable: Boolean = true,
     installWithCompletion: ((String, (Boolean) -> Unit) -> Unit)? = null, logos: Map<String, String> = emptyMap(),
     initialAddonId: String? = null, configurableAddons: Set<String> = emptySet(), configure: (String) -> Unit = {},
-    configureFailure: Pair<String, String>? = null, retryConfigure: () -> Unit = {}) {
+    configureFailure: Pair<String, String>? = null, retryConfigure: () -> Unit = {},
+    profileChangesAvailable: Boolean = managementAvailable, inventoryLoaded: Boolean = true) {
     val address = rememberTextFieldState()
     var installing by remember { mutableStateOf(false) }
     var submission by remember { mutableStateOf<Any?>(null) }
@@ -102,7 +103,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                         }
                     }
                     if (!compact && managementAvailable) AddonInstallForm(address, busy || installingPending, { install(address.text.toString().trim()) })
-                    if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
+                    if (busy || (!inventoryLoaded && error == null)) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Palette.accent)
                     error?.let { Text(it, color = Palette.danger) }
                     configureFailure?.let { (_, message) ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -114,7 +115,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                         AddonFilterControls(query, { query = it }, provides, { provides = it }, counts, shown.size, addons.size)
                     }
                     if (addons.isNotEmpty() && !compact) Text("Installed", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    if (addons.isEmpty() && !busy) Text("No add-ons installed.", color = Palette.secondary)
+                    if (inventoryLoaded && addons.isEmpty() && !busy && error == null) Text("No add-ons installed.", color = Palette.secondary)
                     if (addons.isNotEmpty() && shown.isEmpty()) Text("No add-ons match.", color = Palette.secondary)
                 }
             }
@@ -124,7 +125,7 @@ internal fun AddonSettings(local: Boolean, addons: List<IntegrationConnection>, 
                     highlighted = addon.id == initialAddonId,
                     focusRequester = targetFocus.takeIf { addon.id == initialAddonId },
                     configurable = addon.id in configurableAddons,
-                    reconfigure = { configure(addon.id) })
+                    reconfigure = { configure(addon.id) }, profileChangesAvailable = profileChangesAvailable)
             }
         }
         PhoneSheet(visible = installing, title = "Add an add-on", dismiss = closeInstall,

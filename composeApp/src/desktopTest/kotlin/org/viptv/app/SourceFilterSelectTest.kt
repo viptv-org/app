@@ -112,8 +112,9 @@ class SourceFilterSelectTest {
         fun triggers() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList }.sortedBy { it.boundsInRoot.left }
         fun clickable(label: String) = nodes().any { text(it) == label && it.config.contains(SemanticsActions.OnClick) }
         fun streams() = scene.semanticsOwners.flatMap { it.getAllSemanticsNodes(mergingEnabled = false) }
-            .filter { n -> text(n).matches(Regex("Stream [a-z]\\d+")) }
-            .sortedBy { it.boundsInRoot.top }.map { text(it) }
+            .filter { n -> STREAM_ROW.matches(text(n)) }
+            .sortedBy { it.boundsInRoot.top }.map { STREAM_ROW.find(text(it))!!.groupValues[1] }
+        private val STREAM_ROW = Regex("""\[(Stream [a-z]\d+)] Release .*""")
         private fun rows() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == Role.RadioButton }.sortedBy { it.boundsInRoot.top }
         fun options() = rows().map { it.config.getOrNull(SemanticsProperties.Text).orEmpty().first().text }
 

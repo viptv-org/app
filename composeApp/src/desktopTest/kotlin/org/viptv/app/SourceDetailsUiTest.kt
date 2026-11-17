@@ -124,7 +124,12 @@ class SourceDetailsUiTest {
             }
         }
         fun hasDetails() = unmerged().any { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Source details" }
-        fun descriptionNodes() = unmerged().count { text(it) == description }
+        fun descriptionNodes(): Int {
+            val pane = unmerged().firstOrNull { it.config.getOrNull(SemanticsProperties.PaneTitle) == "Source details" }
+                ?: return unmerged().count { text(it) == description }
+            return flatten(pane).count { text(it) == description }
+        }
+        private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun keyDown(key: Key) { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }
         fun keyUp(key: Key) { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)) }
         suspend fun waitFor(what: String, condition: () -> Boolean) {

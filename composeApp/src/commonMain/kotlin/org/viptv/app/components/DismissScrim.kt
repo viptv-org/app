@@ -6,7 +6,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 
 // A scrim is dismissed by the labelled control on the sheet, so a screen reader never meets the blank surface behind it.
 internal fun Modifier.dismissScrim(onClick: () -> Unit): Modifier =
-    clearAndSetSemantics {}.pointerClickable(onClick = onClick)
+    clearAndSetSemantics {}.pointerClickable(interactionSource = null, indication = null, hover = null, onClick = onClick)
 
 internal fun Modifier.dismissScrim(interactionSource: MutableInteractionSource, onClick: () -> Unit): Modifier =
-    clearAndSetSemantics {}.pointerClickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+    clearAndSetSemantics {}.pointerClickable(interactionSource = interactionSource, indication = null, hover = null, onClick = onClick)

@@ -12,6 +12,7 @@ import tarfile
 import tempfile
 
 import playback_gateway
+from source_archive import extract_source_archive
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -36,7 +37,7 @@ with tempfile.TemporaryDirectory(prefix="viptv-desktop-torrent-") as temporary:
         repository = playback_gateway.repository()
         archive = subprocess.check_output(["git", "-C", str(repository), "archive", revision, "torrent-runtime", "LICENSE", "PROVENANCE.md"])
         with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-            tar.extractall(temporary, filter="data")
+            extract_source_archive(tar, temporary)
         source = Path(temporary) / "torrent-runtime"
     if not (source / "go.mod").is_file():
         raise SystemExit("Expected torrent-runtime source directory")

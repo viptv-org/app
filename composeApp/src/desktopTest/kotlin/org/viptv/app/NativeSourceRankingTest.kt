@@ -22,7 +22,9 @@ class NativeSourceRankingTest {
         }
     }) : AutoCloseable {
         val directory = Files.createTempDirectory("viptv-native-source-ranking-")
+        val requested = EngineRequests<String>()
         val client = HttpClient(MockEngine { request ->
+            requested += request.url.host
             respond(body(request.url.host), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { configureTransport() }
         val secrets = object : SecretStore {
@@ -52,6 +54,33 @@ class NativeSourceRankingTest {
             assertEquals(listOf(clean.id, cam.id), ranked.rows.map { it.id }, "The clean source ranks first; the camera release sorts last")
             assertEquals(SourceGroups(listOf(clean.id), clean.id), ranked.groups, "Only the clean source joins Best matches")
             assertTrue(ranked.bestMatchFullyMatches, "The clean direct 720p source matches the default preferences")
+        }
+    }
+
+    @Test fun rememberedAddonStartsWithoutDispatchingOtherAddons() = runBlocking<Unit> {
+        Fixture().use { fixture ->
+            val candidates = fixture.local.fetchLocalSources("default", card).candidates
+            val clean = candidates.single { it.release_type != "cam" }
+            fixture.requested.clear()
+            val context = RankingContext(reuse = SourceReuseContext(title = SourceReuseMemory(clean.provider_id)))
+            val outcome = fixture.local.discoverSources("default", card, context)
+            assertEquals("preferred", outcome.discoveryPhase)
+            assertEquals(listOf("good.example"), fixture.requested)
+            assertEquals(listOf("Clean.720p.mkv"), outcome.candidates.map { it.label })
+            assertTrue(fixture.local.rankSources("default", outcome.candidates, context).reuseReady)
+        }
+    }
+
+    @Test fun unknownAudioExpandsDiscoveryWithoutReusingTheAttemptedAddon() = runBlocking<Unit> {
+        Fixture().use { fixture ->
+            val candidates = fixture.local.fetchLocalSources("default", card).candidates
+            val clean = candidates.single { it.release_type != "cam" }
+            fixture.requested.clear()
+            val context = RankingContext(reuse = SourceReuseContext(title = SourceReuseMemory(clean.provider_id, listOf("en"))))
+            val outcome = fixture.local.discoverSources("default", card, context)
+            assertEquals("fallback", outcome.discoveryPhase)
+            assertEquals(listOf("good.example", "cam.example"), fixture.requested)
+            assertFalse(fixture.local.rankSources("default", outcome.candidates, context).reuseReady)
         }
     }
 

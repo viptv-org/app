@@ -1,0 +1,18 @@
+{
+  "apkSha256": "fc8c9ef9b5b4673be98e344926f549f99dadc5cce5a0c1e2f33ef407158a4e2b",
+  "bootSeconds": 41.8,
+  "api": "35",
+  "resultAbsentBeforeLaunch": true,
+  "launchUtc": "2026-11-12T02:41:54.362321+00:00",
+  "result": "spans=144 bytes=2764800 firstUs=0 lastUs=9900000 ordered=true nonzero=true gaps=0 stage=3 epochs=3 sdk=35 media3=1.11.1 state=ended",
+  "wallSeconds": 11.905,
+  "capturedPcmFrames": 691200,
+  "fixture": {
+    "sha256": "2103df46f1c8dbe8e06a520654259c3b18d8bebc171c72c1acc39d51432749cc",
+    "sampleRate": 48000,
+    "channels": 2,
+    "bits": 16,
+    "frames": 480000
+  },
+  "scope": "API35 emulator owned-local-WAV PCM16 acquisition; seeks and playback-speed stages only"
+}

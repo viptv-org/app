@@ -89,7 +89,7 @@ class PlaybackPreferenceMappingTest {
         assertEquals(listOf("Next episode button", "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality", "HDR and Dolby Vision",
             "Match frame rate"), tvPlaybackRows(actualPreferencesOnly = false))
         assertFalse("Start with subtitles" in tvPlaybackRows(false))
-        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Remember source choices", "Default source", "Preferred quality",
+        assertEquals(listOf("Next episode button", autoplayNextRow, "Skip intros and recaps", "Remember source choices", crossTitleSourceRow, "Default source", "Preferred quality",
             "HDR and Dolby Vision"), tvPlaybackRows(actualPreferencesOnly = true, deviceRows = true))
         assertEquals(listOf("Audio language", "Subtitles", "Subtitle language", "Subtitle size", "Subtitle background", "Subtitle colour"), tvSubtitleRows)
     }

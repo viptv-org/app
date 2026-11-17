@@ -37,7 +37,8 @@ data class SeriesMemory(val providerId: String, val bingeGroup: String)
 
 @Immutable
 data class RankingContext(val device: DeviceCapability = DeviceCapability(), val seriesMemory: SeriesMemory? = null,
-    val providerAffinity: String? = null)
+    val providerAffinity: String? = null, val reuse: SourceReuseContext = SourceReuseContext(),
+    val excludePreferred: Boolean = false, val preferredBudgetMillis: Long? = null)
 
 internal expect suspend fun platformDeviceCapability(): DeviceCapability
 
@@ -57,6 +58,7 @@ internal suspend fun rankingContext(seriesMemory: SeriesMemory?, providerAffinit
     RankingContext(capability().copy(maxHeight = deviceMaxVideoHeight()), seriesMemory, affinityText(providerAffinity))
 
 internal fun rankingContextJson(context: RankingContext): JsonObject = buildJsonObject {
+    context.reuse.json(true).forEach { (key, value) -> put(key, value) }
     deviceCapabilityJson(context.device)?.let { put("device", it) }
     context.seriesMemory?.let(::seriesMemoryJson)?.let { put("series_memory", it) }
     affinityText(context.providerAffinity)?.let { put("provider_affinity", it) }

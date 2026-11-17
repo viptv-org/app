@@ -39,7 +39,7 @@ import org.viptv.app.theme.Palette
 internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial: FocusRequester, sidebar: FocusRequester,
     providerChanged: (Long?) -> Unit, typeChanged: (String?) -> Unit, search: (String) -> Unit,
     openForm: (VodMatchRow) -> Unit, loadMore: () -> Unit, retry: () -> Unit,
-    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit) {
+    closeForm: () -> Unit, changeMetadata: (String) -> Unit, save: () -> Unit, canManage: Boolean = true) {
     var searching by remember { mutableStateOf(false) }
     var wasSearching by remember { mutableStateOf(false) }
     val searchChip = remember { FocusRequester() }
@@ -67,7 +67,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
         TvSettingsHeading("VOD matches", scale, subtitle = "Provider titles that still need a metadata match.")
         val open = state.form
         if (open != null) {
-            TvVodMatchForm(open, state.saving, state.error, scale, changeMetadata, save, { if (!state.saving) closeForm() })
+            TvVodMatchForm(open, state.saving, state.error, scale, changeMetadata, save, { if (!state.saving) closeForm() }, canManage)
             return@Column
         }
         TvVodMatchFilters(state, scale, searchChip, sidebar, searching, providerChanged, typeChanged, { searching = true },
@@ -101,7 +101,7 @@ internal fun TvVodMatchesSettings(state: VodMatchesState, scale: Float, initial:
                             if (row.vodId == state.rows.firstOrNull()?.vodId) initial else FocusRequester()
                         }
                         TvAction(Modifier.fillMaxWidth().heightIn(min = 112.dp * scale).focusProperties { left = sidebar },
-                            scale, requester = requester, ring = false, enabled = !state.saving, background = Color(0xFF191919),
+                            scale, requester = requester, ring = false, enabled = !state.saving && canManage, background = Color(0xFF191919),
                             arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 24.dp * scale),
                             activate = { openForm(row) }) { tint ->
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp * scale)) {
@@ -195,7 +195,7 @@ private fun TvVodMatchSearchPanel(query: String, queryChange: (String) -> Unit, 
 
 @Composable
 private fun TvVodMatchForm(form: VodMatchForm, saving: Boolean, error: String?, scale: Float,
-    change: (String) -> Unit, save: () -> Unit, cancel: () -> Unit) {
+    change: (String) -> Unit, save: () -> Unit, cancel: () -> Unit, canManage: Boolean = true) {
     val field = remember { FocusRequester() }
     Column(Modifier.fillMaxSize().imePadding().onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) false else when (event.key) {
@@ -212,11 +212,11 @@ private fun TvVodMatchForm(form: VodMatchForm, saving: Boolean, error: String?, 
             fontSize = (22 * scale).sp, lineHeight = (30 * scale).sp, color = Palette.secondary)
         Spacer(Modifier.height(6.dp * scale))
         TvTextField(form.metadataId, { if (!saving) change(it) }, scale, Modifier.width(1060.dp * scale),
-            label = "Metadata ID", placeholder = "tt0111161", enabled = !saving, requester = field, focusOnEnter = true)
+            label = "Metadata ID", placeholder = "tt0111161", enabled = !saving && canManage, requester = field, focusOnEnter = true)
         Spacer(Modifier.height(6.dp * scale))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
             TvAction(Modifier.width(300.dp * scale).heightIn(min = 72.dp * scale), scale, primary = true,
-                enabled = form.metadataId.isNotBlank() && !saving, activate = save) { tint ->
+                enabled = form.metadataId.isNotBlank() && !saving && canManage, activate = save) { tint ->
                 Text(if (saving) "Saving…" else "Save match", color = tint, fontSize = (26 * scale).sp,
                     lineHeight = (32 * scale).sp, fontWeight = FontWeight.Bold)
             }

@@ -250,10 +250,10 @@ class SourceRowMenuTest {
                 .distinct()
         }
 
-        fun streams(): List<String> = all().filter { node -> text(node).matches(Regex("Stream [a-z]\\d+")) }
-            .sortedBy { it.boundsInRoot.top }.map { text(it) }
+        fun streams(): List<String> = all().filter { node -> STREAM_ROW.matches(text(node)) }
+            .sortedBy { it.boundsInRoot.top }.map { STREAM_ROW.find(text(it))!!.groupValues[1] }
 
-        private fun row(name: String) = all().first { text(it) == name }.boundsInRoot.center
+        private fun row(name: String) = all().first { text(it).startsWith("[$name]") }.boundsInRoot.center
 
         fun tap(name: String) {
             val at = row(name)
@@ -293,6 +293,8 @@ class SourceRowMenuTest {
             assertTrue(trigger.config[SemanticsActions.OnClick].action!!.invoke())
             frames(30)
         }
+
+        private val STREAM_ROW = Regex("""\[(Stream [a-z]\d+)] Release .*""")
 
         fun options() = nodes().filter { it.config.getOrNull(SemanticsProperties.Role) == androidx.compose.ui.semantics.Role.RadioButton }
             .sortedBy { it.boundsInRoot.top }
