@@ -110,6 +110,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var restartRequested = false
     internal var firstFrameSeen = false
     internal var startupBuffered: Float? = null
+    internal var presentedPlayback: PresentedPlayback? = null
     internal var fallbackJob: Job? = null
     internal var startDeadlineJob: Job? = null
     internal var playbackStall: Job? = null
@@ -194,7 +195,7 @@ private class RunClaim(val prior: Job?, val generation: Long, val job: Job)
 internal fun ApplicationController.updateState(change: (ApplicationState) -> ApplicationState) {
     mutable.update { before ->
         val changed = change(before)
-        val startup = startupProgress(changed.startup, changed.startupSignals(startupBuffered))
+        val startup = startupProgress(changed.startup, changed.startupSignals(startupBuffered, presentedPlayback))
         val after = if (startup == changed.startup) changed else changed.copy(startup = startup)
         if (startup == null) startupBuffered = null
         CrashFacts.lastScreen = after.screen.name

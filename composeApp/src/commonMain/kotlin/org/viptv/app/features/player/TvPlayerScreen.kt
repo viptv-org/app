@@ -152,7 +152,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             state.buffering && !state.hasPresented ->
                 if (startup != null) StartupProgressScreen(startup, title,
                     artWidth = 640.dp * scale, artMaxHeight = 420.dp * scale,
-                    titleSize = (44 * scale).sp, statusSize = (24 * scale).sp, reduceMotion = reduceMotion)
+                    titleSize = (44 * scale).sp, statusSize = (30 * scale).sp, statusGap = 56.dp * scale, reduceMotion = reduceMotion, backdrop = true)
                 else TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
                 // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.

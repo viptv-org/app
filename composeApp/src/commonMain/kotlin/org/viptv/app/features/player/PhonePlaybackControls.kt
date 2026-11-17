@@ -10,6 +10,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.*
@@ -25,17 +26,20 @@ import org.viptv.app.components.DropdownMenuItem
 import org.viptv.app.components.pressScale
 
 @Composable
-internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true) {
+internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) -> Unit, seekEnabled: Boolean = true, buffering: Boolean = false) {
     Row(horizontalArrangement = Arrangement.spacedBy(48.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(enabled = seekEnabled, onClick = { skip(-10000) }, modifier = Modifier.size(56.dp), pressedScale = Motion.control) {
             PlaybackSkipIcon(false, 34.dp)
         }
         val toggleSource = remember { MutableInteractionSource() }
-        FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp).pressScale(toggleSource, Motion.control),
-            interactionSource = toggleSource,
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised.copy(alpha = 0.8f), contentColor = Palette.text)) {
-            if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(28.dp))
-            else Icon(Lucide.Pause, "Pause", Modifier.size(28.dp))
+        Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+            if (buffering) CircularProgressIndicator(Modifier.requiredSize(84.dp).testTag(TransportBufferingTag), color = Palette.text, strokeWidth = 3.dp)
+            FilledIconButton(onClick = toggle, modifier = Modifier.size(72.dp).pressScale(toggleSource, Motion.control),
+                interactionSource = toggleSource,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Palette.raised.copy(alpha = 0.8f), contentColor = Palette.text)) {
+                if (paused) Icon(painterResource(Res.drawable.ic_play_zip), "Play", Modifier.size(28.dp))
+                else Icon(Lucide.Pause, "Pause", Modifier.size(28.dp))
+            }
         }
         IconButton(enabled = seekEnabled, onClick = { skip(10000) }, modifier = Modifier.size(56.dp), pressedScale = Motion.control) {
             PlaybackSkipIcon(true, 34.dp)
@@ -44,6 +48,7 @@ internal fun PhoneTransport(paused: Boolean, toggle: () -> Unit, skip: (Long) ->
 }
 
 internal val TransportChromeGap = 12.dp
+internal const val TransportBufferingTag = "transport-buffering"
 internal const val PlayerChromeTag = "player-chrome"
 
 @Composable

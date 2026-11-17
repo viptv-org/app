@@ -232,6 +232,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(controlError) { if (controlError != null) { frameDelay(playbackControlErrorVisibleMillis); controlError = null } }
     LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
+    val waiting = buffering || seekPending != null || input == null && rendering != null
+    val controlsShown = visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null)
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
@@ -266,7 +268,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
                 }
-                AnimatedVisibility(visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null),
+                AnimatedVisibility(controlsShown,
                     modifier = Modifier.fillMaxSize(), enter = fadeIn(motionSpec(tween(Motion.arrive, easing = Motion.standard))),
                     exit = fadeOut(motionSpec(tween(Motion.leave, easing = Motion.exit)))) {
                 Box(Modifier.fillMaxSize().onFocusChanged { controlsFocused = it.hasFocus }) {
@@ -281,7 +283,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         }
                     }
                     if (phone) CentredClearOfChrome(chromeHeight, controlInsets, Modifier.fillMaxSize()) {
-                        PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true)
+                        PhoneTransport(paused, { interaction++; toggle() }, { seek(position + it) }, seekEnabled = input?.live != true,
+                            buffering = waiting && startup == null)
                     }
                     BoxWithConstraints(Modifier.align(Alignment.BottomCenter).fillMaxWidth().testTag(PlayerChromeTag)
                         .onGloballyPositioned { chromeTopPx = it.positionInRoot().y }
@@ -346,8 +349,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         back = close, title = title, insets = controlInsets)
                     else -> {
                         if (startup != null) StartupProgressScreen(startup, title, artWidth = if (phone) 300.dp else 440.dp,
-                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion)
-                        else if (buffering || seekPending != null) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
+                            artMaxHeight = if (phone) 220.dp else 320.dp, reduceMotion = reduceMotion, backdrop = !phone,
+                            close = close, insets = controlInsets, desktop = !phone)
+                        else if (waiting && !(phone && controlsShown)) CircularProgressIndicator(Modifier.align(Alignment.Center).size(40.dp), color = Palette.text)
                         controlError?.let { Text(it, Modifier.align(Alignment.Center).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(24.dp), color = Palette.danger) }
                     }
                 }
