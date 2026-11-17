@@ -31,6 +31,8 @@ internal fun languageOptionLabel(name: String, tag: String): String = "$name ($t
 internal fun subtitleModeChoices(preferredAudio: String?): List<Pair<String, String>> =
     listOf("always" to "Always", "foreign" to "When audio isn’t ${preferredAudioName(preferredAudio)}", "never" to "Never")
 
+internal fun subtitleModeNote(mode: String): String? = "Signs & songs on dubs".takeIf { mode == "foreign" }
+
 internal fun subtitleModeLabel(mode: String, preferredAudio: String?): String =
     subtitleModeChoices(preferredAudio).firstOrNull { it.first == mode }?.second ?: "Always"
 

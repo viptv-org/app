@@ -73,7 +73,7 @@ class TvPreferenceRowsUiTest {
             assertFocused(scene, "Subtitles")
             assertTrue(focused(scene)!!.let(::text).contains("Always"))
             press(scene, Key.Enter); frames(scene, 20)
-            click(scene, "When audio isn’t French"); frames(scene, 40)
+            click(scene, "When audio isn’t French Signs & songs on dubs"); frames(scene, 40)
             assertEquals("foreign", prefs.subtitleMode)
             assertFalse(nodes(scene).any { text(it).startsWith("The preview updates") })
             capture(scene, "tv-subtitle-settings")

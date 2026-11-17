@@ -67,7 +67,8 @@ import com.composables.icons.lucide.X
 import org.viptv.app.theme.Palette
 
 @Immutable
-internal data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true)
+internal data class SelectOption(val id: String, val label: String, val trailing: String? = null, val enabled: Boolean = true,
+    val note: String? = null)
 
 internal enum class SelectPresentation { Popover, Sheet, Panel }
 
@@ -421,7 +422,7 @@ private fun SelectPanel(options: List<SelectOption>, selected: List<String>, mul
                 val checked = if (row == null) selected.isEmpty() else row.id in selected
                 SelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
                     trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
-                    checked, multiple, enabled(row), active = index == active, metrics.rowHeight, hovered = { active = index }) { pick(row) }
+                    checked, multiple, enabled(row), active = index == active, metrics.rowHeight, hovered = { active = index }, note = row?.note) { pick(row) }
             }
         }
     }
@@ -501,7 +502,7 @@ private fun SelectTvPanel(options: List<SelectOption>, selected: List<String>, m
                 TvSelectRow(row?.label ?: anyLabel.orEmpty(), unavailable = row != null && !row.enabled,
                     trailing = listOfNotNull(if (row == null) anyTrailing else row.trailing, "Current".takeIf { !multiple && checked }).joinToString(" · ").ifEmpty { null },
                     checked, multiple, enabled(row), scale, requesters.getOrPut(key(row)) { FocusRequester() },
-                    onFocus = { lastFocus = it }) { pick(row) }
+                    onFocus = { lastFocus = it }, note = row?.note) { pick(row) }
             }
         }
     }
@@ -605,7 +606,7 @@ private fun ChoiceMark(checked: Boolean, multiple: Boolean, enabled: Boolean, on
 
 @Composable
 private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean, enabled: Boolean,
-    active: Boolean, height: Dp, hovered: () -> Unit, pick: () -> Unit) {
+    active: Boolean, height: Dp, hovered: () -> Unit, note: String? = null, pick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pointer = interaction.pointerHovered()
     LaunchedEffect(pointer) { if (pointer) hovered() }
@@ -616,18 +617,21 @@ private fun SelectRow(label: String, unavailable: Boolean, trailing: String?, ch
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         ChoiceMark(checked, multiple, enabled, onLight = false,
             box = 18.dp, mark = 16.dp, radius = 4.dp, border = 1.5.dp, glyph = 12.dp)
-        Text(buildAnnotatedString {
-            append(label)
-            if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
-        }, Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            color = if (enabled) Palette.text else Palette.tertiary)
+        Column(Modifier.weight(1f)) {
+            Text(buildAnnotatedString {
+                append(label)
+                if (unavailable) withStyle(SpanStyle(color = Palette.tertiary, fontWeight = FontWeight.Normal)) { append(" · unavailable") }
+            }, fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = if (enabled) Palette.text else Palette.tertiary)
+            note?.let { Text(it, fontSize = 11.sp, lineHeight = 14.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
         trailing?.let { Text(it, Modifier.widthIn(max = 120.dp), fontSize = 12.sp, color = Palette.tertiary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }
 
 @Composable
 private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, checked: Boolean, multiple: Boolean,
-    enabled: Boolean, scale: Float, requester: FocusRequester, onFocus: (FocusRequester) -> Unit = {}, pick: () -> Unit) {
+    enabled: Boolean, scale: Float, requester: FocusRequester, onFocus: (FocusRequester) -> Unit = {}, note: String? = null, pick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(14.dp * scale)
@@ -643,12 +647,16 @@ private fun TvSelectRow(label: String, unavailable: Boolean, trailing: String?, 
         ChoiceMark(checked, multiple, enabled, onLight = focused,
             box = 24.dp * scale, mark = if (multiple) 22.dp * scale else 24.dp * scale,
             radius = 6.dp * scale, border = 2.dp * scale, glyph = 16.dp * scale)
-        Text(buildAnnotatedString {
-            append(label)
-            if (unavailable) withStyle(SpanStyle(color = if (focused) OnLightSecondary else Palette.tertiary,
-                fontWeight = FontWeight.Normal)) { append(" · unavailable") }
-        }, Modifier.weight(1f), fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, color = if (focused) Palette.background else if (enabled) Palette.text else Palette.tertiary)
+        Column(Modifier.weight(1f)) {
+            Text(buildAnnotatedString {
+                append(label)
+                if (unavailable) withStyle(SpanStyle(color = if (focused) OnLightSecondary else Palette.tertiary,
+                    fontWeight = FontWeight.Normal)) { append(" · unavailable") }
+            }, fontSize = (24 * scale).sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, color = if (focused) Palette.background else if (enabled) Palette.text else Palette.tertiary)
+            note?.let { Text(it, fontSize = (18 * scale).sp, color = if (focused) OnLightSecondary else Palette.secondary, maxLines = 1,
+                overflow = TextOverflow.Ellipsis) }
+        }
         trailing?.let { Text(it, Modifier.widthIn(max = 260.dp * scale), fontSize = (20 * scale).sp,
             color = if (focused) OnLightSecondary else Palette.tertiary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }

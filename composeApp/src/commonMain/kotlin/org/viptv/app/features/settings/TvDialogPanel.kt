@@ -169,11 +169,14 @@ internal fun TvConfirmDialog(scale: Float, title: String, body: String, confirm:
 
 /** One row of a TV choice list: the panel's full width, the current value checked, the remote's ring on the row it stands on. */
 @Composable
-internal fun TvDialogChoiceRow(label: String, selected: Boolean, scale: Float, stop: TvDialogStop, activate: () -> Unit) {
+internal fun TvDialogChoiceRow(label: String, selected: Boolean, scale: Float, stop: TvDialogStop, detail: String? = null, activate: () -> Unit) {
     TvAction(Modifier.tvDialogStop(stop).fillMaxWidth().heightIn(min = (72 * scale).dp).semantics { if (selected) this.selected = true },
         scale, requester = stop.requester, ring = false, contentPadding = PaddingValues(horizontal = (28 * scale).dp),
         arrangement = Arrangement.Start, activate = activate) { ink ->
-        Text(label, color = ink, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+        Column {
+            Text(label, color = ink, fontSize = (26 * scale).sp, lineHeight = (32 * scale).sp, fontWeight = FontWeight.SemiBold)
+            detail?.let { Text(it, color = ink.copy(alpha = .72f), fontSize = (20 * scale).sp, lineHeight = (26 * scale).sp) }
+        }
         if (selected) {
             Spacer(Modifier.weight(1f))
             Icon(Lucide.Check, null, Modifier.size((26 * scale).dp), ink)

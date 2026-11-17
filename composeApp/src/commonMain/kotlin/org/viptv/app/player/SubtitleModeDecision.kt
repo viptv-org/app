@@ -64,12 +64,27 @@ internal fun subtitleModeEnabled(mode: String, preferredAudio: String?, audioLan
 internal fun <T> subtitleModeChoice(mode: String, preferredAudio: String?, preferredSubtitle: String?, audioLanguage: String?,
     tracks: List<SubtitleModeTrack<T>>): SubtitleModeTrack<T>? {
     if (mode == "never") return null
-    if (mode == "foreign" && !audioIsForeign(audioLanguage, preferredAudio)) return null
+    if (mode == "foreign" && !audioIsForeign(audioLanguage, preferredAudio)) return dubSigns(preferredAudio, preferredSubtitle, audioLanguage, tracks)
     val usable = tracks.filterNot { signsOnlySubtitle(it.name, it.forced) }
     val wanted = subtitleModeLanguage(preferredSubtitle) ?: return usable.singleOrNull()
     val matching = usable.filter { subtitleModeLanguage(it.language) == wanted }
     return matching.firstOrNull { it.default } ?: matching.firstOrNull()
 }
+
+private fun <T> dubSigns(preferredAudio: String?, preferredSubtitle: String?, audioLanguage: String?,
+    tracks: List<SubtitleModeTrack<T>>): SubtitleModeTrack<T>? {
+    val audio = subtitleModeLanguage(audioLanguage) ?: return null
+    if (audio != (subtitleModeLanguage(preferredAudio) ?: "en")) return null
+    val wanted = subtitleModeLanguage(preferredSubtitle) ?: audio
+    val signs = tracks.filter { signsOnlySubtitle(it.name, it.forced) && subtitleModeLanguage(it.language) == wanted }
+    return signs.firstOrNull { it.default } ?: signs.firstOrNull()
+}
+
+internal fun dubSignsSubtitle(embedded: List<PlaybackTrack>, mode: String, preferredAudio: String?, preferredSubtitle: String?,
+    audioLanguage: String?): Int? =
+    if (mode != "foreign" || audioIsForeign(audioLanguage, preferredAudio)) null
+    else subtitleModeChoice(mode, preferredAudio, preferredSubtitle, audioLanguage,
+        embedded.map { SubtitleModeTrack(it.id, it.language, it.forced, it.name, it.default) })?.key
 
 internal fun fullDialogueSubtitle(embedded: List<PlaybackTrack>, preferredSubtitle: String?): Int? =
     subtitleModeChoice("always", null, preferredSubtitle, null,

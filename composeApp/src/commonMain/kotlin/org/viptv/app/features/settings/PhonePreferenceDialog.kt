@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.viptv.app.theme.Palette
 import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.subtitleMode
 import org.viptv.app.connection.withSubtitleMode
@@ -73,7 +75,9 @@ internal fun PhonePreferenceDialog(field: PhonePreferenceField, value: ProfilePr
         text = { org.viptv.app.components.TvFocusScroll(horizontal = false) { Column(Modifier.heightIn(max = 450.dp).verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             choices.forEach { (key, label) -> Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).pointerSelectable(current.equals(key, true),
                 enabled = !busy, role = Role.RadioButton, onClick = { apply(key) }), verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(current.equals(key, true), onClick = null, enabled = !busy); Spacer(Modifier.width(8.dp)); Text(label)
+                RadioButton(current.equals(key, true), onClick = null, enabled = !busy); Spacer(Modifier.width(8.dp))
+                val note = if (field == PhonePreferenceField.SubtitleMode) subtitleModeNote(key) else null
+                if (note == null) Text(label) else Column { Text(label); Text(note, fontSize = 12.sp, color = Palette.secondary) }
             } }
             if (custom) AppTextField(entry, { entry = it.take(if (language) 32 else 9) }, enabled = !busy,
                 label = if (language) "Language tag" else title, onEscape = { if (!busy) close() }, supportingText = { Text(if (language) "For example en or pt-BR. Empty uses the default."
