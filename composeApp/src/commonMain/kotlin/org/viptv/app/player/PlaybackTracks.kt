@@ -3,7 +3,7 @@ package org.viptv.app.player
 enum class PlaybackTrackKind { Audio, Subtitle }
 // `language` is the durable identity of a choice; `id` is session-local per renderer.
 data class PlaybackTrack(val id: Int, val label: String, val selected: Boolean, val language: String? = null,
-    val name: String? = null, val forced: Boolean = false, val default: Boolean = false)
+    val name: String? = null, val forced: Boolean = false, val default: Boolean = false, val detail: String? = null)
 
 // One id is one source: a provider subtitle id or an embedded stream index.
 data class PlaybackTracks private constructor(val audio: List<PlaybackTrack>, val subtitles: List<PlaybackTrack>) {

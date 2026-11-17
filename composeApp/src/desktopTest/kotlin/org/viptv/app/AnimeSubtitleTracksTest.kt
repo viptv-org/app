@@ -63,6 +63,7 @@ class AnimeSubtitleTracksTest {
             val state = withTimeout(20_000) { session.state.first { it.loaded && it.subtitles.size == 2 } }
             assertEquals(listOf("Signs & Songs · English", "Full Subtitles · English"), state.subtitles.map { it.label })
             assertEquals(listOf(true, false), state.subtitles.map { it.forced })
+            assertEquals(listOf("Japanese" to "Mono", "English" to "Mono"), state.audio.map { it.name to it.detail })
             assertEquals(listOf(true, false), state.subtitles.map { it.default })
             assertEquals(state.subtitles.single { it.name == "Full Subtitles" }.id, fullDialogueSubtitle(state.subtitles, "en"))
         } finally { session.closeAfterRenderer(); withTimeout(5_000) { session.closed.await() }; file.delete() }

@@ -150,7 +150,7 @@ private fun AudioColumn(tracks: List<PlaybackTrack>, select: (PlayerCommand.Sele
 private fun audioRow(track: PlaybackTrack, select: (PlayerCommand.SelectTrack) -> Unit,
     pendingAudio: Int?, audioError: Int?, retryAudio: () -> Unit) {
     val pending = pendingAudio == track.id
-    PlaybackTrackRow(track.label, null, (track.selected && pendingAudio == null) || pending,
+    PlaybackTrackRow(track.name ?: track.label, track.detail, (track.selected && pendingAudio == null) || pending,
         pending = pending, error = if (audioError == track.id) audioTrackErrorCopy else null,
         retry = if (audioError == track.id) retryAudio else null) { select(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) }
 }

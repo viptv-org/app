@@ -65,7 +65,9 @@ internal class AVProviderSubtitles(private val player: AVPlayer, private val inp
         val selected = item.currentMediaSelection.selectedMediaOptionInMediaSelectionGroup(group)
         return group.options.mapIndexed { index, value ->
             val option = value as AVMediaSelectionOption
-            PlaybackTrack(index, option.displayName, selected == option && (kind == PlaybackTrackKind.Audio || desired == null), option.extendedLanguageTag)
+            val chosen = selected == option && (kind == PlaybackTrackKind.Audio || desired == null)
+            if (kind == PlaybackTrackKind.Audio) audioTrack(index, index + 1, option.displayName, option.extendedLanguageTag, null, chosen)
+            else PlaybackTrack(index, option.displayName, chosen, option.extendedLanguageTag)
         }
     }
 
