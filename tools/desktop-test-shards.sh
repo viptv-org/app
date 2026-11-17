@@ -6,7 +6,7 @@ shards=${SHARDS:-4}
 shard=${SHARD:-0}
 mode=${1:-list}
 root=$(cd "$(dirname "$0")/.." && pwd)
-test_dir="$root/composeApp/src/desktopTest/kotlin"
+test_dirs=("$root/composeApp/src/desktopTest/kotlin" "$root/composeApp/src/commonTest/kotlin")
 durations_file="$root/tools/desktop-test-durations.txt"
 
 if [[ ! "$shards" =~ ^[1-9][0-9]*$ || ! "$shard" =~ ^[0-9]+$ ]] || (( shard >= shards )); then
@@ -15,7 +15,7 @@ if [[ ! "$shards" =~ ^[1-9][0-9]*$ || ! "$shard" =~ ^[0-9]+$ ]] || (( shard >= s
 fi
 
 mapfile -t classes < <(
-  find "$test_dir" -name '*Test.kt' -printf '%P\n' \
+  for dir in "${test_dirs[@]}"; do find "$dir" -name '*Test.kt' -printf '%P\n'; done \
     | sed 's#/#.#g; s#\.kt$##' \
     | LC_ALL=C sort -u
 )
