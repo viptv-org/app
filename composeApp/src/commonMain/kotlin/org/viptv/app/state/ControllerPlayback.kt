@@ -206,6 +206,7 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         return
     }
     if (fact is PlayerFact.Presentation && !firstFrameSeen) {
+        presentedPlayback = mutable.value.presentedPlayback()
         updateState { next -> next.copy(presentation = fact, openingSource = null) }
         firstFrameSeen = true
         mutable.value.selectedProfile?.let { profile ->

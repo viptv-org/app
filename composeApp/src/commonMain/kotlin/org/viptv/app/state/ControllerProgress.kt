@@ -26,6 +26,7 @@ internal fun ApplicationController.releaseRemotePlayback(): Job? {
 }
 
 internal fun ApplicationController.releasePlaybackSession(): Job? {
+    presentedPlayback = null
     val releasingPrepared = cancelNextEpisodePreparation()
     val releasingPlayback = releaseRemotePlayback()
     return when {

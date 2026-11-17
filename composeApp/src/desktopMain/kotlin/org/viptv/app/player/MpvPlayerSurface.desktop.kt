@@ -158,13 +158,14 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         }
         LaunchedEffect(commands, session) {
             commands.collect { command ->
-                if (opened) try {
+                val remoteSeek = input.remoteSeek
+                if (command is PlayerCommand.Seek && remoteSeek != null) { slateDetector.reset(); remoteSeek(command.positionMillis) }
+                else if (opened) try {
                     when (command) {
                         is PlayerCommand.Seek -> {
                             slateDetector.reset()
                             input.diagnostics?.invoke("seek_requested target_ms=${command.positionMillis} opened=$opened")
-                            if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
-                            else session.command("seek", (command.positionMillis.coerceAtLeast(0) / 1000.0).toString(), "absolute+exact")
+                            session.command("seek", (command.positionMillis.coerceAtLeast(0) / 1000.0).toString(), "absolute+exact")
                         }
                         is PlayerCommand.Volume -> session.property("volume", (command.value.coerceIn(0f, 1f) * 100).toString())
                         is PlayerCommand.Speed -> session.property("speed", command.value.coerceIn(.25, 2.0).toString())
