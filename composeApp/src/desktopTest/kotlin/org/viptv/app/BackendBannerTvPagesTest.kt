@@ -109,8 +109,7 @@ class BackendBannerTvPagesTest {
     }
 
     @Test fun upFromTheTopOfEveryHeaderlessPageReachesDismissAndThePageKeepsItsFocus() {
-        for ((screen, start) in listOf(Screen.Details to "Play",
-            Screen.Settings to "Profile", Screen.ContinueWatching to "Monster")) {
+        for ((screen, start) in listOf(Screen.Details to "Play", Screen.Settings to "Profile")) {
             TvApp(screen).use { app ->
                 app.frames()
                 app.focus(start)

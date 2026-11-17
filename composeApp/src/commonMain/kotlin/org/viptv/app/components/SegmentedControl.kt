@@ -36,7 +36,7 @@ internal fun SegmentedControl(labels: List<String>, selected: Int, select: (Int)
         val tv = LocalTvFocusAnchoring.current
         val scale = if (tv) LocalTvScale.current else 1f
         val full = !tv && maxWidth < 640.dp
-        val height = when { tv -> 56.dp * scale; full -> 44.dp; else -> 40.dp }
+        val height = if (tv) 56.dp * scale else TapTargetMinimum
         val inset = 4.dp * scale
         val textSize = if (tv) (22 * scale).sp else 14.sp
         val insetDp = if (tv) 28.dp * scale else SegmentInset
@@ -50,11 +50,11 @@ internal fun SegmentedControl(labels: List<String>, selected: Int, select: (Int)
             widths.map { it.toFloat() / total }
         }
         val own = remember(labels.size) { List(labels.size) { FocusRequester() } }
-        Row(Modifier.then(if (full) Modifier.fillMaxWidth() else Modifier).height(height)
-            .background(Palette.surface, RoundedCornerShape(height / 2)).padding(inset)
+        Row(Modifier.then(if (full) Modifier.fillMaxWidth() else Modifier).heightIn(min = height)
+            .background(Palette.surface, RoundedCornerShape(50)).padding(horizontal = inset)
             .then(if (tv) Modifier.focusGroup() else Modifier), verticalAlignment = Alignment.CenterVertically) {
             labels.forEachIndexed { index, label ->
-                Segment(label, index == selected, tv, scale, weights.getOrNull(index), insetDp, height - inset * 2,
+                Segment(label, index == selected, tv, scale, weights.getOrNull(index), insetDp, height, inset,
                     if (index == selected) entry ?: own[index] else own[index], down, up) { select(index) }
             }
         }
@@ -63,22 +63,23 @@ internal fun SegmentedControl(labels: List<String>, selected: Int, select: (Int)
 
 @Composable
 private fun RowScope.Segment(label: String, selected: Boolean, tv: Boolean, scale: Float, weight: Float?, inset: Dp,
-    height: Dp, own: FocusRequester?, down: FocusRequester?, up: FocusRequester?, onClick: () -> Unit) {
+    height: Dp, track: Dp, own: FocusRequester?, down: FocusRequester?, up: FocusRequester?, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(50)
     val fill by animateColorAsState(if (selected || focused) Palette.text else Color.Transparent,
         tween(120), label = "Segment fill")
     val ink by animateColorAsState(if (selected || focused) Palette.background else Palette.secondary,
         tween(120), label = "Segment ink")
-    Row(Modifier.then(if (weight != null) Modifier.weight(weight) else Modifier).height(height)
+    Row(Modifier.then(if (weight != null) Modifier.weight(weight) else Modifier).heightIn(min = height)
         .then(if (tv && own != null) Modifier.focusRequester(own)
             .then(if (down == null && up == null) Modifier else Modifier.focusProperties {
                 down?.let { this.down = it }
                 up?.let { this.up = it }
             })
-            .onFocusChanged { focused = it.isFocused }
-            .tvFocusOutline(focused, height / 2, scale) else Modifier)
+            .onFocusChanged { focused = it.isFocused } else Modifier)
         .pointerSelectable(selected, role = Role.Tab, shape = shape, onClick = onClick)
+        .padding(vertical = track)
+        .then(if (tv) Modifier.tvFocusOutline(focused, height / 2 - track, scale) else Modifier)
         .clip(shape).background(fill).padding(horizontal = inset),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
         Text(label, color = ink, fontSize = if (tv) (22 * scale).sp else 14.sp, fontWeight = FontWeight.SemiBold,
