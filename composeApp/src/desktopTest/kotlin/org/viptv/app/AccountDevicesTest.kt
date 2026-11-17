@@ -20,7 +20,7 @@ class AccountDevicesTest {
     }
 
     @Test fun browserDeviceManagementUsesOneAggregateAndCookieCsrfWithoutBearerCredentials(): Unit = runBlocking {
-        val calls = mutableListOf<Pair<String, HttpMethod>>()
+        val calls = EngineRequests<Pair<String, HttpMethod>>()
         val client = HttpClient(MockEngine { request ->
             calls += request.url.encodedPath to request.method
             assertNull(request.headers[HttpHeaders.Authorization])

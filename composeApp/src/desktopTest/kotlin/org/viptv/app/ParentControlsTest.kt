@@ -42,7 +42,7 @@ class ParentControlsTest {
     private fun client(handle: suspend MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> HttpResponseData) = HttpClient(MockEngine(handle)) { configureTransport() }
 
     @Test fun unlockAndPinChangesUseHouseholdEndpointsWithoutSwitchingProfiles() = runBlocking {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             if (request.method != HttpMethod.Get) writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
             respond(if (request.method == HttpMethod.Get) Json.encodeToString(parentFixture()) else "{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -109,7 +109,7 @@ class ParentControlsTest {
     }
 
     @Test fun nativeSessionsSetChangeRemovePinAndKidsPolicyThroughFakeHost() = runBlocking {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             if (request.method != HttpMethod.Get)
                 writes += request.url.encodedPath to Json.parseToJsonElement((request.body as TextContent).text).jsonObject
@@ -135,7 +135,7 @@ class ParentControlsTest {
     }
 
     @Test fun ratingLimitsAndTheUnratedToggleSaveThroughTheKidsRoute() = runBlocking<Unit> {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             when {
                 request.method == HttpMethod.Put -> {
@@ -167,7 +167,7 @@ class ParentControlsTest {
     }
 
     @Test fun leavePinSetChangeAndRemoveSaveThroughTheProfilePinRoute() = runBlocking<Unit> {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         var configured = false
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             when {
@@ -287,7 +287,7 @@ class ParentControlsTest {
     }
 
     @Test fun profilePageKidsSaveKeepsRatingLimitsAndTheUnratedToggle() = runBlocking<Unit> {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val remote = RemoteConnection("https://watch.example", store, client { request ->
             when {
                 request.method == HttpMethod.Put -> {

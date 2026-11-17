@@ -7,13 +7,14 @@ import kotlin.test.*
 // ArrayList while the test thread iterated it: record what the engine saw in EngineRequests, never a plain list.
 class EngineRequestRecorderScanTest {
     private val tests = File("src/desktopTest/kotlin")
+    private val typeArguments = """<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>"""
 
     private val plainList = Regex(
         """(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*(?:MutableList|MutableSet|ArrayList|LinkedHashSet)[^=\n]*)?=\s*""" +
-            """(?:mutableListOf|arrayListOf|mutableSetOf|linkedSetOf|ArrayList|LinkedHashSet)\s*<[^>]*>\s*\(\s*\)""")
+            """(?:mutableListOf|arrayListOf|mutableSetOf|linkedSetOf|ArrayList|LinkedHashSet)\s*$typeArguments\s*\(\s*\)""")
     private val adHocThreadSafe = Regex(
         """(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=\n]+)?=\s*(?:[A-Za-z0-9_.]*\.)?""" +
-            """(?:CopyOnWriteArrayList|ConcurrentLinkedQueue|synchronizedList\s*\(\s*mutableListOf)\s*<[^>]*>\s*\(?""")
+            """(?:CopyOnWriteArrayList|ConcurrentLinkedQueue|synchronizedList\s*\(\s*mutableListOf)\s*$typeArguments\s*\(?""")
     private val synchronizedAppend = Regex("""synchronized\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\{[^}]*\b\1\s*\+=""")
     private val requestHandler = Regex("""\{\s*(?:[A-Za-z_][A-Za-z0-9_]*\s*:\s*[^->{]*->|(?:request|req)\s*->)""")
     private val requestUse = Regex("""\b(?:request|req)\.(?:url|method|body|headers|attributes)\b""")
