@@ -32,8 +32,6 @@ import org.viptv.app.features.calendar.CalendarDay
 import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
-import org.viptv.app.features.continuewatching.ContinueWatchingScreen
-import org.viptv.app.features.continuewatching.TvContinueWatchingScreen
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.history.TvHistoryScreen
 import org.viptv.app.features.library.LibraryScreen
@@ -74,8 +72,8 @@ class PageRestoreUiTest {
         val visiting = mutableStateOf(true)
         var opened: Card? = null
         val scene = page(1280, 900, visiting) {
-            ContinueWatchingScreen(ContinueWatchingPage(cards.value, loaded = true), play = { opened = it }, open = { opened = it },
-                more = null, retry = {}, back = {}, home = {})
+            ContinueWatchingSegment(ContinueWatchingPage(cards.value, loaded = true), play = { opened = it }, open = { opened = it },
+                more = null, retry = {}, home = {})
         }
         try {
             frames(scene)
@@ -171,7 +169,7 @@ class PageRestoreUiTest {
         var opened: Card? = null
         val scene = page(1920, 1080, visiting, television = true) {
             focusManager = LocalFocusManager.current
-            TvContinueWatchingScreen(ContinueWatchingPage(cards.value, loaded = true), play = { opened = it }, open = { opened = it },
+            ContinueWatchingSegment(ContinueWatchingPage(cards.value, loaded = true), television = true, play = { opened = it }, open = { opened = it },
                 more = null, retry = {}, home = {})
         }
         try {
