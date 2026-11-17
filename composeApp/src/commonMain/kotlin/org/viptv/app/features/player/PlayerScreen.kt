@@ -356,7 +356,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 val skippedNotice = autoSkip.notice
                 if (!locked && phonePanel == null && !showTracks && !failed && error == null) {
-                    val promptBottom = if (phone) maxOf(panelBottomInset, 104.dp) else 104.dp
+                    val promptBottom = maxOf(panelBottomInset, 104.dp)
                     if (skippedNotice != null) PlayerSkippedNotice(skippedNotice, controlInsets, promptBottom) { undoSkip(skippedNotice) }
                     else if (activeSkip != null) PlayerSkipPrompt(activeSkip, controlInsets, promptBottom) { skipSegment(activeSkip) }
                 }
