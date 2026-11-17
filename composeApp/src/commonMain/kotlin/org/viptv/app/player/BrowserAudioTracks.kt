@@ -1,12 +1,19 @@
 package org.viptv.app.player
 
-import org.viptv.app.state.audioLanguageName
+internal fun audioTrack(id: Int, ordinal: Int, name: String?, language: String?, channels: Int?, selected: Boolean): PlaybackTrack {
+    val languageName = subtitleLanguageName(language)
+    val title = name?.trim()?.takeIf { it.isNotEmpty() && (languageName == null || subtitleModeLanguage(it) != subtitleModeLanguage(language)) }
+    val primary = title ?: languageName ?: "Audio track $ordinal"
+    val detail = listOfNotNull(languageName.takeIf { title != null }, channelLayout(channels)).joinToString(" · ").ifEmpty { null }
+    return PlaybackTrack(id, listOfNotNull(primary, detail).joinToString(" · "), selected,
+        language?.takeUnless { subtitleModeLanguage(it) == null }, name = primary, detail = detail)
+}
 
-internal fun browserAudioTrack(id: Int, name: String?, language: String?, selected: Boolean): PlaybackTrack {
-    val lang = language?.takeUnless { it == "und" }
-    val tag = lang?.let { subtitleModeLanguage(it) }
-    val label = name?.takeIf { it.isNotBlank() }
-        ?: tag?.let(::audioLanguageName)?.takeIf { it.isNotBlank() }
-        ?: "Audio track ${id + 1}"
-    return PlaybackTrack(id, label, selected, lang)
+internal fun channelLayout(channels: Int?): String? = when {
+    channels == null || channels <= 0 -> null
+    channels == 1 -> "Mono"
+    channels == 2 -> "Stereo"
+    channels == 6 -> "5.1"
+    channels == 8 -> "7.1"
+    else -> "$channels channels"
 }
