@@ -9,8 +9,8 @@ internal fun SourceCandidate.sameStream(other: SourceCandidate): Boolean =
     provider_id == other.provider_id && label == other.label && detail == other.detail &&
         presentation?.source_id == other.presentation?.source_id && presentation?.size_bytes == other.presentation?.size_bytes
 
-internal fun RankedSources.equivalentOf(stale: SourceCandidate, fingerprints: Map<String, String> = emptyMap()): SourceCandidate? =
-    fingerprints[stale.id]?.let { wanted -> rows.firstOrNull { fingerprints[it.id] == wanted } }
+internal fun RankedSources.equivalentOf(stale: SourceCandidate): SourceCandidate? =
+    stale.source_fingerprint?.let { wanted -> rows.firstOrNull { it.source_fingerprint == wanted } }
         ?: rows.firstOrNull { it.sameStream(stale) }
         ?: stale.binge_group?.let { group -> rows.firstOrNull { it.provider_id == stale.provider_id && it.binge_group == group } }
         ?: autoplayTarget()
@@ -25,5 +25,5 @@ internal suspend fun ApplicationController.rediscoveredSource(stale: SourceCandi
     val ranked = remote.rankSources(profile, outcome.candidates, context)
     if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != cardLookupKey(card)) return null
     updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups, sourceProducers = producersLabelled(outcome.producers)) }
-    return ranked.equivalentOf(stale, remote.sourceFingerprints)
+    return ranked.equivalentOf(stale)
 }
