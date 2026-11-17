@@ -98,6 +98,24 @@ class TvLiveFilterFocusTest {
         }
     }
 
+    @Test fun theRemoteReachesTheChannelSearchAndLeavesItForTheChips() {
+        Page {
+            LiveScreen(listOf(channel()), television = true, start = 0, now = 30, watch = {},
+                groupLabels = mapOf("news" to "News", "sport" to "Sport"), groupChanged = {}, favoritesFilter = {},
+                search = "", searchChanged = {})
+        }.use { page ->
+            page.focusGuide()
+            page.press(Key.DirectionUp)
+            assertEquals("Group: All", page.focusedChip(), "Up from the guide reaches the chips")
+            page.press(Key.DirectionLeft)
+            assertTrue(page.focusedEditor(), "Left from the first chip reaches the channel search field, focused '${page.focusedText()}'")
+            page.press(Key.DirectionDown)
+            assertEquals("Group: All", page.focusedChip(), "Down from the field returns to the chips")
+            page.press(Key.DirectionDown)
+            assertEquals("Morning news", page.focusedText(), "and Down from the chips returns to the guide")
+        }
+    }
+
     private class Page(content: @Composable () -> Unit) : AutoCloseable {
         private var focusManager: FocusManager? = null
         private var frame = 0L
@@ -113,6 +131,8 @@ class TvLiveFilterFocusTest {
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
         fun focusedText() = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true }?.let(::text)
+        fun focusedEditor() = nodes().any {
+            it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.contains(SemanticsActions.SetText) }
         fun focusedChip() = nodes().firstOrNull {
             it.config.getOrNull(SemanticsProperties.Focused) == true && it.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList
         }?.let(::text)

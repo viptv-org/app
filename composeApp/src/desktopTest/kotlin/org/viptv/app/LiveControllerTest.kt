@@ -209,6 +209,30 @@ class LiveControllerTest {
         } finally { f.close() }
     }
 
+    @Test fun aSearchReScopesTheSameLiveQueryAndABlankTermClearsIt() = runTest {
+        val queries = EngineRequests<Parameters>()
+        val f = Fixture(this, testScheduler) { request -> when {
+            request.url.encodedPath.endsWith("/favorites") -> """{"channel_ids":[]}"""
+            request.url.encodedPath.endsWith("/guide") -> guide("one")
+            else -> { queries += request.url.parameters; page(if (request.url.parameters["search"] == null) "one" else "news") }
+        } }
+        try {
+            f.controller.mutable.value = f.controller.state.value.copy(liveQuery = f.controller.state.value.liveQuery.copy(group_id = "sport", offset = 500))
+            f.controller.searchLive("  news  "); advanceUntilIdle()
+            assertEquals("news", queries.last()["search"], "the term is trimmed and sent to the scoped query")
+            assertEquals("sport", queries.last()["group_id"], "a search narrows the chosen group, it does not drop it")
+            assertEquals("0", queries.last()["offset"])
+            assertEquals("news", f.controller.state.value.liveQuery.search)
+            assertEquals(listOf("news"), f.controller.state.value.livePage!!.channels.map { it.id })
+            val repeated = queries.size; f.controller.searchLive("news"); advanceUntilIdle()
+            assertEquals(repeated, queries.size, "the same term does not re-request")
+            f.controller.searchLive("   "); advanceUntilIdle()
+            assertNull(queries.last()["search"], "a blank term asks for the whole directory again")
+            assertNull(f.controller.state.value.liveQuery.search)
+            assertEquals(listOf("one"), f.controller.state.value.livePage!!.channels.map { it.id })
+        } finally { f.close() }
+    }
+
     @Test fun favoritesFromAnotherFeedScanOnlySelectedFeedAndNeverExposeItsChannels() = runTest {
         val feeds = EngineRequests<String>()
         val f = Fixture(this, testScheduler) { request -> when {

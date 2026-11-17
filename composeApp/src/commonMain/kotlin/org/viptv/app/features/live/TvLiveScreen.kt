@@ -28,7 +28,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     sources: Map<String, String> = emptyMap(), selectedSource: String? = null, sourceChanged: ((String) -> Unit)? = null,
     spread: LiveSpread = LiveSpread.Channels, noChannelsReason: String? = null, noChannelsRetry: (() -> Unit)? = null,
     sourceIntegrations: (() -> Unit)? = null,
-    restore: PageRestoreState = rememberPageRestore("live"), pageError: String? = null) {
+    restore: PageRestoreState = rememberPageRestore("live"), pageError: String? = null,
+    search: String = "", searchChanged: ((String) -> Unit)? = null) {
     var category by remember { mutableStateOf(AllGroups) }
     LaunchedEffect(selectedSource) { category = AllGroups }
     val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
@@ -37,8 +38,12 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
+    val searchField = remember { FocusRequester() }
     val favorite = remember { FocusRequester() }; val watchTile = remember { FocusRequester() }
     val empty = remember { FocusRequester() }; val integrationsFocus = remember { FocusRequester() }
+    val searchable = searchChanged != null && (spread == LiveSpread.Channels || spread == LiveSpread.Filtered)
+    val draft = searchChanged?.let { rememberLiveSearchDraft(search, it) }.takeIf { searchable }
+    val clearSearch: (() -> Unit)? = searchChanged?.let { changed -> { draft?.value = ""; changed("") } }
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
     val chipsOnly = spread.showsChannelRows()
     val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
@@ -64,7 +69,9 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         val density = androidx.compose.ui.platform.LocalDensity.current
         // The preview grows with the system font scale, so the chips and the guide start below it instead of over it.
         val chipsTop = maxOf(380.dp * scale, with(density) { previewHeight.toDp() } + 12.dp * scale)
-        val guideTop = maxOf(460.dp * scale, chipsTop + 80.dp * scale)
+        // The search field stands taller than the chips beside it, so the guide starts below whichever is taller.
+        val chipsRowHeight = if (searchable) 104.dp * scale else 80.dp * scale
+        val guideTop = maxOf(460.dp * scale, chipsTop + chipsRowHeight)
         if (chipsOnly) {
             Box(Modifier.fillMaxSize().focusProperties { onEnter = { when {
                 noChannelsRetry != null -> empty.requestFocus()
@@ -99,7 +106,9 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                 favoriteFocus = favorite, watchFocus = watchTile, down = downFromPreview, onHeight = { previewHeight = it }) { watch(it) } }
             Box(Modifier.offset(96.dp * scale, guideTop).width(1728.dp * scale)
                 .height((pageHeight - guideTop - 50.dp * scale).coerceAtLeast(0.dp))) {
-                if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
+                if (visible.isEmpty() && search.isNotBlank() && clearSearch != null) {
+                    LiveSearchEmpty(true, scale, false, Modifier.fillMaxSize(), clearSearch)
+                } else if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
                     category = AllGroups; groupChanged?.invoke(null)
                 } else if (hasGuide) {
                     LiveGuide(visible, start!!, now, true, scale,
@@ -127,9 +136,17 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         }
         Box(Modifier.offset(96.dp * scale, chipsTop).width(1728.dp * scale).focusGroup()) {
             CompositionLocalProvider(LocalTvScale provides scale) {
-                LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
-                    favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
-                    sources, selectedSource, sourceChanged, entry = chip, down = first, up = previewEntry)
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp * scale), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    draft?.let { term ->
+                        TvLiveSearchField(term.value, { term.value = it }, scale, Modifier.width(560.dp * scale),
+                            requester = searchField, down = chip.takeIf { hasFilters } ?: first.takeIf { visible.isNotEmpty() })
+                    }
+                    Box(Modifier.weight(1f)) {
+                        LiveFilters(groups, activeCategory.takeUnless { it == AllGroups }, { category = it ?: AllGroups; groupChanged?.invoke(it) },
+                            favoritesOnly, favoritesFilter, { category = AllGroups; groupChanged?.invoke(null) },
+                            sources, selectedSource, sourceChanged, entry = chip, down = first, up = previewEntry)
+                    }
+                }
             }
         }
     }

@@ -26,8 +26,13 @@ import org.viptv.app.components.Button
 import org.viptv.app.components.TextButton
 import org.viptv.app.components.ServerMessages
 import org.viptv.app.components.TvAction
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pageGutter
+import org.viptv.app.components.PageState
+import org.viptv.app.components.PageStateAction
+import org.viptv.app.components.pageStateLayout
 import org.viptv.app.components.rememberTvLoadingShimmer
 import org.viptv.app.connection.AccountAccess
 import org.viptv.app.theme.Palette
@@ -219,6 +224,14 @@ internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean,
 @Composable
 internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester? = null, secondary: FocusRequester? = null) =
     LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations, primary, secondary)
+
+// copy.md §Empty states — a search that matched no channel is a page state, not a filtered list.
+@Composable
+internal fun LiveSearchEmpty(television: Boolean, scale: Float, phone: Boolean, modifier: Modifier = Modifier,
+    clearSearch: () -> Unit) {
+    PageState(Lucide.Search, LiveNoSearchMatch, "", listOf(PageStateAction(LiveClearSearch, primary = true, activate = clearSearch)),
+        modifier, pageStateLayout(television, phone), scale = scale, enabled = true)
+}
 
 @Composable
 internal fun LiveFilteredEmpty(television: Boolean, scale: Float, phone: Boolean, favoritesOnly: Boolean, busy: Boolean,

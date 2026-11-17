@@ -15,6 +15,10 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import org.junit.Rule
 import org.viptv.app.connection.defaultLibraryQuery
+import org.viptv.app.features.live.LiveClearSearch
+import org.viptv.app.features.live.LiveNoSearchMatch
+import org.viptv.app.features.live.LiveSearchLabel
+import org.viptv.app.features.live.LiveSearchPlaceholder
 import org.viptv.app.features.calendar.CALENDAR_EMPTY_DAY_ALL
 import org.viptv.app.features.calendar.CALENDAR_EMPTY_DAY_YOUR_SHOWS
 import org.viptv.app.features.calendar.CALENDAR_EMPTY_WEEK
@@ -153,6 +157,13 @@ class DesignCopyTest {
             assertTrue(shows(scene, CALENDAR_FAILED_TITLE))
             assertTrue(shows(scene, "Request timed out."))
         } finally { scene.close() }
+    }
+
+    @Test fun theLiveSearchUsesTheDesignSystemsWords() {
+        assertEquals("Search channels", LiveSearchPlaceholder)
+        assertEquals("Search channels", LiveSearchLabel)
+        assertEquals("No channels match your search.", LiveNoSearchMatch)
+        assertEquals("Clear search", LiveClearSearch)
     }
 
     @Test fun theCalendarRowsStatusFollowsCopyMd() {
