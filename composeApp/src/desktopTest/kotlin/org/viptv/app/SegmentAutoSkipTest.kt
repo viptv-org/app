@@ -3,6 +3,8 @@ package org.viptv.app
 import org.viptv.app.features.player.SegmentAutoSkip
 import org.viptv.app.features.player.TvSkipKind
 import org.viptv.app.features.player.TvSkipRange
+import org.viptv.app.features.player.endCreditsReached
+import org.viptv.app.features.player.skipsItself
 import org.viptv.app.player.PlaybackInput
 import kotlin.test.*
 
@@ -87,5 +89,30 @@ class SegmentAutoSkipTest {
         val skip = SegmentAutoSkip()
         skip.due(input(30_000), 40_000, listOf(intro), all)
         assertNull(skip.due(input(90_000, chosen = true), 91_000, listOf(intro), all))
+    }
+
+    @Test fun eachKindFollowsItsSettingAndMixedNeverSkipsItself() {
+        val length = 1_800_000L
+        assertTrue(intro.skipsItself(intros = true, credits = false, durationMillis = length, nextEpisode = true))
+        assertTrue(recap.skipsItself(intros = true, credits = false, durationMillis = length, nextEpisode = true))
+        assertFalse(intro.skipsItself(intros = false, credits = true, durationMillis = length, nextEpisode = true))
+        assertFalse(intro.copy(mixed = true).skipsItself(intros = true, credits = true, durationMillis = length, nextEpisode = true))
+        assertFalse(credits.copy(mixed = true).skipsItself(intros = true, credits = true, durationMillis = length, nextEpisode = false))
+        assertFalse(credits.skipsItself(intros = true, credits = false, durationMillis = length, nextEpisode = false))
+    }
+
+    @Test fun creditsSkipWhenAScenePlaysAfterThemOrNoEpisodeFollows() {
+        assertTrue(credits.skipsItself(intros = false, credits = true, durationMillis = 1_390_001, nextEpisode = true))
+        assertFalse(credits.skipsItself(intros = false, credits = true, durationMillis = 1_390_000, nextEpisode = true), "10 s or less is the end")
+        assertFalse(credits.skipsItself(intros = false, credits = true, durationMillis = null, nextEpisode = true), "Unknown length is the end")
+        assertTrue(credits.skipsItself(intros = false, credits = true, durationMillis = 1_390_000, nextEpisode = false))
+    }
+
+    @Test fun upNextWaitsPastCreditsThatSkipToAScene() {
+        assertFalse(listOf(credits).endCreditsReached(1_300_000, credits = true, durationMillis = 1_800_000))
+        assertTrue(listOf(credits).endCreditsReached(1_300_000, credits = false, durationMillis = 1_800_000))
+        assertTrue(listOf(credits).endCreditsReached(1_300_000, credits = true, durationMillis = 1_385_000))
+        assertTrue(listOf(credits.copy(mixed = true)).endCreditsReached(1_300_000, credits = true, durationMillis = 1_800_000))
+        assertFalse(listOf(credits).endCreditsReached(1_200_000, credits = false, durationMillis = 1_800_000))
     }
 }

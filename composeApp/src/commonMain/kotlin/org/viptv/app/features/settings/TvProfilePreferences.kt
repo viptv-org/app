@@ -1,6 +1,7 @@
 package org.viptv.app.features.settings
 
 import org.viptv.app.connection.ProfilePreferences
+import org.viptv.app.connection.skipCredits
 import org.viptv.app.connection.subtitleMode
 import org.viptv.app.connection.withSubtitleMode
 
@@ -9,6 +10,7 @@ private val languages = mapOf("English" to "en", "Spanish" to "es", "Portuguese"
 internal fun ProfilePreferences.tvSettings() = TvSettingsPreferences(
     nextEpisode = next_episode_button,
     skipIntros = skip_intros,
+    skipCredits = skipCredits,
     rememberSource = remembered_source_reuse,
     source = if (source_selection == "best") "Best match" else "Always ask",
     quality = max_quality_height?.let { if (it == 2160) "4K" else "${it}p" } ?: "Auto",
@@ -25,6 +27,7 @@ internal fun ProfilePreferences.tvSettings() = TvSettingsPreferences(
 internal fun TvSettingsPreferences.profilePreferences(base: ProfilePreferences = ProfilePreferences()) = base.copy(
     next_episode_button = nextEpisode,
     skip_intros = skipIntros,
+    skip_credits = skipCredits.takeUnless { base.skip_credits == null && it },
     remembered_source_reuse = rememberSource,
     preferred_audio_language = languages[audioLanguage] ?: audioLanguage.takeUnless { it == "Original language" || it == "Original" },
     preferred_subtitle_language = languages[subtitleLanguage] ?: subtitleLanguage.takeUnless { it == "Default" },

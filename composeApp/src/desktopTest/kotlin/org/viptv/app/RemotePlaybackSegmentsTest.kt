@@ -70,4 +70,14 @@ class RemotePlaybackSegmentsTest {
         assertEquals(listOf(TvSkipRange(0, 30000, TvSkipKind.Recap)), mixed.playbackSegments("lease"))
         mixed.close()
     }
+
+    @Test fun aMixedSegmentKeepsItsKindAndCarriesTheFlag() = runBlocking {
+        val flagged = connection(mutableListOf()) {
+            HttpStatusCode.OK to """{"segments":[{"kind":"intro","start_ms":0,"end_ms":90000,"mixed":true},{"kind":"credits","start_ms":1290000,"end_ms":1380000}]}"""
+        }
+        flagged.login("fixture", "disposable")
+        assertEquals(listOf(TvSkipRange(0, 90000, TvSkipKind.Intro, mixed = true), TvSkipRange(1290000, 1380000, TvSkipKind.Credits)),
+            flagged.playbackSegments("lease"))
+        flagged.close()
+    }
 }

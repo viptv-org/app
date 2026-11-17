@@ -17,10 +17,13 @@ data class ProfilePreferences(
     val hdr_preference: String = "any",
     val subtitle_mode: String? = null,
     val next_episode_button: Boolean = true,
-    val skip_intros: Boolean = false,
+    val skip_intros: Boolean = true,
+    val skip_credits: Boolean? = null,
     val remembered_source_reuse: Boolean = true,
     val match_frame_rate: Boolean = true,
 )
+
+val ProfilePreferences.skipCredits: Boolean get() = skip_credits ?: true
 
 private val subtitleModes = setOf("always", "foreign", "never")
 
@@ -35,13 +38,13 @@ data class PreferencesSnapshot(val revision: Long = 0, val preferences: ProfileP
 
 private val preferencesCodec = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-// Servers that predate a preference reject unknown fields, so each field's default is left out.
+// Servers reject fields they predate, so defaults stay out; skip_credits goes only to servers that sent it.
 internal fun profilePreferencesWire(preferences: ProfilePreferences): JsonObject {
     val mode = preferences.subtitleMode
     val encoded = preferencesCodec.encodeToJsonElement(preferences.copy(subtitles_enabled = mode != "never")).jsonObject.toMutableMap()
     if (preferences.hdr_preference == "any") encoded -= "hdr_preference"
     if (preferences.next_episode_button) encoded -= "next_episode_button"
-    if (!preferences.skip_intros) encoded -= "skip_intros"
+    if (preferences.skip_credits == null) encoded -= "skip_credits"
     if (preferences.remembered_source_reuse) encoded -= "remembered_source_reuse"
     if (mode == "foreign") encoded["subtitle_mode"] = JsonPrimitive(mode) else encoded -= "subtitle_mode"
     return JsonObject(encoded)

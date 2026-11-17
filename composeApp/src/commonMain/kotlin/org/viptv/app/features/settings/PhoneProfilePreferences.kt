@@ -48,6 +48,10 @@ internal fun PhoneProfilePreferences(section: String, snapshot: PreferencesSnaps
                             draft = draft?.copy(skip_intros = it)
                         }
                         PhonePreferenceDivider()
+                        PhonePreferenceSwitchRow(skipCreditsRow, skipCreditsDescription, value.skipCredits) {
+                            draft = draft?.copy(skip_credits = it)
+                        }
+                        PhonePreferenceDivider()
                         PhonePreferenceSwitchRow(rememberedSourceRow, rememberedSourceDescription, value.remembered_source_reuse) {
                             draft = draft?.copy(remembered_source_reuse = it)
                         }
