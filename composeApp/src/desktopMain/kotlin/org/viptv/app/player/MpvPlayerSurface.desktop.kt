@@ -9,6 +9,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.skia.Rect
+import org.viptv.app.connection.subtitleMode
 import org.viptv.app.player.mpv.*
 import org.viptv.engine.wire.SubtitleCandidate
 import java.io.File
@@ -188,13 +189,18 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         }
         LaunchedEffect(candidates, opened, subtitleTouched, state.audio, input.preferences) {
             if (!opened || subtitleTouched) return@LaunchedEffect
+            val desired = input.preferences.preferred_subtitle_language
+            val selected = state.subtitles.firstOrNull { it.selected }
             if (!mpvSubtitlesOn(state.audio, input.preferences)) {
-                if (state.subtitles.any { it.selected }) selectSubtitle(null, null)
+                val signs = dubSignsSubtitle(state.subtitles.filterNot { it.id in providerIds.values }, input.preferences.subtitleMode,
+                    input.preferences.preferred_audio_language, desired, state.audio.firstOrNull { it.selected }?.language)
+                when {
+                    signs != null -> if (selected?.id != signs) selectSubtitle(null, signs)
+                    selected != null -> selectSubtitle(null, null)
+                }
                 return@LaunchedEffect
             }
             val candidate = preferredProviderSubtitle(input, candidates)
-            val desired = input.preferences.preferred_subtitle_language
-            val selected = state.subtitles.firstOrNull { it.selected }
             val selectedMatches = desired != null && selected?.language != null && !signsOnlySubtitle(selected.name, selected.forced) &&
                 canonicalLanguageTag(selected.language).substringBefore('-') == canonicalLanguageTag(desired).substringBefore('-')
             val full = fullDialogueSubtitle(state.subtitles.filterNot { it.id in providerIds.values }, desired)

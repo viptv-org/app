@@ -112,8 +112,9 @@ class PlaybackPreferenceMappingTest {
     @Test fun foreignAudioRuleFollowsTheSpecCases() {
         val tracks = listOf(SubtitleModeTrack("forced-en", "en", forced = true), SubtitleModeTrack("es", "spa"),
             SubtitleModeTrack("en", "eng"), SubtitleModeTrack("en2", "en-US"))
-        assertNull(subtitleModeChoice("foreign", null, "en", "eng", tracks))
-        assertNull(subtitleModeChoice("foreign", "English", "en", "en-GB", tracks))
+        assertEquals("forced-en", subtitleModeChoice("foreign", null, "en", "eng", tracks)?.key)
+        assertEquals("forced-en", subtitleModeChoice("foreign", "English", "en", "en-GB", tracks)?.key)
+        assertNull(subtitleModeChoice("foreign", null, "en", "eng", tracks.drop(1)))
         assertEquals("en", subtitleModeChoice("foreign", null, "en", "jpn", tracks)?.key)
         assertEquals("en", subtitleModeChoice("foreign", "en", "English", "ja", tracks)?.key)
         listOf(null, "", "und", "mul", "zxx").forEach { assertNull(subtitleModeChoice("foreign", null, "en", it, tracks), "audio $it") }

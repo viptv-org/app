@@ -66,7 +66,7 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
                         SearchableSelect("Audio language", languageOptions, listOfNotNull(value.preferred_audio_language),
                             { ids -> draft = draft?.copy(preferred_audio_language = ids.firstOrNull()) },
                             anyLabel = "Original audio", searchPlaceholder = "Search audio languages")
-                        SearchableSelect("Subtitles", subtitleModeChoices(value.preferred_audio_language).map { (mode, label) -> SelectOption(mode, label) },
+                        SearchableSelect("Subtitles", subtitleModeChoices(value.preferred_audio_language).map { (mode, label) -> SelectOption(mode, label, subtitleModeNote(mode)) },
                             listOf(value.subtitleMode),
                             { ids -> ids.firstOrNull()?.let { mode -> draft = draft?.withSubtitleMode(mode) } },
                             anyLabel = null, placeholder = "Choose")

@@ -26,7 +26,8 @@ internal fun TvSettingsChoiceDialog(choice: TvSettingsChoice, scale: Float, dism
     }) {
         Column(verticalArrangement = Arrangement.spacedBy((8 * scale).dp)) {
             choice.values.forEachIndexed { index, value ->
-                TvDialogChoiceRow(value, selected = index == checked, scale = scale, stop = stops[index]) { choice.select(value); dismiss() }
+                TvDialogChoiceRow(value, selected = index == checked, scale = scale, stop = stops[index],
+                    detail = subtitleModeNote(subtitleModeValue(value))) { choice.select(value); dismiss() }
             }
         }
     }
