@@ -34,16 +34,15 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
     LaunchedEffect(selectedSource) { category = AllGroups }
     val groups = if (groupLabels.isNotEmpty()) groupLabels else categories.distinct().associateWith { it }
     val activeCategory = category.takeIf { it == AllGroups || it in groups } ?: AllGroups
-    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || activeCategory == AllGroups || (it.groupId ?: it.category) == activeCategory) }
+    val draft = searchChanged?.let { rememberLiveSearchDraft(search, it) }
+    val visible = channels.filter { (!favoritesOnly || it.favorite) && (groupChanged != null || activeCategory == AllGroups || (it.groupId ?: it.category) == activeCategory) && draft?.matches(it) != false }
     var channel by remember { mutableStateOf(channels.firstOrNull()) }
     var program by remember { mutableStateOf<LiveProgram?>(null) }
     val first = remember { FocusRequester() }; val chip = remember { FocusRequester() }
     val searchField = remember { FocusRequester() }
     val favorite = remember { FocusRequester() }; val watchTile = remember { FocusRequester() }
     val empty = remember { FocusRequester() }; val integrationsFocus = remember { FocusRequester() }
-    val searchable = searchChanged != null && (spread == LiveSpread.Channels || spread == LiveSpread.Filtered)
-    val draft = searchChanged?.let { rememberLiveSearchDraft(search, it) }.takeIf { searchable }
-    val clearSearch: (() -> Unit)? = searchChanged?.let { changed -> { draft?.value = ""; changed("") } }
+    val searchable = draft != null && (spread == LiveSpread.Channels || spread == LiveSpread.Filtered)
     val hasGuide = start != null && visible.any { channel -> channel.programs.any { it.end > start && it.start < start + 120 } }
     val chipsOnly = spread.showsChannelRows()
     val hasFilters = if (chipsOnly) sourceChanged != null && sources.size > 1 else groups.isNotEmpty() || favoritesFilter != null || (sourceChanged != null && sources.size > 1)
@@ -104,8 +103,9 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
                 favoriteFocus = favorite, watchFocus = watchTile, down = downFromPreview, onHeight = { previewHeight = it }) { watch(it) } }
             Box(Modifier.offset(96.dp * scale, guideTop).width(1728.dp * scale)
                 .height((pageHeight - guideTop - 50.dp * scale).coerceAtLeast(0.dp))) {
-                if (visible.isEmpty() && search.isNotBlank() && clearSearch != null) {
-                    LiveSearchEmpty(true, scale, false, Modifier.fillMaxSize(), clearSearch)
+                if (visible.isEmpty() && draft?.typing == true) LiveChannelSkeletons(true, scale, false)
+                else if (visible.isEmpty() && search.isNotBlank() && draft != null) {
+                    LiveSearchEmpty(true, scale, false, Modifier.fillMaxSize(), draft::clear)
                 } else if (visible.isEmpty()) LiveFilteredEmpty(true, scale, false, favoritesOnly, busy, sources[selectedSource]) {
                     category = AllGroups; groupChanged?.invoke(null)
                 } else if (hasGuide) {
@@ -135,8 +135,8 @@ internal fun TvLiveScreen(channels: List<LiveChannel>, start: Int?, now: Int?, w
         Box(Modifier.offset(96.dp * scale, chipsTop).width(1728.dp * scale).focusGroup()) {
             CompositionLocalProvider(LocalTvScale provides scale) {
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp * scale), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    draft?.let { term ->
-                        TvLiveSearchField(term.value, { term.value = it }, scale, Modifier.width(560.dp * scale),
+                    if (searchable) draft?.let {
+                        TvLiveSearchField(it, scale, Modifier.width(560.dp * scale),
                             requester = searchField, down = chip.takeIf { hasFilters } ?: first.takeIf { visible.isNotEmpty() })
                     }
                     Box(Modifier.weight(1f)) {

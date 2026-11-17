@@ -225,7 +225,6 @@ internal fun LiveNoChannels(television: Boolean, scale: Float, compact: Boolean,
 internal fun LiveLoadFailed(television: Boolean, scale: Float, compact: Boolean, reason: String?, retry: (() -> Unit)?, integrations: (() -> Unit)?, primary: FocusRequester? = null, secondary: FocusRequester? = null) =
     LiveEmptyCopy(television, scale, compact, LiveLoadFailedHeadline, reason ?: ServerMessages.GENERIC, retry, integrations, primary, secondary)
 
-// copy.md §Empty states — a search that matched no channel is a page state, not a filtered list.
 @Composable
 internal fun LiveSearchEmpty(television: Boolean, scale: Float, phone: Boolean, modifier: Modifier = Modifier,
     clearSearch: () -> Unit) {

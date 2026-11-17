@@ -605,6 +605,32 @@ class LiveUiTest {
         }
     }
 
+    @Test fun typingNarrowsTheLoadedChannelsInTheSameFrameWithoutClaimingNoMatch() {
+        val rows = listOf(
+            LiveChannel(Card(MediaIdentity("one", "live", emptyList()), provider_id = "m3u:1", title = "BBC One", badges = emptyList()), id = "one", connectionId = "m3u:1"),
+            LiveChannel(Card(MediaIdentity("two", "live", emptyList()), provider_id = "m3u:1", title = "Sky News", badges = emptyList()), id = "two", connectionId = "m3u:1"))
+        for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
+            val scene = ImageComposeScene(width, height, Density(1f)) {
+                ViptvTheme(television) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    LiveScreen(rows, television, null, null, {}, groupLabels = mapOf("news" to "News"),
+                        groupChanged = {}, search = "", searchChanged = {})
+                } }
+            }
+            try {
+                frames(scene)
+                val field = nodes(scene).first { it.config.contains(SemanticsActions.SetText) }
+                field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("bbc"))
+                scene.render(400_000_000L).close()
+                val labels = nodes(scene).map(::text)
+                assertTrue(labels.none { it.contains("Sky News") }, "$width px: a loaded channel the term rules out leaves at once; texts=$labels")
+                assertTrue(labels.any { it.contains("BBC One") }, "$width px: the matching channel stays")
+                field.config[SemanticsActions.SetText].action!!.invoke(AnnotatedString("zzz"))
+                scene.render(420_000_000L).close()
+                assertTrue(nodes(scene).map(::text).none { it == LiveNoSearchMatch }, "$width px: no-match waits for the server's answer")
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun aSearchThatMatchesNothingDrawsThePageStateWithTheChipRow() {
         for ((width, height, television) in listOf(Triple(390, 844, false), Triple(1280, 800, false), Triple(1920, 1080, true))) {
             var cleared = 0

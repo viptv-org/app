@@ -62,7 +62,6 @@ fun ApplicationController.filterLive(group: String?) = run {
     updateState { next -> next.copy(liveFavoritesOnly = false) }
     loadLive(mutable.value.liveQuery.copy(group_id = group, offset = 0))
 }
-// The server matches channel names only; a blank term is the unfiltered directory.
 fun ApplicationController.searchLive(term: String) = run {
     val search = term.trim().takeIf { it.isNotEmpty() }
     if (search == mutable.value.liveQuery.search) return@run
