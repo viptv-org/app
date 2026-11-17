@@ -51,6 +51,7 @@ internal suspend fun RemoteConnection.sources(card: Card, reuse: SourceReuseCont
                 event["streams"]?.jsonArray.orEmpty().forEach { stream ->
                     val value = stream.jsonObject
                     val id = value.getValue("id").jsonPrimitive.content
+                    value.text("source_fingerprint")?.let { sourceFingerprints[id] = it }
                     found[id] = SourceCandidate(id, event["source"]?.jsonPrimitive?.content ?: "server",
                         value["name"]?.jsonPrimitive?.contentOrNull ?: value["title"]?.jsonPrimitive?.contentOrNull ?: "Source",
                         detail = value["detail"]?.jsonPrimitive?.contentOrNull
@@ -58,7 +59,8 @@ internal suspend fun RemoteConnection.sources(card: Card, reuse: SourceReuseCont
                             ?: value["title"]?.jsonPrimitive?.contentOrNull,
                         quality_height = value["quality_height"]?.jsonPrimitive?.longOrNull,
                         audio_languages = value["audio_languages"]?.jsonArray.orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull },
-                        presentation = value["presentation"]?.takeUnless { it is JsonNull }?.let { presentationCodec.decodeFromJsonElement<SourcePresentation>(it) })
+                        presentation = value["presentation"]?.takeUnless { it is JsonNull }?.let { presentationCodec.decodeFromJsonElement<SourcePresentation>(it) },
+                        binge_group = value.text("source_binge_group"))
                         .withReleaseFacts(value)
                 }
             }
