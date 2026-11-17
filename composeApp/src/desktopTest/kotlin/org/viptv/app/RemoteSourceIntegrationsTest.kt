@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class RemoteSourceIntegrationsTest {
     @Test fun configurationUsesDisplayedRevisionAndProfileScope() = runBlocking {
-        val requests = mutableListOf<Pair<HttpMethod, String>>()
+        val requests = EngineRequests<Pair<HttpMethod, String>>()
         val store = object : RemoteSessionStore {
             override suspend fun read(): SavedRemoteSession? = null
             override suspend fun save(session: SavedRemoteSession) = Unit

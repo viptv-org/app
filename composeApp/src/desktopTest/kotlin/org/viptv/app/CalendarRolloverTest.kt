@@ -34,7 +34,7 @@ class CalendarRolloverTest {
         val clock = MovableClock(ZonedDateTime.of(LocalDate.of(2026, 10, 14), LocalTime.of(23, 58), zone))
         val previous = appDateClock
         appDateClock = clock
-        val windows = mutableListOf<Pair<String?, String?>>()
+        val windows = EngineRequests<Pair<String?, String?>>()
         val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             if (path == "/api/calendar") windows += request.url.parameters["start"] to request.url.parameters["end"]

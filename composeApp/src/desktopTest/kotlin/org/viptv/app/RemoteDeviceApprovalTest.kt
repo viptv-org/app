@@ -34,7 +34,7 @@ class RemoteDeviceApprovalTest {
         respond(ByteReadChannel(body), status, headersOf(HttpHeaders.ContentType, "application/json"))
 
     @Test fun aNativeSessionLooksUpApprovesAndDeniesWithItsBearerTokenAndNoBrowser() = runBlocking<Unit> {
-        val calls = mutableListOf<Pair<String, String?>>()
+        val calls = EngineRequests<Pair<String, String?>>()
         val remote = signedIn { request ->
             val body = request.body.toByteArray().decodeToString()
             calls += request.url.encodedPath to request.headers[HttpHeaders.Authorization]

@@ -16,7 +16,7 @@ class RemoteProfilesTest {
         override suspend fun clear() = Unit
     }
     @Test fun managementUsesTypedProfilesAndNeverReplacesAccountPinWithProfilePin() = runBlocking {
-        val writes = mutableListOf<Pair<String, JsonObject>>()
+        val writes = EngineRequests<Pair<String, JsonObject>>()
         val allowed = """{"availability":"Available","message":null}"""
         val unsupported = """{"availability":"Unsupported","message":"Account parent PINs apply"}"""
         val management = """{"profiles":[{"id":"1","name":"Parent","avatar_id":"vynxc","avatar_style":"critters","avatar_choice":null,"avatar_url":"https://avatars.example/seed.png","is_primary":true,"can_delete":false,"kids":true,"max_age":10},{"id":"2","name":"Kid","avatar_id":null,"avatar_style":"disney","avatar_choice":6,"avatar_url":"https://avatars.example/disney-6.png"}],"capabilities":{"create":$allowed,"rename":$allowed,"delete":$allowed,"avatar":$allowed,"profile_pin":$unsupported,"parent_unlock":$allowed},"parent":{"pin_configured":true,"unlocked":true,"restricted":false}}"""

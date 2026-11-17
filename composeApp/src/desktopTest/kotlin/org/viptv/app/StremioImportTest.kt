@@ -452,7 +452,7 @@ class StremioImportTest {
     private val completionJson = """{"profile_id":2,"summary":{"favorites_added":1,"progress_added":0,"progress_updated":0,"existing_preserved":0,"already_imported":0,"needs_review":0,"skipped_items":0},"addons_added":1,"already_completed":false}"""
 
     @Test fun deviceSessionsSendTheDocumentedBodiesAndSortedHandles(): Unit = runBlocking {
-        val bodies = mutableListOf<Triple<HttpMethod, String, JsonObject?>>()
+        val bodies = EngineRequests<Triple<HttpMethod, String, JsonObject?>>()
         val client = HttpClient(MockEngine { request ->
             assertEquals("https://watch.example", request.headers[HttpHeaders.Origin], "Native device requests carry the device origin")
             bodies += Triple(request.method, request.url.encodedPath, (request.body as? TextContent)?.text?.takeIf { it.isNotBlank() }?.let(::json))
@@ -523,7 +523,7 @@ class StremioImportTest {
     }
 
     @Test fun profileChangeAndSignOutDiscardTheDraftAndDeleteTheServerPreview(): Unit = runBlocking {
-        val requests = mutableListOf<Pair<HttpMethod, String>>()
+        val requests = EngineRequests<Pair<HttpMethod, String>>()
         val client = HttpClient(MockEngine { request ->
             requests += request.method to request.url.encodedPath
             val path = request.url.encodedPath
