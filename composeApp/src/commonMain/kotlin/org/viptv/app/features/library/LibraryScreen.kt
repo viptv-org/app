@@ -73,7 +73,6 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
             selectSegment = selectSegment, continueWatching = continueWatching)
         return
     }
-    // Each segment is its own visit: switching resets that segment's scroll and focus to its first row.
     key(segment) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val phone = maxWidth < 640.dp
@@ -84,7 +83,6 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
             var sort by remember { mutableStateOf("Date added") }
             var confirming by remember { mutableStateOf<Card?>(null) }
             val removal = remember(remove) { remove?.let { ListRemoval(REMOVE_LIBRARY_LABEL, replacesSave = true) { card -> confirming = card } } }
-            // The Continue Watching removal is the one Home's shelf offers: one entry, one confirmation, one request.
             val continueRemoval = remember(section?.remove) { ContinueWatchingRemoval(section?.remove) }
             val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
             val visible = when {

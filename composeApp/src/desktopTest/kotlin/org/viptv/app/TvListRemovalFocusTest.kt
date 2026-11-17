@@ -150,7 +150,6 @@ class TvListRemovalFocusTest {
             if (!consumed && direction != null) { focusManager!!.moveFocus(direction); frames() }
         }
 
-        // The design's My List options: 700 ms of OK on the focused card.
         suspend fun hold() {
             scene.sendKeyEvent(KeyEvent(Key.DirectionCenter, KeyEventType.KeyDown))
             repeat(45) { delay(20); frames(1) }
@@ -160,7 +159,6 @@ class TvListRemovalFocusTest {
 
         private fun subtree(node: SemanticsNode): String = flatten(node).map(::text).filter { it.isNotBlank() }.joinToString(" ")
 
-        // The smallest control that reads as the label: a menu row and a card both carry their children's words.
         fun click(label: String) {
             val node = nodes().filter { it.config.contains(SemanticsActions.OnClick) }
                 .firstOrNull { text(it) == label }

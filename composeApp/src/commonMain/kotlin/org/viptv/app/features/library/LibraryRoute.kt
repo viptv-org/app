@@ -26,12 +26,10 @@ internal fun LibraryRoute(state: ApplicationState, controller: ApplicationContro
             }
         }
     }
-    // The second segment reads its own list the first time the viewer opens it.
     LaunchedEffect(segment) {
         if (segment == MyListSegment.Continue) controller.ensureContinueWatching() else controller.ensureLibraryPage()
     }
     val list = state.continueWatching?.takeIf { it.profile == state.selectedProfile }
-    // The segment reads its own load failure; an action's error never becomes its page state.
     val continuePage = ContinueWatchingPage(list?.cards.orEmpty(), loaded = list != null, busy = state.busy,
         error = state.continueWatchingError, pageError = state.continueWatchingPageError)
     LibraryScreen(page?.cards ?: state.library, true, television, controller::open, { controller.navigate(Screen.History) },

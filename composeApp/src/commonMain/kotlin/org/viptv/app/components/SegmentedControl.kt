@@ -28,11 +28,9 @@ import org.viptv.app.theme.Palette
 
 private val SegmentInset = 20.dp
 
-// One mode switch inside a page (components.md §2): a surface-1 track whose selected segment is the off-white fill.
 @Composable
 internal fun SegmentedControl(labels: List<String>, selected: Int, select: (Int) -> Unit,
     modifier: Modifier = Modifier, down: FocusRequester? = null, up: FocusRequester? = null,
-    // The caller's handle on the selected segment: the row a remote lands back on when it returns to the switch.
     entry: FocusRequester? = null) {
     BoxWithConstraints(modifier) {
         val tv = LocalTvFocusAnchoring.current
@@ -42,7 +40,6 @@ internal fun SegmentedControl(labels: List<String>, selected: Int, select: (Int)
         val inset = 4.dp * scale
         val textSize = if (tv) (22 * scale).sp else 14.sp
         val insetDp = if (tv) 28.dp * scale else SegmentInset
-        // A full-width track splits by label, so the longer name is never cut to fit half a phone.
         val weights = if (!full) emptyList() else {
             val measurer = rememberTextMeasurer()
             val density = LocalDensity.current

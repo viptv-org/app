@@ -401,7 +401,6 @@ private val BOTTOM_BAR_HIDDEN = setOf(Screen.Details, Screen.Sources, Screen.Set
 internal fun bottomBarShown(screen: Screen, compact: Boolean, browser: Boolean, desktopChrome: Boolean): Boolean =
     compact && !browser && !desktopChrome && screen !in BOTTOM_BAR_HIDDEN
 
-// Continue Watching is My List's second segment, so the SideNavigation highlight resolves it to My List.
 private fun navHighlightPage(detailReturnScreen: Screen): Screen =
     if (detailReturnScreen == Screen.ContinueWatching) Screen.Library else detailReturnScreen
 

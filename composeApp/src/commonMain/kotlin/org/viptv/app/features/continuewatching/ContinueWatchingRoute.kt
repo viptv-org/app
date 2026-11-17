@@ -6,7 +6,6 @@ import org.viptv.app.features.library.LibraryRoute
 import org.viptv.app.features.library.MyListSegment
 import org.viptv.app.state.*
 
-// The Home shelf's See all and the title menu open My List on its second segment.
 @Composable
 internal fun ContinueWatchingRoute(state: ApplicationState, controller: ApplicationController, television: Boolean) {
     LibraryRoute(state, controller, television, MyListSegment.Continue)

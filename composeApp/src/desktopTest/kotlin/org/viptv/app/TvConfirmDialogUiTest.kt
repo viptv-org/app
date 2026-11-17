@@ -171,7 +171,6 @@ class TvConfirmDialogUiTest {
             TvLibraryScreen(posters, available = true, open = {}, home = {}, snapshot = library, remove = { removed = it })
         }.use { page ->
             page.settle()
-            // tv-my-list-posters.md: a 700 ms hold on a card opens the My List options.
             page.hold()
             page.settle(30)
             val remove = assertNotNull(page.action(REMOVE_LIBRARY_LABEL), "the card's hold menu offers its removal: ${page.labels()}")

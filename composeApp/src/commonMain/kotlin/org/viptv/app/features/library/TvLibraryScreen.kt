@@ -51,7 +51,6 @@ internal fun TvLibraryScreen(cards: List<Card>, available: Boolean, open: (Card)
     remove: ((Card) -> Unit)? = null, retry: () -> Unit = {}, pageError: String? = null,
     segment: MyListSegment = MyListSegment.Saved, selectSegment: (MyListSegment) -> Unit = {},
     continueWatching: ContinueWatchingSection? = null) {
-    // Each segment is its own visit: switching reclaims the new segment's first card at the first row.
     key(segment) {
         TvLibraryBody(cards, available, open, home, lastWatched, snapshot, query, changeQuery, more, busy, error, remove, retry,
             pageError, segment, selectSegment, continueWatching)
@@ -73,7 +72,6 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     val selectedFilter = remember { FocusRequester() }
     val gridFocus = remember { FocusRequester() }
     val action = remember { FocusRequester() }
-    // Kept so a removal can hand the remote to the card that takes the removed one's place.
     var lastFocused by remember { mutableStateOf<Card?>(null) }
     var confirming by remember { mutableStateOf<Card?>(null) }
     val filtered = cards.filter { filter == "All" || it.identity.kind == if (filter == "Movies") "movie" else "series" }
@@ -99,11 +97,9 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     val moreAction = if (saved) more else section?.more
     val barBusy = if (saved) busy else section?.page?.busy ?: false
     val removeAction = if (saved) remove else section?.remove
-    // The design's My List options: a 700 ms hold on a card offers the title's removal, so no bar takes the grid's room.
     val removal = remember(remove, saved) {
         remove?.let { ListRemoval(REMOVE_LIBRARY_LABEL, replacesSave = true) { card -> confirming = card } }
     }
-    // The second segment shares Home's Continue Watching removal: one entry, one confirmation, one request.
     val continueRemoval = remember(section?.remove) { ContinueWatchingRemoval(section?.remove) }
     suspend fun claim(requester: FocusRequester) {
         repeat(30) { if (runCatching { requester.requestFocus() }.getOrDefault(false)) return; withFrameNanos { } }
@@ -114,7 +110,6 @@ private fun TvLibraryBody(cards: List<Card>, available: Boolean, open: (Card) ->
     if (!saved) LaunchedEffect(continueCards.isEmpty(), pageState) {
         if (continueCards.isEmpty() && pageState != ListPageState.Loading) claim(action)
     } else LaunchedEffect(shown.isEmpty(), pageState) {
-        // An emptied My List leaves the remote on the segment that owns it.
         if (shown.isEmpty() && pageState != ListPageState.Loading) claim(segmentEntry)
     }
     LaunchedEffect(shown) {

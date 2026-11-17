@@ -72,6 +72,15 @@ class BrowserDetailsBackdropTest {
         fun onScreen(title: String) = nodes().any { title in text(it) }
         fun pane(name: String) = nodes().firstOrNull { it.config.getOrNull(SemanticsProperties.PaneTitle) == name }
         fun visibleTitles(prefix: String, count: Int) = (1..count).filter { onScreen(prefix.format(it)) }.toSet()
+        fun scrollPosition(prefix: String, count: Int): Pair<Float, Map<Int, Float>> {
+            val grid = nodes().filter { it.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange) != null }
+                .maxBy { it.config[SemanticsProperties.VerticalScrollAxisRange].maxValue() }
+            val placed = (1..count).mapNotNull { n ->
+                nodes().firstOrNull { prefix.format(n) in text(it) && it.boundsInRoot.top == it.positionInRoot.y && !it.boundsInRoot.isEmpty }
+                    ?.let { n to it.positionInRoot.y }
+            }.toMap()
+            return grid.config[SemanticsProperties.VerticalScrollAxisRange].value() to placed
+        }
         fun until(what: String, condition: () -> Boolean) {
             val deadline = System.nanoTime() + 30_000_000_000L
             while (!condition()) { check(System.nanoTime() < deadline) { "timed out waiting for $what" }; frames(2) }
@@ -92,7 +101,7 @@ class BrowserDetailsBackdropTest {
     @Test fun theOriginPageStaysBehindTheDetailsDialogAndKeepsItsScroll() {
         Harness(libraryState()).use { app ->
             app.until("My List") { app.onScreen("My List 01") }
-            assertFalse(app.onScreen("Continue Watching"), "My List, not Home, is the page")
+            assertFalse(app.onScreen(HOME_ONLY_ROW), "My List, not Home, is the page")
 
             app.scrollDown(1600f)
             app.until("the grid scrolled") { !app.onScreen("My List 01") && app.visibleTitles("My List %02d", 30).isNotEmpty() }
@@ -103,7 +112,7 @@ class BrowserDetailsBackdropTest {
                 screen = Screen.Details, detailReturnScreen = Screen.Library, detail = PreviewData.detail)
             app.until("the Details dialog") { app.pane("The End of Oak Street") != null }
             assertEquals(before, app.visibleTitles("My List %02d", 30), "the My List grid stays composed behind the dialog")
-            assertFalse(app.onScreen("Continue Watching"), "the background is not Home")
+            assertFalse(app.onScreen(HOME_ONLY_ROW), "the background is not Home")
 
             app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.Library)
             app.frames(20)
@@ -114,20 +123,22 @@ class BrowserDetailsBackdropTest {
     @Test fun theContinueWatchingPageStaysBehindTheDialogAndKeepsItsScroll() {
         Harness(continueWatchingState()).use { app ->
             app.until("Continue Watching") { app.onScreen("In Progress 01") }
+            assertFalse(app.onScreen(HOME_ONLY_ROW), "the Continue Watching segment, not Home, is the page")
 
             app.scrollDown(1600f)
             app.until("the list scrolled") { !app.onScreen("In Progress 01") && app.visibleTitles("In Progress %02d", 30).isNotEmpty() }
-            val before = app.visibleTitles("In Progress %02d", 30)
-            assertTrue(before.isNotEmpty() && 1 !in before, "the viewer scrolled into Continue Watching: $before")
+            val before = app.scrollPosition("In Progress %02d", 30)
+            assertTrue(before.second.isNotEmpty() && 1 !in before.second, "the viewer scrolled into Continue Watching: $before")
 
             app.controller.mutable.value = app.controller.state.value.copy(
                 screen = Screen.Details, detailReturnScreen = Screen.ContinueWatching, detail = PreviewData.detail)
             app.until("the Details dialog") { app.pane("The End of Oak Street") != null }
-            assertEquals(before, app.visibleTitles("In Progress %02d", 30), "the Continue Watching page stays composed behind the dialog")
+            assertEquals(before, app.scrollPosition("In Progress %02d", 30), "the Continue Watching segment keeps its exact scroll behind the dialog")
+            assertFalse(app.onScreen(HOME_ONLY_ROW), "the background is not Home")
 
             app.controller.mutable.value = app.controller.state.value.copy(screen = Screen.ContinueWatching)
             app.frames(20)
-            assertEquals(before, app.visibleTitles("In Progress %02d", 30), "closing the dialog returns to the same scrolled position")
+            assertEquals(before, app.scrollPosition("In Progress %02d", 30), "closing the dialog returns to the same scrolled position")
         }
     }
 
@@ -145,11 +156,12 @@ class BrowserDetailsBackdropTest {
             assertNull(app.pane("The End of Oak Street"), "the first dialog is replaced, not stacked behind")
             assertEquals(before, app.visibleTitles("My List %02d", 30), "the origin page stays behind the related title")
             assertEquals(Screen.Library, app.controller.state.value.detailReturnScreen)
-            assertFalse(app.onScreen("Continue Watching"), "the background is not Home")
+            assertFalse(app.onScreen(HOME_ONLY_ROW), "the background is not Home")
         }
     }
 
     private companion object {
+        const val HOME_ONLY_ROW = "New this week"
         fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
     }
 }

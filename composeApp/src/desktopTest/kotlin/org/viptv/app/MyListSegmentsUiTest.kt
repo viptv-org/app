@@ -59,7 +59,6 @@ class MyListSegmentsUiTest {
         node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ")
     private fun subtree(node: SemanticsNode) = flat(node).map(::label).filter { it.isNotBlank() }.joinToString(" ")
     private fun clickables(scene: ImageComposeScene) = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) }
-    // A card also holds its overflow target's name, so the smallest control that reads as the name wins.
     private fun clickable(scene: ImageComposeScene, text: String) =
         clickables(scene).firstOrNull { label(it) == text }
             ?: clickables(scene).firstOrNull { subtree(it).trim() == text }
@@ -242,7 +241,6 @@ class MyListSegmentsUiTest {
     }
 }
 
-// Renders, letting the controller's own work land between frames, until the page shows what the test waits for.
 private fun renderUntil(scene: ImageComposeScene, condition: () -> Boolean) {
     val deadline = System.nanoTime() + 10_000_000_000L
     var frame = 0L
