@@ -28,7 +28,7 @@ class StartupBeforeFirstFrameTest {
 
     private inner class Host {
         val gates = Channel<Unit>(Channel.UNLIMITED)
-        val opened = java.util.concurrent.CopyOnWriteArrayList<Long>()
+        val opened = EngineRequests<Long>()
         private val client = HttpClient(MockEngine { request ->
             val path = request.url.encodedPath
             fun json(body: String) = respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
