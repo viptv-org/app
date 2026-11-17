@@ -53,9 +53,10 @@ class ShardCoverageTest(unittest.TestCase):
                               text=True, capture_output=True)
 
     def test_all_desktop_classes_are_assigned_once(self):
-        source = ROOT / "composeApp/src/desktopTest/kotlin"
         expected = {str(path.relative_to(source).with_suffix('')).replace('/', '.')
+                    for source in (ROOT / "composeApp/src" / name / "kotlin" for name in ("desktopTest", "commonTest"))
                     for path in source.rglob("*Test.kt")}
+        self.assertIn("org.viptv.app.player.SubtitleSyncTest", expected)
         assigned = []
         for index in range(12):
             result = self.shard(index)
