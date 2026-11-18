@@ -86,8 +86,8 @@ class ErrorSlateDetectTest {
         assertTrue(detector.due(62_000, clip))
         assertFalse(detector.take(62_000, clip, slate(), lowBitrate = true), "a restart still needs two samples")
         assertFalse(detector.due(62_500, clip), "the advance rule survives the restart")
-        assertFalse(detector.due(69_000, clip), "the second point is 8 s after the seek")
-        assertTrue(detector.take(70_000, clip, slate(), lowBitrate = true))
+        assertFalse(detector.due(67_000, clip), "the second point is 8 s after the seek")
+        assertTrue(detector.take(68_000, clip, slate(), lowBitrate = true))
     }
 
     @Test fun aRealEpisodeNeverReportsWhateverItsPictureDoes() {
