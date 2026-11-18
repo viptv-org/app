@@ -15,7 +15,11 @@ internal class RemotePlaybackLease(val input: PlaybackInput, val renewSeconds: L
     private val path = "/api/playback/${input.id.encodeURLPathPart()}"
     suspend fun firstFrame() { if (local != null) local.firstFrame() else if (gateway) remote.call("$path/first-frame", HttpMethod.Post, buildJsonObject {}) }
     suspend fun segments(): List<org.viptv.app.features.player.TvSkipRange> = remote.playbackSegments(input.id)
-    suspend fun renew() { if (local != null) local.renew() else remote.call("$path/heartbeat", HttpMethod.Post) }
+    suspend fun renew() {
+        val stats = input.stats.drain()
+        if (local != null) local.renew(stats)
+        else remote.withHeartbeatStats(stats) { body -> remote.call("$path/heartbeat", HttpMethod.Post, body) }
+    }
     suspend fun close() {
         try { local?.close() } finally { remote.call(path, HttpMethod.Delete) }
     }
@@ -33,6 +37,16 @@ internal class PreparedPlaybackLease(
     suspend fun release() { remote.call(path, HttpMethod.Delete) }
     suspend fun promote(replaces: String?): RemotePlaybackLease =
         remote.promotePreparedPlayback(id, profile, admission, replaces)
+}
+
+internal suspend fun <T> RemoteConnection.withHeartbeatStats(stats: JsonObject?, send: suspend (JsonObject?) -> T): T {
+    if (stats == null || heartbeatStatsRejected) return send(null)
+    return try { send(buildJsonObject { put("buffering", stats) }) }
+    catch (failure: RemoteFailure) {
+        if (failure.status != 400) throw failure
+        heartbeatStatsRejected = true
+        send(null)
+    }
 }
 
 internal class PlaybackAdmission(val request: JsonObject, val native: LocalTorrents?, val canPlayDirect: Boolean)

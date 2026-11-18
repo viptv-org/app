@@ -15,7 +15,7 @@ internal interface LocalTorrents {
 internal interface LocalTorrentPlayback {
     val mediaUrl: String
     val positionSeconds: Double
-    suspend fun renew()
+    suspend fun renew(stats: JsonObject? = null)
     suspend fun firstFrame()
     suspend fun close()
 }

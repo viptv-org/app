@@ -63,6 +63,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private var audioDecoder = "pending"
     private var videoDecoder = "pending"
     private var presented = false
+    private var seeking = false
     private var closed = false
     private var opened = false
     private var mediaTransitions = 0
@@ -82,6 +83,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             }
         }
         override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+            if (reason == Player.DISCONTINUITY_REASON_SEEK) seeking = true
             input.subtitleSync.discontinuity()
             input.diagnostics?.invoke("discontinuity_reason=$reason discontinuity_old_ms=${oldPosition.positionMs} discontinuity_new_ms=${newPosition.positionMs}")
         }
@@ -109,15 +111,20 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
                 output: Any, renderTimeMs: Long) {
                 if (!presented) {
                     presented = true
+                    stall()
                     progress()
                     emit(PlayerFact.Presentation(PresentationProof.NativeRendererPresented,
                         atNanos = renderTimeMs * 1_000_000L, exact = false))
                 }
             }
             override fun onAudioDecoderInitialized(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
-                decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long) { audioDecoder = decoderName }
+                decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long) { audioDecoder = decoderName; input.stats.decoders(null, decoderName) }
             override fun onVideoDecoderInitialized(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
-                decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long) { videoDecoder = decoderName }
+                decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long) { videoDecoder = decoderName; input.stats.decoders(decoderName, null) }
+            override fun onDroppedVideoFrames(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                droppedFrames: Int, elapsedMs: Long) = input.stats.droppedFrames(droppedFrames)
+            override fun onBandwidthEstimate(eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                totalLoadTimeMs: Int, totalBytesLoaded: Long, bitrateEstimate: Long) = input.stats.throughput(bitrateEstimate)
         })
     }
     fun open(paused: Boolean) {
@@ -143,8 +150,13 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         player.prepare()
         properties()
     }
+    private fun stall() {
+        if (player.playbackState == Player.STATE_READY) seeking = false
+        input.stats.stalled(!closed && presented && !seeking && player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
+    }
     private fun status() {
         updateSubtitleDelivery()
+        stall()
         if (closed || player.playerError != null) return
         emit(PlayerFact.Status(when (player.playbackState) {
             Player.STATE_BUFFERING -> "Buffering"
@@ -156,8 +168,11 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     fun progress() {
         if (closed || player.playbackState == Player.STATE_IDLE) return
         sampleSlate()
+        stall()
         emit(input.mediaProgress(player.currentPosition,
             player.duration.takeIf { it != C.TIME_UNSET && it > 0 }, windowOffsetMillis()))
+        input.stats.bufferedAhead(player.bufferedPosition - player.currentPosition)
+        input.stats.sourceBitrate(player.videoFormat?.bitrate?.takeIf { it != Format.NO_VALUE }?.toLong())
         // Media3 reports one buffered end: the media it holds from the playhead forward.
         if (input.live) return
         val buffered = input.mediaBuffered(listOf(BufferedRange(player.currentPosition, player.bufferedPosition)), windowOffsetMillis()).ranges
@@ -216,6 +231,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         try { when (command) {
             is PlayerCommand.Seek -> {
                 slateDetector.reset()
+                seeking = true
                 if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
                 else player.seekTo(input.mediaSeekPosition(command.positionMillis, windowOffsetMillis()))
             }
@@ -248,7 +264,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     }
     fun close() {
         if (closed) return
-        closed = true; subtitleDelivery.value = false; subtitleAnalysis.close(); player.removeListener(listener); subtitles.close()
+        closed = true; input.stats.stalled(false); subtitleDelivery.value = false; subtitleAnalysis.close(); player.removeListener(listener); subtitles.close()
         if (systemControls) AndroidMediaSessions.withdraw(application, mediaSession.session)
         mediaSession.close(); player.release(); view = null
     }

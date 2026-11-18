@@ -104,6 +104,46 @@ class RemotePlaybackTest {
         }
     }
 
+    @Test fun heartbeatCarriesBufferingStatsAndFallsBackWhenAnOlderServerRefusesABody() = runBlocking {
+        for (acceptsStats in listOf(true, false)) {
+            val heartbeats = EngineRequests<String>()
+            val client = HttpClient(MockEngine { request ->
+                if (request.url.encodedPath == "/api/playback")
+                    return@MockEngine respond("""{"id":"direct","status":"ready","delivery":{"kind":"direct","url":"https://media.example/movie.mp4"}}""",
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                val body = (request.body as? TextContent)?.text.orEmpty()
+                if (request.url.encodedPath.endsWith("/heartbeat")) heartbeats += body
+                if (!acceptsStats && body.isNotEmpty()) respond("""{"error":"invalid_playback_request"}""", HttpStatusCode.BadRequest, headersOf(HttpHeaders.ContentType, "application/json"))
+                else respond("{}", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            }) { configureTransport() }
+            val connection = RemoteConnection("https://watch.example", Store(), client, browserMode = true)
+            try {
+                val lease = connection.openPlayback(SourceCandidate("opaque", "addon:1", "Fixture"), "profile", buildJsonObject { put("can_play_direct", true) })
+                lease.renew()
+                val stats = lease.input.stats
+                stats.stalled(false)
+                stats.decoders("c2.android.avc.decoder", "c2.android.aac.decoder")
+                stats.stalled(true); stats.stalled(false)
+                stats.stalled(true); stats.stalled(false)
+                lease.renew()
+                lease.renew()
+                if (acceptsStats) {
+                    assertEquals("", heartbeats[0])
+                    val buffering = Json.parseToJsonElement(heartbeats[1]).jsonObject.getValue("buffering").jsonObject
+                    assertEquals(2, buffering.getValue("rebuffer_count").jsonPrimitive.int)
+                    assertEquals("c2.android.avc.decoder", buffering.getValue("video_decoder").jsonPrimitive.content)
+                    assertFalse(heartbeats[1].contains("media.example"))
+                    assertEquals(0, Json.parseToJsonElement(heartbeats[2]).jsonObject.getValue("buffering").jsonObject.getValue("rebuffer_count").jsonPrimitive.int)
+                } else {
+                    assertEquals(4, heartbeats.size)
+                    assertEquals("", heartbeats[0])
+                    assertTrue(heartbeats[1].startsWith("{\"buffering\""))
+                    assertEquals(listOf("", ""), heartbeats.drop(2))
+                }
+            } finally { connection.close() }
+        }
+    }
+
     private class FakeTorrents(val supported: Boolean, val failure: Exception? = null) : LocalTorrents {
         val events = mutableListOf<String>()
         var acquired: JsonObject? = null
@@ -116,7 +156,7 @@ class RemotePlaybackTest {
             return object : LocalTorrentPlayback {
                 override val mediaUrl = "http://127.0.0.1:41999/media/private"
                 override val positionSeconds = 12.5
-                override suspend fun renew() { events += "renew" }
+                override suspend fun renew(stats: JsonObject?) { events += "renew" }
                 override suspend fun firstFrame() { events += "first_frame" }
                 override suspend fun close() { events += "close" }
             }

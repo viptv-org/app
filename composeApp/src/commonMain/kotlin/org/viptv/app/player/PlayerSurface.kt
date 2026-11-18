@@ -23,6 +23,7 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     var preferences: org.viptv.app.connection.ProfilePreferences = preferences
         private set
     internal val subtitleSync = SubtitleSyncSession()
+    internal val stats = PlaybackStats()
 
     internal fun reopenAt(titlePositionMillis: Long?, preferences: org.viptv.app.connection.ProfilePreferences) {
         if (titlePositionMillis != null && !live) positionMillis = mediaSeekPosition(titlePositionMillis)

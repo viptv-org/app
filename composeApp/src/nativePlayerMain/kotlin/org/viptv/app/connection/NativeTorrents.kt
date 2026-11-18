@@ -180,11 +180,16 @@ internal class NativeTorrents(private val host: TorrentRuntimeHost) : LocalTorre
             }
         }
 
-        override suspend fun renew() {
+        override suspend fun renew(stats: JsonObject?) {
             control.withLock {
                 if (closed) throw unavailable()
-                val sent = host.elapsedMillis()
-                val (status, body) = remote.exchange("/api/playback/${id.encodeURLPathPart()}/heartbeat", HttpMethod.Post)
+                var sent = 0L
+                val (status, body) = remote.withHeartbeatStats(stats) { payload ->
+                    sent = host.elapsedMillis()
+                    remote.exchange("/api/playback/${id.encodeURLPathPart()}/heartbeat", HttpMethod.Post, payload).also { (status, _) ->
+                        if (status == 400 && payload != null) throw RemoteFailure(400, "The server refused the buffering report.")
+                    }
+                }
                 val received = host.elapsedMillis()
                 if (status != 200) throw RemoteFailure(status, "The server playback session ended. Choose the source again.")
                 accept("heartbeat", status, body, sent, received)

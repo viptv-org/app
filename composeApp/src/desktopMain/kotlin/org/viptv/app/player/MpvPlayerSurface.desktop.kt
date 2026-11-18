@@ -31,6 +31,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         val renderer = remember { MpvRenderer(session, host) { revision++ } }
         val presented = remember { AtomicBoolean(false) }
         val lastDrawn = remember { AtomicLong(0) }
+        val lastDropped = remember { AtomicLong(0) }
         val scope = rememberCoroutineScope()
         var opened by remember { mutableStateOf(false) }
         var subtitleTouched by remember { mutableStateOf(false) }
@@ -47,6 +48,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         DisposableEffect(renderer) {
             renderer.start()
             onDispose {
+                input.stats.stalled(false)
                 renderer.close()
                 subtitleFiles.forEach { it.delete() }
             }
@@ -217,6 +219,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
             else if (opened && transport.accept(state.status)) latestObserve(PlayerFact.Status(state.status))
             if (opened) state.startupFill?.let { latestObserve(PlayerFact.Startup(it)) }
             if (opened) latestObserve(input.mediaProgress(state.positionMs, state.durationMs))
+            if (opened) state.reportStats(input.stats, presented.get(), lastDropped)
             latestObserve(PlayerFact.Properties(state.volume, state.speed, state.subtitleScale))
             latestObserve(PlayerFact.Tracks(PlaybackTracks(state.audio,
                 state.subtitles.filterNot { it.id in providerIds.values } + input.providerTracks(
@@ -231,4 +234,13 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         }
         }
     }
+}
+
+private fun MpvState.reportStats(stats: PlaybackStats, presented: Boolean, lastDropped: AtomicLong) {
+    stats.stalled(presented && buffering)
+    stats.droppedFrames((dropped - lastDropped.getAndSet(dropped)).coerceIn(0, Int.MAX_VALUE.toLong()).toInt())
+    cacheAheadMs?.let(stats::bufferedAhead)
+    cacheBytesPerSecond?.let { stats.throughput(it * 8) }
+    stats.sourceBitrate(bitrate)
+    stats.decoders(if (loaded) hwdec.takeUnless { it == "no" } ?: "software" else null, audioCodec)
 }
