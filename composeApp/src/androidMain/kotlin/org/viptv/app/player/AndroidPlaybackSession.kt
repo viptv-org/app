@@ -55,7 +55,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         input.controlFailed(PlaybackControl.Track, error.controlCause(), if (chosen) ::emit else null)
     }
     // The picture the TV is showing, scaled into a 32x18 frame: one GPU capture per sample, off the main thread.
-    private val slateDetector = ErrorSlateDetector()
+    private val slateDetector = ErrorSlateDetector(input.durationMillis)
     private val slateBitmap = Bitmap.createBitmap(SlateSampleWidth, SlateSampleHeight, Bitmap.Config.ARGB_8888)
     private val slatePixels = IntArray(SlateSampleBytes)
     private var slateSampling = false
@@ -188,7 +188,8 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
     private fun sampleSlate() {
         if (slateFailures >= SLATE_SAMPLE_FAILURE_LIMIT || slateSampling || !player.playWhenReady || player.playbackState != Player.STATE_READY) return
         val position = titlePositionMillis()
-        if (!slateDetector.due(position)) return
+        val mediaDuration = player.duration.takeIf { it != C.TIME_UNSET && it > 0 }
+        if (!slateDetector.due(position, mediaDuration)) return
         val surfaceView = view?.videoSurfaceView as? SurfaceView ?: return
         slateSampling = true
         try {
@@ -198,7 +199,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
                 if (result != PixelCopy.SUCCESS) { slateFailures++; return@request }
                 slateBitmap.getPixels(slatePixels, 0, SlateSampleWidth, 0, 0, SlateSampleWidth, SlateSampleHeight)
                 val format = player.videoFormat
-                if (slateDetector.take(position, graySample(slatePixels),
+                if (slateDetector.take(position, mediaDuration, graySample(slatePixels),
                         slateLowBitrate(format?.bitrate?.toLong(), format?.width ?: 0, format?.height ?: 0))) {
                     input.diagnostics?.invoke("error_slate=probable position_ms=$position bitrate=${format?.bitrate} size=${format?.width}x${format?.height}")
                     emit(PlayerFact.ProbableErrorSlate)

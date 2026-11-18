@@ -41,7 +41,7 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
         val subtitleFiles = remember { mutableListOf<File>() }
         val requiredAudio = remember { RequiredAudioSelection(input.requiredAudioIndex) }
         val transport = remember { PlaybackTransportGate() }
-        val slateDetector = remember { ErrorSlateDetector() }
+        val slateDetector = remember { ErrorSlateDetector(input.durationMillis) }
         val slateWarm = remember { AtomicBoolean(false) }
         val candidates by input.providerSubtitles.collectAsState()
         val state by session.state.collectAsState()
@@ -73,9 +73,9 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
             // The first scaled sample costs a one-time Skia setup; spend it on the opening frame, not at 2 s.
             if (!slateWarm.get() && renderer.generation > 0 && slateWarm.compareAndSet(false, true)) renderer.graySample()
             val position = renderer.framePositionMs
-            if (slateDetector.due(position) && state.status == "Playing") renderer.graySample()?.let { sample ->
+            if (state.status == "Playing" && slateDetector.due(position, state.durationMs)) renderer.graySample()?.let { sample ->
                 val value = session.state.value
-                if (slateDetector.take(position, sample, slateLowBitrate(value.bitrate, value.width, value.height))) {
+                if (slateDetector.take(position, value.durationMs, sample, slateLowBitrate(value.bitrate, value.width, value.height))) {
                     input.diagnostics?.invoke("error_slate=probable position_ms=$position bitrate=${value.bitrate} size=${value.width}x${value.height}")
                     scope.launch { latestObserve(PlayerFact.ProbableErrorSlate) }
                 }

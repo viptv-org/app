@@ -4,11 +4,19 @@ internal const val SlateSampleWidth = 32
 internal const val SlateSampleHeight = 18
 internal const val SlateSampleBytes = SlateSampleWidth * SlateSampleHeight
 
-// About 2 s, 8 s and 20 s of the source's own clock.
+// About 2 s, 8 s and 20 s of playback after the source started or was seeked.
 internal val SlateSamplePoints = listOf(2_000L, 8_000L, 20_000L)
 
 // A sample never stands in for an earlier one: the playhead has to have moved this far since the last.
 internal const val SlateSampleAdvanceMillis = 1_000L
+
+// Provider error slates are short clips; anything longer is a real title, whatever its picture does.
+internal const val SlateMaxMediaMillis = 300_000L
+
+internal fun slateMediaEligible(mediaDurationMillis: Long?, runtimeMillis: Long?): Boolean {
+    if (mediaDurationMillis == null || mediaDurationMillis <= 0 || mediaDurationMillis > SlateMaxMediaMillis) return false
+    return runtimeMillis == null || runtimeMillis <= 0 || mediaDurationMillis * 2 < runtimeMillis
+}
 
 // Under this the stream barely needs a bit per pixel: only a still image encodes that cheaply.
 internal const val SlateLowBitratePerMegapixel = 250_000L
@@ -54,8 +62,9 @@ internal fun graySample(pixels: IntArray): ByteArray {
 
 // A source that plays one still image: every sample of the presented picture has to match, so an
 // almost-still scene never matches.
-internal class ErrorSlateDetector(private val samplePoints: List<Long> = SlateSamplePoints) {
+internal class ErrorSlateDetector(private val runtimeMillis: Long? = null, private val samplePoints: List<Long> = SlateSamplePoints) {
     private val samples = mutableListOf<ByteArray>()
+    private var startPosition: Long? = null
     private var lastPosition = Long.MIN_VALUE
     private var reported = false
 
@@ -63,20 +72,29 @@ internal class ErrorSlateDetector(private val samplePoints: List<Long> = SlateSa
 
     fun reset() {
         samples.clear()
+        startPosition = null
         lastPosition = Long.MIN_VALUE
         reported = false
     }
 
     // Cheap enough to ask every frame; building the sample is what costs.
-    fun due(positionMillis: Long): Boolean {
+    fun due(positionMillis: Long, mediaDurationMillis: Long?): Boolean {
         if (done) return false
-        if (positionMillis < samplePoints[samples.size]) return false
+        val start = startPosition
+        if (start == null || positionMillis < start) {
+            samples.clear()
+            startPosition = positionMillis
+            lastPosition = Long.MIN_VALUE
+            return false
+        }
+        if (!slateMediaEligible(mediaDurationMillis, runtimeMillis)) return false
+        if (positionMillis - start < samplePoints[samples.size]) return false
         return samples.isEmpty() || positionMillis - lastPosition >= SlateSampleAdvanceMillis
     }
 
     // Returns true once, on the sample that completes the evidence.
-    fun take(positionMillis: Long, gray: ByteArray, lowBitrate: Boolean): Boolean {
-        if (!due(positionMillis)) return false
+    fun take(positionMillis: Long, mediaDurationMillis: Long?, gray: ByteArray, lowBitrate: Boolean): Boolean {
+        if (!due(positionMillis, mediaDurationMillis)) return false
         lastPosition = positionMillis
         samples += gray
         if (samples.any { !slateSamplesMatch(it, gray) }) return false
