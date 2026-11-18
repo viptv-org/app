@@ -113,6 +113,7 @@ open class RemoteConnection(
         private set
     internal var requiredAudioIndexSupported = false
         private set
+    internal var heartbeatStatsRejected = false
     // Raised from checkStatus, not a call site: a background call that swallows the failure must still say so.
     internal var onClientUpdateRequired: (() -> Unit)? = null
     internal var onBackendReachability: ((Boolean) -> Unit)? = null
