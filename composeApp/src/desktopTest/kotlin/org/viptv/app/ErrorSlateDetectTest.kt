@@ -4,6 +4,12 @@ import org.viptv.app.player.*
 import kotlin.test.*
 
 class ErrorSlateDetectTest {
+    private val clip = 120_000L
+    private val episode = 23 * 60_000L
+
+    private fun started(at: Long = 0, runtimeMillis: Long? = null, duration: Long? = clip) =
+        ErrorSlateDetector(runtimeMillis).also { assertFalse(it.due(at, duration), "the first observation only marks where playback started") }
+
     // A dark slate with a bright caption line: what a provider's "connection expired" still looks like downscaled.
     private fun slate(shift: Int = 0): ByteArray = ByteArray(SlateSampleBytes) { index ->
         val x = index % SlateSampleWidth
@@ -25,60 +31,100 @@ class ErrorSlateDetectTest {
     }
 
     @Test fun threeIdenticalSamplesReportAProbableSlateOnTheThird() {
-        val detector = ErrorSlateDetector()
+        val detector = started()
         for ((index, position) in SlateSamplePoints.withIndex()) {
-            assertTrue(detector.due(position), "sample $index is due at $position")
-            assertEquals(index == SlateSamplePoints.lastIndex, detector.take(position, slate(), lowBitrate = false),
+            assertTrue(detector.due(position, clip), "sample $index is due at $position")
+            assertEquals(index == SlateSamplePoints.lastIndex, detector.take(position, clip, slate(), lowBitrate = false),
                 "only the third sample completes the evidence")
         }
         assertTrue(detector.done)
-        assertFalse(detector.due(30_000), "a reported source is not sampled again")
+        assertFalse(detector.due(30_000, clip), "a reported source is not sampled again")
     }
 
     @Test fun aLowBitrateSourceIsKnownFromTheSecondSample() {
-        val detector = ErrorSlateDetector()
-        assertFalse(detector.take(2_000, slate(), lowBitrate = true), "one sample is never enough")
-        assertTrue(detector.take(8_000, slate(), lowBitrate = true), "two identical samples at a still image's bitrate")
-        val patient = ErrorSlateDetector()
-        patient.take(2_000, slate(), lowBitrate = false)
-        assertFalse(patient.take(8_000, slate(), lowBitrate = false), "a normal bitrate waits for the third sample")
-        assertTrue(patient.take(20_000, slate(), lowBitrate = false))
+        val detector = started()
+        assertFalse(detector.take(2_000, clip, slate(), lowBitrate = true), "one sample is never enough")
+        assertTrue(detector.take(8_000, clip, slate(), lowBitrate = true), "two identical samples at a still image's bitrate")
+        val patient = started()
+        patient.take(2_000, clip, slate(), lowBitrate = false)
+        assertFalse(patient.take(8_000, clip, slate(), lowBitrate = false), "a normal bitrate waits for the third sample")
+        assertTrue(patient.take(20_000, clip, slate(), lowBitrate = false))
     }
 
     @Test fun aSlowSceneNeverReportsASlate() {
-        val detector = ErrorSlateDetector()
-        assertFalse(detector.take(2_000, talkingHead(4), lowBitrate = true))
-        assertFalse(detector.take(8_000, talkingHead(6), lowBitrate = true), "a moved jaw is motion, not a still")
-        assertFalse(detector.take(20_000, talkingHead(5), lowBitrate = true))
+        val detector = started()
+        assertFalse(detector.take(2_000, clip, talkingHead(4), lowBitrate = true))
+        assertFalse(detector.take(8_000, clip, talkingHead(6), lowBitrate = true), "a moved jaw is motion, not a still")
+        assertFalse(detector.take(20_000, clip, talkingHead(5), lowBitrate = true))
         assertTrue(detector.done, "the three samples are spent on a scene that is not a slate")
-        assertFalse(detector.due(25_000))
+        assertFalse(detector.due(25_000, clip))
     }
 
     @Test fun aMovingPictureNeverReportsASlate() {
-        val detector = ErrorSlateDetector()
-        assertFalse(detector.take(2_000, movingFrame(1), lowBitrate = true))
-        assertFalse(detector.take(8_000, movingFrame(2), lowBitrate = true))
-        assertFalse(detector.take(20_000, movingFrame(3), lowBitrate = true))
+        val detector = started()
+        assertFalse(detector.take(2_000, clip, movingFrame(1), lowBitrate = true))
+        assertFalse(detector.take(8_000, clip, movingFrame(2), lowBitrate = true))
+        assertFalse(detector.take(20_000, clip, movingFrame(3), lowBitrate = true))
     }
 
     @Test fun aSampleIsSkippedRatherThanTakenEarly() {
-        val detector = ErrorSlateDetector()
-        assertFalse(detector.due(1_500), "nothing is sampled before the first point")
-        assertFalse(detector.take(2_000, slate(), lowBitrate = false), "one sample is never enough")
-        assertFalse(detector.due(2_500), "the playhead has not advanced a second since the last sample")
-        assertFalse(detector.take(2_500, slate(), lowBitrate = true), "a sample that cannot be taken is not recorded")
-        assertTrue(detector.due(8_000))
-        assertTrue(detector.take(8_000, slate(), lowBitrate = true), "the second sample still fires on a low bitrate")
+        val detector = started()
+        assertFalse(detector.due(1_500, clip), "nothing is sampled before the first point")
+        assertFalse(detector.take(2_000, clip, slate(), lowBitrate = false), "one sample is never enough")
+        assertFalse(detector.due(2_500, clip), "the playhead has not advanced a second since the last sample")
+        assertFalse(detector.take(2_500, clip, slate(), lowBitrate = true), "a sample that cannot be taken is not recorded")
+        assertTrue(detector.due(8_000, clip))
+        assertTrue(detector.take(8_000, clip, slate(), lowBitrate = true), "the second sample still fires on a low bitrate")
     }
 
     @Test fun aSeekStartsTheEvidenceAgain() {
-        val detector = ErrorSlateDetector()
-        detector.take(2_000, slate(), lowBitrate = false)
+        val detector = started()
+        detector.take(2_000, clip, slate(), lowBitrate = false)
         detector.reset()
-        assertTrue(detector.due(600_000), "after a seek the first sample is due again")
-        assertFalse(detector.take(600_000, slate(), lowBitrate = true), "a restart still needs two samples")
-        assertFalse(detector.due(600_500), "the advance rule survives the restart")
-        assertTrue(detector.take(601_000, slate(), lowBitrate = true))
+        assertFalse(detector.due(60_000, clip), "after a seek the clock starts where playback resumed")
+        assertFalse(detector.due(61_000, clip), "one second after the seek is not two")
+        assertTrue(detector.due(62_000, clip))
+        assertFalse(detector.take(62_000, clip, slate(), lowBitrate = true), "a restart still needs two samples")
+        assertFalse(detector.due(62_500, clip), "the advance rule survives the restart")
+        assertFalse(detector.due(69_000, clip), "the second point is 8 s after the seek")
+        assertTrue(detector.take(70_000, clip, slate(), lowBitrate = true))
+    }
+
+    @Test fun aRealEpisodeNeverReportsWhateverItsPictureDoes() {
+        for (open in listOf(0L, 160_000L)) {
+            val detector = started(open, duration = episode)
+            for (point in SlateSamplePoints) {
+                assertFalse(detector.due(open + point, episode), "a 23-minute media opened at $open is never sampled")
+                assertFalse(detector.take(open + point, episode, slate(), lowBitrate = true))
+            }
+            detector.reset()
+            assertFalse(detector.due(400_000, episode))
+            for (point in SlateSamplePoints) assertFalse(detector.take(400_000 + point, episode, slate(), lowBitrate = true), "nor after a seek")
+        }
+    }
+
+    @Test fun aResumedSourceSamplesFromWherePlaybackStarted() {
+        val detector = started(160_000)
+        assertFalse(detector.due(161_000, clip), "every point lies ahead of where this source started")
+        assertTrue(detector.due(162_000, clip))
+    }
+
+    @Test fun anUnknownOrLongMediaIsNeverSampled() {
+        val unknown = started(duration = null)
+        for (point in SlateSamplePoints) assertFalse(unknown.take(point, null, slate(), lowBitrate = true))
+        assertFalse(slateMediaEligible(null, null))
+        assertFalse(slateMediaEligible(0, null))
+        assertTrue(slateMediaEligible(SlateMaxMediaMillis, null))
+        assertFalse(slateMediaEligible(SlateMaxMediaMillis + 1, null))
+        assertTrue(slateMediaEligible(clip, episode), "a slate is well under the episode it stands in for")
+        assertFalse(slateMediaEligible(clip, 200_000), "a short title is not half again its own length")
+    }
+
+    @Test fun aSlateAgainstAKnownRuntimeStillReports() {
+        val detector = started(runtimeMillis = episode)
+        assertFalse(detector.take(2_000, clip, slate(), lowBitrate = false))
+        assertFalse(detector.take(8_000, clip, slate(), lowBitrate = false))
+        assertTrue(detector.take(20_000, clip, slate(), lowBitrate = false))
     }
 
     @Test fun encoderNoiseToleranceStopsAtTwoLevels() {
@@ -111,11 +157,11 @@ class ErrorSlateDetectTest {
     }
 
     @Test fun aCopyOfTheStateIsNeverShared() {
-        val detector = ErrorSlateDetector()
+        val detector = started()
         val frame = slate()
-        detector.take(2_000, frame, lowBitrate = false)
+        detector.take(2_000, clip, frame, lowBitrate = false)
         frame.fill(0)
-        assertFalse(detector.take(8_000, slate(), lowBitrate = true), "the recorded sample still describes the picture it was taken from")
+        assertFalse(detector.take(8_000, clip, slate(), lowBitrate = true), "the recorded sample still describes the picture it was taken from")
     }
 
     @Test fun theGrayscaleSampleReadsTheGreenChannelMost() {

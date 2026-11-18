@@ -50,11 +50,12 @@ class ErrorSlateClipTest {
             val deadline = System.nanoTime() + 20_000_000_000L
             while (!detector.done && System.nanoTime() < deadline) {
                 val position = ((number(session, "time-pos") ?: 0.0) * 1000).toLong()
-                if (!detector.due(position)) { Thread.sleep(2); continue }
+                val duration = number(session, "duration")?.let { (it * 1000).toLong() }
+                if (!detector.due(position, duration)) { Thread.sleep(2); continue }
                 val gray = render(context)
                 if (gray == null) { Thread.sleep(2); continue }
                 sampled = true
-                if (detector.take(position, gray, lowBitrate = false)) reported = true
+                if (detector.take(position, duration, gray, lowBitrate = false)) reported = true
             }
             assertTrue(detector.done, "all three samples of $url")
         } finally {
