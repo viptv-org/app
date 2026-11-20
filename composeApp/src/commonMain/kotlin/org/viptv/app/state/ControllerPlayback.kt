@@ -20,6 +20,7 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
 internal fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean, choice: SourceChoice) {
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
     if (!beginPendingSource(source)) return
+    cancelSeekReopen()
     val restart = restartRequested
     restartRequested = false
     clearBestMatchSession()
@@ -27,10 +28,13 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 }
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
-    pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None) {
+    pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None, retryFullCapacity: Boolean = false) {
     updateState { next -> next.copy(playingSource = source, openingSource = source) }
     run {
-        try { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
+        try {
+            if (retryFullCapacity) retryingFullCapacity { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
+            else openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice)
+        }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
             if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen) startFailed(PlaybackFailure.Failed)
@@ -80,11 +84,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title, startChosen = positionMillis != null,
-        remoteSeek = if (lease?.reopensForSeek == true) { target ->
-            if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
-                saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
-            }
-        } else null,
+        remoteSeek = if (lease?.reopensForSeek == true) seekByReopening(source, profile) else null,
         subtitleContent = { id ->
             // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
             if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
@@ -136,11 +136,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
         timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title,
-        remoteSeek = if (lease.reopensForSeek) { target ->
-            if (mutable.value.playingSource?.id == source.id && mutable.value.selectedProfile == profile) {
-                saveProgress(false); openSource(source, forceGateway = true, positionMillis = target, pausedAfterOpen = mutable.value.paused)
-            }
-        } else null,
+        remoteSeek = if (lease.reopensForSeek) seekByReopening(source, profile) else null,
         subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray() })
     remotePlayback = lease
     CrashFacts.playbackAttempt = playbackAttempt(source, if (lease.gateway) "gateway" else "direct")
@@ -296,6 +292,7 @@ internal fun ApplicationController.cancelPlaybackStall() {
 }
 
 fun ApplicationController.closePlayer() {
+    cancelSeekReopen()
     job?.cancel()
     playbackSegmentsJob?.cancel()
     startDeadlineJob?.cancel(); startDeadlineJob = null

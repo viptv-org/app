@@ -26,6 +26,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
     internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L),
+    internal val seekReopenSettleMillis: Long = 700L,
+    internal val seekCapacityRetryDelays: List<Long> = listOf(500L, 1_000L, 1_500L, 2_000L),
     internal val launchOrigin: () -> String? = ::browserOrigin) {
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
@@ -72,6 +74,8 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var livePlaybackChannel: String? = null
     internal var tracking: PlaybackTracking? = null
     internal var playbackRenewal: Job? = null
+    internal var seekReopenSettle: Job? = null
+    internal var seekReopenOpen: Job? = null
     internal var leaseOpener: PlaybackLeaseOpener = PlaybackLeaseOpener.Server
     internal var resumeAfterRenewal: org.viptv.app.player.PlaybackInput? = null
     internal val inFront = MutableStateFlow(true)
