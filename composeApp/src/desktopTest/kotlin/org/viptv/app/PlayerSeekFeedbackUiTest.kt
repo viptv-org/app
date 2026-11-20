@@ -68,6 +68,20 @@ class PlayerSeekFeedbackUiTest {
         }
     }
 
+    @Test fun everySkipPressShowsItsTargetInTheFrameOfThePress() {
+        val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
+        scene(facts) { scene ->
+            frames(scene)
+            repeat(10) { press ->
+                seekAhead(scene)
+                scene.render((20 + press) * 16_666_667L).close()
+                val target = playbackTime(120_000L + (press + 1) * 10_000L)
+                assertTrue(nodes(scene).any { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == target } == true },
+                    "press ${press + 1} shows $target on the timeline")
+            }
+        }
+    }
+
     private fun scene(facts: MutableSharedFlow<PlayerFact>, body: (ImageComposeScene) -> Unit) {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
             PlayerScreen(null, true, null, {}, {}, {}, phone = true, preview = PlayerFact.Progress(120_000, 600_000),
