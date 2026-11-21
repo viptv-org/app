@@ -25,6 +25,7 @@ class PlaybackOffsets internal constructor(initial: TimingOffsets, private val s
     private val mutable = MutableStateFlow(TimingOffsets(clampOffset(initial.audioUs), clampOffset(initial.subtitleUs)))
     val state = mutable.asStateFlow()
     val remembered: TimingOffsets = mutable.value
+    internal var changed: ((TimingOffsets) -> Unit)? = null
     private val support = MutableStateFlow(OffsetSupport())
     val supported = support.asStateFlow()
 
@@ -35,23 +36,29 @@ class PlaybackOffsets internal constructor(initial: TimingOffsets, private val s
 
     fun supports(audio: Boolean, subtitles: Boolean) { support.value = OffsetSupport(audio, subtitles) }
 
-    fun shiftAudio(deltaUs: Long) { mutable.value = mutable.value.copy(audioUs = clampOffset(mutable.value.audioUs + deltaUs)) }
+    private fun update(next: TimingOffsets) {
+        if (next == mutable.value) return
+        mutable.value = next
+        changed?.invoke(next)
+    }
 
-    fun resetAudio() { mutable.value = mutable.value.copy(audioUs = 0) }
+    fun shiftAudio(deltaUs: Long) = update(mutable.value.copy(audioUs = clampOffset(mutable.value.audioUs + deltaUs)))
+
+    fun resetAudio() = update(mutable.value.copy(audioUs = 0))
 
     fun shiftSubtitle(deltaUs: Long) {
         val next = clampOffset(mutable.value.subtitleUs + deltaUs)
-        mutable.value = mutable.value.copy(subtitleUs = next)
+        update(mutable.value.copy(subtitleUs = next))
         subtitleSync.manualDelay(next)
     }
 
     fun resetSubtitle() {
-        mutable.value = mutable.value.copy(subtitleUs = 0)
+        update(mutable.value.copy(subtitleUs = 0))
         subtitleSync.resetTiming()
     }
 
     internal fun automaticSubtitleTiming(enabled: Boolean) {
-        if (enabled) mutable.value = mutable.value.copy(subtitleUs = 0)
+        if (enabled) update(mutable.value.copy(subtitleUs = 0))
         subtitleSync.setAutomatic(enabled)
     }
 }
