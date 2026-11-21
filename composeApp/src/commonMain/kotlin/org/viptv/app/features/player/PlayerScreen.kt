@@ -56,16 +56,17 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     externalFacts: Flow<PlayerFact> = emptyFlow(),
     openSettings: (() -> Unit)? = null,
     autoplayNext: Boolean = false, reduceMotion: Boolean = false, startup: StartupProgress? = null,
-    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, nextSource: (() -> Unit)? = null,
+    fallback: PlayerFallbackNotice? = null, stopFallback: (() -> Unit)? = null, audioNotice: String? = null, dismissAudioNotice: () -> Unit = {}, nextSource: (() -> Unit)? = null,
     slateProvider: String? = null, configureSource: (() -> Unit)? = null,
     preferences: ProfilePreferences? = null, updatePreferences: (ProfilePreferences) -> Unit = {},
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null,
     failure: PlaybackFailure? = null, failedSource: String? = null) {
+    val shownAudioNotice = visibleAudioNotice(audioNotice, dismissAudioNotice)
     if (television) {
         TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
-            fallback = fallback, stopFallback = stopFallback, audioNotice = audioNotice, nextSource = nextSource,
+            fallback = fallback, stopFallback = stopFallback, audioNotice = shownAudioNotice, nextSource = nextSource,
             slateProvider = slateProvider, configureSource = configureSource,
             failure = failure, failedSource = failedSource, startup = startup)
         return
@@ -358,7 +359,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 }
                 if (!stopped && slateNotice && phonePanel == null && !showTracks)
                     PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
-                else if (!stopped) audioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
+                else if (!stopped) shownAudioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 val skippedNotice = autoSkip.notice
                 if (!locked && phonePanel == null && !showTracks && !failed && error == null) {
                     val promptBottom = maxOf(panelBottomInset, 104.dp)
