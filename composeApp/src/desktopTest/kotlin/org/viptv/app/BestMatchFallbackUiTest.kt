@@ -1,5 +1,8 @@
 package org.viptv.app
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.semantics.*
@@ -75,6 +78,33 @@ class BestMatchFallbackUiTest {
             click(scene, "Next source")
             assertEquals(1, next)
         } finally { scene.close() }
+    }
+
+    @Test fun theNoAudioNoticeHidesByItselfAfterSixSecondsOnPhoneAndTelevision() {
+        for (television in listOf(false, true)) {
+            var notice by mutableStateOf<String?>("This source has no English audio.")
+            var dismissed = 0
+            val scene = ImageComposeScene(if (television) 1920 else 390, if (television) 1080 else 844, Density(1f)) {
+                ViptvTheme(television = television) {
+                    PlayerScreen(null, false, null, {}, {}, {}, title = title, phone = !television, television = television,
+                        audioNotice = notice, dismissAudioNotice = { dismissed++; notice = null }, nextSource = {})
+                }
+            }
+            try {
+                var frame = 0L
+                fun advance(millis: Long) = repeat((millis / 100).toInt()) { scene.render(frame).close(); frame += 100_000_000L }
+                advance(1_000)
+                assertTrue(nodes(scene).any { text(it) == "This source has no English audio." }, "shown first (tv=$television)")
+                advance(4_000)
+                assertTrue(nodes(scene).any { text(it) == "This source has no English audio." }, "still up after 5 s (tv=$television)")
+                advance(2_000)
+                assertFalse(nodes(scene).any { text(it) == "This source has no English audio." }, "gone after 6 s (tv=$television)")
+                assertFalse(nodes(scene).any { text(it) == "Next source" }, "its action leaves with it (tv=$television)")
+                assertEquals(1, dismissed, "the controller hears once (tv=$television)")
+                advance(10_000)
+                assertFalse(nodes(scene).any { text(it) == "This source has no English audio." }, "stays gone (tv=$television)")
+            } finally { scene.close() }
+        }
     }
 
     private fun frames(scene: ImageComposeScene, start: Int = 0) = repeat(16) { scene.render((start + it) * 16_666_667L).close() }

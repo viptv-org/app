@@ -169,11 +169,8 @@ internal class Media3ProviderSubtitles(private val player: ExoPlayer, private va
     fun prefetch(values: List<SubtitleCandidate>) {
         if (closed || input.preferences.subtitleMode == "never") return
         val preferred = input.preferences.preferred_subtitle_language ?: return
-        val wanted = canonicalLanguageTag(preferred)
         for (candidate in values) {
-            if (candidate.id in cache) continue
-            val language = canonicalLanguageTag(candidate.language)
-            if (language != wanted && language.substringBefore('-') != wanted.substringBefore('-')) continue
+            if (candidate.id in cache || !sameLanguage(candidate.language, preferred)) continue
             scope.launch {
                 try {
                     val parsed = loadSidecar(candidate.id)

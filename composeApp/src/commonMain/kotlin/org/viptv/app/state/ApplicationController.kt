@@ -117,6 +117,7 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var presentedPlayback: PresentedPlayback? = null
     internal var fallbackJob: Job? = null
     internal var startDeadlineJob: Job? = null
+    internal var audioNoticeDismissed: Any? = null
     internal var playbackStall: Job? = null
     internal var playbackStallPosition = 0L
     internal var playbackWaiting = false

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.*
 import org.viptv.app.components.Button
 import org.viptv.app.components.TvAction
+import org.viptv.app.components.frameDelay
 import org.viptv.app.features.sources.sourceTags
 import org.viptv.app.features.sources.providerLabel
 import org.viptv.app.features.sources.qualityLabel
@@ -38,6 +39,21 @@ internal fun PlayerFallbackPage(notice: PlayerFallbackNotice, stop: (() -> Unit)
     insets: WindowInsets = WindowInsets(0, 0, 0, 0)) {
     PlayerFailurePage(style, notice.message, description = listOfNotNull(notice.nextLabel, notice.nextFacts).joinToString(" \u00b7 "),
         primary = stop?.let { PlayerFailureAction("Stop", null, it) }, insets = insets)
+}
+
+internal const val audioNoticeMillis = 6_000L
+
+@Composable
+internal fun visibleAudioNotice(notice: String?, dismiss: () -> Unit): String? {
+    var expired by remember(notice) { mutableStateOf(false) }
+    val currentDismiss by rememberUpdatedState(dismiss)
+    LaunchedEffect(notice) {
+        if (notice == null) return@LaunchedEffect
+        frameDelay(audioNoticeMillis)
+        expired = true
+        currentDismiss()
+    }
+    return notice.takeUnless { expired }
 }
 
 @Composable

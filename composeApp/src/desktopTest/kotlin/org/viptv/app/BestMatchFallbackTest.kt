@@ -35,6 +35,7 @@ class BestMatchFallbackTest {
     }
 
     private fun fallback(rows: List<SourceCandidate>, startDeadlineMillis: Long = 60_000,
+        preferences: ProfilePreferences = ProfilePreferences(source_selection = "best"),
         check: suspend (ApplicationController, Fallback) -> Unit) = runTest {
         val fixture = LocalSetupFixture()
         val fake = Fallback(fixture, rows)
@@ -44,7 +45,7 @@ class BestMatchFallbackTest {
         controller.capability = { DeviceCapability() }
         controller.local = fake.device
         controller.mutable.value = ApplicationState(screen = Screen.Details, selectedProfile = "default", localMode = true, detail = DetailSnapshot(movie, episodes = emptyList()),
-            preferences = PreferencesSnapshot(preferences = ProfilePreferences(source_selection = "best")))
+            preferences = PreferencesSnapshot(preferences = preferences))
         try {
             controller.playTitle(movie)
             withTimeout(5000) { controller.state.first { it.playback != null } }
@@ -198,6 +199,29 @@ class BestMatchFallbackTest {
         assertNull(missingAudioNotice("EN-gb", tracks))
         assertNull(missingAudioNotice(null, tracks), "Original language is unknown to the client")
         assertNull(missingAudioNotice("fr", org.viptv.app.player.PlaybackTracks()), "Tracks without languages prove nothing")
+    }
+
+    @Test fun aDismissedNoAudioNoticeStaysGoneForThatPlayback() =
+        fallback(listOf(row("a"), row("b")), preferences = ProfilePreferences(source_selection = "best", preferred_audio_language = "eng")) { controller, _ ->
+            val japanese = org.viptv.app.player.PlayerFact.Tracks(org.viptv.app.player.PlaybackTracks(audio = listOf(
+                org.viptv.app.player.PlaybackTrack(1, "Japanese", true, "jpn"))))
+            controller.observePlayback(japanese)
+            assertEquals("This source has no English audio.", controller.state.value.audioNotice)
+            controller.dismissAudioNotice()
+            assertNull(controller.state.value.audioNotice)
+            controller.observePlayback(japanese)
+            assertNull(controller.state.value.audioNotice, "Later track reports do not bring it back")
+        }
+
+    @Test fun theNoAudioNoticeReadsEveryFormOfTheLanguageAndNeedsEveryTrackKnown() {
+        fun tracks(vararg languages: String?) = org.viptv.app.player.PlaybackTracks(audio = languages.mapIndexed { index, language ->
+            org.viptv.app.player.PlaybackTrack(index, "Track $index", index == 0, language) })
+        for (preference in listOf("eng", "en", "English")) {
+            for (reported in listOf(tracks("en"), tracks("eng"), tracks("jpn", "eng"))) assertNull(missingAudioNotice(preference, reported), "$preference $reported")
+            assertEquals("This source has no English audio.", missingAudioNotice(preference, tracks("jpn")), preference)
+            assertNull(missingAudioNotice(preference, tracks("jpn", "und")), "An undetermined track may be English")
+            assertNull(missingAudioNotice(preference, tracks("jpn", null)), "An untagged track may be English")
+        }
     }
 
     @Test fun failedRowsKeepTheirRankedPositionsAndGroups() {

@@ -44,6 +44,20 @@ class AnimeSubtitleTracksTest {
         assertEquals(1, subtitleModeChoice("foreign", "en", "en", "eng", tracks)?.key, "A dub starts Signs & Songs")
     }
 
+    @Test fun subtitleModeAndSignsChoicesReadEngAndEnAlike() {
+        val tracks = listOf(SubtitleModeTrack(1, "en", forced = true, name = "Signs & Songs", default = true),
+            SubtitleModeTrack(2, "en", name = "Full Subtitles"))
+        val embedded = listOf(track(1, "Signs & Songs", forced = true, language = "en"), track(2, "Full Subtitles", language = "en"))
+        for (preference in listOf("eng", "en", "English")) {
+            assertEquals(2, subtitleModeChoice("foreign", preference, preference, "jpn", tracks)?.key, preference)
+            assertEquals(1, subtitleModeChoice("foreign", preference, preference, "eng", tracks)?.key, preference)
+            assertEquals(1, dubSignsSubtitle(embedded, "foreign", preference, preference, "en-US"), preference)
+            assertNull(dubSignsSubtitle(embedded, "foreign", preference, preference, "jpn"), preference)
+            assertEquals(2, fullDialogueSubtitle(embedded, preference), preference)
+            assertFalse(subtitleModeEnabled("foreign", preference, "eng"), preference)
+        }
+    }
+
     @Test fun aDubStartsTheSignsTrackAndForeignAudioTheFullOne() {
         val tracks = listOf(track(1, "Signs & Songs", forced = true, default = true), track(2, "Full Subtitles"))
         assertEquals(1, dubSignsSubtitle(tracks, "foreign", "en", "en", "eng"))

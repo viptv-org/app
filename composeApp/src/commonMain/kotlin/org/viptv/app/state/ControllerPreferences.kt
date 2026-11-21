@@ -4,7 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.viptv.app.connection.*
 import org.viptv.app.player.PlaybackTrackKind
-import org.viptv.app.player.canonicalLanguageTag
+import org.viptv.app.player.languageTag
 
 internal suspend fun ApplicationController.loadPreferences(owner: AddonOperationOwner? = null) {
     owner?.requireCurrent(this)
@@ -64,7 +64,7 @@ internal fun ApplicationState.withPreferences(snapshot: PreferencesSnapshot): Ap
 fun ApplicationController.rememberTrackChoice(kind: PlaybackTrackKind, language: String?) {
     val snapshot = mutable.value.preferences ?: return
     val current = snapshot.preferences
-    val tag = language?.takeIf(String::isNotBlank)?.let(::canonicalLanguageTag)
+    val tag = language?.takeIf(String::isNotBlank)?.let { languageTag(it) ?: return }
     val updated = when (kind) {
         PlaybackTrackKind.Audio -> current.copy(preferred_audio_language = tag)
         PlaybackTrackKind.Subtitle -> when {

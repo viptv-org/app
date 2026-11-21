@@ -59,9 +59,16 @@ fun ApplicationController.playNextSource() {
 
 internal fun ApplicationController.noticeMissingAudio(tracks: PlaybackTracks) {
     val state = mutable.value
-    if (state.audioNotice != null) return
+    if (state.audioNotice != null || audioNoticeDismissed === state.playback) return
     val notice = missingAudioNotice(state.playback?.preferences?.preferred_audio_language, tracks) ?: return
     updateState { it.copy(audioNotice = notice) }
+}
+
+fun ApplicationController.dismissAudioNotice() {
+    val state = mutable.value
+    if (state.audioNotice == null) return
+    audioNoticeDismissed = state.playback
+    updateState { it.copy(audioNotice = null) }
 }
 
 internal fun ApplicationController.armStartDeadline(input: org.viptv.app.player.PlaybackInput, source: SourceCandidate) {

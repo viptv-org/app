@@ -78,7 +78,8 @@ class PlaybackPreferenceMappingTest {
         assertEquals(listOf("Always", "When audio isn’t French", "Never"), subtitleModeChoices("fr").map { it.second })
         assertEquals("When audio isn’t English", subtitleModeLabel("foreign", null))
         assertEquals("When audio isn’t English", subtitleModeLabel("foreign", "en-US"))
-        assertEquals("When audio isn’t ja", subtitleModeLabel("foreign", "ja"))
+        assertEquals("When audio isn’t Japanese", subtitleModeLabel("foreign", "jpn"))
+        assertEquals("When audio isn’t tlh", subtitleModeLabel("foreign", "tlh"))
         listOf("always", "foreign", "never").forEach { assertEquals(it, subtitleModeValue(subtitleModeLabel(it, "es"))) }
         assertEquals("When audio isn’t English", subtitleModeLabel("foreign", ProfilePreferences().tvSettings().audioLanguageTag()))
     }
@@ -142,9 +143,9 @@ class PlaybackPreferenceMappingTest {
     }
 
     @Test fun languageMatchingAcceptsCodesAndNames() {
-        listOf("en", "eng", "en-US", "en_GB", "English", "ENGLISH").forEach { assertEquals("en", subtitleModeLanguage(it), it) }
-        assertEquals("ja", subtitleModeLanguage("jpn")); assertEquals("pt", subtitleModeLanguage("pt-BR"))
-        assertEquals("tlh", subtitleModeLanguage("tlh"))
-        listOf(null, "", " ", "und", "mul", "zxx").forEach { assertNull(subtitleModeLanguage(it), "$it") }
+        listOf("en", "eng", "en-US", "en_GB", "English", "ENGLISH").forEach { assertEquals("en", languageCode(it), it) }
+        assertEquals("ja", languageCode("jpn")); assertEquals("pt", languageCode("pt-BR"))
+        assertEquals("tlh", languageCode("tlh"))
+        listOf(null, "", " ", "und", "mul", "zxx").forEach { assertNull(languageCode(it), "$it") }
     }
 }

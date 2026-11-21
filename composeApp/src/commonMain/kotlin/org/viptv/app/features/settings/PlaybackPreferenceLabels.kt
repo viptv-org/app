@@ -1,5 +1,7 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.player.languageName
+
 internal val hdrPreferenceChoices = listOf("any" to "No preference", "prefer" to "Prefer", "avoid" to "Avoid")
 
 internal fun hdrPreferenceLabel(value: String): String = hdrPreferenceChoices.firstOrNull { it.first == value }?.second ?: "No preference"
@@ -11,20 +13,12 @@ internal fun tvQualityChoice(quality: String): String = if (quality == "Auto" ||
 internal fun qualityLabel(height: Int?, deviceHeight: Int?): String =
     height?.let { if (it == 2160) "4K" else "${it}p" } ?: org.viptv.app.connection.autoQualityLabel(deviceHeight)
 
-internal fun preferredAudioName(tag: String?): String = when (tag?.lowercase()?.substringBefore('-')) {
-    null, "" -> "English"
-    "en" -> "English"; "es" -> "Spanish"; "pt" -> "Portuguese"; "fr" -> "French"; "de" -> "German"
-    else -> tag
-}
+internal fun preferredAudioName(tag: String?): String = languageName(tag) ?: tag?.takeIf(String::isNotBlank) ?: "English"
 
 internal val languageChoices: List<Pair<String, String>> = listOf(
-    "en" to "English", "es" to "Spanish", "pt" to "Portuguese", "fr" to "French", "de" to "German",
-    "it" to "Italian", "ja" to "Japanese", "ko" to "Korean", "zh" to "Chinese", "ru" to "Russian",
-    "nl" to "Dutch", "pl" to "Polish", "tr" to "Turkish", "sv" to "Swedish", "da" to "Danish",
-    "no" to "Norwegian", "fi" to "Finnish", "cs" to "Czech", "uk" to "Ukrainian", "ar" to "Arabic",
-    "hi" to "Hindi", "he" to "Hebrew", "el" to "Greek", "hu" to "Hungarian", "ro" to "Romanian",
-    "th" to "Thai", "vi" to "Vietnamese", "id" to "Indonesian", "ta" to "Tamil", "te" to "Telugu",
-)
+    "en", "es", "pt", "fr", "de", "it", "ja", "ko", "zh", "ru", "nl", "pl", "tr", "sv", "da",
+    "no", "fi", "cs", "uk", "ar", "hi", "he", "el", "hu", "ro", "th", "vi", "id", "ta", "te",
+).map { it to (languageName(it) ?: it) }
 
 internal fun languageOptionLabel(name: String, tag: String): String = "$name ($tag)"
 
