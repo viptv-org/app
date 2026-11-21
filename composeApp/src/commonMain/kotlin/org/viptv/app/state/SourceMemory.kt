@@ -7,6 +7,8 @@ import kotlinx.serialization.json.Json
 import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.connection.RankedSources
 import org.viptv.app.connection.failsHardFilter
+import org.viptv.app.player.TimingOffsets
+import org.viptv.app.player.clampOffset
 import org.viptv.app.player.languageCode
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
@@ -22,12 +24,16 @@ internal data class RememberedSource(
 )
 
 @Serializable
+internal data class RememberedOffsets(val audio_us: Long = 0, val subtitle_us: Long = 0)
+
+@Serializable
 internal data class SourceMemoryRecord(
     val entries: Map<String, RememberedSource> = emptyMap(),
     val across: Set<String> = emptySet(),
     val crossTitle: Map<String, RememberedSource> = emptyMap(),
     val lastManual: Map<String, RememberedSource> = emptyMap(),
     val affinity: Map<String, String> = emptyMap(),
+    val offsets: Map<String, RememberedOffsets> = emptyMap(),
 )
 
 internal interface SourceMemoryStore {
@@ -103,6 +109,7 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
         while (encoded.length > MAX_RECORD_LENGTH) {
             record = when {
                 record.entries.isNotEmpty() -> record.copy(entries = record.entries - record.entries.keys.first())
+                record.offsets.isNotEmpty() -> record.copy(offsets = record.offsets - record.offsets.keys.first())
                 record.lastManual.isNotEmpty() -> record.copy(lastManual = record.lastManual - record.lastManual.keys.first())
                 record.crossTitle.isNotEmpty() -> record.copy(crossTitle = record.crossTitle - record.crossTitle.keys.first())
                 else -> break
@@ -142,6 +149,19 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
         persist()
     }
 
+    fun offsets(profile: String, source: SourceCandidate): TimingOffsets =
+        releaseKey(profile, source)?.let(record.offsets::get)?.let { TimingOffsets(it.audio_us, it.subtitle_us) } ?: TimingOffsets()
+
+    fun rememberOffsets(profile: String, source: SourceCandidate, value: TimingOffsets) {
+        val key = releaseKey(profile, source) ?: return
+        val remembered = RememberedOffsets(clampOffset(value.audioUs), clampOffset(value.subtitleUs))
+        if (record.offsets[key] == remembered.takeUnless { it == RememberedOffsets() }) return
+        val merged = record.offsets - key + if (remembered == RememberedOffsets()) emptyMap() else mapOf(key to remembered)
+        record = record.copy(offsets = if (merged.size <= MAX_OFFSETS) merged
+            else merged.entries.drop(merged.size - MAX_OFFSETS).associate { it.key to it.value })
+        persist()
+    }
+
     fun forget(profile: String, card: Card) {
         val key = sourceMemoryKey(profile, card)
         if (key !in record.entries) return
@@ -150,7 +170,8 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
     }
 
     companion object {
-        const val MAX_RECORD_LENGTH = 8_000
+        const val MAX_RECORD_LENGTH = 16_000
+        const val MAX_OFFSETS = 48
         const val MAX_ENTRIES = 200
         const val MAX_LANGUAGES = 8
         const val MAX_PROFILES = 16
@@ -195,5 +216,17 @@ internal fun ApplicationController.rememberSourceChoice() {
 }
 
 internal fun RememberedSource.wire() = org.viptv.app.connection.SourceReuseMemory(provider_id, languages, provider_name, source_id)
+
+internal fun releaseKey(profile: String, source: SourceCandidate): String? {
+    if (profile.isEmpty()) return null
+    val binge = source.binge_group?.takeIf { it.durableSourceText() }
+    val provider = source.provider_id.takeIf { it.durableSourceText() }
+    val fingerprint = source.source_fingerprint?.takeIf { it.durableSourceText() }
+    return when {
+        binge != null && provider != null -> "$profile\u001Fbinge\u001F$provider\u001F$binge"
+        fingerprint != null -> "$profile\u001Ffile\u001F$fingerprint"
+        else -> null
+    }
+}
 
 private fun String.durableSourceText(): Boolean = isNotBlank() && length <= 256 && !contains("://") && none { it.isISOControl() }

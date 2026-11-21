@@ -107,6 +107,17 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
             } catch (error: CancellationException) { throw error }
             catch (error: Exception) { input.controlFailed(PlaybackControl.PlayPause, error.controlCause(), latestObserve) }
         }
+        LaunchedEffect(session) { input.offsets.supports(audio = true, subtitles = true) }
+        LaunchedEffect(opened, session) {
+            if (!opened) return@LaunchedEffect
+            input.offsets.state.collect { offsets ->
+                try {
+                    session.property("audio-delay", (offsets.audioUs / 1_000_000.0).toString())
+                    session.property("sub-delay", (offsets.subtitleUs / 1_000_000.0).toString())
+                } catch (error: CancellationException) { throw error }
+                catch (error: Exception) { input.controlFailed(PlaybackControl.Sync, error.controlCause(), latestObserve) }
+            }
+        }
         var fillSettled by remember { mutableStateOf(false) }
         LaunchedEffect(opened, fill) {
             if (!opened) return@LaunchedEffect

@@ -88,6 +88,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     val rendering = input ?: retainedInput
     var showTracks by remember(if (phone) playbackKey else Unit) { mutableStateOf(false) }
     var locked by remember(playbackKey) { mutableStateOf(false) }
+    var sync by remember(playbackKey) { mutableStateOf<SyncKind?>(null) }
     val pictureInPicture by PictureInPictureWindow.active.collectAsState()
     var visible by remember(if (phone) playbackKey else Unit) { mutableStateOf(true) }
     var interaction by remember { mutableStateOf(0) }
@@ -130,14 +131,16 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     fun closePanel() { restorePanel = if (phone) phonePanel else null; phonePanel = null; visible = true; interaction++ }
     fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) endHandled = true; closePanel() }
     val phoneBack = {
-        when { showTracks -> { showTracks = false; visible = true }
+        when { sync != null -> sync = null
+            showTracks -> { showTracks = false; visible = true }
             phonePanel != null -> dismissPanel()
             locked -> { locked = false; visible = true }
             else -> latestClose() }
     }
     val latestPhoneBack by rememberUpdatedState(phoneBack)
     val keyboardBack = {
-        when { showTracks -> { showTracks = false; visible = true }
+        when { sync != null -> sync = null
+            showTracks -> { showTracks = false; visible = true }
             phonePanel != null -> dismissPanel()
             else -> latestClose() }
     }
@@ -235,7 +238,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
     val waiting = buffering || seekPending != null || input == null && rendering != null
-    val controlsShown = visible && !locked && phonePanel == null && !(phone && showTracks || failed || error != null)
+    val controlsShown = visible && !locked && phonePanel == null && sync == null && !(phone && showTracks || failed || error != null)
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
@@ -250,6 +253,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 if (event.type != KeyEventType.KeyDown) false else when (event.key) {
                     Key.Escape -> {
                         if (phone) latestPhoneBack()
+                        else if (sync != null) sync = null
                         else if (showTracks) { showTracks = false; visible = true }
                         else if (fullscreen && toggleFullscreen != null) toggleFullscreen!!()
                         else if (phonePanel != null) dismissPanel()
@@ -260,12 +264,13 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
                     Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
                     Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
-                    else -> if (!visible && !locked) { visible = true; interaction++; true } else false
+                    else -> if (sync == null && !visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
                 Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
                     enabled = !locked && !failed && error == null,
-                    onClickLabel = if (visible) "Hide controls" else "Show controls") { visible = !visible; interaction++ })
+                    onClickLabel = sync?.let { "Close ${syncTitle(it)}" } ?: if (visible) "Hide controls" else "Show controls") {
+                    if (sync != null) sync = null else visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
                     modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal)).padding(start = 32.dp).size(56.dp)) {
                     Icon(Lucide.LockKeyholeOpen, "Unlock controls", Modifier.size(24.dp))
@@ -326,7 +331,12 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     preferences ?: rendering?.preferences ?: ProfilePreferences(), updatePreferences,
                     { background -> send(PlayerCommand.SubtitleBackground(background)) }, controlInsets, bottomInset = panelBottomInset, openSettings,
                     pendingSubtitle = pendingSubtitle, subtitleError = subtitleError, retrySubtitle = ::retrySubtitle,
-                    pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio, subtitleSync = rendering?.subtitleSync)
+                    pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio, subtitleSync = rendering?.subtitleSync,
+                    offsets = rendering?.offsets, openSync = { kind -> showTracks = false; visible = false; sync = kind })
+                val syncing = sync
+                if (syncing != null && rendering != null && !failed && error == null)
+                    PlaybackSyncOverlay(syncing, rendering.offsets, { sync = null },
+                        Modifier.windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)))
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }
@@ -361,7 +371,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
                 else if (!stopped) shownAudioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 val skippedNotice = autoSkip.notice
-                if (!locked && phonePanel == null && !showTracks && !failed && error == null) {
+                if (!locked && phonePanel == null && !showTracks && sync == null && !failed && error == null) {
                     val promptBottom = maxOf(panelBottomInset, 104.dp)
                     if (skippedNotice != null) PlayerSkippedNotice(skippedNotice, controlInsets, promptBottom) { undoSkip(skippedNotice) }
                     else if (activeSkip != null) PlayerSkipPrompt(activeSkip, controlInsets, promptBottom) { skipSegment(activeSkip) }

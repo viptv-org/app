@@ -23,6 +23,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var failed by mutableStateOf(scene == TvPlayerScene.Error)
     var visible by mutableStateOf(scene !in listOf(TvPlayerScene.Skip, TvPlayerScene.Buffer, TvPlayerScene.Error, TvPlayerScene.Next))
     var showTracks by mutableStateOf(scene == TvPlayerScene.Tracks)
+    var sync by mutableStateOf<SyncKind?>(null)
     var showNext by mutableStateOf(scene == TvPlayerScene.Next)
     var showEpisodes by mutableStateOf(false)
     var ended by mutableStateOf(false)
@@ -146,6 +147,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     }
     fun back(close: () -> Unit): Boolean {
         when {
+            sync != null -> sync = null
             showTracks -> dismissTracks?.invoke() ?: run { showTracks = false }
             showEpisodes -> showEpisodes = false
             showNext -> keepWatching()

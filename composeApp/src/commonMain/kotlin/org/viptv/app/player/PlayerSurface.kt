@@ -15,7 +15,8 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val title: String? = null,
     // Loopback media of this device's torrent runtime: reads wait on peers, not a server.
     val localTorrent: Boolean = false,
-    val startChosen: Boolean = false) {
+    val startChosen: Boolean = false,
+    offsets: TimingOffsets = TimingOffsets()) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
     internal var selectedAudioLanguage: String? = null
     var positionMillis: Long = positionMillis
@@ -23,6 +24,7 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     var preferences: org.viptv.app.connection.ProfilePreferences = preferences
         private set
     internal val subtitleSync = SubtitleSyncSession()
+    val offsets = PlaybackOffsets(offsets, subtitleSync)
     internal val stats = PlaybackStats()
 
     internal fun reopenAt(titlePositionMillis: Long?, preferences: org.viptv.app.connection.ProfilePreferences) {

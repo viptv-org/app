@@ -25,7 +25,7 @@ internal fun subtitleTimingStatus(ui: SubtitleSyncUiState): String = when {
 
 @Composable
 internal fun SubtitleTimingChoices(session: SubtitleSyncSession,
-    textScale: Float = 1f,
+    textScale: Float = 1f, offsets: PlaybackOffsets? = null,
     row: @Composable (String, Boolean?, () -> Unit) -> Unit) {
     val ui by session.ui.collectAsState()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -34,11 +34,11 @@ internal fun SubtitleTimingChoices(session: SubtitleSyncSession,
         if (!ui.providerSelected) return@Column
         if (ui.localAudioAvailable || ui.automatic) {
             Text("Automatic timing (experimental)", Modifier.padding(top = 8.dp), fontSize = (14 * textScale).sp)
-            row("Off", !ui.automatic) { session.setAutomatic(false) }
-            if (ui.localAudioAvailable) row("On", ui.automatic) { session.setAutomatic(true) }
+            row("Off", !ui.automatic) { offsets?.automaticSubtitleTiming(false) ?: session.setAutomatic(false) }
+            if (ui.localAudioAvailable) row("On", ui.automatic) { offsets?.automaticSubtitleTiming(true) ?: session.setAutomatic(true) }
         } else Text("Automatic timing unavailable", color = Palette.secondary, fontSize = (14 * textScale).sp)
-        row("Earlier by 0.5 s", null) { session.adjustManual(-500_000) }
-        row("Later by 0.5 s", null) { session.adjustManual(500_000) }
-        row("Reset automatic timing", null) { session.resetTiming() }
+        row("Earlier by 0.5 s", null) { offsets?.shiftSubtitle(-500_000) ?: session.adjustManual(-500_000) }
+        row("Later by 0.5 s", null) { offsets?.shiftSubtitle(500_000) ?: session.adjustManual(500_000) }
+        row("Reset automatic timing", null) { offsets?.resetSubtitle() ?: session.resetTiming() }
     }
 }

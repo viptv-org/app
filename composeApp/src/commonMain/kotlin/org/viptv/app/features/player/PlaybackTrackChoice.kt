@@ -9,7 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,13 +26,15 @@ import org.viptv.app.theme.Palette
 
 @Composable
 internal fun PlaybackTrackRow(primary: String, secondary: String?, selected: Boolean, modifier: Modifier = Modifier,
-    pending: Boolean = false, error: String? = null, retry: (() -> Unit)? = null, action: Boolean = false, choose: () -> Unit) {
+    pending: Boolean = false, error: String? = null, retry: (() -> Unit)? = null, action: Boolean = false, enabled: Boolean = true,
+    choose: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val highlighted = selected && !pending
     Row(modifier.fillMaxWidth().heightIn(min = 48.dp).onFocusChanged { focused = it.isFocused }
         .tvFocusOutline(focused, 8.dp, width = 2.dp)
         .background(if (highlighted) Color.White.copy(alpha = .1f) else Color.Transparent, RoundedCornerShape(8.dp))
-        .then(if (action) Modifier.pointerClickable(role = Role.Button, onClick = choose, shape = RoundedCornerShape(8.dp))
+        .then(if (!enabled) Modifier.alpha(.5f).semantics { disabled() }
+            else if (action) Modifier.pointerClickable(role = Role.Button, onClick = choose, shape = RoundedCornerShape(8.dp))
             else Modifier.pointerSelectable(highlighted, role = Role.RadioButton, onClick = choose, shape = RoundedCornerShape(8.dp)))
         .padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(18.dp), contentAlignment = Alignment.CenterStart) {
