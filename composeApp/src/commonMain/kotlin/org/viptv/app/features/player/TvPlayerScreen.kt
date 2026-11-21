@@ -190,7 +190,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             offsets = rendering?.offsets, openSync = { kind -> state.showTracks = false; state.visible = false; state.sync = kind })
         val syncing = state.sync
         if (syncing != null && rendering != null && !state.failed && error == null)
-            PlaybackSyncOverlay(syncing, rendering.offsets, { state.sync = null }, scale = scale, tv = true, bottomInset = 72.dp * scale)
+            PlaybackSyncOverlay(syncing, rendering.offsets, { state.sync = null }, scale = scale, tv = true)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
         if (slateNotice && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes)
             TvSlateNotice(slateProvider, scale, configureSource, chooseSources, slateConfigure, slateChoose) { slateFocused = it }

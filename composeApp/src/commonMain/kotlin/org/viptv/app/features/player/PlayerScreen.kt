@@ -335,8 +335,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 val syncing = sync
                 if (syncing != null && rendering != null && !failed && error == null)
                     PlaybackSyncOverlay(syncing, rendering.offsets, { sync = null },
-                        Modifier.windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)),
-                        bottomInset = if (phone) 20.dp else 32.dp)
+                        Modifier.windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)))
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
                     if (latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey)) {
                         latestEpisodes.find { cardLookupKey(it) == cardLookupKey(selected) }?.let { phonePanel = null; latestPlayEpisode?.invoke(it) }

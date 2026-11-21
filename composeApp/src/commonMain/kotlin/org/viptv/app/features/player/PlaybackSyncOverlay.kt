@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
@@ -34,6 +33,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.viptv.app.components.frameDelay
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.tvFocusOutline
 import org.viptv.app.player.OFFSET_STEP_US
 import org.viptv.app.player.PlaybackOffsets
@@ -45,12 +45,13 @@ internal enum class SyncKind { Audio, Subtitle }
 internal const val syncOverlayIdleMillis = 5_000L
 internal const val syncRepeatDelayMillis = 400L
 internal const val syncRepeatMillis = 100L
+// Captions sit about 8 % up the picture; the bar clears two caption lines so they stay readable.
+internal const val syncBarLift = .25f
+internal const val syncBarTvLift = .21f
 internal const val SUBTITLES_OFF = "Subtitles off"
 internal const val SYNC_SAVED = "Saved for this release"
 
 internal fun syncTitle(kind: SyncKind) = if (kind == SyncKind.Audio) "Audio sync" else "Subtitle sync"
-
-internal fun PlaybackOffsets.valueOf(kind: SyncKind) = if (kind == SyncKind.Audio) audioUs else subtitleUs
 
 private fun PlaybackOffsets.shift(kind: SyncKind, steps: Int) =
     if (kind == SyncKind.Audio) shiftAudio(steps * OFFSET_STEP_US) else shiftSubtitle(steps * OFFSET_STEP_US)
@@ -59,7 +60,7 @@ private fun PlaybackOffsets.reset(kind: SyncKind) = if (kind == SyncKind.Audio) 
 
 @Composable
 internal fun PlaybackSyncOverlay(kind: SyncKind, offsets: PlaybackOffsets, close: () -> Unit, modifier: Modifier = Modifier,
-    scale: Float = 1f, tv: Boolean = false, bottomInset: Dp = 24.dp) {
+    scale: Float = 1f, tv: Boolean = false) {
     val state by offsets.state.collectAsState()
     val value = if (kind == SyncKind.Audio) state.audioUs else state.subtitleUs
     val remembered = if (kind == SyncKind.Audio) offsets.remembered.audioUs else offsets.remembered.subtitleUs
@@ -72,16 +73,16 @@ internal fun PlaybackSyncOverlay(kind: SyncKind, offsets: PlaybackOffsets, close
     var resetFocused by remember { mutableStateOf(false) }
     val press: (Int) -> Unit = { steps -> offsets.shift(kind, steps); inputs++ }
     val clear: () -> Unit = { offsets.reset(kind); inputs++ }
-    LaunchedEffect(kind) { withFrameNanos { }; adjuster.requestFocus() }
+    LaunchedEffect(kind) { repeat(30) { withFrameNanos { }; if (adjuster.requestPlacedFocus()) return@LaunchedEffect } }
     val text = (if (tv) 26 else 15) * scale
     val small = (if (tv) 20 else 12) * scale
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        Row(Modifier.padding(bottom = bottomInset).padding(horizontal = 16.dp * scale).widthIn(max = (if (tv) 960 else 520).dp * scale).fillMaxWidth()
+    BoxWithConstraints(modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        Row(Modifier.padding(bottom = maxHeight * (if (tv) syncBarTvLift else syncBarLift)).padding(horizontal = 16.dp * scale).widthIn(max = (if (tv) 960 else 520).dp * scale).fillMaxWidth()
             .clip(RoundedCornerShape(16.dp * scale)).background(Palette.surface.copy(alpha = .94f))
             .pointerInput(Unit) { detectTapGestures { } }
             .semantics { paneTitle = syncTitle(kind) }
-            .padding(start = 16.dp * scale, end = 8.dp * scale, top = 8.dp * scale, bottom = 8.dp * scale),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp * scale)) {
+            .padding(start = (if (tv) 16 else 14).dp * scale, end = (if (tv) 8 else 4).dp * scale, top = 8.dp * scale, bottom = 8.dp * scale),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy((if (tv) 8 else 4).dp * scale)) {
             Column(Modifier.weight(1f)) {
                 Text(syncTitle(kind), fontSize = text.sp, lineHeight = (text * 1.25f).sp, fontWeight = FontWeight.SemiBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, color = Palette.text)
@@ -101,7 +102,7 @@ internal fun PlaybackSyncOverlay(kind: SyncKind, offsets: PlaybackOffsets, close
                 }.focusable().semantics(mergeDescendants = false) { contentDescription = "${syncTitle(kind)} ${offsetLabel(value)}" },
                 verticalAlignment = Alignment.CenterVertically) {
                 SyncStepButton(Lucide.Minus, "Earlier", scale, tv) { press(-1) }
-                Text(offsetLabel(value), Modifier.widthIn(min = (if (tv) 120 else 64).dp * scale), textAlign = TextAlign.Center,
+                Text(offsetLabel(value), Modifier.widthIn(min = (if (tv) 120 else 58).dp * scale), textAlign = TextAlign.Center,
                     fontSize = text.sp, lineHeight = (text * 1.25f).sp, fontWeight = FontWeight.SemiBold, color = Palette.text, maxLines = 1)
                 SyncStepButton(Lucide.Plus, "Later", scale, tv) { press(1) }
             }
@@ -117,7 +118,7 @@ internal fun PlaybackSyncOverlay(kind: SyncKind, offsets: PlaybackOffsets, close
                 }
                 .clip(RoundedCornerShape(20.dp * scale))
                 .pointerClickable(role = Role.Button, shape = RoundedCornerShape(20.dp * scale), onClick = clear)
-                .padding(horizontal = 14.dp * scale, vertical = 8.dp * scale),
+                .padding(horizontal = (if (tv) 14 else 10).dp * scale, vertical = 8.dp * scale),
                 fontSize = text.sp, lineHeight = (text * 1.25f).sp, fontWeight = FontWeight.Medium,
                 color = if (value == 0L) Palette.tertiary else Palette.accent)
         }
