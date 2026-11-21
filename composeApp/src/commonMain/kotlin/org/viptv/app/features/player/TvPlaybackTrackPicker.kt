@@ -31,8 +31,12 @@ import org.viptv.app.theme.Palette
 internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: Float, send: (PlayerCommand) -> Unit,
     close: () -> Unit, initialSubtitle: Int? = null, dismissChanged: ((() -> Unit)?) -> Unit,
     openSettings: (() -> Unit)? = null, pendingSubtitle: SubtitleSelection? = null,
-    subtitleError: SubtitleSelection? = null, pendingAudio: Int? = null, audioError: Int? = null, subtitleSync: SubtitleSyncSession? = null) {
+    subtitleError: SubtitleSelection? = null, pendingAudio: Int? = null, audioError: Int? = null, subtitleSync: SubtitleSyncSession? = null,
+    offsets: PlaybackOffsets? = null, openSync: (SyncKind) -> Unit = {}) {
     val timing = subtitleSync?.ui?.collectAsState()?.value
+    val support = offsets?.supported?.collectAsState()?.value
+    val values = offsets?.state?.collectAsState()?.value
+    val subtitlesOn = tracks.subtitles.any { it.selected } || pendingSubtitle is SubtitleSelection.Track
     var showTiming by remember(subtitleSync) { mutableStateOf(false) }
     val initial = remember { FocusRequester() }
     val subtitleFocus = tracks.subtitles.find { it.id == initialSubtitle } ?: tracks.subtitles.find { it.selected }
@@ -50,7 +54,7 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                 if (showTiming && subtitleSync != null) {
                     LazyColumn(Modifier.weight(1f).width(1000.dp * scale).tvRingRoom(tvRingReach(scale), horizontal = false)) {
                         item {
-                            SubtitleTimingChoices(subtitleSync, 24 * scale / 14) { label, selected, action ->
+                            SubtitleTimingChoices(subtitleSync, 24 * scale / 14, offsets) { label, selected, action ->
                                 TvTrackRow(label, selected == true, scale, if (label == "Earlier by 0.5 s") initial else null,
                                     selectionState = selected, choose = action)
                             }
@@ -65,6 +69,9 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                             TvTrackRow(track.label, (track.selected && pendingAudio == null) || pending, scale,
                             if (preferAudio && track.id == audioFocus?.id) initial else null, pending = pending,
                             error = if (failed) audioTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Audio, track.id)) } }
+                        if (support?.audio == true && values != null) item(key = "audio-sync") {
+                            TvTrackRow("${syncTitle(SyncKind.Audio)}  ${offsetLabel(values.audioUs)}", false, scale, null) { openSync(SyncKind.Audio) }
+                        }
                     }
                     TvTrackColumn("Subtitles", Modifier.width(520.dp * scale), scale) {
                         item { TvTrackRow("Off", tracks.subtitles.none { it.selected } && pendingSubtitle == null || pendingSubtitle is SubtitleSelection.Off, scale,
@@ -77,6 +84,10 @@ internal fun TvPlaybackTrackPicker(tracks: PlaybackTracks, size: Float, scale: F
                             TvTrackRow(track.label, (track.selected && pendingSubtitle == null) || pending, scale,
                             if (!preferAudio && track.id == subtitleFocus?.id) initial else null, pending = pending,
                             error = if (failed) subtitleTrackErrorCopy else null) { send(PlayerCommand.SelectTrack(PlaybackTrackKind.Subtitle, track.id)) } }
+                        if ((support?.subtitles == true || timing?.providerSelected == true) && values != null) item(key = "subtitle-sync") {
+                            TvTrackRow("${syncTitle(SyncKind.Subtitle)}  ${if (subtitlesOn) offsetLabel(values.subtitleUs) else SUBTITLES_OFF}", false, scale, null,
+                                enabled = subtitlesOn) { openSync(SyncKind.Subtitle) }
+                        }
                     }
                     TvTrackColumn("Subtitle size", Modifier.width(520.dp * scale), scale) {
                         if (timing?.providerSelected == true) item {
@@ -111,9 +122,10 @@ private fun TvTrackColumn(label: String, modifier: Modifier, scale: Float, conte
 
 @Composable
 private fun TvTrackRow(label: String, selected: Boolean, scale: Float, requester: FocusRequester?,
-    pending: Boolean = false, error: String? = null, selectionState: Boolean? = null, choose: () -> Unit) {
+    pending: Boolean = false, error: String? = null, selectionState: Boolean? = null, enabled: Boolean = true, choose: () -> Unit) {
     val highlighted = selected && !pending
     TvAction(Modifier.fillMaxWidth().height((64 * scale).dp).semantics { selectionState?.let { this.selected = it } }, scale, requester = requester, activate = choose,
+        enabled = enabled, keepFocus = true,
         background = Color.Transparent, arrangement = Arrangement.Start, contentPadding = PaddingValues(horizontal = 20.dp * scale)) { tint ->
         Box(Modifier.width(40.dp * scale)) {
             when {

@@ -34,7 +34,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             DefaultHttpDataSource.Factory().setDefaultRequestProperties(input.headers)
                 // A torrent read can wait for peers well past Media3's 8 s default.
                 .apply { if (input.localTorrent) setReadTimeoutMs(LOCAL_TORRENT_READ_TIMEOUT_MS) }))
-    val player: ExoPlayer = ExoPlayer.Builder(context, Media3SubtitleRenderersFactory(context, subtitleCapture::set)
+    val player: ExoPlayer = ExoPlayer.Builder(context, Media3SubtitleRenderersFactory(context, input.offsets, subtitleCapture::set)
         .setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
         .setMediaSourceFactory(sourceFactory)
         .build()
@@ -96,6 +96,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         override fun onVolumeChanged(volume: Float) = properties()
     }
     init {
+        input.offsets.supports(audio = true, subtitles = true)
         if (systemControls) AndroidMediaSessions.publish(application, mediaSession.session)
         val selection = player.trackSelectionParameters.buildUpon()
             .setPreferredAudioLanguage(input.preferences.preferred_audio_language)
@@ -145,7 +146,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
             !input.live && input.timelineOffsetMillis == 0L
         subtitleDelivery.value = subtitleTimelineEligible
         player.setMediaSource(if (!input.live && source is HlsMediaSource) TitleHlsMediaSource(source) else source,
-            input.positionMillis.coerceAtLeast(0))
+            audioClockStart(input.positionMillis))
         player.playWhenReady = !paused
         player.prepare()
         properties()
@@ -227,6 +228,9 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
         val target = progress.positionMillis + deltaMillis
         command(PlayerCommand.Seek(progress.durationMillis?.let { target.coerceIn(0, it) } ?: target.coerceAtLeast(0)))
     }
+    // Audio starts this much earlier in the media so the shifted clock lands the picture on the requested frame.
+    private fun audioClockStart(mediaMillis: Long): Long =
+        if (input.live) mediaMillis.coerceAtLeast(0) else (mediaMillis - input.offsets.audioUs / 1000).coerceAtLeast(0)
     private fun properties() = emit(PlayerFact.Properties(player.volume, player.playbackParameters.speed.toDouble(), captionStyle.scale))
     suspend fun command(command: PlayerCommand) {
         try { when (command) {
@@ -234,7 +238,7 @@ internal class AndroidPlaybackSession(context: Context, private val input: Playb
                 slateDetector.reset()
                 seeking = true
                 if (input.remoteSeek != null) input.remoteSeek.invoke(command.positionMillis)
-                else player.seekTo(input.mediaSeekPosition(command.positionMillis, windowOffsetMillis()))
+                else player.seekTo(audioClockStart(input.mediaSeekPosition(command.positionMillis, windowOffsetMillis())))
             }
             is PlayerCommand.Volume -> player.volume = command.value.coerceIn(0f, 1f)
             is PlayerCommand.Speed -> player.setPlaybackSpeed(command.value.toFloat().coerceIn(.25f, 2f))
