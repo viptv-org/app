@@ -16,6 +16,7 @@ import org.viptv.app.components.TextButton
 import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.connection.*
 import org.viptv.app.state.PREFERENCES_TARGET
+import org.viptv.app.player.languageCode
 import org.viptv.app.state.preferenceTarget
 import org.viptv.app.theme.Palette
 
@@ -63,14 +64,14 @@ internal fun ProfilePreferencesSettings(section: String, snapshot: PreferencesSn
                         SearchableSelect("Text colour", textColourOptions, listOf(value.subtitle_text_color.uppercase()),
                             { ids -> ids.firstOrNull()?.let { draft = draft?.copy(subtitle_text_color = it) } },
                             anyLabel = null, placeholder = "Choose")
-                        SearchableSelect("Audio language", languageOptions, listOfNotNull(value.preferred_audio_language),
+                        SearchableSelect("Audio language", languageOptions, listOfNotNull(languageCode(value.preferred_audio_language) ?: value.preferred_audio_language),
                             { ids -> draft = draft?.copy(preferred_audio_language = ids.firstOrNull()) },
                             anyLabel = "Original audio", searchPlaceholder = "Search audio languages")
                         SearchableSelect("Subtitles", subtitleModeChoices(value.preferred_audio_language).map { (mode, label) -> SelectOption(mode, label, note = subtitleModeNote(mode)) },
                             listOf(value.subtitleMode),
                             { ids -> ids.firstOrNull()?.let { mode -> draft = draft?.withSubtitleMode(mode) } },
                             anyLabel = null, placeholder = "Choose")
-                        SearchableSelect("Subtitle language", languageOptions, listOfNotNull(value.preferred_subtitle_language),
+                        SearchableSelect("Subtitle language", languageOptions, listOfNotNull(languageCode(value.preferred_subtitle_language) ?: value.preferred_subtitle_language),
                             { ids -> draft = draft?.copy(preferred_subtitle_language = ids.firstOrNull()) },
                             anyLabel = "None", searchPlaceholder = "Search subtitle languages")
                     }

@@ -215,8 +215,8 @@ internal fun MpvPlayerSurface(input: PlaybackInput, paused: Boolean, fill: Boole
                 return@LaunchedEffect
             }
             val candidate = preferredProviderSubtitle(input, candidates)
-            val selectedMatches = desired != null && selected?.language != null && !signsOnlySubtitle(selected.name, selected.forced) &&
-                canonicalLanguageTag(selected.language).substringBefore('-') == canonicalLanguageTag(desired).substringBefore('-')
+            val selectedMatches = selected != null && !signsOnlySubtitle(selected.name, selected.forced) &&
+                sameLanguage(selected.language, desired)
             val full = fullDialogueSubtitle(state.subtitles.filterNot { it.id in providerIds.values }, desired)
             when {
                 selectedMatches -> Unit

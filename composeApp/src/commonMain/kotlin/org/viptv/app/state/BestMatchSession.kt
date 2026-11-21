@@ -4,7 +4,8 @@ import androidx.compose.runtime.Immutable
 import org.viptv.app.connection.failsHardFilter
 import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackTracks
-import org.viptv.app.features.settings.languageChoices
+import org.viptv.app.player.languageCode
+import org.viptv.app.player.languageName
 import org.viptv.engine.wire.SourceCandidate
 
 internal const val BEST_MATCH_ATTEMPT_LIMIT = 3
@@ -66,13 +67,8 @@ internal fun ApplicationState.failedSources(): List<String> = bestMatch?.failed.
 
 // No original language reaches the client yet, so only a named preference can prove a track is missing.
 internal fun missingAudioNotice(preferred: String?, tracks: PlaybackTracks): String? {
-    val language = preferred?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    val reported = tracks.audio.mapNotNull { track -> track.language?.let(::audioLanguageTag) }.toSet()
-    if (reported.isEmpty() || audioLanguageTag(language) in reported) return null
-    return "This source has no ${audioLanguageName(language)} audio."
+    val language = languageCode(preferred) ?: return null
+    val reported = tracks.audio.map { languageCode(it.language) }
+    if (reported.isEmpty() || null in reported || language in reported) return null
+    return "This source has no ${languageName(language)} audio."
 }
-
-internal fun audioLanguageTag(value: String): String = value.trim().lowercase().substringBefore('-').substringBefore('_')
-
-internal fun audioLanguageName(tag: String): String =
-    languageChoices.firstOrNull { it.first == audioLanguageTag(tag) }?.second ?: tag

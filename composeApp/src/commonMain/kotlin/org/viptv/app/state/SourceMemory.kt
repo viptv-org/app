@@ -8,8 +8,8 @@ import org.viptv.app.connection.PreferencesSnapshot
 import org.viptv.app.connection.RankedSources
 import org.viptv.app.connection.failsHardFilter
 import org.viptv.app.player.TimingOffsets
-import org.viptv.app.player.canonicalLanguageTag
 import org.viptv.app.player.clampOffset
+import org.viptv.app.player.languageCode
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.SourceCandidate
@@ -183,18 +183,14 @@ internal class SourceMemoryBook(private val store: SourceMemoryStore = EmptySour
 internal fun RankedSources.matchingSource(memory: RememberedSource): SourceCandidate? {
     val eligible = rows.filterNot { it.failsHardFilter() }
     val sameProvider = eligible.filter { it.provider_id == memory.provider_id }
-    val wanted = memory.languages.mapNotNull(::languageKey).toSet()
+    val wanted = memory.languages.mapNotNull(::languageCode).toSet()
     return sameProvider.firstOrNull { it.speaks(wanted) }
         ?: eligible.firstOrNull { it.speaks(wanted) }
         ?: if (wanted.isEmpty()) sameProvider.firstOrNull() else null
 }
 
 private fun SourceCandidate.speaks(wanted: Set<String>): Boolean =
-    wanted.isNotEmpty() && audio_languages.any { languageKey(it) in wanted }
-
-internal fun languageKey(tag: String): String? = tag.trim().takeIf(String::isNotEmpty)
-    ?.let { runCatching { canonicalLanguageTag(it) }.getOrNull() }
-    ?.substringBefore('-')?.takeIf(String::isNotEmpty)
+    wanted.isNotEmpty() && audio_languages.any { languageCode(it) in wanted }
 
 internal val rememberedKinds = setOf("movie", "series")
 

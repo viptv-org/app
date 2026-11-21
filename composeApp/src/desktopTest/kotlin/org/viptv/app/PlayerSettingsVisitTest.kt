@@ -268,7 +268,7 @@ class PlayerSettingsVisitTest {
         val controller = controller(server)
         play(controller)
         controller.rememberTrackChoice(org.viptv.app.player.PlaybackTrackKind.Audio, "ja"); runCurrent()
-        assertEquals(org.viptv.app.player.canonicalLanguageTag("ja"), server.preferences.preferences.preferred_audio_language)
+        assertEquals("ja", server.preferences.preferences.preferred_audio_language)
         controller.openPlayerSettings(); runCurrent()
         controller.navigateBack(); runCurrent()
         assertEquals(1, server.opens.size)
