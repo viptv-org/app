@@ -25,6 +25,8 @@ class PlaybackPreferenceMappingTest {
         assertEquals("Original language", phonePreferenceLanguage(null, audio = true))
         assertEquals("Original language", phonePreferenceLanguage("", audio = true))
         assertEquals("Default", phonePreferenceLanguage(null, audio = false))
+        assertEquals("Czech", phonePreferenceLanguage("ces", audio = true)); assertEquals("cs-CZ", phonePreferenceLanguage("cs-CZ", audio = true))
+        assertEquals("pt-BR", ProfilePreferences(preferred_subtitle_language = "pt-BR").tvSettings().subtitleLanguage)
     }
 
     @Test fun autoQualityNamesThisDevice() {

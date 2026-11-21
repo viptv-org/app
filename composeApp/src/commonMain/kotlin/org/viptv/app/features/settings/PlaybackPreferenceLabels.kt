@@ -1,6 +1,8 @@
 package org.viptv.app.features.settings
 
+import org.viptv.app.player.languageCode
 import org.viptv.app.player.languageName
+import org.viptv.app.player.languageTag
 
 internal val hdrPreferenceChoices = listOf("any" to "No preference", "prefer" to "Prefer", "avoid" to "Avoid")
 
@@ -12,6 +14,9 @@ internal fun tvQualityChoice(quality: String): String = if (quality == "Auto" ||
 
 internal fun qualityLabel(height: Int?, deviceHeight: Int?): String =
     height?.let { if (it == 2160) "4K" else "${it}p" } ?: org.viptv.app.connection.autoQualityLabel(deviceHeight)
+
+internal fun preferenceLanguageLabel(tag: String?): String? =
+    if (languageTag(tag) == languageCode(tag)) languageName(tag) ?: tag?.takeIf(String::isNotBlank) else tag
 
 internal fun preferredAudioName(tag: String?): String = languageName(tag) ?: tag?.takeIf(String::isNotBlank) ?: "English"
 

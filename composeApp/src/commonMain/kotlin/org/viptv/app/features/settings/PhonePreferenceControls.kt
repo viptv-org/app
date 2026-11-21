@@ -19,7 +19,6 @@ import org.viptv.app.theme.Palette
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.components.pointerSelectable
 import org.viptv.app.components.pointerToggleable
-import org.viptv.app.player.languageName
 
 @Composable
 internal fun PhonePreferenceGroup(content: @Composable ColumnScope.() -> Unit) {
@@ -78,4 +77,4 @@ internal fun phonePreferenceColor(value: String, fallback: Color = Color.White):
     ?.let { Color(if (value.length == 7) it or 0xFF000000 else it) } ?: fallback
 
 internal fun phonePreferenceLanguage(value: String?, audio: Boolean): String =
-    languageName(value) ?: value?.takeIf(String::isNotBlank) ?: if (audio) "Original language" else "Default"
+    preferenceLanguageLabel(value) ?: if (audio) "Original language" else "Default"
