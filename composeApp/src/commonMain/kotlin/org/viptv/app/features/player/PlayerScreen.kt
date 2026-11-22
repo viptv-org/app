@@ -47,7 +47,7 @@ import org.viptv.app.components.motionSpec
 import org.viptv.app.components.frameDelay
 
 @Composable
-fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
+fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card? = null, preview: PlayerFact.Progress? = null, phone: Boolean = false, previewFrame: String? = null, canvasColor: Color = Color.Black,
     television: Boolean = false, tvExtras: TvPlaybackExtras = TvPlaybackExtras(), chooseSources: (() -> Unit)? = null,
     playEpisode: ((Card) -> Unit)? = null, retry: (() -> Unit)? = null, backChanged: ((() -> Unit)?) -> Unit = {}, playbackKey: Any? = input,
@@ -63,7 +63,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     failure: PlaybackFailure? = null, failedSource: String? = null) {
     val shownAudioNotice = visibleAudioNotice(audioNotice, dismissAudioNotice)
     if (television) {
-        TvPlayerScreen(input, paused, error, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
+        TvPlayerScreen(input, paused, toggle, observe, close, title, tvExtras, chooseSources, playEpisode, retry, backChanged,
             previewFrame = previewFrame, initialFacts = listOfNotNull(preview), externalFacts = externalFacts, playbackKey = playbackKey,
             trackChosen = trackChosen, canvasColor = canvasColor, openSettings = openSettings, autoplayNext = autoplayNext, reduceMotion = reduceMotion,
             fallback = fallback, stopFallback = stopFallback, audioNotice = shownAudioNotice, nextSource = nextSource,
@@ -105,6 +105,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     var buffering by remember(playbackKey) { mutableStateOf(input != null) }
     var failed by remember(playbackKey, input) { mutableStateOf(false) }
     var undecodable by remember(playbackKey, input) { mutableStateOf(false) }
+    val stopped = failed || failure != null
     var fill by remember(title?.identity) { mutableStateOf(false) }
     val toggleFill = { fill = !fill; interaction++; visible = true }
     var phonePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
@@ -163,16 +164,16 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                 phonePanel == PhonePlaybackPanel.Next && (next == null || nextChoice?.let(::cardLookupKey) != cardLookupKey(next)) ||
                 phonePanel == PhonePlaybackPanel.Episodes && episodes.isEmpty())) closePanel()
     }
-    LaunchedEffect(ended, creditsReached, endHandled, next, playEpisode != null, phonePanel, failed, error) {
-        if ((ended || creditsReached) && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !failed && error == null) {
+    LaunchedEffect(ended, creditsReached, endHandled, next, playEpisode != null, phonePanel, stopped) {
+        if ((ended || creditsReached) && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !stopped) {
             showTracks = false; locked = false
             nextChoice = next; phonePanel = PhonePlaybackPanel.Next
         }
     }
     LaunchedEffect(paused) { if (paused) visible = true }
-    LaunchedEffect(visible, paused, interaction, buffering, phonePanel, showTracks, failed) {
+    LaunchedEffect(visible, paused, interaction, buffering, phonePanel, showTracks, stopped) {
         // Hiding before the first interaction swallows the click that reaches for the transport.
-        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !failed && input != null) { frameDelay(controlsAutoHideMillis); visible = false }
+        if (visible && interaction > 0 && !paused && !buffering && phonePanel == null && !showTracks && !stopped && input != null) { frameDelay(controlsAutoHideMillis); visible = false }
     }
     fun send(command: PlayerCommand) { commands.tryEmit(command); interaction++; visible = true; controlError = null }
     fun chooseSubtitle(id: Int?) {
@@ -218,7 +219,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
             }
             is PlayerFact.Startup -> Unit
             is PlayerFact.Status -> {
-                buffering = !failed && fact.name in PlaybackWaitingStatuses
+                buffering = !stopped && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
                 if (!ended) endHandled = false
             }
@@ -238,14 +239,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
     LaunchedEffect(slateNotice) { if (slateNotice) { frameDelay(slateNoticeVisibleMillis); slateNotice = false } }
     val activationKeys = LocalActivationKeys.current
     val waiting = buffering || seekPending != null || input == null && rendering != null
-    val controlsShown = visible && !locked && phonePanel == null && sync == null && !(phone && showTracks || failed || error != null)
+    val controlsShown = visible && !locked && phonePanel == null && sync == null && !(phone && showTracks || stopped)
     val panelBottomInset = if (timelineTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - timelineTopPx + 12.dp.toPx()).toDp() } else 76.dp
     val chromeHeight = if (chromeTopPx.isFinite() && playerSizePx.height > 0)
         with(LocalDensity.current) { (playerSizePx.height - chromeTopPx).toDp() } else 0.dp
     Box(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.onGloballyPositioned { playerSizePx = it.size }) {
         if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        if (rendering != null) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
+        if (rendering != null && !stopped) PlayerSurface(rendering, paused || input == null, fill, Modifier.fillMaxSize(), { fact ->
             if (input === rendering) { applyFact(fact); observe(fact) }
         }, commands)
         if (!pictureInPicture) {
@@ -260,15 +261,15 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         else close()
                         true
                     }
-                    Key.Spacebar -> if (activationKeys && !controlsFocused) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
-                    Key.MediaPlayPause -> if (activationKeys) { if (!failed && error == null) { visible = true; interaction++; toggle() }; true } else false
+                    Key.Spacebar -> if (activationKeys && !controlsFocused) { if (!stopped) { visible = true; interaction++; toggle() }; true } else false
+                    Key.MediaPlayPause -> if (activationKeys) { if (!stopped) { visible = true; interaction++; toggle() }; true } else false
                     Key.MediaFastForward -> if (activationKeys) { seek(position + MediaSkipMillis); true } else false
                     Key.MediaRewind -> if (activationKeys) { seek(position - MediaSkipMillis); true } else false
                     else -> if (sync == null && !visible && !locked) { visible = true; interaction++; true } else false
                 }
             }) {
                 Box(Modifier.fillMaxSize().pointerClickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
-                    enabled = !locked && !failed && error == null,
+                    enabled = !locked && !stopped,
                     onClickLabel = sync?.let { "Close ${syncTitle(it)}" } ?: if (visible) "Hide controls" else "Show controls") {
                     if (sync != null) sync = null else visible = !visible; interaction++ })
                 if (locked) FilledIconButton(onClick = { locked = false; visible = true; interaction++ },
@@ -322,7 +323,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     }
                 }
                 }
-                if (showTracks && !failed && error == null) PlaybackTrackPicker(tracks, { choice ->
+                if (showTracks && !stopped) PlaybackTrackPicker(tracks, { choice ->
                     if (choice.kind == PlaybackTrackKind.Subtitle) chooseSubtitle(choice.id)
                     else choice.id?.let(::chooseAudio) ?: send(choice)
                     trackChosen(choice.kind, (if (choice.kind == PlaybackTrackKind.Audio) tracks.audio else tracks.subtitles)
@@ -334,7 +335,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     pendingAudio = pendingAudio, audioError = audioError, retryAudio = ::retryAudio, subtitleSync = rendering?.subtitleSync,
                     offsets = rendering?.offsets, openSync = { kind -> showTracks = false; visible = false; sync = kind })
                 val syncing = sync
-                if (syncing != null && rendering != null && !failed && error == null)
+                if (syncing != null && rendering != null && !stopped)
                     PlaybackSyncOverlay(syncing, rendering.offsets, { sync = null },
                         Modifier.windowInsetsPadding(controlInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)))
                 if (phonePanel == PhonePlaybackPanel.Episodes) PhoneEpisodePicker(title, episodes, { selected ->
@@ -349,7 +350,6 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                         endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
                     }
                 }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
-                val stopped = failed || error != null
                 val failureStyle = if (phone) PhoneFailureStyle else DesktopFailureStyle
                 when {
                     stopped && fallback != null -> PlayerFallbackPage(fallback, stopFallback, failureStyle, controlInsets)
@@ -371,7 +371,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle:
                     PlayerSlateNotice(slateProvider, phone, controlInsets, if (phone) panelBottomInset else 104.dp, configureSource, chooseSources)
                 else if (!stopped) shownAudioNotice?.let { PhoneAudioNotice(it, controlInsets, nextSource) }
                 val skippedNotice = autoSkip.notice
-                if (!locked && phonePanel == null && !showTracks && sync == null && !failed && error == null) {
+                if (!locked && phonePanel == null && !showTracks && sync == null && !stopped) {
                     val promptBottom = maxOf(panelBottomInset, 104.dp)
                     if (skippedNotice != null) PlayerSkippedNotice(skippedNotice, controlInsets, promptBottom) { undoSkip(skippedNotice) }
                     else if (activeSkip != null) PlayerSkipPrompt(activeSkip, controlInsets, promptBottom) { skipSegment(activeSkip) }

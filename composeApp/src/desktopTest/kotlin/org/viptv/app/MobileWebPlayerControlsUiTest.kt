@@ -114,7 +114,7 @@ class MobileWebPlayerControlsUiTest {
     private fun player(width: Int, height: Int, sourceLabel: String?): ImageComposeScene {
         var time = 0L
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = false,
+            PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = false,
                 preview = PlayerFact.Progress(842_000, 3_132_000), chooseSources = {},
                 tvExtras = TvPlaybackExtras(sourceLabel = sourceLabel, episodes = episodes, nextEpisode = episode(25)),
                 playEpisode = {}, controlInsets = WindowInsets(0, 0, 0, 0))

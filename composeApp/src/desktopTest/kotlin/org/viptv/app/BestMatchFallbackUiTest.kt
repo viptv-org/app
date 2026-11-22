@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import org.viptv.app.connection.SourceGroups
 import org.viptv.app.connection.interimSourceGroups
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.features.player.PlayerFallbackNotice
 import org.viptv.app.features.player.PlayerScreen
 import org.viptv.app.features.sources.SourcesScreen
@@ -42,7 +43,7 @@ class BestMatchFallbackUiTest {
     @Test fun theFallbackNoticeNamesTheNextSourceAndStops() {
         var stopped = 0
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, "This source could not play. Choose another source.", {}, {}, {}, title = title, phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = title, phone = true, failure = PlaybackFailure.Failed,
                 fallback = PlayerFallbackNotice("This source could not play", "Source b", "1080p · WEB-DL · addon:b"),
                 stopFallback = { stopped++ })
         } }
@@ -58,7 +59,7 @@ class BestMatchFallbackUiTest {
 
     @Test fun theNoAudioNoticeOffersNextSourceOnlyInABestMatchSession() {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = title, phone = true, audioNotice = "This source has no French audio.")
+            PlayerScreen(null, true, {}, {}, {}, title = title, phone = true, audioNotice = "This source has no French audio.")
         } }
         try {
             frames(scene)
@@ -70,7 +71,7 @@ class BestMatchFallbackUiTest {
     @Test fun theNoAudioNoticeInASessionOffersNextSource() {
         var next = 0
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = title, phone = true, audioNotice = "This source has no French audio.",
+            PlayerScreen(null, true, {}, {}, {}, title = title, phone = true, audioNotice = "This source has no French audio.",
                 nextSource = { next++ })
         } }
         try {
@@ -86,7 +87,7 @@ class BestMatchFallbackUiTest {
             var dismissed = 0
             val scene = ImageComposeScene(if (television) 1920 else 390, if (television) 1080 else 844, Density(1f)) {
                 ViptvTheme(television = television) {
-                    PlayerScreen(null, false, null, {}, {}, {}, title = title, phone = !television, television = television,
+                    PlayerScreen(null, false, {}, {}, {}, title = title, phone = !television, television = television,
                         audioNotice = notice, dismissAudioNotice = { dismissed++; notice = null }, nextSource = {})
                 }
             }

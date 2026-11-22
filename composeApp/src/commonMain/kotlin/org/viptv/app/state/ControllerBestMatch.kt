@@ -2,7 +2,7 @@ package org.viptv.app.state
 
 import kotlinx.coroutines.*
 import org.viptv.app.connection.*
-import org.viptv.app.features.player.PlaybackFailure
+import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.engine.wire.SourceCandidate
 
@@ -18,14 +18,15 @@ internal fun ApplicationController.startBestMatch(ranked: RankedSources, target:
     openSource(target, forceGateway = false, positionMillis = null)
 }
 
-internal fun ApplicationController.startFailed(cause: PlaybackFailure, dolbyVision: Boolean = false) {
-    startDeadlineJob?.cancel(); startDeadlineJob = null
+internal fun ApplicationController.startFailed(origin: PlaybackFailureOrigin, input: PlaybackInput?, dolbyVision: Boolean = false,
+    operation: String? = null, status: Int? = null) {
+    if (!declarePlaybackFailure(origin, input, operation, status)) return
+    val cause = origin.failure
     val reason = cause.reason
-    val failure = "$reason. Choose another source."
     val session = mutable.value.bestMatch
     val playing = session?.playingId
     if (session == null || playing == null || firstFrameSeen || session.exhausted) {
-        updateState { it.copy(error = failure, playbackFailure = cause) }
+        updateState { it.copy(playbackFailure = cause, paused = it.paused || input != null) }
         return
     }
     val after = session.failed(playing, dolbyVision)
@@ -36,7 +37,7 @@ internal fun ApplicationController.startFailed(cause: PlaybackFailure, dolbyVisi
     if (next == null || after.attempts >= BEST_MATCH_ATTEMPT_LIMIT) { exhaustFallback(after); return }
     val notice = BestMatchFallback(reason, next)
     updateState { it.copy(bestMatch = after.copy(attempts = after.attempts + 1, playingId = next.id),
-        fallbackNotice = notice, error = failure, playbackFailure = cause) }
+        fallbackNotice = notice, playbackFailure = cause, paused = it.paused || input != null) }
     fallbackJob?.cancel()
     fallbackJob = scope.launch {
         delay(bestMatchNoticeMillis)
@@ -77,7 +78,7 @@ internal fun ApplicationController.armStartDeadline(input: org.viptv.app.player.
     if (mutable.value.bestMatch == null || source.delivery == "torrent") return
     startDeadlineJob = scope.launch {
         delay(startDeadlineMillis)
-        if (mutable.value.playback === input && !firstFrameSeen) startFailed(PlaybackFailure.Timeout)
+        if (mutable.value.playback === input && !firstFrameSeen) startFailed(PlaybackFailureOrigin.StartTimeout, input)
     }
 }
 

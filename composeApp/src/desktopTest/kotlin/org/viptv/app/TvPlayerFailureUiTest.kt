@@ -30,7 +30,7 @@ class TvPlayerFailureUiTest {
         var retried = 0
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                TvPlayerScreen(null, false, "This source could not play. Choose another source.", {}, {}, {}, title,
+                TvPlayerScreen(null, false, {}, {}, {}, title,
                     TvPlaybackExtras(), null, null, { retried++ }, {}, failure = PlaybackFailure.Failed, failedSource = "LordStreams 4K")
             }
         } }

@@ -56,7 +56,7 @@ class PlayerEpisodePickerUiTest {
     @Test fun phonePickerShowsArtworkWatchedProgressAndNowPlayingInsideTheSafeInsets() = withFakeArtwork { requested ->
         var played: Card? = null
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true,
                 tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = { played = it },
                 controlInsets = WindowInsets(right = 48.dp, bottom = 16.dp))
         } }
@@ -96,7 +96,7 @@ class PlayerEpisodePickerUiTest {
 
     @Test fun portraitPhonePickerStacksTheCardsInsideTheSheet() = withFakeArtwork {
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true,
                 tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = {})
         } }
         val ui = Ui(scene)
@@ -145,7 +145,7 @@ class PlayerEpisodePickerUiTest {
     @Test fun desktopPickerShowsTheSameDetailsCardsAndPlaysTheChosenEpisode() = withFakeArtwork { requested ->
         var played: Card? = null
         val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = false,
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = false,
                 tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = { played = it })
         } }
         val ui = Ui(scene)
@@ -177,7 +177,7 @@ class PlayerEpisodePickerUiTest {
         val channel = episode(1).copy(identity = MediaIdentity("channel-7", "channel", emptyList()), parent_identity = null)
         listOf(movie, channel).forEach { title ->
             val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
-                PlayerScreen(null, true, null, {}, {}, {}, title = title, phone = false,
+                PlayerScreen(null, true, {}, {}, {}, title = title, phone = false,
                     tvExtras = TvPlaybackExtras(episodes = episodes), playEpisode = {})
             } }
             val ui = Ui(scene)

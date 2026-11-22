@@ -329,7 +329,7 @@ class NextEpisodeEndPanelUiTest {
         private var time = 0L
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television = television) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                PlayerScreen(null, true, null, {}, {}, { closed++ }, title = title, phone = phone, television = television,
+                PlayerScreen(null, true, {}, {}, { closed++ }, title = title, phone = phone, television = television,
                     canvasColor = Color.Transparent, externalFacts = facts,
                     tvExtras = TvPlaybackExtras(episodes = listOf(title), nextEpisode = this@Player.next),
                     playEpisode = play, backChanged = { back = it }, playbackKey = "current", controlInsets = insets,

@@ -46,7 +46,7 @@ class PhoneTransportCentreUiTest {
     private fun withPlayer(width: Int, height: Int, check: (play: Rect, chromeTop: Float) -> Unit) {
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(false) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                PlayerScreen(null, true, null, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
+                PlayerScreen(null, true, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
                     tvExtras = TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams"),
                     playEpisode = {}, chooseSources = {})
             }

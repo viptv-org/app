@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import org.viptv.app.connection.*
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
-import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.crash.CrashFacts
@@ -29,7 +28,8 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
     pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None, retryFullCapacity: Boolean = false) {
-    updateState { next -> next.copy(playingSource = source, openingSource = source) }
+    declaredFailure = null
+    updateState { next -> next.copy(playingSource = source, openingSource = source, playbackFailure = null) }
     run {
         try {
             if (retryFullCapacity) retryingFullCapacity { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
@@ -37,8 +37,9 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
-            if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen) startFailed(PlaybackFailure.Failed)
-            else throw error
+            if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen)
+                startFailed(PlaybackFailureOrigin.OpenFailed, null, operation = error::class.simpleName, status = (error as? RemoteFailure)?.status)
+            else { declareOpenFailure(error); throw error }
         }
     }
 }
@@ -254,8 +255,9 @@ internal fun ApplicationController.observePlayback(fact: PlayerFact) {
         fact.options.audio.firstOrNull { it.selected }?.language?.let { mutable.value.playback?.selectedAudioLanguage = it }
         noticeMissingAudio(fact.options)
     }
-    if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Undecodable, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
-    if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailure.Failed) }
+    if (fact is PlayerFact.Undecodable) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailureOrigin.Undecodable, mutable.value.playback, dolbyVision = mutable.value.playingSource?.riskyDolbyVision() == true) }
+    if (fact is PlayerFact.Failed) { sourceChoice = SourceChoice.None; startFailed(PlaybackFailureOrigin.Renderer, mutable.value.playback) }
+    clearDisprovedFailure(fact)
     watchPlaybackStall(fact)
 }
 
@@ -268,7 +270,7 @@ private fun ApplicationController.watchPlaybackStall(fact: PlayerFact) {
             playbackWaiting = fact.name in PlaybackWaitingStatuses
             if (playbackWaiting) armPlaybackStall(lastProgress?.positionMillis ?: 0L) else cancelPlaybackStall()
         }
-        is PlayerFact.Progress -> if (playbackWaiting && mutable.value.error == null && fact.positionMillis != playbackStallPosition) armPlaybackStall(fact.positionMillis)
+        is PlayerFact.Progress -> if (playbackWaiting && mutable.value.playbackFailure == null && fact.positionMillis != playbackStallPosition) armPlaybackStall(fact.positionMillis)
         PlayerFact.Failed, PlayerFact.Undecodable -> cancelPlaybackStall()
         else -> Unit
     }
@@ -284,9 +286,8 @@ private fun ApplicationController.armPlaybackStall(positionMillis: Long) {
         playbackStall = null
         if (mutable.value.playback !== input || mutable.value.paused) return@launch
         if ((lastProgress?.positionMillis ?: positionMillis) != positionMillis) return@launch
-        playbackDiagnostics?.invoke("playback_stalled position_ms=$positionMillis window_ms=$PLAYBACK_STALL_WINDOW_MILLIS")
         sourceChoice = SourceChoice.None
-        startFailed(PlaybackFailure.Failed)
+        startFailed(PlaybackFailureOrigin.Stall, input, operation = "stall_window")
     }
 }
 
@@ -304,7 +305,8 @@ fun ApplicationController.closePlayer() {
     val live = mutable.value.playback?.live == true
     releasePlaybackSession()
     if(!completionSeen) saveProgress(false, final = true)
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, busy = false, openingSource = null, pendingAction = null) }
+    declaredFailure = null
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, playbackFailure = null, busy = false, openingSource = null, pendingAction = null) }
     lastProgress=null
     afterPlayback(live)
 }

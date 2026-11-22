@@ -28,11 +28,11 @@ internal class A11ySurface(
 
 internal val a11ySurfaces: List<A11ySurface> = listOf(
     A11ySurface("Player, phone", 390, 844) {
-        PlayerScreen(null, true, null, {}, {}, {}, title = PreviewData.playerTitle, phone = true,
+        PlayerScreen(null, true, {}, {}, {}, title = PreviewData.playerTitle, phone = true,
             preview = PlayerFact.Progress(842_000, 3_132_000))
     },
     A11ySurface("Player, desktop", 1280, 720) {
-        PlayerScreen(null, false, null, {}, {}, {}, title = PreviewData.playerTitle, phone = false,
+        PlayerScreen(null, false, {}, {}, {}, title = PreviewData.playerTitle, phone = false,
             preview = PlayerFact.Progress(842_000, 3_132_000))
     },
     A11ySurface("Profile PIN, phone", 390, 844) {

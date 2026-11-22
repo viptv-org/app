@@ -34,7 +34,7 @@ class PlayerTransportOrderUiTest {
             tryEmit(PlayerFact.Progress(768_000, 3_132_000))
         }
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(pointer = true) {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), externalFacts = facts,
+            PlayerScreen(null, true, {}, {}, {}, title = episode(24), externalFacts = facts,
                 tvExtras = TvPlaybackExtras(episodes = listOf(episode(24)), nextEpisode = episode(25), sourceLabel = "Torrentio 1080p"),
                 playEpisode = {}, chooseSources = {}, toggleFullscreen = {})
         } }

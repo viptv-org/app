@@ -38,7 +38,7 @@ class RouteBackUiTest {
         facts.tryEmit(PlayerFact.Tracks(PlaybackTracks(audio = listOf(PlaybackTrack(1, "English · 5.1", true, "en")),
             subtitles = listOf(PlaybackTrack(3, "Spanish", false, "es")))))
         val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, { closed++ }, title = org.viptv.engine.wire.Card(org.viptv.engine.wire.MediaIdentity("m", "movie", emptyList()),
+            PlayerScreen(null, true, {}, {}, { closed++ }, title = org.viptv.engine.wire.Card(org.viptv.engine.wire.MediaIdentity("m", "movie", emptyList()),
                 provider_id = "metadata", title = "Movie", badges = emptyList()), preview = PlayerFact.Progress(842_000, 3_132_000),
                 phone = false, externalFacts = facts, backChanged = { routeBack = it })
         } }

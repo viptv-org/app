@@ -34,7 +34,7 @@ class DesktopPlayerWindowFirstClickTest {
             val state = rememberWindowState(position = WindowPosition(40.dp, 40.dp), size = DpSize(1280.dp, 720.dp))
             var paused by remember { mutableStateOf(false) }
             DesktopAppWindow(::exitApplication, "app#98 first click", state, framed = true) {
-                PlayerScreen(null, paused, null, { paused = !paused; toggles.incrementAndGet() }, {}, {},
+                PlayerScreen(null, paused, { paused = !paused; toggles.incrementAndGet() }, {}, {},
                     preview = PlayerFact.Progress(0, 20_000))
                 LaunchedEffect(Unit) {
                     while (!window.isShowing || window.width == 0) delay(50)

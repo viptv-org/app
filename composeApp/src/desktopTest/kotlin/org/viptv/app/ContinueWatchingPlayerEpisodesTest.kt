@@ -208,7 +208,7 @@ class ContinueWatchingPlayerEpisodesTest {
     private fun phoneChoices(title: Card, episodes: List<Card>, next: Card?, nextEnabled: Boolean, pick: Card, capture: String): List<Card> {
         val played = mutableListOf<Card>()
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = title, phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = title, phone = true,
                 tvExtras = TvPlaybackExtras(episodes = episodes, nextEpisode = next), playEpisode = { played += it })
         } }
         var frame = 0

@@ -31,7 +31,7 @@ import org.viptv.app.components.requestPlacedFocus
 import org.viptv.app.components.tvBackdropSource
 
 @Composable
-internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: String?, toggle: () -> Unit,
+internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     observe: (PlayerFact) -> Unit, close: () -> Unit, title: Card?, extras: TvPlaybackExtras,
     chooseSources: (() -> Unit)?, playEpisode: ((Card) -> Unit)?, retry: (() -> Unit)?, backChanged: ((() -> Unit)?) -> Unit,
     previewFrame: String? = null, scene: TvPlayerScene = TvPlayerScene.Controls, initialFacts: List<PlayerFact> = emptyList(),
@@ -76,16 +76,17 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     LaunchedEffect(state.controlError) { state.controlError?.let { frameDelay(playbackControlErrorVisibleMillis); state.controlError = null } }
     val activeSkip = extras.skips.firstOrNull { state.position in it.startMillis until it.endMillis }
     val skipActive = (activeSkip != null || state.autoSkip.notice != null) && !state.visible
-    val audioPrompt = audioNotice?.takeIf { !state.failed && !state.undecodable && error == null }
+    val stopped = state.failed || state.undecodable || failure != null
+    val audioPrompt = audioNotice?.takeIf { !stopped }
     val audioPromptActive = audioPrompt != null && nextSource != null
     val audioRequester = remember { FocusRequester() }
     LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }
     val creditsReached = extras.skips.endCreditsReached(state.position, extras.skipCredits, state.duration)
-    LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, state.failed, creditsReached) {
+    LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, stopped, creditsReached) {
         state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
     }
-    LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, state.failed, state.scrub) {
-        if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !state.failed && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
+    LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, stopped, state.scrub) {
+        if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !stopped && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
     }
     LaunchedEffect(rendering, state.position, extras.skips, extras.skipIntros, extras.skipCredits, paused) {
         val nextOffered = extras.nextEpisode != null && playEpisode != null
@@ -94,13 +95,13 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
     val skippedNotice = state.autoSkip.notice
     LaunchedEffect(skippedNotice) { if (skippedNotice != null) { frameDelay(skippedNoticeMillis); state.autoSkip.notice = null } }
     LaunchedEffect(state.visible) { if (state.visible) state.autoSkip.notice = null }
-    LaunchedEffect(state.visible, state.buffering, state.failed, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive, audioPromptActive, state.sync) {
+    LaunchedEffect(state.visible, state.buffering, stopped, state.showTracks, state.showNext, state.showEpisodes, state.duration, state.focusAudio, skipActive, audioPromptActive, state.sync) {
         if (state.sync != null) Unit
-        else if (state.visible && (!state.buffering || state.hasPresented) && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes && !audioPromptActive) {
+        else if (state.visible && (!state.buffering || state.hasPresented) && !stopped && !state.showTracks && !state.showNext && !state.showEpisodes && !audioPromptActive) {
             val live = state.live || (title?.identity?.kind in listOf("channel", "tv") && state.duration == null)
             if (!state.focusAudio && (state.duration ?: 0) > 0 && !live) timeline.focusWhenPlaced() else audio.focusWhenPlaced()
         }
-        else if (!state.showTracks && !state.showNext && !state.failed && !state.showEpisodes && !skipActive && !audioPromptActive) root.focusWhenPlaced()
+        else if (!state.showTracks && !state.showNext && !stopped && !state.showEpisodes && !skipActive && !audioPromptActive) root.focusWhenPlaced()
     }
     TvBackdrop(Modifier.fillMaxSize().drawBehind { drawRect(canvasColor, blendMode = BlendMode.Src) }.focusRequester(root).onFocusChanged { state.rootFocused = it.isFocused }.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown) state.interaction++
@@ -109,23 +110,23 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             (state.timelineFocused || state.scrub != null)) true
         else if (event.type != KeyEventType.KeyDown) false else when (event.key) {
             Key.Escape -> { back(); true }
-            Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!state.failed) { state.reveal(); toggle() }; true } else false
-            Key.MediaFastForward -> if (activationKeys) { if (!state.failed) state.skip(MediaSkipMillis, previewCommand); true } else false
-            Key.MediaRewind -> if (activationKeys) { if (!state.failed) state.skip(-MediaSkipMillis, previewCommand); true } else false
-            Key.DirectionLeft, Key.DirectionRight -> if (!state.failed && !state.showNext && (state.timelineFocused || state.rootFocused || !state.visible)) {
+            Key.Spacebar, Key.MediaPlayPause -> if (activationKeys) { if (!stopped) { state.reveal(); toggle() }; true } else false
+            Key.MediaFastForward -> if (activationKeys) { if (!stopped) state.skip(MediaSkipMillis, previewCommand); true } else false
+            Key.MediaRewind -> if (activationKeys) { if (!stopped) state.skip(-MediaSkipMillis, previewCommand); true } else false
+            Key.DirectionLeft, Key.DirectionRight -> if (!stopped && !state.showNext && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.step(if (event.key == Key.DirectionLeft) -1 else 1); true
             } else false
-            Key.DirectionCenter, Key.Enter -> if (!state.failed && !state.showNext && (state.timelineFocused || state.rootFocused)) {
+            Key.DirectionCenter, Key.Enter -> if (!stopped && !state.showNext && (state.timelineFocused || state.rootFocused)) {
                 if (state.scrub != null) state.commit(previewCommand) else { state.reveal(); toggle() }; true
             } else false
             Key.DirectionDown -> if (state.timelineFocused) { state.scrub = null; state.visible = false; root.requestFocus(); true }
-                else if (!state.visible && !state.failed && !state.buffering && !state.showNext) { state.reveal(); true } else false
-            Key.DirectionUp -> if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && slateNotice) {
+                else if (!state.visible && !stopped && !state.buffering && !state.showNext) { state.reveal(); true } else false
+            Key.DirectionUp -> if (!stopped && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && slateNotice) {
                 (if (configureSource != null) slateConfigure else slateChoose).requestFocus(); true
-            } else if (!state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused || !state.visible)) {
+            } else if (!stopped && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes && (state.timelineFocused || state.rootFocused || !state.visible)) {
                 state.scrub = null; state.reveal(audio = true); true
             } else false
-            else -> if (event.key != Key.Back && !state.visible && !state.failed && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes) {
+            else -> if (event.key != Key.Back && !state.visible && !stopped && !state.buffering && !state.showNext && !state.showTracks && !state.showEpisodes) {
                 state.reveal(); false
             } else false
         }
@@ -134,14 +135,14 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
         val failureStyle = tvFailureStyle(scale)
         Box(Modifier.fillMaxSize()) {
             if (input == null && previewFrame != null) AsyncImage(previewFrame, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            if (rendering != null) PlayerSurface(rendering, paused || input == null, LocalFitToScreen.current, Modifier.fillMaxSize(), {
+            if (rendering != null && !stopped) PlayerSurface(rendering, paused || input == null, LocalFitToScreen.current, Modifier.fillMaxSize(), {
                 if (input === rendering) { noteSlate(it); state.observe(it); observe(it) }
             }, state.commands)
         }
         if (state.showNext) Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Color.Black.copy(alpha = .35f),
             .45f to Color.Black.copy(alpha = .55f), 1f to Color.Black.copy(alpha = .82f))))
         when {
-            state.failed || state.undecodable || error != null ->
+            stopped ->
                 if (fallback != null) PlayerFallbackPage(fallback, stopFallback, failureStyle)
                 else PlayerFailurePage(failureStyle, "This source stopped working",
                     failure = if (state.undecodable) PlaybackFailure.Undecodable else failure,
@@ -189,10 +190,10 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, error: Strin
             pendingAudio = state.pendingAudio, audioError = state.audioError,
             offsets = rendering?.offsets, openSync = { kind -> state.showTracks = false; state.visible = false; state.sync = kind })
         val syncing = state.sync
-        if (syncing != null && rendering != null && !state.failed && error == null)
+        if (syncing != null && rendering != null && !stopped)
             PlaybackSyncOverlay(syncing, rendering.offsets, { state.sync = null }, scale = scale, tv = true)
         if (state.showEpisodes) TvPlayerEpisodePicker(extras.episodes, scale, title, { state.showEpisodes = false; playEpisode?.invoke(it) }, { state.showEpisodes = false })
-        if (slateNotice && !state.failed && !state.showTracks && !state.showNext && !state.showEpisodes)
+        if (slateNotice && !stopped && !state.showTracks && !state.showNext && !state.showEpisodes)
             TvSlateNotice(slateProvider, scale, configureSource, chooseSources, slateConfigure, slateChoose) { slateFocused = it }
         else audioPrompt?.let { TvAudioNotice(it, scale, nextSource, audioRequester) }
     }

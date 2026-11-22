@@ -203,7 +203,7 @@ class PageFontScaleUiTest {
         for ((width, height) in listOf(390 to 844, 320 to 640)) for (scale in scales) {
             val scene = ImageComposeScene(width, height, Density(1f, scale)) { ViptvTheme(false) {
                 Box(Modifier.fillMaxSize()) {
-                    PlayerScreen(null, true, null, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
+                    PlayerScreen(null, true, {}, {}, {}, PreviewData.playerTitle, PlayerFact.Progress(842_000, 3_132_000), phone = true,
                         tvExtras = TvPlaybackExtras(episodes = PreviewData.playerEpisodes, nextEpisode = PreviewData.playerNextEpisode, sourceLabel = "Streams"),
                         playEpisode = {}, chooseSources = {})
                 }

@@ -165,7 +165,7 @@ class BufferedTimelineUiTest {
         var key by mutableStateOf("first")
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 8)
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, phone = true, preview = PlayerFact.Progress(60_000, 240_000),
+            PlayerScreen(null, true, {}, {}, {}, phone = true, preview = PlayerFact.Progress(60_000, 240_000),
                 playbackKey = key, externalFacts = facts)
         } }
         try {

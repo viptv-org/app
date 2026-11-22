@@ -29,7 +29,7 @@ class PlayerControlsMotionTest {
         val scene = ImageComposeScene(1280, 720, Density(1f)) {
             ViptvTheme(television = false, pointer = true) {
                 CompositionLocalProvider(LocalReducedMotion provides reduced) {
-                    PlayerScreen(null, false, null, {}, {}, {}, preview = PlayerFact.Progress(0, 20_000),
+                    PlayerScreen(null, false, {}, {}, {}, preview = PlayerFact.Progress(0, 20_000),
                         canvasColor = Color.Red)
                 }
             }

@@ -25,7 +25,7 @@ class PlayerFitFillUiTest {
     @Test fun fitFillTogglesNameAndStateWhileKeepingEveryPhoneActionReachable() {
         for ((width, height) in listOf(320 to 568, 390 to 844)) {
             val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-                PlayerScreen(null, true, null, {}, {}, {}, title = episode(1), phone = true)
+                PlayerScreen(null, true, {}, {}, {}, title = episode(1), phone = true)
             } }
             try {
                 frames(scene)
@@ -46,7 +46,7 @@ class PlayerFitFillUiTest {
         var key by mutableStateOf("source-a")
         var current by mutableStateOf(episode(1))
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playbackKey = key)
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true, playbackKey = key)
         } }
         try {
             frames(scene)
@@ -62,7 +62,7 @@ class PlayerFitFillUiTest {
     @Test fun theToggleReadsItsModeInWordsBesideFullscreenAndAfterLockOnPhone() {
         for ((width, height, phone) in listOf(Triple(1280, 900, false), Triple(1440, 900, false), Triple(390, 844, true))) {
             val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-                PlayerScreen(null, true, null, {}, {}, {}, title = episode(1), phone = phone, toggleFullscreen = {},
+                PlayerScreen(null, true, {}, {}, {}, title = episode(1), phone = phone, toggleFullscreen = {},
                     tvExtras = TvPlaybackExtras(episodes = listOf(episode(1)), nextEpisode = episode(2)), playEpisode = {})
             } }
             try {

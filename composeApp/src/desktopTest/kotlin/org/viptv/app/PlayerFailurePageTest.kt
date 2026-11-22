@@ -32,7 +32,6 @@ class PlayerFailurePageTest {
     @get:Rule val deterministicImages = DeterministicImageLoaderRule()
     private val title = Card(MediaIdentity("private-movie", "movie", emptyList()), provider_id = "addon:7", title = "A Movie",
         subtitle = "2026 · 1h 52m", badges = emptyList())
-    private val failure = "This source could not play. Choose another source."
     private val source = "LordStreams 1080p"
     private val named = "$source didn’t respond. Choose another source."
     private val decode = "This device can’t decode this stream. Choose another source."
@@ -41,7 +40,7 @@ class PlayerFailurePageTest {
 
     @Test fun phoneDrawsTheSharedPage() {
         val clicks = Clicks()
-        scene(844, 390) { PlayerScreen(null, true, failure, {}, {}, { clicks.close++ }, title, phone = true,
+        scene(844, 390) { PlayerScreen(null, true, {}, {}, { clicks.close++ }, title, phone = true,
             tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ },
             failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
@@ -53,7 +52,7 @@ class PlayerFailurePageTest {
 
     @Test fun desktopDrawsTheSharedPageInsteadOfAnErrorLineOverTheFrame() {
         val clicks = Clicks()
-        scene(1440, 900) { PlayerScreen(null, true, failure, {}, {}, { clicks.close++ }, title,
+        scene(1440, 900) { PlayerScreen(null, true, {}, {}, { clicks.close++ }, title,
             tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = { clicks.retry++ }, chooseSources = { clicks.choose++ },
             failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
@@ -67,7 +66,7 @@ class PlayerFailurePageTest {
 
     @Test fun webDrawsTheSharedPageAtBothWidthsWithoutOverflowing() {
         for ((width, height) in listOf(1440 to 900, 390 to 844)) {
-            scene(width, height) { PlayerScreen(null, true, failure, {}, {}, {}, title, canvasColor = androidx.compose.ui.graphics.Color.Transparent,
+            scene(width, height) { PlayerScreen(null, true, {}, {}, {}, title, canvasColor = androidx.compose.ui.graphics.Color.Transparent,
                 tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {},
                 failure = PlaybackFailure.Failed, failedSource = source) }
                 .use { scene ->
@@ -85,7 +84,7 @@ class PlayerFailurePageTest {
                 PlayerFact.Failed to "$source didn’t respond. Choose another source to continue from 14:02.",
                 PlayerFact.Undecodable to "This device can’t decode this stream. Choose another source to continue from 14:02.")) {
             val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
-            scene(1440, 900, Dispatchers.Unconfined) { PlayerScreen(null, true, null, {}, {}, {}, title,
+            scene(1440, 900, Dispatchers.Unconfined) { PlayerScreen(null, true, {}, {}, {}, title,
                 preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts, retry = {}, chooseSources = {},
                 failedSource = source) }
                 .use { scene ->
@@ -100,7 +99,7 @@ class PlayerFailurePageTest {
 
     @Test fun televisionDrawsTheSamePage() {
         val clicks = Clicks()
-        scene(1920, 1080, television = true) { TvPlayerScreen(null, false, null, {}, {}, { clicks.close++ }, title,
+        scene(1920, 1080, television = true) { TvPlayerScreen(null, false, {}, {}, { clicks.close++ }, title,
             TvPlaybackExtras(fallbackLabel = "Fixture 4K"), { clicks.choose++ }, null, { clicks.retry++ }, {}, scene = TvPlayerScene.Error,
             failure = PlaybackFailure.Failed, failedSource = source) }
             .use { scene ->
@@ -113,9 +112,9 @@ class PlayerFailurePageTest {
     @Test fun everyPlatformWithdrawsTheActionsTheControllerCannotOffer() {
         for (television in listOf(false, true)) {
             scene(if (television) 1920 else 1440, if (television) 1080 else 900, television = television) {
-                if (television) TvPlayerScreen(null, false, null, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Error,
+                if (television) TvPlayerScreen(null, false, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Error,
                     failure = PlaybackFailure.Timeout, failedSource = source)
-                else PlayerScreen(null, true, failure, {}, {}, {}, title, failure = PlaybackFailure.Timeout, failedSource = source)
+                else PlayerScreen(null, true, {}, {}, {}, title, failure = PlaybackFailure.Timeout, failedSource = source)
             }.use { scene ->
                 assertPage(scene, named, emptyList())
             }
@@ -145,7 +144,7 @@ class PlayerFailurePageTest {
 
     private fun failurePages(cause: PlaybackFailure, position: Long): Map<String, List<String>> {
         fun pointer(phone: Boolean, web: Boolean = false) = pageLabels(if (phone) 844 else 1440, if (phone) 390 else 900) {
-            PlayerScreen(null, true, failure, {}, {}, {}, null, phone = phone,
+            PlayerScreen(null, true, {}, {}, {}, null, phone = phone,
                 canvasColor = if (web) androidx.compose.ui.graphics.Color.Transparent else androidx.compose.ui.graphics.Color.Black,
                 preview = PlayerFact.Progress(position, 3_132_000), tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"),
                 retry = {}, chooseSources = {}, failure = cause, failedSource = source)
@@ -154,7 +153,7 @@ class PlayerFailurePageTest {
             "phone" to pointer(phone = true),
             "desktop" to pointer(phone = false),
             "web" to pointer(phone = false, web = true),
-            "television" to pageLabels(1920, 1080, television = true) { TvPlayerScreen(null, false, failure, {}, {}, {}, null,
+            "television" to pageLabels(1920, 1080, television = true) { TvPlayerScreen(null, false, {}, {}, {}, null,
                 TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), {}, null, {}, {}, initialFacts = listOf(PlayerFact.Progress(position, 3_132_000)),
                 failure = cause, failedSource = source) },
         )
@@ -172,10 +171,10 @@ class PlayerFailurePageTest {
                 var stopped = 0
                 val notice = PlayerFallbackNotice("This source could not play", "Source b", "1080p · WEB-DL · addon:b")
                 scene(if (television) 1920 else 1440, if (television) 1080 else 900, television = television) {
-                    if (television) TvPlayerScreen(null, false, failure, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {},
+                    if (television) TvPlayerScreen(null, false, {}, {}, {}, title, TvPlaybackExtras(), null, null, null, {},
                         fallback = notice, stopFallback = { stopped++ }, scene = TvPlayerScene.Error)
-                    else PlayerScreen(null, true, failure, {}, {}, {}, title, phone = phone, fallback = notice,
-                        stopFallback = { stopped++ })
+                    else PlayerScreen(null, true, {}, {}, {}, title, phone = phone, fallback = notice,
+                        stopFallback = { stopped++ }, failure = PlaybackFailure.Failed)
                 }.use { scene ->
                     frames(scene)
                     val texts = nodes(scene).map(::text)
