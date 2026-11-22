@@ -28,7 +28,7 @@ class HeartbeatStatsSourceTest {
         "delivery":{"kind":"native_torrent","live":false,"format":"original","position":0,"grant":{}}}"""
 
     private class Torrents : LocalTorrents {
-        val renewals = mutableListOf<JsonObject?>()
+        val renewals = EngineRequests<JsonObject?>()
         override val capability = buildJsonObject { put("version", 2) }
         override suspend fun negotiate(remote: RemoteConnection) = true
         override suspend fun acquire(remote: RemoteConnection, id: String, request: JsonObject, stage: (String) -> Unit) = object : LocalTorrentPlayback {
@@ -40,7 +40,7 @@ class HeartbeatStatsSourceTest {
         }
     }
 
-    private fun TestScope.controller(ready: String, heartbeats: MutableList<String>, torrents: LocalTorrents?): ApplicationController {
+    private fun TestScope.controller(ready: String, heartbeats: EngineRequests<String>, torrents: LocalTorrents?): ApplicationController {
         val client = HttpClient(MockEngine) {
             engine {
                 dispatcher = StandardTestDispatcher(testScheduler)
@@ -73,7 +73,7 @@ class HeartbeatStatsSourceTest {
     }
 
     @Test fun aStallTheRendererReportsReachesTheRemoteHeartbeat() = runTest {
-        val heartbeats = mutableListOf<String>()
+        val heartbeats = EngineRequests<String>()
         val controller = controller(direct, heartbeats, torrents = null)
         stallOnRenderedInput(controller)
         val buffering = Json.parseToJsonElement(heartbeats.last()).jsonObject.getValue("buffering").jsonObject
@@ -83,7 +83,7 @@ class HeartbeatStatsSourceTest {
 
     @Test fun aStallTheRendererReportsReachesTheNativeTorrentRenewal() = runTest {
         val torrents = Torrents()
-        val controller = controller(nativeTorrent, mutableListOf(), torrents)
+        val controller = controller(nativeTorrent, EngineRequests(), torrents)
         stallOnRenderedInput(controller)
         assertEquals(1, assertNotNull(torrents.renewals.last()).getValue("rebuffer_count").jsonPrimitive.int)
         controller.closePlayer()
