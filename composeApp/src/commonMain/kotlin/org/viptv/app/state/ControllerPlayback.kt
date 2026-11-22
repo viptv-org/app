@@ -83,7 +83,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title, startChosen = positionMillis != null,
-        offsets = sourceMemory.offsets(profile, source),
+        offsets = sourceMemory.offsets(profile, source), stats = opened.stats,
         remoteSeek = if (lease?.reopensForSeek == true) seekByReopening(source, profile) else null,
         subtitleContent = { id ->
             // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
@@ -137,7 +137,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
         timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title,
-        offsets = sourceMemory.offsets(profile, source),
+        offsets = sourceMemory.offsets(profile, source), stats = opened.stats,
         remoteSeek = if (lease.reopensForSeek) seekByReopening(source, profile) else null,
         subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray() })
     rememberPlaybackOffsets(input, profile, source)
