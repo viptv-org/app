@@ -24,6 +24,7 @@ data class BestMatchSession(
     val reuseContext: org.viptv.app.connection.RankingContext? = null,
     val expanded: Boolean = false,
     val reuseAudioLanguages: Map<String, String> = emptyMap(),
+    val startOver: Boolean = false,
 )
 
 // The 2 s notice between a failed start and the next attempt.

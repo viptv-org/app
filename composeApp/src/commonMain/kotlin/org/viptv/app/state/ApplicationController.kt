@@ -111,7 +111,6 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var pairingGeneration = 0L
     internal var pairingCode: PairingCode? = null
     internal var stremioImport: StremioImportSession? = null
-    internal var restartRequested = false
     internal var firstFrameSeen = false
     internal var startupBuffered: Float? = null
     internal var presentedPlayback: PresentedPlayback? = null

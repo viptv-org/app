@@ -41,7 +41,6 @@ internal suspend fun ApplicationController.openProfile(id: String, pin: String? 
         beginHomeTransition(id)
         device.bootstrap(id)
     } else switchRemoteProfile(id, pin) ?: return
-    restartRequested = false
     accept(result)
     if (device != null) {
         val home = device.refreshHome(id)

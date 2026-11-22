@@ -20,8 +20,7 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
     if (!beginPendingSource(source)) return
     cancelSeekReopen()
-    val restart = restartRequested
-    restartRequested = false
+    val restart = takeStartOver() || mutable.value.bestMatch?.let { it.exhausted && it.startOver } == true
     clearBestMatchSession()
     openSource(current, forceGateway, positionMillis = if (restart) 0L else null, choice = choice)
 }

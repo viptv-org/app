@@ -287,7 +287,7 @@ internal fun org.viptv.engine.wire.DetailSnapshot.withOpenedProgress(card: Card)
 
 fun ApplicationController.playTitle(card: Card) = playTitle(card, manualSelection = false)
 
-private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean) {
+private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean, startOver: Boolean = false) {
     if (card.unnumberedEpisode()) {
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
@@ -304,7 +304,7 @@ private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean
         before.selectedProfile?.let { sourceMemory.choice(it, card) } else null
     releaseRemotePlayback()
     updateState { it.copy(detail = keptDetail, detailReturnScreen = origin, calendarEpisode = null, detailShell = false) }
-    openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null, manualSelection = manualSelection)
+    openSources(card, returnTo = Screen.Details, playTap = card.takeIf { keptDetail == null }, quiet = remembered != null, manualSelection = manualSelection, startOver = startOver)
     if (keptDetail != null) {
         val target = try { sourceTarget(card, keptDetail) } catch (error: LocalFailure) {
             updateState { it.copy(error = error.message, findingSources = false, pendingAction = null) }; return
@@ -422,7 +422,8 @@ private fun ApplicationController.loadSourceDetail(card: Card, navigation: Long,
         when {
             mutable.value.screen == Screen.Player -> { loadNextEpisode(); loadPlaybackSeason() }
             card.metadata_origin != detail.item.metadata_origin && (mutable.value.screen == Screen.Sources || reuse != null) -> {
-                openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle, quiet = reuse != null, manualSelection = sourcesManualSelection)
+                openSources(target, returnTo = Screen.Details, playTap = mutable.value.playTapTitle, quiet = reuse != null, manualSelection = sourcesManualSelection,
+                    startOver = mutable.value.sourcesStartOver)
                 // The controller's run, not the scope function: it cancels the job and sets `busy`.
                 this@loadSourceDetail.run { discoverSources(target, reuse) }
             }
@@ -438,9 +439,12 @@ private const val UNNUMBERED_EPISODE = "Choose a numbered episode from this titl
 
 private fun Card.unnumberedEpisode() = identity.episode?.episode?.let { it <= 0L } == true
 
-fun ApplicationController.playTitleFromStart(card: Card) {
-    restartRequested = true
-    playTitle(card)
+fun ApplicationController.playTitleFromStart(card: Card) = playTitle(card, manualSelection = false, startOver = true)
+
+internal fun ApplicationController.takeStartOver(): Boolean {
+    val startOver = mutable.value.sourcesStartOver
+    if (startOver) updateState { it.copy(sourcesStartOver = false) }
+    return startOver
 }
 
 fun ApplicationController.openRemoteIdentity(kind: String, id: String) {
@@ -477,12 +481,12 @@ internal fun ApplicationController.chooseSource(card: Card, startPlayback: Boole
 }
 
 private fun ApplicationController.openSources(card: Card, returnTo: Screen, playTap: Card? = null, startPlayback: Boolean = false, quiet: Boolean = false,
-    seed: DetailSourcePreview? = null, manualSelection: Boolean = false) {
+    seed: DetailSourcePreview? = null, manualSelection: Boolean = false, startOver: Boolean = false) {
     sourcesScrolled = false
     clearBestMatchSession()
     sourcesStartPlayback = startPlayback
     sourcesManualSelection = manualSelection || quiet && sourcesManualSelection
-    updateState { it.copy(screen = if (quiet) it.screen else Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card,
+    updateState { it.copy(screen = if (quiet) it.screen else Screen.Sources, sourceReturnScreen = returnTo, sourceTitle = card, sourcesStartOver = startOver,
         sources = seed?.rows.orEmpty(), sourceProducers = seed?.producers.orEmpty(), sourceGroups = seed?.groups ?: SourceGroups(),
         torrentOnlySources = seed?.torrentOnly ?: 0, findingSources = seed?.settled != true, navForward = emptyList(),
         playTapTitle = playTap, detailFailure = null, detailRetryable = true) }
@@ -519,7 +523,7 @@ private suspend fun ApplicationController.discoverSources(card: Card, reuse: Rem
                 if (!ready && !discoveryComplete) return
                 val target = targetFor(ranked) ?: return
                 started = true
-                startBestMatch(ranked, target, context.takeIf { activeReuse != null })
+                startBestMatch(ranked, target, context.takeIf { activeReuse != null }, startOver = takeStartOver())
             }
 
             var phase: String? = null
