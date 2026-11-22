@@ -26,7 +26,7 @@ class NativePlaybackQaActivity : ComponentActivity() {
             var back by remember { mutableStateOf<(() -> Unit)?>(null) }
             BackHandler { back?.invoke() ?: finish() }
             ViptvTheme(television = true) {
-                PlayerScreen(input, paused, null, { paused = !paused }, { fact ->
+                PlayerScreen(input, paused, { paused = !paused }, { fact ->
                     when (fact) {
                         is PlayerFact.Status -> Log.i("VIPTV_PLAYBACK_QA", "status=${fact.name}")
                         is PlayerFact.Presentation -> Log.i("VIPTV_PLAYBACK_QA", "presentation=${fact.proof} exact=${fact.exact}")
