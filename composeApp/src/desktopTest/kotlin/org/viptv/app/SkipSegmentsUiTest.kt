@@ -263,11 +263,11 @@ class SkipSegmentsUiTest {
         private var time = 0L
         val scene = ImageComposeScene(if (television) 1920 else 844, if (television) 1080 else 390, Density(1f)) { ViptvTheme(television = television) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                if (television) TvPlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24),
+                if (television) TvPlayerScreen(null, paused, { toggles++ }, {}, {}, episode(24),
                     TvPlaybackExtras(skips = skips, skipIntros = skipIntros, skipCredits = skipCredits, episodes = listOf(episode(24)), nextEpisode = next),
                     null, play, null, { back = it }, scene = TvPlayerScene.Skip, externalFacts = facts, previewCommand = { seeks += it },
                     playbackKey = "current")
-                else PlayerScreen(null, paused, null, { toggles++ }, {}, {}, episode(24), phone = phone, canvasColor = Color.Transparent,
+                else PlayerScreen(null, paused, { toggles++ }, {}, {}, episode(24), phone = phone, canvasColor = Color.Transparent,
                     externalFacts = facts, tvExtras = TvPlaybackExtras(skips = skips, skipIntros = skipIntros, skipCredits = skipCredits, episodes = listOf(episode(24)),
                         nextEpisode = next), playEpisode = play, backChanged = { back = it }, playbackKey = "current",
                     controlInsets = WindowInsets(0, 0, 0, 0))

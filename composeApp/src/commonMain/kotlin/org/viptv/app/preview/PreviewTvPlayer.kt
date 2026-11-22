@@ -53,7 +53,7 @@ internal fun PreviewTvPlayer(variant: String, go: (Screen) -> Unit, backChanged:
             else -> Unit
         }
     }
-    TvPlayerScreen(input, paused, null, { paused = !paused }, { fact ->
+    TvPlayerScreen(input, paused, { paused = !paused }, { fact ->
         if (native) {
             when (fact) {
                 is PlayerFact.Status -> { if (fact.name in listOf("Playing", "Paused", "Ended")) paused = fact.name != "Playing"; println("VIPTV_TV_PLAYER_QA status=${fact.name}") }

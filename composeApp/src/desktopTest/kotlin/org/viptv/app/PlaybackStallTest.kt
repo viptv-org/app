@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.state.*
@@ -76,7 +77,7 @@ class PlaybackStallTest {
         return input
     }
 
-    private val stalled = "$FALLBACK_REASON_FAILED. Choose another source."
+    private val stalled = PlaybackFailure.Failed
 
     @Test fun aWaitingStreamWithoutProgressFailsAfterTheWindow() = runTest {
         val server = Server()
@@ -84,10 +85,10 @@ class PlaybackStallTest {
         val input = play(controller)
         controller.observePlaybackFor(input, PlayerFact.Status("Buffering"))
         advanceTimeBy(PLAYBACK_STALL_WINDOW_MILLIS - 1); runCurrent()
-        assertNull(controller.state.value.error, "The stall window has not closed yet")
+        assertNull(controller.state.value.playbackFailure, "The stall window has not closed yet")
         advanceTimeBy(2); runCurrent()
         val state = controller.state.value
-        assertEquals(stalled, state.error)
+        assertEquals(stalled, state.playbackFailure)
         assertSame(input, state.playback, "The failure is shown over the player, not on the source list")
         assertEquals(Screen.Player, state.screen)
         controller.closePlayer()
@@ -101,9 +102,9 @@ class PlaybackStallTest {
         advanceTimeBy(20_000); runCurrent()
         controller.observePlaybackFor(input, PlayerFact.Progress(760_000, 1_400_000)); runCurrent()
         advanceTimeBy(PLAYBACK_STALL_WINDOW_MILLIS - 1); runCurrent()
-        assertNull(controller.state.value.error, "A clock that advances is not a stall")
+        assertNull(controller.state.value.playbackFailure, "A clock that advances is not a stall")
         advanceTimeBy(2); runCurrent()
-        assertEquals(stalled, controller.state.value.error)
+        assertEquals(stalled, controller.state.value.playbackFailure)
         controller.closePlayer()
     }
 
@@ -115,7 +116,7 @@ class PlaybackStallTest {
         advanceTimeBy(10_000); runCurrent()
         controller.observePlaybackFor(input, PlayerFact.Status("Playing")); runCurrent()
         advanceTimeBy(2 * PLAYBACK_STALL_WINDOW_MILLIS); runCurrent()
-        assertNull(controller.state.value.error)
+        assertNull(controller.state.value.playbackFailure)
         controller.closePlayer()
     }
 
@@ -128,7 +129,7 @@ class PlaybackStallTest {
         controller.closePlayer(); runCurrent()
         assertNull(controller.playbackStall)
         advanceTimeBy(2 * PLAYBACK_STALL_WINDOW_MILLIS); runCurrent()
-        assertNull(controller.state.value.error)
+        assertNull(controller.state.value.playbackFailure)
     }
 
     @Test fun aTorrentKeepsItsOwnStartupBudget() = runTest {
@@ -139,7 +140,7 @@ class PlaybackStallTest {
         val input = assertNotNull(controller.state.value.playback)
         controller.observePlaybackFor(input, PlayerFact.Status("Buffering"))
         advanceTimeBy(3 * PLAYBACK_STALL_WINDOW_MILLIS); runCurrent()
-        assertNull(controller.state.value.error)
+        assertNull(controller.state.value.playbackFailure)
         controller.closePlayer()
     }
 
@@ -149,7 +150,7 @@ class PlaybackStallTest {
         val input = play(controller)
         controller.observePlaybackFor(input, PlayerFact.Status("Buffering"))
         advanceTimeBy(PLAYBACK_STALL_WINDOW_MILLIS + 1); runCurrent()
-        assertEquals(stalled, controller.state.value.error)
+        assertEquals(stalled, controller.state.value.playbackFailure)
         controller.retrySource(source); runCurrent()
         assertEquals(2, server.opens.size)
         assertEquals(listOf("opaque-stream", "opaque-stream"), server.opens.map { it.getValue("stream_id").jsonPrimitive.content })
@@ -157,7 +158,7 @@ class PlaybackStallTest {
         val record = Json.decodeFromJsonElement<PlaybackRecord>(server.progress.last().getValue("record"))
         assertEquals(754_000L, record.position_millis)
         val state = controller.state.value
-        assertNull(state.error)
+        assertNull(state.playbackFailure)
         assertEquals(Screen.Player, state.screen)
         assertEquals("lease-2", state.playback?.id)
         controller.closePlayer()

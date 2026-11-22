@@ -45,7 +45,7 @@ class AudioSubtitlesPanelUiTest {
         val facts = kotlinx.coroutines.flow.MutableSharedFlow<PlayerFact>(replay = 1)
         facts.tryEmit(PlayerFact.Tracks(PlaybackTracks(audio, subs)))
         return ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            org.viptv.app.features.player.PlayerScreen(null, true, null, {}, {}, {}, title = title, preview = progress,
+            org.viptv.app.features.player.PlayerScreen(null, true, {}, {}, {}, title = title, preview = progress,
                 phone = phone, externalFacts = facts, openSettings = {})
         } }
     }
@@ -128,7 +128,7 @@ class AudioSubtitlesPanelUiTest {
             tryEmit(PlayerFact.Tracks(PlaybackTracks(listOf(PlaybackTrack(1, "English · 5.1", true, "en")), subtitles(3, 5))))
         }
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            org.viptv.app.features.player.PlayerScreen(null, true, null, {}, {}, { closed++ }, title = title, preview = progress,
+            org.viptv.app.features.player.PlayerScreen(null, true, {}, {}, { closed++ }, title = title, preview = progress,
                 phone = phone, externalFacts = facts, openSettings = {})
         } }
         fun frames(count: Int = 16) = repeat(count) { scene.render(frame++ * 16_666_667L).close() }

@@ -34,7 +34,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
         if (episode != null && detail != null) card.copy(title = detail.item.title,
             subtitle = "S${episode.seasonNumber()} E${episode.episode} · ${card.title}") else card
     }
-    PlayerScreen(state.playback, state.paused, state.error, controller::pausePlayback,
+    PlayerScreen(state.playback, state.paused, controller::pausePlayback,
         { fact -> controller.observePlaybackFor(state.playback, fact) }, controller::closePlayer,
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.providerLabel(),

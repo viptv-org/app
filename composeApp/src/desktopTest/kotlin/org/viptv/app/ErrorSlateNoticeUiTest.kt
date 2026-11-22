@@ -43,7 +43,7 @@ class ErrorSlateNoticeUiTest {
     @Test fun desktopShowsTheNoticeOverPlaybackAndOffersBothActions() {
         val clicks = Clicks()
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
-        scene(1440, 900) { PlayerScreen(null, false, null, {}, {}, {}, title, externalFacts = facts,
+        scene(1440, 900) { PlayerScreen(null, false, {}, {}, {}, title, externalFacts = facts,
             slateProvider = "ElfHosted", configureSource = { clicks.configure++ }, chooseSources = { clicks.choose++ }) }
             .use { scene ->
                 frames(scene)
@@ -60,7 +60,7 @@ class ErrorSlateNoticeUiTest {
     @Test fun phoneKeepsBothActionsOnScreenAtItsWidth() {
         val clicks = Clicks()
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
-        scene(390, 844) { PlayerScreen(null, false, null, {}, {}, {}, title, phone = true, externalFacts = facts,
+        scene(390, 844) { PlayerScreen(null, false, {}, {}, {}, title, phone = true, externalFacts = facts,
             configureSource = { clicks.configure++ }, chooseSources = { clicks.choose++ }) }
             .use { scene ->
                 frames(scene)
@@ -80,7 +80,7 @@ class ErrorSlateNoticeUiTest {
 
     @Test fun theNoticeLeavesOnItsOwnAfterThirtySeconds() {
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
-        scene(1440, 900) { PlayerScreen(null, false, null, {}, {}, {}, title, externalFacts = facts, configureSource = {}, chooseSources = {}) }
+        scene(1440, 900) { PlayerScreen(null, false, {}, {}, {}, title, externalFacts = facts, configureSource = {}, chooseSources = {}) }
             .use { scene ->
                 frames(scene)
                 assertTrue(facts.tryEmit(PlayerFact.ProbableErrorSlate))
@@ -94,7 +94,7 @@ class ErrorSlateNoticeUiTest {
 
     @Test fun theSlateNoticeReplacesTheAudioNoticeWhileItIsUp() {
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
-        scene(1440, 900) { PlayerScreen(null, false, null, {}, {}, {}, title, externalFacts = facts,
+        scene(1440, 900) { PlayerScreen(null, false, {}, {}, {}, title, externalFacts = facts,
             audioNotice = "This source has no English audio.", nextSource = {}, configureSource = {}, chooseSources = {}) }
             .use { scene ->
                 frames(scene)
@@ -111,7 +111,7 @@ class ErrorSlateNoticeUiTest {
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         var focusManager: FocusManager? = null
         scene(1920, 1080, television = true) {
-            PlayerScreen(null, false, null, {}, {}, {}, title, television = true, externalFacts = facts,
+            PlayerScreen(null, false, {}, {}, {}, title, television = true, externalFacts = facts,
                 tvExtras = TvPlaybackExtras(), slateProvider = "ElfHosted",
                 configureSource = { clicks.configure++ }, chooseSources = { clicks.choose++ })
             focusManager = LocalFocusManager.current

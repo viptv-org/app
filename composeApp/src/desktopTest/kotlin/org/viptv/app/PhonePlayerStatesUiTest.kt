@@ -25,7 +25,7 @@ class PhonePlayerStatesUiTest {
 
     @Test fun scrubbingTimelineSeeksToFractionAndShowsRemainingTime() {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = true,
                 preview = PlayerFact.Progress(842_000, 3_132_000))
         } }
         try {
@@ -40,7 +40,7 @@ class PhonePlayerStatesUiTest {
 
     @Test fun lockedScreenShowsOnlyUnlockActionAndUnlockRestoresControls() {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = true,
                 preview = PlayerFact.Progress(842_000, 3_132_000))
         } }
         try {
@@ -59,7 +59,7 @@ class PhonePlayerStatesUiTest {
 
     @Test fun audioAndSubtitlesSheetRendersTrackColumnsAndSizeControl() {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = true,
                 preview = PlayerFact.Progress(842_000, 3_132_000))
         } }
         try {
@@ -76,7 +76,7 @@ class PhonePlayerStatesUiTest {
         val channel = Card(MediaIdentity("chan-9", "channel", emptyList()), title = "Channel 9 News",
             provider_id = "addon:7", badges = emptyList(), metadata_origin = origin)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = channel, phone = true)
+            PlayerScreen(null, true, {}, {}, {}, title = channel, phone = true)
         } }
         try {
             frames(scene)
@@ -88,7 +88,7 @@ class PhonePlayerStatesUiTest {
 
     @Test fun startingStateShowsBufferingIndicator() {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, false, null, {}, {}, {}, title = episode(24), phone = true,
+            PlayerScreen(null, false, {}, {}, {}, title = episode(24), phone = true,
                 preview = PlayerFact.Progress(0, null))
         } }
         try {

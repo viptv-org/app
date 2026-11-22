@@ -1,5 +1,6 @@
 package org.viptv.app
 
+import org.viptv.app.features.player.PlaybackFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
@@ -84,7 +85,7 @@ class ProgressWriteFailureTest {
         controller.observePlayback(PlayerFact.Failed)
         controller.progressRetryJob?.cancel()
         val state = controller.state.value
-        assertNotNull(state.error)
+        assertEquals(PlaybackFailure.Failed, state.playbackFailure)
         assertSame(input, state.playback)
     }
 }

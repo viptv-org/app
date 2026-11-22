@@ -46,7 +46,7 @@ class PlayerCutoutInsetsUiTest {
     @Test fun cameraOnTheRightKeepsControlsOutOfTheCutoutWhileVideoFillsIt() = assertControlsClearTheCutout("right", WindowInsets(right = cutout.dp, bottom = bottomBar.dp))
 
     private fun assertControlsClearTheCutout(side: String, insets: WindowInsets) {
-        val scene = scene(insets) { PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
+        val scene = scene(insets) { PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = true,
             preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(episode(24), episode(25)), nextEpisode = episode(25)),
             playEpisode = {}, controlInsets = insets) }
         try {
@@ -58,7 +58,7 @@ class PlayerCutoutInsetsUiTest {
 
     @Test fun panelsReachTheEdgeButKeepTheirContentOutOfTheCutout() {
         val insets = WindowInsets(right = cutout.dp, bottom = bottomBar.dp)
-        val scene = scene(insets) { PlayerScreen(null, true, null, {}, {}, {}, title = episode(24), phone = true,
+        val scene = scene(insets) { PlayerScreen(null, true, {}, {}, {}, title = episode(24), phone = true,
             preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(episode(24), episode(25)), nextEpisode = episode(25)),
             playEpisode = {}, controlInsets = insets) }
         try {
@@ -73,7 +73,7 @@ class PlayerCutoutInsetsUiTest {
 
     @Test fun failureActionsStayOutOfTheCutout() {
         val insets = WindowInsets(left = cutout.dp, bottom = bottomBar.dp)
-        val scene = scene(insets) { PlayerScreen(null, true, "The selected source did not respond.", {}, {}, {}, title = episode(2), phone = true,
+        val scene = scene(insets) { PlayerScreen(null, true, {}, {}, {}, title = episode(2), phone = true, failure = PlaybackFailure.Failed,
             tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = {}, chooseSources = {}, controlInsets = insets) }
         try {
             frames(scene); capture(scene, "phone-player-cutout-failure")

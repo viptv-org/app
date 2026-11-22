@@ -53,7 +53,7 @@ class TvPlayerFocusUiTest {
             ViptvTheme(television = true) {
                 focusManager = LocalFocusManager.current
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
-                    TvPlayerScreen(null, true, null, {}, {}, {}, title(live), TvPlaybackExtras(), null, null, null, {},
+                    TvPlayerScreen(null, true, {}, {}, {}, title(live), TvPlaybackExtras(), null, null, null, {},
                         scene = TvPlayerScene.Controls, playbackKey = "current",
                         initialFacts = if (live) emptyList() else listOf(PlayerFact.Progress(842_000, 3_132_000)))
                 }

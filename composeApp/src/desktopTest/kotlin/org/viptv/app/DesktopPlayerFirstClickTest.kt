@@ -24,7 +24,7 @@ class DesktopPlayerFirstClickTest {
     @Test fun theTransportTakesAPointerPressAndTheTimelineSeeksAtTheClick() {
         var toggles = 0
         val scene = ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, false, null, { toggles++ }, {}, {}, preview = PlayerFact.Progress(0, 20_000))
+            PlayerScreen(null, false, { toggles++ }, {}, {}, preview = PlayerFact.Progress(0, 20_000))
         } }
         try {
             sceneFrames(scene)
@@ -43,7 +43,7 @@ internal fun playerPausePointer(width: Int, height: Int): Offset {
     var found: Offset? = null
     EventQueue.invokeAndWait {
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, false, null, {}, {}, {}, preview = PlayerFact.Progress(0, 20_000))
+            PlayerScreen(null, false, {}, {}, {}, preview = PlayerFact.Progress(0, 20_000))
         } }
         try {
             sceneFrames(scene)

@@ -102,7 +102,7 @@ class TimelineSegmentsUiTest {
         private var time = 0L
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
-                TvPlayerScreen(null, true, null, {}, {}, {}, episode(24),
+                TvPlayerScreen(null, true, {}, {}, {}, episode(24),
                     TvPlaybackExtras(skips = skips, episodes = listOf(episode(24))),
                     null, null, null, { }, scene = TvPlayerScene.Controls, externalFacts = facts, playbackKey = "current")
             }

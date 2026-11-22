@@ -40,7 +40,7 @@ class PlayerSpaceActivationUiTest {
             tryEmit(PlayerFact.Progress(768_000, 3_132_000))
         }
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, { toggles++ }, {}, { closed++ }, title = episode(24), phone = phone, externalFacts = facts,
+            PlayerScreen(null, true, { toggles++ }, {}, { closed++ }, title = episode(24), phone = phone, externalFacts = facts,
                 tvExtras = TvPlaybackExtras(episodes = listOf(episode(24)), nextEpisode = episode(25)), playEpisode = {},
                 chooseSources = {}, toggleFullscreen = { fullscreen++ })
         } }

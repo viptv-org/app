@@ -41,7 +41,7 @@ class SkipPromptClearanceUiTest {
             var time = 0L
             val scene = ImageComposeScene(layout.width, layout.height, Density(1f)) { ViptvTheme {
                 Box(Modifier.fillMaxSize().background(Palette.background)) {
-                    PlayerScreen(null, false, null, {}, {}, {}, card, phone = layout.phone, canvasColor = Color.Transparent, externalFacts = facts,
+                    PlayerScreen(null, false, {}, {}, {}, card, phone = layout.phone, canvasColor = Color.Transparent, externalFacts = facts,
                         tvExtras = TvPlaybackExtras(skips = listOf(intro), skipIntros = crossing, episodes = listOf(card)),
                         playbackKey = "k", controlInsets = WindowInsets(0, 0, 0, 0))
                 }

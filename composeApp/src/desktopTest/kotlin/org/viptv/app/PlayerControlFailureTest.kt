@@ -78,7 +78,7 @@ class PlayerControlFailureTest {
     @Test fun theNoticeAppearsCentrallyAndDoesNotOutliveItsWindow() {
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         val scene = ImageComposeScene(1280, 720, Density(1f), Dispatchers.Unconfined) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts)
+            PlayerScreen(null, true, {}, {}, {}, preview = PlayerFact.Progress(842_000, 3_132_000), externalFacts = facts)
         } }
         val step = 250_000_000L
         var frame = 0L

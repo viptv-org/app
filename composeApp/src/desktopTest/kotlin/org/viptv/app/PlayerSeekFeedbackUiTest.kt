@@ -84,7 +84,7 @@ class PlayerSeekFeedbackUiTest {
 
     private fun scene(facts: MutableSharedFlow<PlayerFact>, body: (ImageComposeScene) -> Unit) {
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, phone = true, preview = PlayerFact.Progress(120_000, 600_000),
+            PlayerScreen(null, true, {}, {}, {}, phone = true, preview = PlayerFact.Progress(120_000, 600_000),
                 playbackKey = "playing", externalFacts = facts)
         } }
         try { body(scene) } finally { scene.close() }

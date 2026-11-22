@@ -142,7 +142,7 @@ class DesktopFullscreenTest {
 
     private fun playerScene(fullscreen: Boolean, toggleFullscreen: (() -> Unit)?, close: () -> Unit = {}) =
         ImageComposeScene(1280, 720, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, close, title = episode(1), phone = false,
+            PlayerScreen(null, true, {}, {}, close, title = episode(1), phone = false,
                 fullscreen = fullscreen, toggleFullscreen = toggleFullscreen)
         } }
 

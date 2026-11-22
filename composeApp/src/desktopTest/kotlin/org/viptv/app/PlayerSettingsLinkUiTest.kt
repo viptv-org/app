@@ -70,7 +70,7 @@ class PlayerSettingsLinkUiTest {
         val facts = MutableSharedFlow<PlayerFact>(replay = 1)
         facts.tryEmit(PlayerFact.Tracks(tracks))
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = org.viptv.engine.wire.Card(org.viptv.engine.wire.MediaIdentity("m", "movie", emptyList()),
+            PlayerScreen(null, true, {}, {}, {}, title = org.viptv.engine.wire.Card(org.viptv.engine.wire.MediaIdentity("m", "movie", emptyList()),
                 provider_id = "metadata", title = "Movie", badges = emptyList()), preview = PlayerFact.Progress(842_000, 3_132_000),
                 phone = phone, externalFacts = facts, openSettings = { opened++ })
         } }
@@ -92,7 +92,7 @@ class PlayerSettingsLinkUiTest {
         val facts = MutableSharedFlow<PlayerFact>(replay = 1)
         facts.tryEmit(PlayerFact.Tracks(tracks))
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, phone = true, externalFacts = facts)
+            PlayerScreen(null, true, {}, {}, {}, phone = true, externalFacts = facts)
         } }
         try {
             frames(scene); click(scene, "Audio & subtitles"); frames(scene, 20)
@@ -105,7 +105,7 @@ class PlayerSettingsLinkUiTest {
         var focusManager: FocusManager? = null
         val scene = ImageComposeScene(1920, 1080, Density(1f)) { ViptvTheme(television = true) {
             focusManager = LocalFocusManager.current
-            TvPlayerScreen(null, true, null, {}, {}, {}, null, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Tracks,
+            TvPlayerScreen(null, true, {}, {}, {}, null, TvPlaybackExtras(), null, null, null, {}, scene = TvPlayerScene.Tracks,
                 initialFacts = listOf(PlayerFact.Tracks(tracks)), openSettings = { opened++ })
         } }
         try {

@@ -37,7 +37,7 @@ class PlayerOpeningIndicatorUiTest {
         val startup = mutableStateOf<StartupProgress?>(opening)
         val scene = ImageComposeScene(844, 390, Density(1f)) {
             ViptvTheme {
-                PlayerScreen(null, true, null, {}, {}, {}, title = title, startup = startup.value)
+                PlayerScreen(null, true, {}, {}, {}, title = title, startup = startup.value)
             }
         }
         try {
@@ -79,7 +79,7 @@ class PlayerOpeningIndicatorUiTest {
     @Test fun bufferingAfterTheFirstFrameRingsThePlayButtonAndKeepsTheControls() {
         val scene = ImageComposeScene(844, 390, Density(1f)) {
             ViptvTheme {
-                PlayerScreen(null, false, null, {}, {}, {}, title = title, phone = true,
+                PlayerScreen(null, false, {}, {}, {}, title = title, phone = true,
                     externalFacts = flowOf(PlayerFact.Progress(600_000, 2_400_000), PlayerFact.Status("Buffering")))
             }
         }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import org.viptv.app.connection.*
+import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackInput
 import org.viptv.app.player.PlayerFact
 import org.viptv.app.player.PresentationProof
@@ -112,12 +113,12 @@ class BestMatchFallbackTest {
             assertNotNull(notice)
             assertEquals("b", notice.next.id, "The camera release is never a fallback target")
             assertEquals("This source could not play. Trying the next best source…", notice.message)
-            assertEquals("This source could not play. Choose another source.", controller.state.value.error,
+            assertEquals(PlaybackFailure.Failed, controller.state.value.playbackFailure,
                 "Stop leaves the existing failure screen's description")
             awaitPlayback(controller, "b")
             assertNull(controller.state.value.fallbackNotice)
             assertEquals(listOf("a", "b"), fake.opened)
-            assertNull(controller.state.value.error, "The next attempt clears the failure")
+            assertNull(controller.state.value.playbackFailure, "The next attempt clears the failure")
         }
 
     @Test fun anUndecodableStartNamesTheDecodeReasonAndOpensTheNextSource() =
@@ -128,7 +129,7 @@ class BestMatchFallbackTest {
             assertNotNull(notice)
             assertEquals("b", notice.next.id)
             assertEquals("${FALLBACK_REASON_UNDECODABLE}. Trying the next best source…", notice.message)
-            assertEquals("${FALLBACK_REASON_UNDECODABLE}. Choose another source.", controller.state.value.error)
+            assertEquals(PlaybackFailure.Undecodable, controller.state.value.playbackFailure)
             awaitPlayback(controller, "b")
             assertEquals(listOf("a", "b"), fake.opened)
         }
@@ -140,7 +141,7 @@ class BestMatchFallbackTest {
             controller.stopBestMatchFallback()
             assertNull(controller.state.value.fallbackNotice)
             assertNull(controller.state.value.bestMatch, "Stop ends the session")
-            assertNotNull(controller.state.value.error)
+            assertNotNull(controller.state.value.playbackFailure)
             delay(200)
             assertEquals(listOf("a"), fake.opened)
         }
@@ -168,7 +169,7 @@ class BestMatchFallbackTest {
             awaitPlayback(controller, "b")
             controller.observePlayback(PlayerFact.Failed)
             assertNull(controller.state.value.fallbackNotice)
-            assertNotNull(controller.state.value.error)
+            assertNotNull(controller.state.value.playbackFailure)
             delay(200)
             assertEquals(listOf("a", "b"), fake.opened)
         }

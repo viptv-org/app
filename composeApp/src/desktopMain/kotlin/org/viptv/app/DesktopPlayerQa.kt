@@ -45,7 +45,7 @@ internal fun launchDesktopPlayerQa() = application {
         LaunchedEffect(window) { window.toFront(); window.requestFocus() }
         org.viptv.app.player.mpv.MpvWindow(window) {
         if (controls) org.viptv.app.theme.ViptvTheme {
-            org.viptv.app.features.player.PlayerScreen(input, paused, null, { paused = !paused }, probe::observe, ::exitApplication)
+            org.viptv.app.features.player.PlayerScreen(input, paused, { paused = !paused }, probe::observe, ::exitApplication)
         } else PlayerSurface(input, paused, false, Modifier.fillMaxSize().background(Color.Black), observe = probe::observe, commands = commands)
         LaunchedEffect(input) { if (scripted) { probe.run(input, commands) { paused = it }; exitApplication() } }
         LaunchedEffect(input) {

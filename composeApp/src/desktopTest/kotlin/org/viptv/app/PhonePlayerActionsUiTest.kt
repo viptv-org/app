@@ -30,7 +30,7 @@ class PhonePlayerActionsUiTest {
         val current = episode(24); val next = episode(25)
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true,
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true,
                 preview = PlayerFact.Progress(842_000, 3_132_000), tvExtras = TvPlaybackExtras(episodes = listOf(current), nextEpisode = next),
                 playEpisode = { played = it }, backChanged = { back = it }, playbackKey = "current", externalFacts = facts)
         } }
@@ -57,7 +57,7 @@ class PhonePlayerActionsUiTest {
         var closed = 0
         val current = episode(80)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, { closed++ }, title = current, phone = true,
+            PlayerScreen(null, true, {}, {}, { closed++ }, title = current, phone = true,
                 tvExtras = TvPlaybackExtras(episodes = (1L..100L).map(::episode)), playEpisode = { played = it }, backChanged = { back = it })
         } }
         try {
@@ -78,7 +78,7 @@ class PhonePlayerActionsUiTest {
         var current by mutableStateOf(episode(1))
         var played = 0
         val scene = ImageComposeScene(390, 844, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playEpisode = { played++ })
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true, playEpisode = { played++ })
         } }
         try {
             frames(scene)
@@ -98,7 +98,7 @@ class PhonePlayerActionsUiTest {
         var retry = 0; var choose = 0; var close = 0
         var available by mutableStateOf(true)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, "The selected source did not respond.", {}, {}, { close++ }, title = episode(2), phone = true,
+            PlayerScreen(null, true, {}, {}, { close++ }, title = episode(2), phone = true, failure = PlaybackFailure.Failed,
                 tvExtras = TvPlaybackExtras(fallbackLabel = "Fixture 1080p"), retry = if (available) ({ retry++ }) else null,
                 chooseSources = if (available) ({ choose++ }) else null)
         } }
@@ -123,7 +123,7 @@ class PhonePlayerActionsUiTest {
         var played = 0
         val facts = MutableSharedFlow<PlayerFact>(extraBufferCapacity = 4)
         val scene = ImageComposeScene(844, 390, Density(1f)) { ViptvTheme {
-            PlayerScreen(null, true, null, {}, {}, {}, title = current, phone = true, playbackKey = key,
+            PlayerScreen(null, true, {}, {}, {}, title = current, phone = true, playbackKey = key,
                 tvExtras = TvPlaybackExtras(episodes = episodes, nextEpisode = next), playEpisode = { played++ }, externalFacts = facts)
         } }
         try {

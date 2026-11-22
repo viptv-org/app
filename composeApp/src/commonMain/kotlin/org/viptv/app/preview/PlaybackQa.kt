@@ -17,7 +17,7 @@ fun PlaybackQa(close: () -> Unit = {}, canvasColor: Color = Color.Black) {
     var paused by remember { mutableStateOf(true) }
     ViptvTheme {
         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            PlayerScreen(input, paused, null, { paused = !paused }, { fact ->
+            PlayerScreen(input, paused, { paused = !paused }, { fact ->
                 if (fact is PlayerFact.Status) when (fact.name) {
                     "Playing" -> paused = false
                     "Paused", "Ended" -> paused = true
