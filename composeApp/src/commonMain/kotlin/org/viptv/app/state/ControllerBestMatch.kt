@@ -6,7 +6,7 @@ import org.viptv.app.features.player.PlaybackFailure
 import org.viptv.app.player.PlaybackTracks
 import org.viptv.engine.wire.SourceCandidate
 
-internal fun ApplicationController.startBestMatch(ranked: RankedSources, target: SourceCandidate, context: RankingContext? = null) {
+internal fun ApplicationController.startBestMatch(ranked: RankedSources, target: SourceCandidate, context: RankingContext? = null, startOver: Boolean = false) {
     val reuse = context?.takeIf { it.reuse.present && ranked.reuseSupported }
     val ids = if (reuse != null) ranked.reuseIds.toSet()
         else ranked.automaticIds?.toSet()
@@ -14,8 +14,8 @@ internal fun ApplicationController.startBestMatch(ranked: RankedSources, target:
     val canExpand = local is PreferredSourceDiscovery || connection?.preferredSourceDiscoverySupported == true
     updateState { it.copy(bestMatch = BestMatchSession(rows, tried = listOf(target.id), playingId = target.id,
         reuseContext = reuse, reuseAudioLanguages = ranked.reuseAudioLanguages,
-        expanded = ranked.discoveryPhase != "preferred" || !canExpand), fallbackNotice = null, audioNotice = null) }
-    openSource(target, forceGateway = false, positionMillis = null)
+        expanded = ranked.discoveryPhase != "preferred" || !canExpand, startOver = startOver), fallbackNotice = null, audioNotice = null) }
+    openSource(target, forceGateway = false, positionMillis = if (startOver) 0L else null)
 }
 
 internal fun ApplicationController.startFailed(cause: PlaybackFailure, dolbyVision: Boolean = false) {
@@ -90,8 +90,9 @@ internal fun ApplicationController.clearBestMatchSession() {
 
 private fun ApplicationController.openFallback(next: SourceCandidate) {
     val source = mutable.value.sources.firstOrNull { it.id == next.id } ?: next
+    val startOver = mutable.value.bestMatch?.startOver == true
     updateState { it.copy(fallbackNotice = null, audioNotice = null) }
-    openSource(source, forceGateway = false, positionMillis = null)
+    openSource(source, forceGateway = false, positionMillis = if (startOver) 0L else null)
 }
 
 private fun ApplicationController.exhaustFallback(session: BestMatchSession) {

@@ -83,6 +83,27 @@ class BestMatchFallbackTest {
         } finally { fixture.close(controller); scope.cancel() }
     }
 
+    @Test fun aStartOverFallbackStillStartsFromTheBeginning() = runTest {
+        val fixture = LocalSetupFixture()
+        val rows = listOf(row("a"), row("b"))
+        val device = object : LocalConnection by fixture.local {
+            override suspend fun openSource(id: String): PlaybackInput {
+                if (id == "a") throw LocalFailure("Source expired")
+                return PlaybackInput(id, "https://media.example/$id", positionMillis = 1_200_000, profileId = "default")
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val controller = ApplicationController(scope, fixture.store, bestMatchNoticeMillis = 20)
+        controller.local = device
+        controller.mutable.value = ApplicationState(screen = Screen.Sources, selectedProfile = "default", localMode = true,
+            sourceTitle = movie, sources = rows, preferences = PreferencesSnapshot())
+        try {
+            controller.startBestMatch(RankedSources(rows, interimSourceGroups(rows)), rows.first(), startOver = true)
+            val fallback = withTimeout(5_000) { controller.state.first { it.playback?.id == "b" } }
+            assertTrue(fallback.playback!!.startChosen, "the fallback keeps the start-over its Best match was opened with")
+        } finally { fixture.close(controller); scope.cancel() }
+    }
+
     @Test fun aFailedStartShowsTheNoticeThenOpensTheNextRowThatSurvivesTheHardFilters() =
         fallback(listOf(row("a"), row("cam", 2160, "cam"), row("b"))) { controller, fake ->
             assertEquals(listOf("a"), fake.opened)

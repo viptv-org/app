@@ -126,15 +126,13 @@ fun ApplicationController.backDetails() {
 }
 
 fun ApplicationController.backSources() {
-    // A restart the viewer never started must not move a later title to 0:00.
-    restartRequested = false
     sourcePreviewSession?.adopted = false
     val awaitingTitle = mutable.value.let { it.playTapTitle != null && it.detail == null && it.sourceReturnScreen == Screen.Details }
     generation++; job?.cancel()
     clearBestMatchSession()
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
-        state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null,
+        state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null, sourcesStartOver = false,
             pendingAction = null, error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
     }
     rememberNavigation()

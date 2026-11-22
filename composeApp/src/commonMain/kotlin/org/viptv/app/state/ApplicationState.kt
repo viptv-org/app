@@ -163,6 +163,7 @@ data class ApplicationState(
     val gatewayGrants: Map<String, List<Long>> = emptyMap(),
     val enabledAddonIds: Set<String> = emptySet(),
     val sourceTitle: Card? = null,
+    val sourcesStartOver: Boolean = false,
     val sourceReturnScreen: Screen = Screen.Home,
     val sources: List<SourceCandidate> = emptyList(),
     val sourceProducers: List<org.viptv.app.connection.SourceProducerOutcome> = emptyList(),
