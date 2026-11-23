@@ -31,8 +31,15 @@ internal data class DownloadRecord(
     val tracks: List<DownloadTrack> = emptyList(),
     val pinned: Boolean = false,
     val release: SourceCandidate? = null,
+    val revision: Int = 0,
+    val previous: DownloadPrevious? = null,
+    val subtitlesFetched: Boolean = false,
 ) {
-    val fileName: String get() = downloadFileName(id)
+    val fileName: String get() = downloadFileName(id, revision)
+
+    val storedBytes: Long get() = bytesDone + (previous?.bytes ?: 0)
+
+    val previousFileName: String? get() = previous?.let { downloadFileName(id, it.revision) }
 
     fun item(settings: DownloadSettings): DownloadItem = DownloadItem(
         id = id, profileId = profileId, card = card, seriesTitle = seriesTitle, state = state,
@@ -56,6 +63,10 @@ internal data class DownloadRecord(
 internal data class DownloadSubtitle(val id: String, val providerId: String, val language: String, val label: String, val fileName: String) {
     fun candidate() = org.viptv.engine.wire.SubtitleCandidate(id, providerId, language, label)
 }
+
+@Serializable
+internal data class DownloadPrevious(val revision: Int, val source: SourceCandidate?, val mimeType: String?, val bytes: Long,
+    val subtitles: List<DownloadSubtitle>, val tracks: List<DownloadTrack>, val subtitlesFetched: Boolean)
 
 @Serializable
 internal data class OfflineProgress(val profileId: String, val card: Card, val positionMillis: Long, val durationMillis: Long?,
@@ -85,6 +96,8 @@ internal fun DownloadSettings.record() =
     DownloadSettingsRecord(wifiOnly, maxQualityHeight, storageLimitBytes, deleteWatchedAfterMillis, keepNextEpisodes, downloadSubtitles)
 
 internal fun downloadId(profileId: String, card: Card): String = "$profileId|${cardLookupKey(card)}"
+
+internal fun downloadFileName(id: String, revision: Int): String = downloadFileName(if (revision == 0) id else "$id#$revision")
 
 internal fun downloadFileName(id: String): String {
     val safe = id.map { if (it.isLetterOrDigit()) it else '_' }.joinToString("").takeLast(80)

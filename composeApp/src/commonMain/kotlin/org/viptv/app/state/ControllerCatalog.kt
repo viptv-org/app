@@ -292,6 +292,7 @@ private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean
         updateState { it.copy(error = UNNUMBERED_EPISODE) }
         return
     }
+    if (!manualSelection && !forDownload) completedDownloadFor(card)?.let { playDownload(it, startOver); return }
     if (!beginPendingPlayback(card)) return
     cancelSourceDetail()
     sourcesManualSelection = manualSelection

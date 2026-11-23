@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import org.viptv.app.connection.epochMillis
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SubtitleCandidate
 
 enum class DownloadNetwork { None, Metered, Unmetered }
 
@@ -46,6 +47,15 @@ internal fun interface DownloadResolver {
     suspend fun resolve(record: DownloadRecord, settings: DownloadSettings): DownloadResolution
 }
 
+internal interface DownloadSubtitleFetcher {
+    fun accepts(profileId: String): Boolean
+    suspend fun fetch(record: DownloadRecord): List<Pair<SubtitleCandidate, ByteArray>>
+}
+
+internal fun interface DownloadProbe {
+    fun tracks(path: String): List<DownloadTrack>
+}
+
 internal class DownloadUnavailable(message: String) : Exception(message)
 
 internal class DownloadDeferred(val retryAfterMillis: Long) : Exception()
@@ -66,6 +76,7 @@ internal class DownloadEngine(
     private val retryDelays: List<Long> = listOf(2_000L, 10_000L, 30_000L),
     private val sweepMillis: Long = 60_000L,
     private val saveDelayMillis: Long = 1_000L,
+    private val probe: DownloadProbe? = null,
 ) : Downloads {
     private val codec = Json { ignoreUnknownKeys = true; encodeDefaults = false }
     private val lock = SynchronizedObject()
@@ -78,6 +89,8 @@ internal class DownloadEngine(
     private val saves = Channel<Unit>(Channel.CONFLATED)
     private var running: Pair<String, Job>? = null
     private var resolverValue: DownloadResolver? = null
+    private var subtitleFetcherValue: DownloadSubtitleFetcher? = null
+    private val fetchingSubtitles = mutableSetOf<String>()
 
     override val items: StateFlow<List<DownloadItem>> = itemFlow.asStateFlow()
     override val storage: StateFlow<DownloadStorage> = storageFlow.asStateFlow()
@@ -88,18 +101,22 @@ internal class DownloadEngine(
         get() = resolverValue
         set(value) { resolverValue = value; requeueWaiting(); wake.trySend(Unit) }
 
+    var subtitleFetcher: DownloadSubtitleFetcher?
+        get() = subtitleFetcherValue
+        set(value) { subtitleFetcherValue = value; fetchPendingSubtitles() }
+
     var playingId: String? = null
         private set
 
     init {
         publish()
-        scope.launch { network.drop(1).collect { requeueWaiting(); wake.trySend(Unit) } }
+        scope.launch { network.drop(1).collect { requeueWaiting(); wake.trySend(Unit); fetchPendingSubtitles() } }
         scope.launch { while (true) { saves.receive(); save(); delay(saveDelayMillis) } }
         scope.launch { while (true) { sweep(); delay(sweepMillis) } }
         scope.launch { work() }
     }
 
-    fun wakeUp() { wake.trySend(Unit) }
+    fun wakeUp() { wake.trySend(Unit); fetchPendingSubtitles() }
 
     fun records(): List<DownloadRecord> = synchronized(lock) { book.records }
 
@@ -129,6 +146,27 @@ internal class DownloadEngine(
         requeueWaiting()
         sweep()
         wake.trySend(Unit)
+        fetchPendingSubtitles()
+    }
+
+    fun replaceSource(id: String, source: SourceCandidate): Boolean {
+        val current = record(id) ?: return false
+        if (current.state != DownloadState.Failed && current.source != null && sameRelease(current.source, listOf(source)) != null) return false
+        stopRunning(id)
+        change(id) { record ->
+            val kept = record.previous ?: record.takeIf { it.state == DownloadState.Completed }?.let {
+                DownloadPrevious(it.revision, it.source, it.mimeType, it.bytesDone, it.subtitles, it.tracks, it.subtitlesFetched)
+            }
+            record.copy(revision = maxOf(record.revision, kept?.revision ?: 0) + 1, previous = kept, source = source, pinned = true,
+                release = source, url = null, headers = emptyMap(), mimeType = null, state = DownloadState.Queued, bytesDone = 0,
+                bytesTotal = null, failure = null, retryAtMillis = null, subtitles = emptyList(), tracks = emptyList(), subtitlesFetched = false)
+        } ?: return false
+        if (current.state != DownloadState.Completed) {
+            files.delete(current.fileName)
+            current.subtitles.forEach { files.delete(it.fileName) }
+        }
+        wake.trySend(Unit)
+        return true
     }
 
     override fun pause(id: String) {
@@ -168,9 +206,9 @@ internal class DownloadEngine(
     fun subtitleBytes(id: String, subtitleId: String): ByteArray? =
         record(id)?.subtitles?.firstOrNull { it.id == subtitleId }?.let { files.read(it.fileName) }
 
-    fun storeSubtitle(id: String, subtitle: org.viptv.engine.wire.SubtitleCandidate, content: ByteArray) {
+    fun storeSubtitle(id: String, subtitle: SubtitleCandidate, content: ByteArray) {
         val record = record(id) ?: return
-        val name = downloadFileName("$id|subtitle|${subtitle.id}").removeSuffix(".media") + ".sub"
+        val name = downloadFileName("${record.fileName}|subtitle|${subtitle.id}").removeSuffix(".media") + ".sub"
         files.write(name, content)
         change(record.id) { current ->
             current.copy(subtitles = current.subtitles.filter { it.id != subtitle.id } +
@@ -301,7 +339,7 @@ internal class DownloadEngine(
 
     private fun ensureSpace(record: DownloadRecord, grown: Boolean = false) {
         val records = records()
-        val used = records.sumOf { it.bytesDone }
+        val used = records.sumOf { it.storedBytes }
         val limit = effectiveLimit(settingsFlow.value, used, files.freeBytes())
         val needed = if (grown) 0 else ((record.bytesTotal ?: 0) - record.bytesDone).coerceAtLeast(0)
         val plan = evictionPlan(records, protectedIds(records, playingId) + record.id, needed, limit) ?: throw OutOfSpace()
@@ -367,11 +405,64 @@ internal class DownloadEngine(
         return record
     }
 
-    private fun complete(id: String): DownloadRecord? =
-        change(id) { it.copy(state = DownloadState.Completed, bytesTotal = it.bytesDone, failure = null) }
+    private fun complete(id: String): DownloadRecord? {
+        val before = record(id)
+        val done = change(id) { it.copy(state = DownloadState.Completed, bytesTotal = it.bytesDone, failure = null, previous = null) } ?: return null
+        before?.previous?.let { previous ->
+            before.previousFileName?.let(files::delete)
+            previous.subtitles.forEach { files.delete(it.fileName) }
+        }
+        probeTracks(done)
+        fetchSubtitles(done)
+        return done
+    }
 
-    private fun fail(id: String, message: String?) =
-        change(id) { it.copy(state = DownloadState.Failed, failure = message ?: "The download failed.") }
+    private fun fail(id: String, message: String?) {
+        val record = record(id) ?: return
+        val previous = record.previous
+        if (previous == null) {
+            change(id) { it.copy(state = DownloadState.Failed, failure = message ?: "The download failed.") }
+            return
+        }
+        files.delete(record.fileName)
+        record.subtitles.forEach { files.delete(it.fileName) }
+        change(id) {
+            it.copy(state = DownloadState.Completed, revision = previous.revision, source = previous.source, mimeType = previous.mimeType,
+                bytesDone = previous.bytes, bytesTotal = previous.bytes, subtitles = previous.subtitles, tracks = previous.tracks,
+                subtitlesFetched = previous.subtitlesFetched, previous = null, url = null, headers = emptyMap(), retryAtMillis = null,
+                failure = "Couldn't switch source: ${message ?: "the download failed."}")
+        }
+    }
+
+    private fun probeTracks(record: DownloadRecord) {
+        val probe = probe ?: return
+        val path = files.path(record.fileName)
+        scope.launch {
+            val tracks = try { probe.tracks(path) } catch (error: CancellationException) { throw error } catch (_: Exception) { return@launch }
+            change(record.id) { if (it.revision == record.revision) it.copy(tracks = tracks) else it }
+        }
+    }
+
+    private fun fetchPendingSubtitles() {
+        records().filter { it.state == DownloadState.Completed && !it.subtitlesFetched }.forEach(::fetchSubtitles)
+    }
+
+    private fun fetchSubtitles(record: DownloadRecord) {
+        if (!settingsFlow.value.downloadSubtitles || record.subtitlesFetched) return
+        val fetcher = subtitleFetcherValue?.takeIf { it.accepts(record.profileId) } ?: return
+        if (network.value == DownloadNetwork.None) return
+        if (!synchronized(lock) { fetchingSubtitles.add(record.id) }) return
+        scope.launch {
+            try {
+                val fetched = try { fetcher.fetch(record) } catch (error: CancellationException) { throw error } catch (_: Exception) { return@launch }
+                if (record(record.id)?.revision != record.revision) return@launch
+                fetched.forEach { (subtitle, content) -> if (content.isNotEmpty()) storeSubtitle(record.id, subtitle, content) }
+                change(record.id) { if (it.revision == record.revision) it.copy(subtitlesFetched = true) else it }
+            } finally {
+                synchronized(lock) { fetchingSubtitles.remove(record.id) }
+            }
+        }
+    }
 
     private fun stopRunning(id: String) {
         val job = synchronized(lock) { running?.takeIf { it.first == id }?.second }
@@ -387,6 +478,8 @@ internal class DownloadEngine(
     private fun erase(record: DownloadRecord) {
         files.delete(record.fileName)
         record.subtitles.forEach { files.delete(it.fileName) }
+        record.previousFileName?.let(files::delete)
+        record.previous?.subtitles?.forEach { files.delete(it.fileName) }
     }
 
     private fun change(id: String, transform: (DownloadRecord) -> DownloadRecord): DownloadRecord? {
@@ -414,7 +507,7 @@ internal class DownloadEngine(
         val settings = current.settings.settings()
         settingsFlow.value = settings
         itemFlow.value = current.records.map { it.item(settings) }
-        storageFlow.value = DownloadStorage(current.records.sumOf { it.bytesDone }, files.freeBytes())
+        storageFlow.value = DownloadStorage(current.records.sumOf { it.storedBytes }, files.freeBytes())
         evictionFlow.value = current.evicted
     }
 
