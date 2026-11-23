@@ -13,7 +13,6 @@ import org.viptv.app.connection.epochMillis
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.Downloads
 import org.viptv.engine.wire.Card
-import org.viptv.engine.wire.SourceCandidate
 
 internal val LocalDownloadActions = compositionLocalOf<DownloadActions?> { null }
 
@@ -22,7 +21,7 @@ internal const val REQUEST_HOLD_MILLIS = 10_000L
 @Stable
 internal class DownloadActions(
     val downloads: Downloads,
-    private val startTitle: (Card, SourceCandidate?) -> Unit,
+    private val startTitle: (Card) -> Unit,
     private val startSeason: (Card, Long) -> Unit,
     private val startNext: (Card, Int) -> Unit,
     private val startSeries: (Card) -> Unit,
@@ -38,7 +37,7 @@ internal class DownloadActions(
 
     fun requested(card: Card): Boolean = downloadKey(card) in requested
 
-    fun title(card: Card, source: SourceCandidate? = null) { mark(listOf(card)); startTitle(card, source) }
+    fun title(card: Card) { mark(listOf(card)); startTitle(card) }
 
     fun season(series: Card, season: Long, episodes: List<Card>) { mark(episodes); startSeason(series, season) }
 

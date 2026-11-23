@@ -125,7 +125,7 @@ fun App(
     val engineDownloads = controller.downloads.takeIf { !television && !browser }
     val downloadActions = remember(controller, engineDownloads) {
         engineDownloads?.let { downloads ->
-            org.viptv.app.features.downloads.DownloadActions(downloads, { card, source -> controller.downloadTitle(card, source) }, controller::downloadSeason,
+            org.viptv.app.features.downloads.DownloadActions(downloads, controller::downloadTitle, controller::downloadSeason,
                 controller::downloadNext, controller::downloadSeries, controller::chooseDownloadSource, controller::changeDownloadSource,
                 controller::playDownload,
                 openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) },
