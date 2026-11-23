@@ -158,6 +158,69 @@ class DownloadControllerTest {
         assertTrue(requests.any { it.first.method == HttpMethod.Delete && it.first.url.encodedPath == "/api/playback/lease-1" })
     }
 
+    @Test fun playAndBestMatchPreferTheDownloadedCopy() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        val app = signedIn(engine)
+        app.playTitle(episodes[0])
+        val playing = app.state.first { it.screen == Screen.Player }
+        assertTrue(playing.playback!!.uri.startsWith("file://"))
+        assertTrue(requests.none { it.first.url.encodedPath.startsWith("/api/sources") || it.first.url.encodedPath == "/api/playback" })
+    }
+
+    @Test fun theSourceListMarksTheDownloadedRowAndPlaysItLocally() = runBlocking<Unit> {
+        val stored = SourceCandidate("old-id", "addon", "Show 1080p", source_fingerprint = "fp-1")
+        val engine = engine(MemoryFiles(), completed(episodes[0]).copy(source = stored))
+        val app = signedIn(engine)
+        val match = stored.copy(id = "row-1")
+        val other = SourceCandidate("row-2", "addon", "Show 720p")
+        app.updateState { it.copy(screen = Screen.Sources, sourceTitle = episodes[0], sources = listOf(other, match)) }
+        val marked = withTimeout(10_000) { app.state.first { it.downloadedSources.isNotEmpty() } }
+        assertEquals(mapOf("row-1" to downloadId("12", episodes[0])), marked.downloadedSources)
+        assertEquals(emptyMap(), marked.downloadableSources)
+        app.playSource(match)
+        assertTrue(app.state.first { it.screen == Screen.Player }.playback!!.uri.startsWith("file://"))
+    }
+
+    @Test fun downloadModeBlocksUnsupportedRowsAndDownloadsThePickedSource() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles())
+        val app = signedIn(engine)
+        val torrent = SourceCandidate("t", "torrentio", "Show 2160p", delivery = "torrent")
+        val picked = SourceCandidate("d", "addon", "Show 1080p", binge_group = "group-a")
+        app.updateState { it.copy(screen = Screen.Sources, sourceReturnScreen = Screen.Details, sourceTitle = episodes[1],
+            sources = listOf(torrent, picked), sourcesForDownload = true) }
+        val blocked = withTimeout(10_000) { app.state.first { it.downloadableSources.isNotEmpty() } }
+        assertEquals(mapOf("t" to org.viptv.app.downloads.DOWNLOAD_TORRENT_ONLY, "d" to null), blocked.downloadableSources)
+        app.playSource(torrent)
+        assertEquals(null, engine.record(downloadId("12", episodes[1])))
+        app.playSource(picked)
+        val record = engine.record(downloadId("12", episodes[1]))!!
+        assertEquals(picked, record.source)
+        assertTrue(record.pinned)
+        assertEquals(Screen.Details, app.state.value.screen)
+        assertTrue(!app.state.value.sourcesForDownload)
+    }
+
+    @Test fun changeSourceFromTheListReplacesTheExistingDownload() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]).copy(source = SourceCandidate("old", "addon", "Old 720p", source_fingerprint = "fp-old")))
+        val app = signedIn(engine)
+        val id = downloadId("12", episodes[0])
+        val picked = SourceCandidate("new", "addon", "New 1080p", source_fingerprint = "fp-new")
+        app.updateState { it.copy(screen = Screen.Sources, sourceTitle = episodes[0], sources = listOf(picked), sourcesForDownload = true) }
+        app.playSource(picked)
+        val record = engine.record(id)!!
+        assertEquals(picked, record.source)
+        assertEquals("Old 720p", record.previous?.source?.label)
+    }
+
+    @Test fun aSeasonFromAManualPickCarriesTheRelease() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles())
+        val app = signedIn(engine)
+        val picked = SourceCandidate("d", "addon", "Show 1080p", binge_group = "group-a")
+        app.downloadSeason(Card(series, provider_id = "catalog", title = "Show", badges = emptyList()), 1, picked)
+        withTimeout(10_000) { engine.items.first { it.size == 4 } }
+        assertTrue(engine.records().all { it.release == picked && !it.pinned })
+    }
+
     private fun progressWrites() = synchronized(requests) {
         requests.filter { it.first.url.encodedPath == "/api/profiles/12/progress" }.map { it.second }
     }
