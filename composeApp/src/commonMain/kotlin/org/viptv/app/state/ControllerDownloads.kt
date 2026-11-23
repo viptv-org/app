@@ -94,7 +94,7 @@ private fun downloadedSourcesFor(engine: DownloadEngine, state: ApplicationState
 
 internal fun ApplicationController.completedDownloadFor(card: Card): String? {
     val engine = downloadEngine ?: return null
-    val profile = mutable.value.selectedProfile ?: return null
+    val profile = mutable.value.selectedProfile ?: mutable.value.playback?.profileId ?: return null
     return engine.record(downloadId(profile, card))?.takeIf { it.state == DownloadState.Completed }?.id
 }
 
@@ -204,6 +204,50 @@ private fun ApplicationController.loadLocalPlaybackDetail(card: Card) {
         updateState { it.copy(detail = detail.withCardPresentation(card).withOpenedProgress(card), detailShell = false) }
         loadPlaybackSeason()
     }
+}
+
+internal fun ApplicationController.downloadedNextEpisode(profile: String, card: Card): Card? =
+    downloadEngine?.records().orEmpty()
+        .filter { it.state == DownloadState.Completed && it.profileId == profile && validNextEpisode(card, it.card) }
+        .map { it.card }
+        .minWithOrNull(compareBy<Card>({ it.identity.episode?.seasonNumber() ?: 1L }, { it.identity.episode?.episode ?: 0L }))
+
+internal fun ApplicationState.downloadedEpisodes(card: Card?): List<Card> {
+    val parent = card?.parent_identity ?: return emptyList()
+    val profile = selectedProfile ?: playback?.profileId ?: return emptyList()
+    return downloads.filter { it.state == DownloadState.Completed && it.profileId == profile && it.card.parent_identity == parent }.map { it.card }
+}
+
+internal fun ApplicationController.streamInsteadOfDownload(origin: PlaybackFailureOrigin, input: PlaybackInput?): Boolean {
+    if (!downloadsOnline()) return false
+    val state = mutable.value
+    val card = state.sourceTitle ?: return false
+    val profile = state.selectedProfile ?: return false
+    val position = lastProgress?.positionMillis?.takeIf { it > 0 } ?: input?.positionMillis ?: 0L
+    if (input != null && !completionSeen) saveProgress(false)
+    val cause = origin.failure
+    updateState { it.copy(playbackFailure = cause, paused = it.paused || input != null) }
+    val remote = connection
+    val device = local
+    fallbackJob?.cancel()
+    fallbackJob = scope.launch {
+        val context = rankingContext(seriesMemoryOf(profile, card), sourceMemory.affinity(profile), capability)
+        val prepared = try { withTimeoutOrNull(NEXT_EPISODE_PREPARE_TIMEOUT_MILLIS) { nextSourcePreparer.prepare(remote, device, profile, card, null, context) } }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { null } ?: return@launch
+        if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != cardLookupKey(card)) return@launch
+        val ranked = prepared.ranked
+        val automatic = ranked.automaticIds?.toSet()
+        val notice = BestMatchFallback(cause.reason, prepared.source)
+        updateState { it.copy(sources = ranked.rows, sourceGroups = ranked.groups, fallbackNotice = notice,
+            bestMatch = BestMatchSession(ranked.rows.filter { row -> automatic == null || row.id in automatic }, tried = listOf(prepared.source.id),
+                playingId = prepared.source.id, fromDownload = true)) }
+        delay(bestMatchNoticeMillis)
+        if (mutable.value.fallbackNotice != notice) return@launch
+        updateState { it.copy(fallbackNotice = null) }
+        openSource(prepared.source, forceGateway = false, positionMillis = position)
+    }
+    return true
 }
 
 private fun TvSkipRange.downloadSegment() = DownloadSegment(kind.name.lowercase(), startMillis, endMillis, mixed)

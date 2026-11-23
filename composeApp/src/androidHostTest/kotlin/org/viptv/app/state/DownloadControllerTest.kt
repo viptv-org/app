@@ -327,6 +327,67 @@ class DownloadControllerTest {
         assertEquals(200_000, engine.record(downloadId("12", episodes[0]))?.positionMillis)
     }
 
+    @Test fun offlineTheEndOfAnEpisodeOffersTheNextDownloadAndPlaysItLocally() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]), completed(episodes[2]))
+        val app = signedIn(engine)
+        app.playDownload(downloadId("12", episodes[0]))
+        val input = app.state.first { it.playback != null }.playback!!
+        val offered = withTimeout(10_000) { app.state.first { it.nextEpisode != null } }
+        assertEquals(episodes[2], offered.nextEpisode)
+        assertEquals(listOf(episodes[0], episodes[2]), offered.downloadedEpisodes(episodes[0]))
+        assertEquals(episodes[2], org.viptv.app.features.player.nextEpisodeAfter(episodes[0], offered.downloadedEpisodes(episodes[0])))
+        app.observePlaybackFor(input, PlayerFact.Status("Ended"))
+        app.playEpisode(offered.nextEpisode!!)
+        val next = withTimeout(10_000) { app.state.first { it.playback != null && it.sourceTitle == episodes[2] } }
+        assertTrue(next.playback!!.uri.startsWith("file://"))
+        assertTrue(requests.none { it.first.url.encodedPath.startsWith("/api/sources") || it.first.url.encodedPath == "/api/playback" })
+    }
+
+    @Test fun aFailedLocalFileStreamsTheSameEpisodeAtTheSamePositionWhenOnline() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        network.value = DownloadNetwork.Unmetered
+        val app = ApplicationController(scope, store, downloads = engine, bestMatchNoticeMillis = 50).also {
+            it.connection = RemoteConnection("https://watch.example", store, client, browserMode = false)
+            it.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "12")
+        }
+        val stream = SourceCandidate("stream-1", "addon", "Show 1080p")
+        app.nextSourcePreparer = NextSourcePreparer { _, _, _, card, _, _ ->
+            assertEquals(episodes[0], card)
+            PreparedNextSource(stream, org.viptv.app.connection.RankedSources(listOf(stream), bestMatchFullyMatches = true))
+        }
+        val opened = Collections.synchronizedList(mutableListOf<Long?>())
+        app.leaseOpener = PlaybackLeaseOpener { remote, source, profile, _, position, _ ->
+            opened += position
+            org.viptv.app.connection.RemotePlaybackLease(org.viptv.app.player.PlaybackInput("lease-1", "https://cdn.test/${source.id}.m3u8",
+                positionMillis = position ?: 0, profileId = profile), 3600, remote, gateway = false)
+        }
+        app.playDownload(downloadId("12", episodes[0]))
+        val local = app.state.first { it.playback != null }.playback!!
+        app.observePlaybackFor(local, PlayerFact.Progress(420_000, 1_000_000))
+        app.observePlaybackFor(local, PlayerFact.Failed)
+        val notice = withTimeout(10_000) { app.state.first { it.fallbackNotice != null } }
+        assertEquals(stream, notice.fallbackNotice!!.next)
+        val streaming = withTimeout(10_000) { app.state.first { it.playback?.id == "lease-1" } }
+        assertEquals(listOf<Long?>(420_000), opened.toList())
+        assertEquals(stream, streaming.playingSource)
+        assertEquals(null, streaming.playbackFailure)
+        app.closePlayer()
+        assertEquals(Screen.Home, app.state.value.screen)
+    }
+
+    @Test fun offlineALocalFailureKeepsTheFailurePage() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        val app = signedIn(engine)
+        app.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> error("offline must not look for streams") }
+        app.playDownload(downloadId("12", episodes[0]))
+        val local = app.state.first { it.playback != null }.playback!!
+        app.observePlaybackFor(local, PlayerFact.Failed)
+        val failed = app.state.value
+        assertEquals(org.viptv.app.features.player.PlaybackFailure.Failed, failed.playbackFailure)
+        assertEquals(null, failed.fallbackNotice)
+        assertTrue(failed.playback!!.uri.startsWith("file://"))
+    }
+
     private fun events() = synchronized(requests) {
         requests.filter { it.first.url.encodedPath == "/api/profiles/12/playback-events" }.map { it.second }
     }

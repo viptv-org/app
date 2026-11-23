@@ -30,6 +30,7 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
     pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None, retryFullCapacity: Boolean = false, localCopy: String? = null) {
     declaredFailure = null
+    if (localCopy == null && mutable.value.bestMatch?.fromDownload != true) downloadReturn = null
     updateState { next -> next.copy(playingSource = source, openingSource = source, playbackFailure = null) }
     run {
         try {
@@ -38,6 +39,10 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
+            if (localCopy != null && downloadsOnline()) {
+                declarePlaybackFailure(PlaybackFailureOrigin.OpenFailed, null, error::class.simpleName)
+                if (streamInsteadOfDownload(PlaybackFailureOrigin.OpenFailed, null)) return@run
+            }
             if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen)
                 startFailed(PlaybackFailureOrigin.OpenFailed, null, operation = error::class.simpleName, status = (error as? RemoteFailure)?.status)
             else { declareOpenFailure(error); throw error }
@@ -48,7 +53,6 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 internal suspend fun ApplicationController.openSourceNow(requested: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
     choice: SourceChoice = SourceChoice.None, keepFinding: Boolean = false, localCopy: String? = null) {
     var source = requested
-    if (localCopy == null) downloadReturn = null
     progressJob?.join()
     val stopping = releaseRemotePlayback()
     this.sourceChoice = choice
@@ -143,7 +147,6 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
 internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePlaybackLease, source: SourceCandidate, card: Card, profile: String) {
     if (mutable.value.preferences == null) loadPreferences()
     val remote = requireNotNull(connection)
-    downloadReturn = null
     val opened = lease.input
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val input = PlaybackInput(opened.id, opened.uri, opened.headers, opened.positionMillis, opened.profileId, opened.revision,

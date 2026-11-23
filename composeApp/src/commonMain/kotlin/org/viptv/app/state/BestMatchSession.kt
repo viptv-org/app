@@ -25,6 +25,7 @@ data class BestMatchSession(
     val expanded: Boolean = false,
     val reuseAudioLanguages: Map<String, String> = emptyMap(),
     val startOver: Boolean = false,
+    val fromDownload: Boolean = false,
 )
 
 // The 2 s notice between a failed start and the next attempt.
