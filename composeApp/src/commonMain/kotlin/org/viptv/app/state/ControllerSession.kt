@@ -47,26 +47,47 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             null
         }
     }
-    val restoreSaved: suspend (RemoteConnection) -> Bootstrap? = { remote -> remote.restoreFromStore() }
-    var unreachable = false
-    val restored = if (downloadEngine?.records().isNullOrEmpty()) launchRestore(operation, connect, restoreSaved, retryUnattended = true)
-    else withTimeoutOrNull(offlineStartMillis) {
-        Result.success(launchRestore(operation, connect, restoreSaved, retryDelays = emptyList(), unreachable = { unreachable = true }))
-    }.let { attempt -> if (attempt == null) unreachable = true; attempt?.getOrNull() }
-    if (generation != operation) return@run
-    if (unreachable) {
-        connection?.close(); connection = null
-        startOffline()
+    if (!downloadEngine?.records().isNullOrEmpty()) {
+        restoreOrGoOffline(operation, connect() ?: return@run)
         return@run
     }
+    val restored = launchRestore(operation, connect, { remote -> remote.restoreFromStore() }, retryUnattended = true)
+    if (generation != operation) return@run
     if (restored == null) { connection?.close(); connection = null; return@run }
     accept(restored)
     resumeNavigation()
 }
 
+internal class PendingRestore(val remote: RemoteConnection, val result: Deferred<Result<Bootstrap>>)
+
+private fun ApplicationController.pendingRestore(remote: RemoteConnection) = PendingRestore(remote, scope.async {
+    try { Result.success(remote.restoreFromStore()) }
+    catch (error: CancellationException) { throw error }
+    catch (error: Exception) { Result.failure(error) }
+})
+
+// The device refresh can't be cancelled without tearing a token rotation, so start-up stops waiting instead.
+private suspend fun ApplicationController.restoreOrGoOffline(operation: Long, remote: RemoteConnection) {
+    val pending = pendingRestore(remote)
+    val early = withTimeoutOrNull(offlineStartMillis) { pending.result.await() }
+    if (generation != operation) { pending.result.cancel(); remote.close(); return }
+    val failure = early?.exceptionOrNull() as? Exception
+    when {
+        early == null -> startOffline(pending)
+        failure == null -> { connection = remote; accept(early.getOrThrow()); resumeNavigation() }
+        failure.rejectsSavedSession() -> { remote.close(); rejectSavedSession(failure) }
+        else -> { remote.close(); startOffline() }
+    }
+}
+
+private fun ApplicationController.rejectSavedSession(failure: Exception) {
+    val expired = failure is RemoteFailure && failure.sessionExpired
+    updateState { it.copy(startupRetryable = !expired, error = if (expired) "Session expired. Sign in again." else failureMessage(failure)) }
+}
+
 private suspend fun ApplicationController.launchRestore(operation: Long, connect: suspend () -> RemoteConnection?,
     restore: suspend (RemoteConnection) -> Bootstrap?, retryDelays: List<Long> = startupRetryDelays,
-    unreachable: (() -> Unit)? = null, retryUnattended: Boolean = false): Bootstrap? {
+    retryUnattended: Boolean = false): Bootstrap? {
     var attempt = 0
     while (true) {
         val remote = connect() ?: return null
@@ -85,7 +106,6 @@ private suspend fun ApplicationController.launchRestore(operation: Long, connect
             remote.close(); connection = null
             error
         }
-        if (unreachable != null && !failure.rejectsSavedSession()) { unreachable(); return null }
         if (!failure.retriesStartup() || attempt >= retryDelays.size) {
             if (retryUnattended && !failure.rejectsSavedSession()) scheduleStartupRetry()
             when (failure) {
@@ -132,47 +152,57 @@ fun ApplicationController.retryStartup() {
     restore(startupDatabase)
 }
 
-internal fun ApplicationController.startOffline() {
+internal fun ApplicationController.startOffline(pending: PendingRestore? = null) {
     offlineStart = true
     updateState { it.copy(starting = false, screen = Screen.Downloads, offline = true, error = null, startupRetryable = false) }
     reconnectJob?.cancel()
     reconnectJob = scope.launch {
         var failures = 0
+        var inFlight = pending
         while (offlineStart) {
             if (failures > 0) withTimeoutOrNull(reconnectDelay(failures)) { reconnectWake.receive() }
-            downloadEngine?.network?.first { it != org.viptv.app.downloads.DownloadNetwork.None }
-            if (!offlineStart || connection != null || local != null) return@launch
-            if (reconnectOnce()) return@launch
+            if (inFlight == null) downloadEngine?.network?.first { it != org.viptv.app.downloads.DownloadNetwork.None }
+            if (!offlineStart || connection != null || local != null) { inFlight?.let { it.result.cancel(); it.remote.close() }; return@launch }
+            if (reconnectOnce(inFlight)) return@launch
+            inFlight = null
             failures++
         }
     }
 }
 
-private suspend fun ApplicationController.reconnectOnce(): Boolean {
-    val saved = try { (sessionStore.savedConnection() as? SavedConnection.Remote)?.session }
-        catch (error: CancellationException) { throw error }
-        catch (_: Exception) { null }
-    val remote = saved?.let { session -> try { remoteFactory(session.origin, sessionStore) } catch (_: IllegalArgumentException) { null } }
-    if (remote == null) {
+private suspend fun ApplicationController.reconnectOnce(pending: PendingRestore?): Boolean {
+    val attempt = pending ?: savedRemote()?.let(::pendingRestore)
+    if (attempt == null) {
         offlineStart = false
         restore(startupDatabase)
         return true
     }
-    val restored = try { remote.restoreFromStore() }
-    catch (error: CancellationException) { remote.close(); throw error }
-    catch (error: Exception) {
+    val remote = attempt.remote
+    val outcome = try { attempt.result.await() }
+        catch (error: CancellationException) { attempt.result.cancel(); remote.close(); throw error }
+    val failure = outcome.exceptionOrNull() as? Exception
+    if (failure != null) {
         remote.close()
-        if (!error.rejectsSavedSession()) return false
+        if (!failure.rejectsSavedSession()) return false
         offlineStart = false
-        mutable.value = ApplicationState(error = if (error is RemoteFailure && error.sessionExpired) "Session expired. Sign in again." else failureMessage(error))
+        mutable.value = ApplicationState(error = if (failure is RemoteFailure && failure.sessionExpired) "Session expired. Sign in again." else failureMessage(failure))
         return true
     }
-    mutable.first { it.screen != Screen.Player }
+    val restored = outcome.getOrThrow()
+    try { mutable.first { it.screen != Screen.Player } }
+    catch (error: CancellationException) { remote.close(); throw error }
     if (!offlineStart || connection != null || local != null) { remote.close(); return true }
     offlineStart = false
     connection = remote
     accept(restored, mutable.value.screen.takeIf { restored.selected != null })
     return true
+}
+
+private suspend fun ApplicationController.savedRemote(): RemoteConnection? {
+    val saved = try { (sessionStore.savedConnection() as? SavedConnection.Remote)?.session }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+    return saved?.let { session -> try { remoteFactory(session.origin, sessionStore) } catch (_: IllegalArgumentException) { null } }
 }
 
 private fun ApplicationController.stopReconnecting() {
