@@ -243,7 +243,7 @@ internal fun DownloadsEntry(actions: DownloadActions, modifier: Modifier = Modif
 }
 
 @Composable
-internal fun OfflineBanner(openDownloads: () -> Unit, modifier: Modifier = Modifier) {
+internal fun OfflineBanner(openDownloads: (() -> Unit)?, modifier: Modifier = Modifier) {
     PlainSurface(modifier.widthIn(max = 520.dp).fillMaxWidth(), RoundedCornerShape(20.dp), color = Palette.surface) {
         Row(Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -251,7 +251,7 @@ internal fun OfflineBanner(openDownloads: () -> Unit, modifier: Modifier = Modif
                 Icon(Lucide.CloudOff, null, Modifier.size(18.dp), tint = Palette.text)
             }
             Text(OFFLINE_BANNER, Modifier.weight(1f), fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold)
-            PillButton(DOWNLOADS_TITLE, openDownloads)
+            if (openDownloads != null) PillButton(DOWNLOADS_TITLE, openDownloads)
         }
     }
 }

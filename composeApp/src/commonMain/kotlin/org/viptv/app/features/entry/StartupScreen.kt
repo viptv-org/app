@@ -15,13 +15,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import org.viptv.app.components.Brand
+import org.viptv.app.components.Button
 import org.viptv.app.components.OutlinedButton
 import org.viptv.app.components.StartupProgressBar
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun StartupScreen(changeConnection: (() -> Unit)? = null) {
+internal fun StartupScreen(changeConnection: (() -> Unit)? = null, reason: String? = null, retry: (() -> Unit)? = null) {
     val opacity = remember { Animatable(0f) }
     LaunchedEffect(Unit) { opacity.animateTo(1f, tween(600, easing = CubicBezierEasing(0f, 0f, .58f, 1f))) }
     BoxWithConstraints(Modifier.fillMaxSize().semantics { contentDescription = "Starting VIPTV" }) {
@@ -34,9 +36,15 @@ internal fun StartupScreen(changeConnection: (() -> Unit)? = null) {
             Spacer(Modifier.height(if (phone) 32.dp else 44.dp))
             StartupProgressBar(if (phone) .5f else if (tablet) .7f else .85f)
             Spacer(Modifier.height(if (phone) 22.dp else 28.dp))
-            Text("Getting VIPTV ready…", color = Palette.secondary, fontSize = if (phone) 15.sp else if (tablet) 17.sp else 18.sp)
-            if (changeConnection != null) {
+            if (reason == null) Text("Getting VIPTV ready…", color = Palette.secondary, fontSize = if (phone) 15.sp else if (tablet) 17.sp else 18.sp)
+            else Text(reason, Modifier.widthIn(max = 420.dp), color = Palette.danger, fontSize = if (phone) 15.sp else 16.sp,
+                lineHeight = if (phone) 20.sp else 22.sp, textAlign = TextAlign.Center)
+            if (retry != null) {
                 Spacer(Modifier.height(if (phone) 30.dp else 38.dp))
+                Button(onClick = retry) { Text("Try again", fontSize = if (phone) 15.sp else 16.sp) }
+            }
+            if (changeConnection != null) {
+                Spacer(Modifier.height(if (retry != null) 12.dp else if (phone) 30.dp else 38.dp))
                 OutlinedButton(onClick = changeConnection) { Text("Change connection", fontSize = if (phone) 15.sp else 16.sp) }
             }
         }

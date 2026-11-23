@@ -91,6 +91,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
 // The viewer chose this episode from the player, so a successor plays the best match even when the profile asks before every source pick.
 fun ApplicationController.playEpisode(card: Card) {
     completedDownloadFor(card)?.let { playDownload(it); return }
+    if (offlineWithoutCopy()) return
     if (startPreparedNextEpisode(card)) return
     val state = mutable.value
     val successor = state.screen == Screen.Player && state.playback != null &&

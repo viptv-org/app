@@ -25,6 +25,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val startDeadlineMillis: Long = 20_000L,
     internal val searchStreamTimeoutMillis: Long = 60_000L,
     internal val startupRetryDelays: List<Long> = listOf(1_000L, 2_000L, 4_000L),
+    internal val offlineStartMillis: Long = 4_000L,
+    internal val healthProbeTimeoutMillis: Long = 4_000L,
+    internal val reconnectDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L),
     internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L),
     internal val seekReopenSettleMillis: Long = 700L,
     internal val seekCapacityRetryDelays: List<Long> = listOf(500L, 1_000L, 1_500L, 2_000L),
@@ -149,7 +152,12 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal var downloadReturn: Screen? = null
     internal var downloadWatchNoted: Any? = null
     internal val offlineProgressGate = Mutex()
-    internal var offlineStart = false
+    @Volatile internal var offlineStart = false
+    internal var reconnectJob: Job? = null
+    internal var startupRetryJob: Job? = null
+    internal var startupFailures = 0
+    internal val reconnectWake = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
+    internal var healthProbe: Job? = null
 
     init { startDownloads() }
 

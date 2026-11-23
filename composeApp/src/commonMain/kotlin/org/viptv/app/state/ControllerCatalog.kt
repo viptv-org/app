@@ -293,6 +293,7 @@ private fun ApplicationController.playTitle(card: Card, manualSelection: Boolean
         return
     }
     if (!manualSelection && !forDownload) completedDownloadFor(card)?.let { playDownload(it, startOver); return }
+    if (offlineWithoutCopy()) return
     if (!beginPendingPlayback(card)) return
     cancelSourceDetail()
     sourcesManualSelection = manualSelection

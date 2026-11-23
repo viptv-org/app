@@ -194,13 +194,16 @@ fun App(
             .pointerInput(controller) { awaitPointerEventScope { observeViewerInput(controller::userActivity) } }
             .background(if (browser && state.screen == Screen.Player) androidx.compose.ui.graphics.Color.Transparent else Palette.background)
             .then(if (playerDrawsEdgeToEdge(state.screen, television)) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
-            if (state.starting) {
+            val unreachable = startupUnreachable(state, browser)
+            if (state.starting || unreachable) {
+                val reason = state.error?.takeIf { unreachable && !state.starting }
+                val retry = controller::retryStartup.takeIf { reason != null && !state.busy }
                 if (television) {
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
-                    TvSplash(controller::disconnect)
+                    TvSplash(controller::disconnect, reason, retry)
                 } else {
                     DisposableEffect(controller) { entryBackChanged(controller::disconnect); onDispose { entryBackChanged(null) } }
-                    StartupScreen(controller::disconnect)
+                    StartupScreen(controller::disconnect, reason, retry)
                 }
                 return@BoxWithConstraints
             }
@@ -270,7 +273,7 @@ fun App(
                         else if (tablet) TabletHeader(navigationScreen)
                     }
                     if (offlineBanner) Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
-                        org.viptv.app.features.downloads.OfflineBanner({ controller.navigate(Screen.Downloads) })
+                        org.viptv.app.features.downloads.OfflineBanner({ controller.navigate(Screen.Downloads) }.takeIf { state.screen != Screen.Downloads })
                     }
 
                     Row(Modifier.weight(1f)) {
@@ -435,7 +438,10 @@ private val DETAIL_BACKDROP_PAGES = setOf(
     Screen.Home, Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,
     Screen.Calendar, Screen.Live, Screen.Library, Screen.ContinueWatching, Screen.History, Screen.Settings, Screen.Downloads)
 
-internal fun offlineBannerScreen(screen: Screen): Boolean = backendBannerScreen(screen) && screen != Screen.Downloads
+internal fun offlineBannerScreen(screen: Screen): Boolean = backendBannerScreen(screen)
+
+internal fun startupUnreachable(state: ApplicationState, browser: Boolean): Boolean =
+    !browser && state.screen == Screen.Connect && state.startupRetryable && state.error != null
 
 // Details, Sources and Player are not pages, so a backdrop without a real page behind it falls back to Home.
 private fun detailBackdrop(detailReturnScreen: Screen): Screen =

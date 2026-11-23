@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import org.viptv.app.components.Brand
 import org.viptv.app.components.TvAction
 import org.viptv.app.components.TvRequestedFocus
@@ -23,7 +24,7 @@ import org.viptv.app.components.StartupProgressBar
 import org.viptv.app.theme.Palette
 
 @Composable
-internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
+internal fun TvSplash(changeConnection: (() -> Unit)? = null, reason: String? = null, retry: (() -> Unit)? = null) {
     val opacity = remember { Animatable(0f) }
     LaunchedEffect(Unit) { opacity.animateTo(1f, tween(600, easing = CubicBezierEasing(0f, 0f, .58f, 1f))) }
     BoxWithConstraints(Modifier.fillMaxSize().semantics { contentDescription = "Starting VIPTV" }) {
@@ -36,12 +37,20 @@ internal fun TvSplash(changeConnection: (() -> Unit)? = null) {
             val first = remember { FocusRequester() }
             var placed by remember { mutableStateOf(false) }
             TvRequestedFocus(first, placed, enabled = placed)
-            Text("Getting VIPTV ready…", Modifier.align(Alignment.TopCenter).padding(top = 664.dp * scale),
+            if (reason == null) Text("Getting VIPTV ready…", Modifier.align(Alignment.TopCenter).padding(top = 664.dp * scale),
                 color = Palette.secondary, fontSize = (26 * scale).sp, lineHeight = (34 * scale).sp)
-            TvAction(Modifier.align(Alignment.TopCenter).padding(top = 736.dp * scale)
-                .width(360.dp * scale).heightIn(min = 72.dp * scale).onGloballyPositioned { placed = true },
-                scale, requester = first, activate = changeConnection) {
-                Text("Change connection", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+            else Text(reason, Modifier.align(Alignment.TopCenter).padding(top = 664.dp * scale).padding(horizontal = 96.dp * scale),
+                color = Palette.danger, fontSize = (26 * scale).sp, lineHeight = (36 * scale).sp, textAlign = TextAlign.Center, maxLines = 3)
+            Row(Modifier.align(Alignment.TopCenter).padding(top = (if (reason != null) 800 else 736).dp * scale),
+                horizontalArrangement = Arrangement.spacedBy(20.dp * scale)) {
+                if (retry != null) TvAction(Modifier.width(360.dp * scale).heightIn(min = 72.dp * scale).onGloballyPositioned { placed = true },
+                    scale, primary = true, requester = first, activate = retry) {
+                    Text("Try again", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                }
+                TvAction(Modifier.width(360.dp * scale).heightIn(min = 72.dp * scale).onGloballyPositioned { placed = true },
+                    scale, requester = if (retry == null) first else null, activate = changeConnection) {
+                    Text("Change connection", color = it, fontSize = (26 * scale).sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
