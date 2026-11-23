@@ -33,8 +33,8 @@ class FakeDownloads(items: List<DownloadItem> = emptyList(), storage: DownloadSt
 
     internal fun actions(clock: () -> Long = { NOW }): DownloadActions = DownloadActions(this,
         startTitle = { calls += "title:${it.identity.id}:${it.identity.episode?.episode}" },
-        startSeason = { _, season -> calls += "season:$season" },
-        startNext = { _, count -> calls += "next:$count" },
+        startSeason = { _, season, source -> calls += "season:$season" + (source?.let { ":${it.id}" } ?: "") },
+        startNext = { _, count, source -> calls += "next:$count" + (source?.let { ":${it.id}" } ?: "") },
         startSeries = { calls += "series" },
         chooseSource = { calls += "choose:${it.identity.id}:${it.identity.episode?.episode}" },
         changeSource = { calls += "change:$it" },

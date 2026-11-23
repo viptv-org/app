@@ -51,10 +51,11 @@ internal class SeriesDownloadPlan(episodes: List<Card>, index: Map<String, Downl
 
     private val regular = released.filter { (it.identity.episode?.seasonNumber() ?: 0L) > 0L }
 
-    fun next(count: Int): List<Card> {
-        val lastWatched = regular.indexOfLast { it.watchedEpisode() || (it.progress ?: 0.0) >= WATCHED_FRACTION }
-        return regular.drop(lastWatched + 1).take(count).filter { it in wanted }
-    }
+    private val unwatched: List<Card> = regular.drop(regular.indexOfLast { it.watchedEpisode() || (it.progress ?: 0.0) >= WATCHED_FRACTION } + 1)
+
+    fun next(count: Int): List<Card> = unwatched.take(count).filter { it in wanted }
+
+    fun nextUnwatched(): Card? = unwatched.firstOrNull()
 
     fun series(): List<Card> = regular.filter { it in wanted }
 }
@@ -128,6 +129,9 @@ internal fun TitleDownloadAction(card: Card, episodes: List<Card>, season: Long?
                 }
                 PopoverMenuDivider()
                 PopoverMenuItem("Download series", Lucide.Library, onClick = close { actions.series(card, plan.series()) })
+                plan.nextUnwatched()?.let { episode ->
+                    PopoverMenuItem(CHOOSE_SOURCE, Lucide.ListFilter, onClick = close { actions.chooseSeriesSource(card, episode, plan) })
+                }
             }
         } else if (item != null) DownloadItemMenu(item, actions, menu) { menu = false }
         else DownloadStartMenu(card, actions, menu) { menu = false }

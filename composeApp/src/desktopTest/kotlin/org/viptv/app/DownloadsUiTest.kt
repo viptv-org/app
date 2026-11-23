@@ -21,6 +21,10 @@ import org.viptv.app.FakeDownloads.Companion.episode
 import org.viptv.app.FakeDownloads.Companion.item
 import org.viptv.app.downloads.DownloadState
 import org.viptv.app.downloads.DownloadTrack
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.MediaIdentity
+import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SourcePresentation
 import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.features.downloads.*
 import org.viptv.app.theme.Palette
@@ -173,6 +177,45 @@ class DownloadsUiTest {
             assertTrue(fake.settings.value.downloadSubtitles)
             click(clickable(scene) { it.contains(DOWNLOAD_SUBTITLES) })
             assertFalse(fake.settings.value.downloadSubtitles)
+        } finally { scene.close() }
+    }
+
+    @Test fun seriesChooseSourcePicksTheNextUnwatchedEpisodeThenOffersMoreFromThatRelease() {
+        val fake = FakeDownloads()
+        val actions = fake.actions()
+        val series = Card(MediaIdentity("tt-series", "series", emptyList()), provider_id = "addon:cinemeta", title = "Severance", badges = emptyList())
+        val episodes = listOf(episode(1, 1, progress = 1.0), episode(1, 2), episode(1, 3), episode(1, 4))
+        val release = SourceCandidate("s1", "addon:torrentio", "Torrentio 1080p", quality_height = 1080,
+            presentation = SourcePresentation(provider_name = "Torrentio"))
+        val scene = scene(actions, height = 800) {
+            TitleDownloadAction(series, episodes, 1L, TitleDownloadStyle.Tablet)
+            actions.releasePrompt?.let { ReleaseFollowUpSheet(it, actions) }
+        }
+        try {
+            frames(scene)
+            click(clickable(scene, "Download"))
+            frames(scene)
+            click(clickable(scene, CHOOSE_SOURCE))
+            frames(scene)
+            assertEquals(listOf("choose:tt-series:2"), fake.calls, "the picker opens for the next unwatched episode")
+            actions.sourcePicked(release)
+            frames(scene)
+            assertTrue(RELEASE_PROMPT_TITLE in texts(scene) && "Torrentio · 1080p" in texts(scene), "${texts(scene)}")
+            listOf("Next 3", "Next 5", "Next 10", REST_OF_SEASON, NOT_NOW).forEach { clickable(scene, it) }
+            click(clickable(scene, "Next 5"))
+            frames(scene)
+            assertEquals("next:5:s1", fake.calls.last())
+            assertFalse(RELEASE_PROMPT_TITLE in texts(scene))
+            actions.chooseSeriesSource(series, episodes[1], SeriesDownloadPlan(episodes, emptyMap(), NOW))
+            actions.sourcePicked(release)
+            frames(scene)
+            click(clickable(scene, REST_OF_SEASON))
+            assertEquals("season:1:s1", fake.calls.last())
+            actions.chooseSeriesSource(series, episodes[1], SeriesDownloadPlan(episodes, emptyMap(), NOW))
+            actions.pickerClosed()
+            actions.sourcePicked(release)
+            frames(scene)
+            assertFalse(RELEASE_PROMPT_TITLE in texts(scene), "a pick for a single title asks nothing")
         } finally { scene.close() }
     }
 
