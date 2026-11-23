@@ -6,6 +6,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import org.viptv.app.components.frameDelay
@@ -13,6 +15,11 @@ import org.viptv.app.connection.epochMillis
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.Downloads
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.SourceCandidate
+
+internal class SeriesPick(val series: Card, val season: Long, val plan: SeriesDownloadPlan)
+
+internal class ReleasePrompt(val pick: SeriesPick, val source: SourceCandidate)
 
 internal val LocalDownloadActions = compositionLocalOf<DownloadActions?> { null }
 
@@ -22,13 +29,16 @@ internal const val REQUEST_HOLD_MILLIS = 10_000L
 internal class DownloadActions(
     val downloads: Downloads,
     private val startTitle: (Card) -> Unit,
-    private val startSeason: (Card, Long) -> Unit,
-    private val startNext: (Card, Int) -> Unit,
+    private val startSeason: (Card, Long, SourceCandidate?) -> Unit,
+    private val startNext: (Card, Int, SourceCandidate?) -> Unit,
     private val startSeries: (Card) -> Unit,
+    val chooseSource: (Card) -> Unit,
+    val changeSource: (String) -> Unit,
     val play: (String) -> Unit,
     val openPage: () -> Unit,
     val notice: (String) -> Unit,
     val clock: () -> Long = ::epochMillis,
+    val detailsOpened: (String) -> Unit = {},
 ) {
     private val requested = mutableStateMapOf<String, Long>()
 
@@ -36,9 +46,41 @@ internal class DownloadActions(
 
     fun title(card: Card) { mark(listOf(card)); startTitle(card) }
 
-    fun season(series: Card, season: Long, episodes: List<Card>) { mark(episodes); startSeason(series, season) }
+    var releasePrompt: ReleasePrompt? by mutableStateOf(null)
+        private set
+    private var seriesPick: SeriesPick? = null
 
-    fun next(series: Card, count: Int, episodes: List<Card>) { mark(episodes); startNext(series, count) }
+    fun season(series: Card, season: Long, episodes: List<Card>) { mark(episodes); startSeason(series, season, null) }
+
+    fun next(series: Card, count: Int, episodes: List<Card>) { mark(episodes); startNext(series, count, null) }
+
+    fun chooseSeriesSource(series: Card, episode: Card, plan: SeriesDownloadPlan) {
+        seriesPick = SeriesPick(series, episode.identity.episode?.season ?: 1L, plan)
+        chooseSource(episode)
+    }
+
+    fun sourcePicked(source: SourceCandidate) {
+        releasePrompt = seriesPick?.let { ReleasePrompt(it, source) }
+        seriesPick = null
+    }
+
+    fun pickerClosed() { seriesPick = null }
+
+    fun releaseNext(count: Int) {
+        val prompt = releasePrompt ?: return
+        releasePrompt = null
+        mark(prompt.pick.plan.next(count))
+        startNext(prompt.pick.series, count, prompt.source)
+    }
+
+    fun releaseSeason() {
+        val prompt = releasePrompt ?: return
+        releasePrompt = null
+        mark(prompt.pick.plan.season(prompt.pick.season))
+        startSeason(prompt.pick.series, prompt.pick.season, prompt.source)
+    }
+
+    fun dismissRelease() { releasePrompt = null }
 
     fun series(series: Card, episodes: List<Card>) { mark(episodes); startSeries(series) }
 

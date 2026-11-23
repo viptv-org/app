@@ -50,6 +50,10 @@ internal fun DownloadSettingsPage(downloads: Downloads, compact: Boolean) {
             PhonePreferenceRow("Delete watched downloads", deleteWatchedLabel(settings.deleteWatchedAfterMillis), true) { dialog = DownloadSettingsDialog.DeleteWatched }
             PhonePreferenceDivider()
             DescribedRow("Smart downloads", "Keeps the next episodes of a series you're watching downloaded.", smartDownloadLabel(settings.keepNextEpisodes)) { dialog = DownloadSettingsDialog.Smart }
+            PhonePreferenceDivider()
+            PhonePreferenceSwitchRow(DOWNLOAD_SUBTITLES, DOWNLOAD_SUBTITLES_BODY, settings.downloadSubtitles) {
+                downloads.updateSettings(settings.copy(downloadSubtitles = it))
+            }
         }
         Text(settingsStorageLine(storage), Modifier.padding(horizontal = 16.dp), color = Palette.secondary, fontSize = 13.sp)
     }

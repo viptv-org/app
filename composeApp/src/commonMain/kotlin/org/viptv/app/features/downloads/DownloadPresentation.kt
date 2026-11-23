@@ -5,6 +5,10 @@ import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.DownloadSettings
 import org.viptv.app.downloads.DownloadState
 import org.viptv.app.downloads.DownloadStorage
+import org.viptv.app.downloads.DownloadTrack
+import org.viptv.app.player.languageName
+import org.viptv.app.features.sources.providerLabel
+import org.viptv.app.features.sources.qualityLabel
 import org.viptv.app.features.details.episodeKey
 import org.viptv.engine.wire.Card
 
@@ -14,6 +18,14 @@ internal const val STORAGE_LIMIT_BODY = "Raise the limit or delete downloads to 
 internal const val DOWNLOADS_EMPTY_TITLE = "No downloads yet"
 internal const val DOWNLOADS_EMPTY_BODY = "Download episodes from a title's page to watch them without a connection."
 internal const val OFFLINE_BANNER = "You're offline. Downloads still play."
+internal const val DOWNLOAD_DETAILS_TITLE = "Download details"
+internal const val CHOOSE_SOURCE = "Choose source…"
+internal const val CHANGE_SOURCE = "Change source"
+internal const val DOWNLOAD_SUBTITLES = "Download subtitles"
+internal const val RELEASE_PROMPT_TITLE = "Download more from this release?"
+internal const val REST_OF_SEASON = "Rest of season"
+internal const val NOT_NOW = "Not now"
+internal const val DOWNLOAD_SUBTITLES_BODY = "Saves add-on subtitles in your language with each download."
 
 internal enum class DownloadControlState { None, Requested, Queued, Resolving, Downloading, Halted, Completed, Failed }
 
@@ -80,6 +92,43 @@ private fun completedLine(item: DownloadItem, nowMillis: Long): String {
             "Kept".takeIf { item.keep }).joinToString(" · ")
     }
 }
+
+internal fun downloadSourceLine(item: DownloadItem): String? {
+    val provider = item.sourceProvider?.takeIf(String::isNotBlank) ?: return null
+    val size = (item.bytesTotal ?: item.bytesDone).takeIf { it > 0 && item.state == DownloadState.Completed }?.let(::sizeLabel)
+    return listOfNotNull(provider, item.qualityHeight?.let { "${it}p" }, size).joinToString(" · ")
+}
+
+internal fun downloadRowStatus(item: DownloadItem, settings: DownloadSettings, nowMillis: Long): String? =
+    if (item.state == DownloadState.Completed && !item.watched && downloadSourceLine(item) != null) "Kept".takeIf { item.keep }
+    else downloadStateLine(item, settings, nowMillis)
+
+internal class DownloadFact(val label: String, val value: String)
+
+internal fun downloadFacts(item: DownloadItem): List<DownloadFact> = listOfNotNull(
+    item.sourceProvider?.takeIf(String::isNotBlank)?.let { DownloadFact("Provider", it) },
+    item.qualityHeight?.let { DownloadFact("Quality", "${it}p") },
+    (item.bytesTotal ?: item.bytesDone).takeIf { it > 0 }?.let { DownloadFact("Size", sizeLabel(it)) },
+    item.format?.takeIf(String::isNotBlank)?.let { DownloadFact("Format", it.uppercase()) },
+)
+
+internal fun trackName(track: DownloadTrack): String {
+    val language = languageName(track.language)
+    val label = track.label?.trim()?.takeIf { it.isNotEmpty() && !it.equals(language, ignoreCase = true) }
+    return listOfNotNull(language, label).joinToString(" · ").ifEmpty { "Unknown language" }
+}
+
+internal fun trackOrigin(track: DownloadTrack): String = if (track.embedded) "Embedded" else "Add-on"
+
+internal fun noTracksLine(item: DownloadItem, kind: String): String = when {
+    item.state != DownloadState.Completed -> "Listed when the download finishes."
+    item.tracks.isEmpty() -> "Checking tracks…"
+    kind == "audio" -> "No audio tracks found."
+    else -> "No subtitles."
+}
+
+internal fun releaseLine(source: org.viptv.engine.wire.SourceCandidate): String =
+    listOfNotNull(source.providerLabel(), source.qualityLabel()).joinToString(" · ")
 
 internal fun storageLine(storage: DownloadStorage, settings: DownloadSettings): String =
     settings.storageLimitBytes?.let { limit -> "${sizeLabel(storage.usedBytes)} of ${sizeLabel(limit)} used · ${sizeLabel(storage.freeBytes)} free on this device" }

@@ -47,6 +47,8 @@ internal fun DownloadsScreen(actions: DownloadActions, offline: Boolean, browse:
     val waitingForSpace = items.any { it.state == DownloadState.WaitingForSpace }
     val now = remember(items) { actions.clock() }
     var limitDialog by remember { mutableStateOf(false) }
+    var detailsId by remember { mutableStateOf<String?>(null) }
+    val showDetails = { id: String -> detailsId = id }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -75,7 +77,7 @@ internal fun DownloadsScreen(actions: DownloadActions, offline: Boolean, browse:
             if (items.isEmpty()) item(key = "empty") { DownloadsEmpty(if (offline) null else browse) }
             groups.forEach { group ->
                 when (group) {
-                    is MovieDownload -> item(key = group.key) { DownloadRow(group.item, actions, settings, now) }
+                    is MovieDownload -> item(key = group.key) { DownloadRow(group.item, actions, settings, now, showDetails) }
                     is SeriesDownloads -> {
                         item(key = group.key) {
                             SeriesHeader(group) { group.items.forEach { actions.downloads.delete(it.id) } }
@@ -85,13 +87,14 @@ internal fun DownloadsScreen(actions: DownloadActions, offline: Boolean, browse:
                                 Text(if (season == 0L) "Specials" else "Season $season", Modifier.padding(top = 4.dp),
                                     color = Palette.secondary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                             }
-                            items(episodes, key = { it.id }) { DownloadRow(it, actions, settings, now) }
+                            items(episodes, key = { it.id }) { DownloadRow(it, actions, settings, now, showDetails) }
                         }
                     }
                 }
             }
             item(key = "end") { Spacer(Modifier.pageBottomClearance()) }
         }
+        items.firstOrNull { it.id == detailsId }?.let { shown -> DownloadDetailsSheet(shown, actions) { detailsId = null } }
     }
     if (limitDialog) DownloadChoiceDialog("Storage limit", storageLimitChoices(storage), settings.storageLimitBytes,
         { actions.downloads.updateSettings(settings.copy(storageLimitBytes = it)) }) { limitDialog = false }
@@ -165,13 +168,12 @@ private fun SeriesHeader(group: SeriesDownloads, delete: () -> Unit) {
 }
 
 @Composable
-internal fun DownloadRow(item: DownloadItem, actions: DownloadActions, settings: DownloadSettings, nowMillis: Long) {
-    var menu by remember { mutableStateOf(false) }
+internal fun DownloadRow(item: DownloadItem, actions: DownloadActions, settings: DownloadSettings, nowMillis: Long, details: (String) -> Unit) {
     val failed = item.state == DownloadState.Failed
     val expiring = item.state == DownloadState.Completed && item.watched && !item.keep && item.expiresAtMillis != null
     Column(Modifier.fillMaxWidth()) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).pointerClickable(shape = RoundedCornerShape(12.dp)) {
-        if (item.state == DownloadState.Completed) actions.play(item.id) else menu = true
+        details(item.id)
     }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.width(112.dp).aspectRatio(16f / 9).clip(RoundedCornerShape(8.dp)).background(Palette.surface)) {
             val art = item.card.landscape ?: item.card.poster
@@ -184,14 +186,15 @@ internal fun DownloadRow(item: DownloadItem, actions: DownloadActions, settings:
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(episodeLabel(item.card), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(downloadStateLine(item, settings, nowMillis), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                color = if (failed || item.state == DownloadState.WaitingForSpace) Palette.danger else Palette.secondary)
+            downloadRowStatus(item, settings, nowMillis)?.let { status ->
+                Text(status, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    color = if (failed || item.state == DownloadState.WaitingForSpace) Palette.danger else Palette.secondary)
+            }
+            downloadSourceLine(item)?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             if (failed) item.failure?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 2) }
+            else if (item.state == DownloadState.Completed) item.failure?.let { Text(it, fontSize = 13.sp, color = Palette.danger, maxLines = 2) }
         }
-        Box {
-            DownloadControl(item.card, item, actions)
-            DownloadItemMenu(item, actions, menu) { menu = false }
-        }
+        DownloadControl(item.card, item, actions, details = { details(item.id) })
     }
     if (failed || expiring) Row(Modifier.padding(start = 124.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (failed) {

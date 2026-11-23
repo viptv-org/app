@@ -126,8 +126,10 @@ fun App(
     val downloadActions = remember(controller, engineDownloads) {
         engineDownloads?.let { downloads ->
             org.viptv.app.features.downloads.DownloadActions(downloads, controller::downloadTitle, controller::downloadSeason,
-                controller::downloadNext, controller::downloadSeries, controller::playDownload,
-                openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) })
+                controller::downloadNext, controller::downloadSeries, controller::chooseDownloadSource, controller::changeDownloadSource,
+                controller::playDownload,
+                openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) },
+                detailsOpened = controller::downloadOpened)
         }
     }
     val downloadIndex = downloadActions?.let { org.viptv.app.features.downloads.rememberDownloadIndex(it) } ?: emptyMap()
@@ -474,10 +476,23 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             manageAddons = controller::openAddonsSettings,
             failures = state.detailFailures)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings, configureSource = controller::configureSource) }
+            val downloads = org.viptv.app.features.downloads.LocalDownloadActions.current
+            val forDownload = state.sourcesForDownload
+            LaunchedEffect(forDownload) { if (!forDownload) downloads?.pickerClosed() }
+            val choose = { source: org.viptv.engine.wire.SourceCandidate ->
+                if (forDownload) downloads?.sourcePicked(source)
+                controller.playSource(source)
+            }
+            val downloaded = remember(state.downloadedSources, state.downloads) {
+                state.downloadedSources.mapNotNull { (source, id) -> state.downloads.firstOrNull { it.id == id }?.let { source to it } }.toMap()
+            }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, choose, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings, configureSource = controller::configureSource,
+                forDownload = state.sourcesForDownload, blockedSources = state.downloadableSources, downloadedSources = downloaded) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }
+        val release = org.viptv.app.features.downloads.LocalDownloadActions.current
+        if (!showingSources) release?.releasePrompt?.let { org.viptv.app.features.downloads.ReleaseFollowUpSheet(it, release) }
     }
 }
 

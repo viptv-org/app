@@ -20,6 +20,11 @@ import org.viptv.app.FakeDownloads.Companion.NOW
 import org.viptv.app.FakeDownloads.Companion.episode
 import org.viptv.app.FakeDownloads.Companion.item
 import org.viptv.app.downloads.DownloadState
+import org.viptv.app.downloads.DownloadTrack
+import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.MediaIdentity
+import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SourcePresentation
 import org.viptv.app.features.details.DetailEpisodeCard
 import org.viptv.app.features.downloads.*
 import org.viptv.app.theme.Palette
@@ -104,6 +109,119 @@ class DownloadsUiTest {
             click(clickable(scene) { it.contains("Download on Wi‑Fi only") })
             assertFalse(fake.settings.value.wifiOnly)
         } finally { scene.close() }
+    }
+
+    @Test fun rowShowsItsSourceAndOpensDetailsWithTracksAndChangeSource() {
+        val saved = item(episode(1, 3), DownloadState.Completed, done = 2 * GIB).copy(sourceProvider = "Torrentio",
+            sourceLabel = "Torrentio\n1080p", sourceDetail = "Severance.S01E03.1080p.WEB-DL.DDP5.1.H.264-NTb\n💾 2.1 GB", format = "mkv",
+            tracks = listOf(DownloadTrack("audio", "eng", "English 5.1", embedded = true),
+                DownloadTrack("subtitle", "eng", null, embedded = true), DownloadTrack("subtitle", "spa", null, embedded = false)))
+        val fake = FakeDownloads(listOf(saved))
+        val actions = fake.actions()
+        val scene = scene(actions, height = 900) { DownloadsScreen(actions, offline = false, browse = {}, showTitle = false) }
+        try {
+            frames(scene)
+            assertTrue(texts(scene).any { it.contains("Torrentio · 1080p · 2 GB") }, "${texts(scene)}")
+            click(clickable(scene) { it.contains("S1 E3") })
+            frames(scene)
+            val shown = texts(scene)
+            listOf(DOWNLOAD_DETAILS_TITLE, "Torrentio\n1080p", "Severance.S01E03.1080p.WEB-DL.DDP5.1.H.264-NTb\n💾 2.1 GB", "MKV",
+                "Audio", "English · English 5.1", "Subtitles", "English", "Spanish", "Embedded", "Add-on").forEach {
+                assertTrue(shown.any { line -> line.contains(it) }, "details must show '$it': $shown")
+            }
+            click(clickable(scene, CHANGE_SOURCE))
+            frames(scene)
+            assertEquals(listOf("opened:${saved.id}", "change:${saved.id}"), fake.calls, "opening the sheet asks for a track probe")
+            assertFalse(DOWNLOAD_DETAILS_TITLE in texts(scene), "Change source closes the sheet")
+        } finally { scene.close() }
+    }
+
+    @Test fun aFailedSwitchKeepsTheOldFileAndSaysWhyWhileTracksAreChecked() {
+        val kept = item(episode(1, 3), DownloadState.Completed, done = 2 * GIB, failure = "Couldn't switch source: The source stopped working.")
+            .copy(sourceProvider = "Torrentio")
+        val fake = FakeDownloads(listOf(kept))
+        val actions = fake.actions()
+        val scene = scene(actions, height = 900) { DownloadsScreen(actions, offline = false, browse = {}, showTitle = false) }
+        try {
+            frames(scene)
+            assertTrue(texts(scene).any { it.contains("Couldn't switch source: The source stopped working.") }, "${texts(scene)}")
+            click(clickable(scene) { it.contains("S1 E3") })
+            frames(scene)
+            val shown = texts(scene)
+            assertEquals(2, shown.count { it == "Checking tracks…" }, "$shown")
+            assertTrue(shown.none { it.startsWith("No ") }, "$shown")
+            assertTrue("Play" in shown, "the old file still plays: $shown")
+        } finally { scene.close() }
+    }
+
+    @Test fun episodeControlOffersChooseSourceBeforeAndChangeSourceAfter() {
+        val fake = FakeDownloads()
+        val card = episode(1, 3)
+        val scene = scene(fake.actions()) { DetailEpisodeCard(card, true, {}, download = true) }
+        try {
+            frames(scene)
+            customAction(described(scene, "Download S1 E3"), CHOOSE_SOURCE)
+            assertEquals(listOf("choose:tt-series:3"), fake.calls)
+            fake.items.value = listOf(item(card, DownloadState.Completed, done = 2 * GIB))
+            scene.renderUntil(what = "the downloaded check") { nodes(scene).any { description(it) == "Downloaded" } }
+            customAction(described(scene, "Downloaded"), CHANGE_SOURCE)
+            assertEquals("change:${fake.items.value.single().id}", fake.calls.last())
+        } finally { scene.close() }
+    }
+
+    @Test fun downloadSubtitlesSettingToggles() {
+        val fake = FakeDownloads()
+        val scene = scene(fake.actions(), height = 900) { DownloadSettingsPage(fake, compact = true) }
+        try {
+            frames(scene)
+            assertTrue(fake.settings.value.downloadSubtitles)
+            click(clickable(scene) { it.contains(DOWNLOAD_SUBTITLES) })
+            assertFalse(fake.settings.value.downloadSubtitles)
+        } finally { scene.close() }
+    }
+
+    @Test fun seriesChooseSourcePicksTheNextUnwatchedEpisodeThenOffersMoreFromThatRelease() {
+        val fake = FakeDownloads()
+        val actions = fake.actions()
+        val series = Card(MediaIdentity("tt-series", "series", emptyList()), provider_id = "addon:cinemeta", title = "Severance", badges = emptyList())
+        val episodes = listOf(episode(1, 1, progress = 1.0), episode(1, 2), episode(1, 3), episode(1, 4))
+        val release = SourceCandidate("s1", "addon:torrentio", "Torrentio 1080p", quality_height = 1080,
+            presentation = SourcePresentation(provider_name = "Torrentio"))
+        val scene = scene(actions, height = 800) {
+            TitleDownloadAction(series, episodes, 1L, TitleDownloadStyle.Tablet)
+            actions.releasePrompt?.let { ReleaseFollowUpSheet(it, actions) }
+        }
+        try {
+            frames(scene)
+            click(clickable(scene, "Download"))
+            frames(scene)
+            click(clickable(scene, CHOOSE_SOURCE))
+            frames(scene)
+            assertEquals(listOf("choose:tt-series:2"), fake.calls, "the picker opens for the next unwatched episode")
+            actions.sourcePicked(release)
+            frames(scene)
+            assertTrue(RELEASE_PROMPT_TITLE in texts(scene) && "Torrentio · 1080p" in texts(scene), "${texts(scene)}")
+            listOf("Next 3", "Next 5", "Next 10", REST_OF_SEASON, NOT_NOW).forEach { clickable(scene, it) }
+            click(clickable(scene, "Next 5"))
+            frames(scene)
+            assertEquals("next:5:s1", fake.calls.last())
+            assertFalse(RELEASE_PROMPT_TITLE in texts(scene))
+            actions.chooseSeriesSource(series, episodes[1], SeriesDownloadPlan(episodes, emptyMap(), NOW))
+            actions.sourcePicked(release)
+            frames(scene)
+            click(clickable(scene, REST_OF_SEASON))
+            assertEquals("season:1:s1", fake.calls.last())
+            actions.chooseSeriesSource(series, episodes[1], SeriesDownloadPlan(episodes, emptyMap(), NOW))
+            actions.pickerClosed()
+            actions.sourcePicked(release)
+            frames(scene)
+            assertFalse(RELEASE_PROMPT_TITLE in texts(scene), "a pick for a single title asks nothing")
+        } finally { scene.close() }
+    }
+
+    private fun customAction(node: SemanticsNode, label: String) {
+        val action = node.config.getOrNull(SemanticsActions.CustomActions)?.firstOrNull { it.label == label } ?: fail("no '$label' action")
+        assertTrue(action.action())
     }
 
     private fun scene(actions: DownloadActions, width: Int = 400, height: Int = 600, content: @Composable () -> Unit) =

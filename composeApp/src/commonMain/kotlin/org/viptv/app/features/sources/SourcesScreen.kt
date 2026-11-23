@@ -36,6 +36,11 @@ import com.composables.icons.lucide.X
 import com.composables.icons.lucide.CloudOff
 import kotlinx.coroutines.flow.collect
 import org.viptv.app.connection.SourceGroups
+import org.viptv.app.downloads.DownloadItem
+import org.viptv.app.downloads.DownloadState
+import org.viptv.app.features.downloads.active
+import org.viptv.app.features.downloads.fraction
+import org.viptv.app.features.downloads.percent
 import org.viptv.app.connection.SourceProducerOutcome
 import org.viptv.app.features.details.DetailsScreen
 import org.viptv.app.theme.Palette
@@ -59,7 +64,8 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
     openingStage: String? = null, groups: SourceGroups = SourceGroups(), drawerVisible: Boolean = true, onClosed: () -> Unit = {}, scrolled: () -> Unit = {},
     errorCode: String? = null, openGateways: (() -> Unit)? = null, producers: List<SourceProducerOutcome> = emptyList(),
     banner: String? = null, failed: List<String> = emptyList(), opening: Boolean = false, retry: () -> Unit = {}, manageAddons: () -> Unit = {},
-    configureSource: (String) -> Unit = {}) {
+    configureSource: (String) -> Unit = {}, forDownload: Boolean = false, blockedSources: Map<String, String?> = emptyMap(),
+    downloadedSources: Map<String, DownloadItem> = emptyMap()) {
     if (television) {
         TvSourcesScreen(title, sources, busy, error, choose, back,
             info = sources.associate { it.id to TvSourceInfo(quality = it.qualityLabel()) },
@@ -80,7 +86,9 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
         val id = provider ?: return@LaunchedEffect
         if (offered.none { it.sourceFilterId() == id }) provider = null
     }
-    val rows = remember(visible, groups, failed) { sourceListRows(visible, groups, failed) }
+    val pinned = visible.firstOrNull { downloadedSources[it.id]?.state == DownloadState.Completed }?.id
+    val rows = remember(visible, groups, failed, pinned) { sourceListRows(visible, groups, failed, pinned) }
+    val heading = if (forDownload) CHOOSE_DOWNLOAD_SOURCE else "Choose a source"
     val listState = rememberLazyListState()
     LaunchedEffect(listState) {
         listState.interactionSource.interactions.collect { interaction ->
@@ -116,7 +124,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             else translationX = size.width * (1f - motion.container)
         }.onSizeChanged { if (phone) sheetHeight = it.height.toFloat() }.nestedScroll(drag.nestedScroll)
             .clip(RoundedCornerShape(topStart = if (phone) 24.dp else 0.dp,
-            topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = "Choose a source" }) {
+            topEnd = if (phone) 24.dp else 0.dp)).background(Palette.surface).semantics { paneTitle = heading }) {
             val pending = loadingMore && !opening
             val summary = when {
                 opening -> openingStage ?: "Opening stream…"
@@ -129,7 +137,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             if (phone) Column(Modifier.fillMaxWidth().then(drag.handle)) {
                 SheetHandle(touch, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp, bottom = 4.dp))
                 Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Choose a source", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(heading, Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     AccessibleIconButton(Lucide.X, "Close", back, iconSize = 18.dp, wash = null)
                 }
                 SourceSummary(summaryLine, pending, Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp), 13.sp)
@@ -137,7 +145,7 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             } else Column(Modifier.padding(horizontal = if (television) 48.dp else 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Choose a source", Modifier.weight(1f), fontSize = if (television) 36.sp else 18.sp,
+                    Text(heading, Modifier.weight(1f), fontSize = if (television) 36.sp else 18.sp,
                         fontWeight = FontWeight.Bold)
                     AccessibleIconButton(Lucide.X, "Close", back, iconSize = 18.dp, wash = null)
                 }
@@ -181,14 +189,17 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
                 }
                 items(rows, key = { it.source.id }) { row ->
                     val source = row.source
-                    SourceRow(source, television, choose, enabled = !busy, selected = source.id == selectedSource,
+                    val download = sourceRowDownload(downloadedSources[source.id], blockedSources[source.id])
+                    val taken = forDownload && (download is SourceRowDownload.Saved || download is SourceRowDownload.Saving)
+                    SourceRow(source, television, choose, enabled = !busy && !taken && download !is SourceRowDownload.Blocked, selected = source.id == selectedSource,
                         header = row.header, bestMatch = row.bestMatch, didntStart = row.didntStart, headerMeasured = { headerHeight.pixels = it },
                         focusChanged = { has -> if (has) focusedSource = source.id else if (focusedSource == source.id) focusedSource = null },
                         details = { shown ->
                             detailsRow = rowFocus[shown.id].takeIf { focusedSource == shown.id }
                             details = shown
                         }, requester = rowFocus.getOrPut(source.id) { FocusRequester() },
-                        menu = source.rowMenu(producers, configureSource) { provider = null; hiddenAddons = hiddenAddons + source.provider_id })
+                        menu = if (forDownload) null else source.rowMenu(producers, configureSource) { provider = null; hiddenAddons = hiddenAddons + source.provider_id },
+                        download = download)
                 }
             }
         }
@@ -200,6 +211,15 @@ fun SourcesScreen(title: Card?, sources: List<SourceCandidate>, busy: Boolean, e
             })
         }
     }
+}
+
+internal const val CHOOSE_DOWNLOAD_SOURCE = "Choose a source to download"
+
+internal fun sourceRowDownload(item: DownloadItem?, blocked: String?): SourceRowDownload? = when {
+    item?.state == DownloadState.Completed -> SourceRowDownload.Saved(item.bytesTotal ?: item.bytesDone)
+    item != null && item.active -> SourceRowDownload.Saving(item.fraction, item.percent())
+    blocked != null -> SourceRowDownload.Blocked(blocked)
+    else -> null
 }
 
 internal fun sourceDrawerWidth(window: Dp): Dp = minOf(window, maxOf(460.dp, minOf(720.dp, window * 0.55f)))

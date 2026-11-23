@@ -22,8 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,9 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.PopoverMenu
 import org.viptv.app.components.PopoverMenuDivider
 import org.viptv.app.components.PopoverMenuItem
+import org.viptv.app.components.holdMenu
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.DownloadState
 import org.viptv.app.theme.Palette
@@ -45,27 +49,44 @@ internal fun EpisodeDownloadControl(card: Card, modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun DownloadControl(card: Card, item: DownloadItem?, actions: DownloadActions, modifier: Modifier = Modifier) {
+internal fun DownloadControl(card: Card, item: DownloadItem?, actions: DownloadActions, modifier: Modifier = Modifier,
+    details: (() -> Unit)? = null) {
     val requested = actions.requested(card)
     val state = item.controlState(requested)
     var menu by remember { mutableStateOf(false) }
+    val openMenu = { _: androidx.compose.ui.unit.IntOffset -> menu = true }
+    val hold = state != DownloadControlState.Requested
     Box(modifier) {
-        Box(Modifier.size(44.dp).pointerClickable(role = Role.Button, shape = CircleShape) {
+        Box(Modifier.size(44.dp).secondaryClickMenu(hold, openMenu).pointerClickable(role = Role.Button, shape = CircleShape) {
             when (state) {
                 DownloadControlState.None -> actions.title(card)
                 DownloadControlState.Failed -> item?.let(actions::retry)
                 DownloadControlState.Requested -> Unit
                 else -> menu = true
             }
-        }.semantics { contentDescription = controlName(card, item, requested) }, contentAlignment = Alignment.Center) {
+        }.holdMenu(hold, openMenu).semantics {
+            contentDescription = controlName(card, item, requested)
+            if (hold) customActions = listOf(CustomAccessibilityAction(if (item == null) CHOOSE_SOURCE else CHANGE_SOURCE) {
+                if (item == null) actions.chooseSource(card) else actions.changeSource(item.id); true
+            })
+        }, contentAlignment = Alignment.Center) {
             DownloadGlyph(state, item?.fraction, 24.dp)
         }
-        if (item != null) DownloadItemMenu(item, actions, menu) { menu = false }
+        if (item != null) DownloadItemMenu(item, actions, menu, details) { menu = false }
+        else DownloadStartMenu(card, actions, menu) { menu = false }
     }
 }
 
 @Composable
-internal fun DownloadItemMenu(item: DownloadItem, actions: DownloadActions, expanded: Boolean, dismiss: () -> Unit) {
+internal fun DownloadStartMenu(card: Card, actions: DownloadActions, expanded: Boolean, dismiss: () -> Unit) {
+    PopoverMenu(expanded, dismiss, paneTitle = episodeLabel(card)) {
+        PopoverMenuItem("Download", Lucide.ArrowDownToLine, onClick = { dismiss(); actions.title(card) })
+        PopoverMenuItem(CHOOSE_SOURCE, Lucide.ListFilter, onClick = { dismiss(); actions.chooseSource(card) })
+    }
+}
+
+@Composable
+internal fun DownloadItemMenu(item: DownloadItem, actions: DownloadActions, expanded: Boolean, details: (() -> Unit)? = null, dismiss: () -> Unit) {
     val downloads = actions.downloads
     PopoverMenu(expanded, dismiss, paneTitle = episodeLabel(item.card)) {
         val close = { act: () -> Unit -> { dismiss(); act() } }
@@ -74,18 +95,22 @@ internal fun DownloadItemMenu(item: DownloadItem, actions: DownloadActions, expa
                 PopoverMenuItem("Play", Lucide.Play, onClick = close { actions.play(item.id) })
                 PopoverMenuItem(if (item.keep) "Don't keep" else "Keep", if (item.keep) Lucide.PinOff else Lucide.Pin,
                     onClick = close { downloads.keep(item.id, !item.keep) })
-                PopoverMenuDivider()
-                PopoverMenuItem("Delete download", Lucide.Trash2, onClick = close { downloads.delete(item.id) })
             }
             item.state == DownloadState.Failed -> {
                 PopoverMenuItem("Try again", Lucide.RotateCw, onClick = close { actions.retry(item) })
-                PopoverMenuItem("Remove", Lucide.Trash2, onClick = close { downloads.delete(item.id) })
             }
             else -> {
                 if (item.state == DownloadState.Paused) PopoverMenuItem("Resume", Lucide.Play, onClick = close { downloads.resume(item.id) })
                 else PopoverMenuItem("Pause", Lucide.Pause, onClick = close { downloads.pause(item.id) })
-                PopoverMenuItem("Cancel download", Lucide.X, onClick = close { downloads.cancel(item.id) })
             }
+        }
+        details?.let { PopoverMenuItem(DOWNLOAD_DETAILS_TITLE, Lucide.Info, onClick = close(it)) }
+        PopoverMenuItem(CHANGE_SOURCE, Lucide.ListFilter, onClick = close { actions.changeSource(item.id) })
+        PopoverMenuDivider()
+        when (item.state) {
+            DownloadState.Completed -> PopoverMenuItem("Delete download", Lucide.Trash2, onClick = close { downloads.delete(item.id) })
+            DownloadState.Failed -> PopoverMenuItem("Remove", Lucide.Trash2, onClick = close { downloads.delete(item.id) })
+            else -> PopoverMenuItem("Cancel download", Lucide.X, onClick = close { downloads.cancel(item.id) })
         }
     }
 }
