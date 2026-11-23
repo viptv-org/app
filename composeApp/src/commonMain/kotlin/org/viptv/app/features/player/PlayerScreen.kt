@@ -112,7 +112,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     var nextChoice by remember(playbackKey) { mutableStateOf<Card?>(null) }
     var restorePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
     var ended by remember(playbackKey) { mutableStateOf(false) }
-    var endHandled by remember(playbackKey) { mutableStateOf(false) }
+    val upNext = remember(playbackKey) { UpNextDismissal() }
     var progressed by remember(playbackKey) { mutableStateOf(preview != null) }
     val episodesFocus = remember { FocusRequester() }; val nextFocus = remember { FocusRequester() }
     val episodes = if (input?.live != true) phonePlaybackEpisodes(title, tvExtras.episodes) else emptyList()
@@ -121,6 +121,9 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     val episodeTitle = phone && seriesEpisode
     val activeSkip = tvExtras.skips.firstOrNull { position in it.startMillis until it.endMillis }
     val creditsReached = progressed && tvExtras.skips.endCreditsReached(position, tvExtras.skipCredits, duration)
+    val upNextDue = upNext.due(ended, creditsReached)
+    val creditsStart = tvExtras.skips.endCreditsStart(tvExtras.skipCredits, duration)
+    SideEffect { upNext.creditsStart = creditsStart }
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
     val openEpisodes = if (seriesEpisode) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++; Unit }) else null
     val nextEnabled = next != null && playEpisode != null
@@ -131,7 +134,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     val latestTitle by rememberUpdatedState(title)
     val latestClose by rememberUpdatedState(close)
     fun closePanel() { restorePanel = if (phone) phonePanel else null; phonePanel = null; visible = true; interaction++ }
-    fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) endHandled = true; closePanel() }
+    fun dismissPanel() { if (phonePanel == PhonePlaybackPanel.Next) upNext.dismiss(ended); closePanel() }
     val phoneBack = {
         when { sync != null -> sync = null
             showTracks -> { showTracks = false; visible = true }
@@ -165,8 +168,8 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
                 phonePanel == PhonePlaybackPanel.Next && (next == null || nextChoice?.let(::cardLookupKey) != cardLookupKey(next)) ||
                 phonePanel == PhonePlaybackPanel.Episodes && episodes.isEmpty())) closePanel()
     }
-    LaunchedEffect(ended, creditsReached, endHandled, next, playEpisode != null, phonePanel, stopped) {
-        if ((ended || creditsReached) && !endHandled && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !stopped) {
+    LaunchedEffect(upNextDue, next, playEpisode != null, phonePanel, stopped) {
+        if (upNextDue && seriesEpisode && next != null && playEpisode != null && phonePanel == null && !stopped) {
             showTracks = false; locked = false
             nextChoice = next; phonePanel = PhonePlaybackPanel.Next
         }
@@ -190,7 +193,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     fun seekTo(value: Long, reveal: Boolean, automatic: Boolean = false) { if (input?.live != true) {
         val target = value.coerceIn(0, duration ?: Long.MAX_VALUE)
         seekTarget = target; seekPending = target; position = target; seekMark = kotlin.time.TimeSource.Monotonic.markNow()
-        if (!automatic) autoSkip.seeked(target)
+        if (!automatic) { autoSkip.seeked(target); upNext.seeked(target) }
         if (reveal) send(PlayerCommand.Seek(target)) else { commands.tryEmit(PlayerCommand.Seek(target, automatic)); interaction++; if (!automatic) controlError = null }
     } }
     fun seek(value: Long) { seekTo(value, reveal = true) }
@@ -223,7 +226,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
             is PlayerFact.Status -> {
                 buffering = !stopped && fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
-                if (!ended) endHandled = false
+                upNext.status(ended)
             }
             is PlayerFact.Presentation -> Unit
             is PlayerFact.ControlFailed -> when {
@@ -349,7 +352,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
                 if (phonePanel == PhonePlaybackPanel.Next) nextChoice?.let { candidate -> PhoneNextEpisode(candidate, {
                     if (phonePanel == PhonePlaybackPanel.Next && latestPlaybackKey == playbackKey && latestTitle?.let(::cardLookupKey) == title?.let(::cardLookupKey) &&
                         latestNext?.let(::cardLookupKey) == cardLookupKey(candidate)) {
-                        endHandled = true; phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
+                        upNext.dismiss(ended = true); phonePanel = null; latestNext?.let { latestPlayEpisode?.invoke(it) }
                     }
                 }, ::dismissPanel, controlInsets, nextEpisodeAutoplays(autoplayNext, title, input?.live == true) && ended, reduceMotion) }
                 val failureStyle = if (phone) PhoneFailureStyle else DesktopFailureStyle

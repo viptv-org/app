@@ -27,7 +27,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var showNext by mutableStateOf(scene == TvPlayerScene.Next)
     var showEpisodes by mutableStateOf(false)
     var ended by mutableStateOf(false)
-    var endHandled by mutableStateOf(false)
+    val upNext = UpNextDismissal()
     var progressed by mutableStateOf(false)
     var scrub by mutableStateOf<Long?>(if (scene == TvPlayerScene.Scrub) 1300000 else null)
     var timelineFocused by mutableStateOf(false)
@@ -79,7 +79,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             is PlayerFact.Status -> {
                 buffering = fact.name in PlaybackWaitingStatuses
                 ended = fact.name == "Ended"
-                if (!ended) endHandled = false
+                upNext.status(ended)
             }
             is PlayerFact.Presentation -> { hasPresented = true; buffering = false; undecodable = false }
             PlayerFact.Failed -> { buffering = false; failed = true }
@@ -91,10 +91,11 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
             }
         }
     }
-    fun keepWatching() { showNext = false; visible = false; endHandled = true }
-    fun offerNext(available: Boolean, creditsReached: Boolean = false) {
+    fun keepWatching() { showNext = false; visible = false; upNext.dismiss(ended) }
+    fun playNext() { showNext = false; upNext.dismiss(ended = true) }
+    fun offerNext(available: Boolean, due: Boolean) {
         if (showNext && !available) showNext = false
-        else if ((ended || creditsReached) && !endHandled && available && !live && !failed && !undecodable && !showNext) {
+        else if (due && available && !live && !failed && !undecodable && !showNext) {
             showTracks = false; showEpisodes = false; scrub = null; showNext = true
         }
     }
@@ -104,7 +105,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
         if (command is PlayerCommand.Seek) {
             seekTarget = command.positionMillis; position = command.positionMillis
             seekStarted = TimeSource.Monotonic.markNow()
-            if (!command.automatic) autoSkip.seeked(command.positionMillis)
+            if (!command.automatic) { autoSkip.seeked(command.positionMillis); upNext.seeked(command.positionMillis) }
         }
         commands.tryEmit(command); preview?.invoke(command); interaction++; if (!command.isAutomatic) controlError = null
     }

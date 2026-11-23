@@ -9,6 +9,7 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -130,6 +131,65 @@ class PlayerStatePerPlaybackUiTest {
         } finally { player.close() }
     }
 
+    @Test fun phoneDismissedUpNextStaysClosedForTheRestOfTheCredits() = dismissalSticks(phone = true, panel = "Up next")
+
+    @Test fun tvDismissedUpNextStaysClosedForTheRestOfTheCredits() = dismissalSticks(television = true, panel = "Play next episode")
+
+    private fun dismissalSticks(phone: Boolean = false, television: Boolean = false, panel: String) {
+        val player = Player(phone = phone, television = television)
+        try {
+            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Progress(1_750_000, 1_800_000)); player.frames(40)
+            assertTrue(player.hasText(panel)); player.capture("dismiss-1-credits-panel")
+            player.dismiss(); player.frames(40)
+            assertFalse(player.hasText(panel)); player.capture("dismiss-2-watching-credits")
+            player.facts(PlayerFact.Status("Paused"), PlayerFact.Status("Playing"), PlayerFact.Progress(1_755_000, 1_800_000)); player.frames(40)
+            assertFalse(player.hasText(panel), "Pause and resume keep it dismissed")
+            player.facts(PlayerFact.Status("Buffering"), PlayerFact.Status("Loading"), PlayerFact.Status("Playing"), PlayerFact.Progress(1_760_000, 1_800_000)); player.frames(40)
+            assertFalse(player.hasText(panel), "Buffering and a seek-reopen keep it dismissed")
+            player.seek(0.98f); player.facts(PlayerFact.Status("Buffering"), PlayerFact.Status("Playing"), PlayerFact.Progress(1_764_000, 1_800_000)); player.frames(40)
+            assertFalse(player.hasText(panel), "A seek within the credits keeps it dismissed")
+            player.capture("dismiss-3-after-pause-buffer-seek")
+            assertTrue(player.played.isEmpty())
+            player.facts(PlayerFact.Status("Ended")); player.frames(60)
+            assertTrue(player.hasText(panel), "The real end offers the next episode again")
+            player.capture("dismiss-4-ended")
+        } finally { player.close() }
+    }
+
+    @Test fun phoneSeekingBackBeforeTheCreditsOffersUpNextAgainAtTheCredits() = seekBackRearms(phone = true, panel = "Up next")
+
+    @Test fun tvSeekingBackBeforeTheCreditsOffersUpNextAgainAtTheCredits() = seekBackRearms(television = true, panel = "Play next episode")
+
+    private fun seekBackRearms(phone: Boolean = false, television: Boolean = false, panel: String) {
+        val player = Player(phone = phone, television = television)
+        try {
+            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Progress(1_750_000, 1_800_000)); player.frames(40)
+            player.dismiss(); player.frames(40)
+            player.seek(0.5f); player.facts(PlayerFact.Status("Buffering"), PlayerFact.Status("Playing"), PlayerFact.Progress(900_000, 1_800_000)); player.frames(40)
+            assertFalse(player.hasText(panel))
+            player.facts(PlayerFact.Progress(1_701_000, 1_800_000)); player.frames(40)
+            assertTrue(player.hasText(panel), "Reaching the credits again offers the next episode")
+        } finally { player.close() }
+    }
+
+    @Test fun phoneDismissingAtTheEndKeepsItClosedUntilPlaybackResumes() = dismissAtEnd(phone = true, panel = "Up next")
+
+    @Test fun tvDismissingAtTheEndKeepsItClosedUntilPlaybackResumes() = dismissAtEnd(television = true, panel = "Play next episode")
+
+    private fun dismissAtEnd(phone: Boolean = false, television: Boolean = false, panel: String) {
+        val player = Player(phone = phone, television = television, initialSegments = emptyList())
+        try {
+            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Progress(1_799_000, 1_800_000), PlayerFact.Status("Ended")); player.frames(40)
+            assertTrue(player.hasText(panel))
+            player.dismiss(); player.frames(40)
+            player.facts(PlayerFact.Status("Ended"), PlayerFact.Progress(1_800_000, 1_800_000)); player.frames(40)
+            assertFalse(player.hasText(panel), "A repeated end status keeps it dismissed")
+            player.facts(PlayerFact.Status("Playing"), PlayerFact.Progress(1_790_000, 1_800_000), PlayerFact.Status("Ended")); player.frames(40)
+            assertTrue(player.hasText(panel), "A new end after playback resumes offers it again")
+            assertTrue(player.played.isEmpty())
+        } finally { player.close() }
+    }
+
     private inner class Player(phone: Boolean = false, val television: Boolean = false, autoplay: Boolean = false,
         initialSegments: List<TvSkipRange> = credits) {
         val width = if (television) 1920 else 844
@@ -161,6 +221,12 @@ class PlayerStatePerPlaybackUiTest {
         }
         fun facts(vararg values: PlayerFact) { values.forEach { assertTrue(facts.tryEmit(it)); frames() }; frames() }
         fun back() { back!!.invoke() }
+        fun dismiss() { if (television) back() else click("Watch credits") }
+        fun seek(fraction: Float) {
+            if (television) { assertTrue(scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyDown))); scene.sendKeyEvent(KeyEvent(Key.DirectionDown, KeyEventType.KeyUp)); frames(40) }
+            val slider = nodes().first { label(it).startsWith(if (television) "Position" else "Playback position") && it.config.contains(SemanticsActions.SetProgress) }
+            assertTrue(slider.config[SemanticsActions.SetProgress].action!!.invoke(fraction)); frames()
+        }
         fun nodes() = scene.semanticsOwners.flatMap { flatten(it.rootSemanticsNode) }
         private fun flatten(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::flatten)
         fun text(node: SemanticsNode) = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }.orEmpty()

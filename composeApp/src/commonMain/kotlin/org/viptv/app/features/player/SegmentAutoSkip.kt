@@ -13,9 +13,21 @@ internal fun TvSkipRange.skipsItself(intros: Boolean, credits: Boolean, duration
     TvSkipKind.Credits -> credits && (scenesFollow(durationMillis) || !nextEpisode)
 }
 
+internal fun List<TvSkipRange>.endCreditsStart(credits: Boolean, durationMillis: Long?): Long? =
+    firstOrNull { it.kind == TvSkipKind.Credits && !(credits && !it.mixed && it.scenesFollow(durationMillis)) }?.startMillis
+
 internal fun List<TvSkipRange>.endCreditsReached(position: Long, credits: Boolean, durationMillis: Long?): Boolean =
-    firstOrNull { it.kind == TvSkipKind.Credits && !(credits && !it.mixed && it.scenesFollow(durationMillis)) }
-        ?.let { position >= it.startMillis } == true
+    endCreditsStart(credits, durationMillis)?.let { position >= it } == true
+
+internal class UpNextDismissal {
+    var creditsStart: Long? = null
+    private var endDismissed by mutableStateOf(false)
+    private var creditsDismissed by mutableStateOf(false)
+    fun status(ended: Boolean) { if (!ended) endDismissed = false }
+    fun dismiss(ended: Boolean) { endDismissed = ended; creditsDismissed = true }
+    fun seeked(target: Long) { if (creditsStart?.let { target < it } == true) creditsDismissed = false }
+    fun due(ended: Boolean, creditsReached: Boolean) = ended && !endDismissed || creditsReached && !creditsDismissed
+}
 
 private fun TvSkipRange.scenesFollow(durationMillis: Long?) = durationMillis != null && durationMillis - endMillis > creditsTailMillis
 

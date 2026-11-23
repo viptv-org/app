@@ -82,8 +82,11 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -
     val audioRequester = remember { FocusRequester() }
     LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }
     val creditsReached = state.progressed && extras.skips.endCreditsReached(state.position, extras.skipCredits, state.duration)
-    LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, stopped, creditsReached) {
-        state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
+    val upNextDue = state.upNext.due(state.ended, creditsReached)
+    val creditsStart = extras.skips.endCreditsStart(extras.skipCredits, state.duration)
+    SideEffect { state.upNext.creditsStart = creditsStart }
+    LaunchedEffect(state, upNextDue, extras.nextEpisode, playEpisode != null, stopped) {
+        state.offerNext(extras.nextEpisode != null && playEpisode != null, upNextDue)
     }
     LaunchedEffect(state.visible, paused, state.interaction, state.buffering, state.showTracks, state.showNext, state.showEpisodes, stopped, state.scrub) {
         if (state.visible && !paused && !state.buffering && !state.showTracks && !state.showNext && !state.showEpisodes && !stopped && state.scrub == null && input != null) { frameDelay(controlsAutoHideMillis); state.visible = false }
@@ -159,7 +162,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -
                 else TvPlayerBuffer(title, extras, scale)
             state.showNext && extras.nextEpisode != null -> TvNextEpisode(title, extras.nextEpisode, scale,
                 // The countdown's last tick can land in the frame that closes the panel: only an open panel plays.
-                { if (state.showNext) { state.endHandled = true; state.showNext = false; playEpisode?.invoke(extras.nextEpisode) } }, state::keepWatching, extras.creditsLabel,
+                { if (state.showNext) { state.playNext(); playEpisode?.invoke(extras.nextEpisode) } }, state::keepWatching, extras.creditsLabel,
                 nextEpisodeAutoplays(autoplayNext, title, state.live) && state.ended, reduceMotion, state.interaction)
             else -> {
                 TvControlsVisibility(state.visible && !state.showTracks && !state.showEpisodes && state.sync == null) {
