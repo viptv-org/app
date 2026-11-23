@@ -6,11 +6,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.withLock
 import org.viptv.app.connection.*
 import org.viptv.app.downloads.*
+import org.viptv.app.features.player.TvSkipKind
+import org.viptv.app.features.player.TvSkipRange
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.SourceCandidate
 
 private const val DOWNLOAD_PLAYBACK_PREFIX = "download:"
+private const val DOWNLOAD_GONE = "This download is no longer on this device."
 private const val WATCHED_FRACTION = 0.95
 private const val EPISODE_PAGE_LIMIT = 128
 private const val EPISODE_PAGE_COUNT = 40
@@ -21,6 +24,7 @@ internal fun ApplicationController.startDownloads() {
     val engine = downloadEngine ?: return
     engine.resolver = RemoteDownloadResolver(this)
     engine.subtitleFetcher = RemoteDownloadSubtitles(this)
+    engine.segmentFetcher = RemoteDownloadSegments(this)
     scope.launch {
         mutable.collect { state ->
             val items = engine.items.value
@@ -118,37 +122,99 @@ fun ApplicationController.downloadOpened(id: String) { downloadEngine?.probeIfMi
 fun ApplicationController.playDownload(id: String) = playDownload(id, startOver = false)
 
 internal fun ApplicationController.playDownload(id: String, startOver: Boolean) {
-    val engine = downloadEngine ?: return
-    val record = engine.record(id)?.takeIf { it.state == DownloadState.Completed } ?: return
-    val path = engine.localFile(id) ?: return
-    engine.probeIfMissing(id)
-    val returnTo = mutable.value.screen.takeIf { it != Screen.Player } ?: Screen.Downloads
+    val record = downloadEngine?.record(id)?.takeIf { it.state == DownloadState.Completed } ?: return
+    val source = record.localSource()
+    val before = mutable.value
+    val returnTo = before.screen.takeIf { it != Screen.Player } ?: downloadReturn ?: before.detailReturnScreen
     cancelSeekReopen()
     job?.cancel()
     clearBestMatchSession()
-    if (mutable.value.playback != null && !completionSeen) saveProgress(false, final = true)
+    if (before.playback != null && !completionSeen) saveProgress(false, final = true)
     releasePlaybackSession()
-    val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
-    val resume = record.positionMillis.takeIf { !startOver && record.watchedAtMillis == null && it > 0 } ?: 0L
-    val input = PlaybackInput("$DOWNLOAD_PLAYBACK_PREFIX$id", "file://$path", positionMillis = resume, profileId = record.profileId,
-        durationMillis = record.durationMillis, preferences = preferences, diagnostics = playbackDiagnostics,
-        mimeType = record.mimeType, title = record.card.title, startChosen = true, owner = playbackKey(record.card, record.source),
-        subtitleContent = { subtitle -> engine.subtitleBytes(id, subtitle) ?: ByteArray(0) })
-    input.updateProviderSubtitles(record.subtitles.map { it.candidate() })
     downloadReturn = returnTo
     downloadWatchNoted = null
-    tracking = null
-    firstFrameSeen = false
-    lastProgress = null
-    completionSeen = false
-    progressSavedAt = freshness.time.markNow()
-    engine.playing(id)
-    updateState { it.copy(playback = input, sourceTitle = record.card, playingSource = record.source, paused = false, presentation = null,
-        screen = Screen.Player, error = null, playbackFailure = null, openingSource = null, pendingAction = null, navForward = emptyList(),
-        detailReturnScreen = returnTo) }
+    val keptDetail = before.detail?.takeIf { !before.detailShell && sameLookupIdentity(it.item.identity, record.card.parent_identity ?: record.card.identity) }
+    updateState { it.copy(sourceTitle = record.card, detail = keptDetail, playingSource = source, screen = Screen.Player, presentation = null,
+        error = null, playbackFailure = null, pendingAction = null, navForward = emptyList(), detailReturnScreen = returnTo) }
+    openSource(source, forceGateway = false, positionMillis = if (startOver) 0L else null, localCopy = id)
+    if (keptDetail == null) loadLocalPlaybackDetail(record.card)
 }
 
-internal fun PlaybackInput.downloadId(): String? = id.takeIf { it.startsWith(DOWNLOAD_PLAYBACK_PREFIX) }?.removePrefix(DOWNLOAD_PLAYBACK_PREFIX)
+private fun DownloadRecord.localSource(): SourceCandidate = source ?: SourceCandidate(id, "download", card.title)
+
+internal fun ApplicationController.downloadsOnline(): Boolean =
+    connection != null && downloadEngine?.network?.value != DownloadNetwork.None
+
+internal suspend fun ApplicationController.openDownload(id: String, profile: String, positionMillis: Long?): PlaybackInput {
+    val engine = requireNotNull(downloadEngine)
+    val record = engine.record(id)?.takeIf { it.state == DownloadState.Completed && it.profileId == profile } ?: throw LocalFailure(DOWNLOAD_GONE)
+    val path = engine.localFile(id) ?: throw LocalFailure(DOWNLOAD_GONE)
+    engine.probeIfMissing(id)
+    val resume = positionMillis ?: localResume(record, profile)
+    engine.playing(id)
+    val input = PlaybackInput("$DOWNLOAD_PLAYBACK_PREFIX${kotlin.uuid.Uuid.random()}:$id", "file://$path", positionMillis = resume, profileId = profile,
+        durationMillis = record.durationMillis, mimeType = record.mimeType)
+    input.updateProviderSubtitles(record.subtitles.map { it.candidate() })
+    return input
+}
+
+private suspend fun ApplicationController.localResume(record: DownloadRecord, profile: String): Long {
+    val stored = record.positionMillis.takeIf { record.watchedAtMillis == null && it > 0 } ?: 0L
+    val unsynced = downloadEngine?.pendingProgress()?.lastOrNull { it.profileId == profile && sameLookupIdentity(it.card.identity, record.card.identity) }
+    if (unsynced != null) return if (unsynced.ended) 0L else unsynced.positionMillis
+    val remote = connection?.takeIf { downloadsOnline() } ?: return stored
+    val saved = try { withTimeoutOrNull(5_000) { remote.savedPosition(profile, record.card) } }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+    return saved ?: stored
+}
+
+internal suspend fun ApplicationController.downloadSegments(input: PlaybackInput, card: Card): List<TvSkipRange> {
+    val engine = downloadEngine ?: return emptyList()
+    val id = input.downloadId() ?: return emptyList()
+    val stored = engine.record(id)?.segments.orEmpty().mapNotNull { it.skipRange() }
+    val remote = connection?.takeIf { downloadsOnline() } ?: return stored
+    val fetched = try { remote.titleSegments(card) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { return stored }
+    engine.storeSegments(id, fetched.map { it.downloadSegment() })
+    return fetched
+}
+
+internal suspend fun ApplicationController.downloadSubtitleContent(input: PlaybackInput, card: Card, subtitleId: String): ByteArray {
+    val id = requireNotNull(input.downloadId())
+    downloadEngine?.subtitleBytes(id, subtitleId)?.let { return it }
+    val remote = connection?.takeIf { downloadsOnline() } ?: return ByteArray(0)
+    return remote.subtitleContent(subtitleId).encodeToByteArray().also { content -> storeDownloadSubtitle(input, card, subtitleId, content) }
+}
+
+private fun ApplicationController.loadLocalPlaybackDetail(card: Card) {
+    val profile = mutable.value.selectedProfile ?: return
+    val remote = connection?.takeIf { downloadsOnline() }
+    val device = local
+    if (remote == null && device == null) return
+    val parent = card.parent_identity ?: return
+    scope.launch {
+        val detail = try { withTimeoutOrNull(12_000) { device?.detail(profile, card) ?: requireNotNull(remote).detail(card) } }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { null } ?: return@launch
+        val state = mutable.value
+        if (state.selectedProfile != profile || state.screen != Screen.Player || state.sourceTitle?.let(::cardLookupKey) != cardLookupKey(card) ||
+            !sameLookupIdentity(detail.item.identity, parent)) return@launch
+        updateState { it.copy(detail = detail.withCardPresentation(card).withOpenedProgress(card), detailShell = false) }
+        loadPlaybackSeason()
+    }
+}
+
+private fun TvSkipRange.downloadSegment() = DownloadSegment(kind.name.lowercase(), startMillis, endMillis, mixed)
+
+private fun DownloadSegment.skipRange(): TvSkipRange? {
+    val kind = TvSkipKind.entries.firstOrNull { it.name.lowercase() == kind } ?: return null
+    return TvSkipRange(startMillis, endMillis, kind, mixed).takeIf { endMillis > startMillis }
+}
+
+internal fun PlaybackInput.downloadId(): String? =
+    id.takeIf { it.startsWith(DOWNLOAD_PLAYBACK_PREFIX) }?.removePrefix(DOWNLOAD_PLAYBACK_PREFIX)?.substringAfter(':')
 
 internal fun ApplicationController.endDownloadPlayback(input: PlaybackInput?) {
     val engine = downloadEngine ?: return
@@ -190,9 +256,8 @@ internal fun ApplicationController.noteStreamedProgress(input: PlaybackInput, ca
     val engine = downloadEngine ?: return
     val profile = input.profileId ?: return
     val watched = completed || (durationMillis != null && durationMillis > 0 && positionMillis >= durationMillis * WATCHED_FRACTION)
-    if (!watched) return
-    engine.record(downloadId(profile, card))?.let { engine.played(it.id, positionMillis, durationMillis, watched = true) }
-    noteWatched(input, profile, card)
+    engine.record(downloadId(profile, card))?.takeIf { it.state == DownloadState.Completed }?.let { engine.played(it.id, positionMillis, durationMillis, watched) }
+    if (watched) noteWatched(input, profile, card)
 }
 
 private fun ApplicationController.noteWatched(input: PlaybackInput, profile: String, card: Card) {
@@ -329,5 +394,15 @@ internal class RemoteDownloadSubtitles(private val controller: ApplicationContro
         val preferences = controller.mutable.value.preferences?.preferences ?: ProfilePreferences()
         val chosen = downloadSubtitleChoice(remote.subtitles(record.card).candidates, preferences, record.source)
         return chosen.map { it to remote.subtitleContent(it.id).encodeToByteArray() }
+    }
+}
+
+internal class RemoteDownloadSegments(private val controller: ApplicationController) : DownloadSegmentFetcher {
+    override fun accepts(profileId: String): Boolean =
+        controller.connection != null && controller.mutable.value.selectedProfile == profileId
+
+    override suspend fun fetch(record: DownloadRecord): List<DownloadSegment> {
+        val remote = controller.connection ?: throw IllegalStateException("offline")
+        return remote.titleSegments(record.card).map { it.downloadSegment() }
     }
 }

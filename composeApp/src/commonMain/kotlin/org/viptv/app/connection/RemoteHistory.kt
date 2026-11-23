@@ -72,6 +72,21 @@ internal suspend fun RemoteConnection.correctProgress(profile: String, display: 
     )
 }
 
+internal suspend fun RemoteConnection.savedPosition(profile: String, card: Card, pages: Int = 5): Long? {
+    val codec = Json { ignoreUnknownKeys = true }
+    var offset = 0
+    repeat(pages) {
+        val values = call("/api/profiles/${profile.encodeURLPathPart()}/history?limit=100&offset=$offset")
+        val page = codec.decodeFromJsonElement<List<HistoryItem>>(values)
+        page.firstOrNull { sameLookupIdentity(it.card.identity, card.identity) }?.let { item ->
+            return if (item.resume_active && !item.watched) (item.position * 1000).toLong() else 0L
+        }
+        if (page.size < 100) return null
+        offset += page.size
+    }
+    return null
+}
+
 internal suspend fun RemoteConnection.clearHistory(profile: String) {
     call("/api/profiles/${profile.encodeURLPathPart()}/history", HttpMethod.Delete)
 }

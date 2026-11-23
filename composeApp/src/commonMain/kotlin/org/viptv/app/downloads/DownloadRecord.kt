@@ -35,6 +35,7 @@ internal data class DownloadRecord(
     val previous: DownloadPrevious? = null,
     val subtitlesFetched: Boolean = false,
     val probed: Boolean = false,
+    val segments: List<DownloadSegment>? = null,
 ) {
     val fileName: String get() = downloadFileName(id, revision)
 
@@ -64,6 +65,9 @@ internal data class DownloadRecord(
 internal data class DownloadSubtitle(val id: String, val providerId: String, val language: String, val label: String, val fileName: String) {
     fun candidate() = org.viptv.engine.wire.SubtitleCandidate(id, providerId, language, label)
 }
+
+@Serializable
+internal data class DownloadSegment(val kind: String, val startMillis: Long, val endMillis: Long, val mixed: Boolean = false)
 
 @Serializable
 internal data class DownloadPrevious(val revision: Int, val source: SourceCandidate?, val mimeType: String?, val bytes: Long,

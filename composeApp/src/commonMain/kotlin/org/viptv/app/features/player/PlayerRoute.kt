@@ -21,7 +21,7 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     val detail = state.detail
     val loaded = detail?.episodes.orEmpty() + state.playbackSeason
     val episodes = playerEpisodes(state.sourceTitle, loaded)
-    val nextEpisode = nextEpisodeAfter(state.sourceTitle, loaded)
+    val nextEpisode = nextEpisodeAfter(state.sourceTitle, loaded) ?: state.nextEpisode
     LaunchedEffect(state.playback, state.selectedProfile, state.sourceTitle?.identity, state.sourceTitle?.provider_id, state.sourceTitle?.parent_identity) {
         controller.loadNextEpisode()
         controller.loadPlaybackSeason()
