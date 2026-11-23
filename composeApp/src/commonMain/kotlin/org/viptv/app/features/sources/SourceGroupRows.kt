@@ -21,11 +21,18 @@ internal const val BEST_MATCHES_HEADER = "Best matches"
 internal const val ALL_SOURCES_HEADER = "All sources"
 internal const val BEST_MATCH_MARKER = "Best match"
 internal const val DIDNT_START_LABEL = "Didn’t start"
+internal const val DOWNLOADED_HEADER = "Downloaded"
 
 @Immutable
 internal data class SourceListRow(val source: SourceCandidate, val header: String? = null, val bestMatch: Boolean = false, val didntStart: Boolean = false)
 
-internal fun sourceListRows(visible: List<SourceCandidate>, groups: SourceGroups, failed: List<String> = emptyList()): List<SourceListRow> {
+internal fun sourceListRows(visible: List<SourceCandidate>, groups: SourceGroups, failed: List<String> = emptyList(),
+    pinned: String? = null): List<SourceListRow> {
+    val first = visible.firstOrNull { it.id == pinned } ?: return groupedRows(visible, groups, failed)
+    return listOf(SourceListRow(first, DOWNLOADED_HEADER, first.id == groups.bestMatchId, first.id in failed)) + groupedRows(visible - first, groups, failed)
+}
+
+private fun groupedRows(visible: List<SourceCandidate>, groups: SourceGroups, failed: List<String>): List<SourceListRow> {
     val members = groups.bestMatches.toSet()
     val best = visible.filter { it.id in members }
     if (best.isEmpty()) return visible.map { SourceListRow(it, didntStart = it.id in failed) }

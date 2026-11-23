@@ -32,10 +32,12 @@ class FakeDownloads(items: List<DownloadItem> = emptyList(), storage: DownloadSt
     override fun dismissEvictionNotice() { calls += "dismissEviction"; evictionNotice.value = 0 }
 
     internal fun actions(clock: () -> Long = { NOW }): DownloadActions = DownloadActions(this,
-        startTitle = { calls += "title:${it.identity.id}:${it.identity.episode?.episode}" },
+        startTitle = { card, source -> calls += "title:${card.identity.id}:${card.identity.episode?.episode}" + (source?.let { ":${it.id}" } ?: "") },
         startSeason = { _, season -> calls += "season:$season" },
         startNext = { _, count -> calls += "next:$count" },
         startSeries = { calls += "series" },
+        chooseSource = { calls += "choose:${it.identity.id}:${it.identity.episode?.episode}" },
+        changeSource = { calls += "change:$it" },
         play = { calls += "play:$it" },
         openPage = { calls += "open" },
         notice = { calls += "notice:$it" },

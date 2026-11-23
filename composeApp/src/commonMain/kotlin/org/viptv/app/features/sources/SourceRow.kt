@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +54,8 @@ import org.viptv.app.components.pressScale
 import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.components.PendingActionSpinner
 import org.viptv.app.components.isPlayPending
+import org.viptv.app.features.downloads.DownloadControlState
+import org.viptv.app.features.downloads.DownloadGlyph
 import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.SourceCandidate
 
@@ -63,16 +66,27 @@ private val RowDetailLine = 16.sp
 private val RowQualityColumn = 70.dp
 private val RowTagHeight = 20.dp
 
+internal const val DOWNLOADED_BADGE = "Downloaded"
+
+@Immutable
+internal sealed interface SourceRowDownload {
+    data class Saved(val bytes: Long?) : SourceRowDownload
+    data class Saving(val fraction: Float?, val percent: Int) : SourceRowDownload
+    data class Blocked(val reason: String) : SourceRowDownload
+}
+
+internal fun savedLine(bytes: Long?): String = listOfNotNull("On this device", bytes?.takeIf { it > 0 }?.let(::sizeFromBytes)).joinToString(" · ")
+
 @Composable
 internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (SourceCandidate) -> Unit, enabled: Boolean = true, selected: Boolean = false,
     header: String? = null, bestMatch: Boolean = false, didntStart: Boolean = false, focusChanged: (Boolean) -> Unit = {}, headerMeasured: (Int) -> Unit = {},
     details: ((SourceCandidate) -> Unit)? = null, requester: FocusRequester? = null,
-    menu: SourceRowMenuActions? = null) {
+    menu: SourceRowMenuActions? = null, download: SourceRowDownload? = null) {
     var focused by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val pointer = LocalPointerHover.current
     val inverted = focused || selected
-    val foreground = if (inverted) Palette.background else Palette.text
+    val foreground = (if (inverted) Palette.background else Palette.text).let { if (download is SourceRowDownload.Blocked) it.copy(alpha = .5f) else it }
     val interaction = remember { MutableInteractionSource() }
     // The fill is the row's focus treatment; Material's focus layer would double it.
     OwnFocusTreatment { Box(Modifier.fillMaxWidth()) { Column(Modifier.fillMaxWidth().then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
@@ -94,14 +108,28 @@ internal fun SourceRow(source: SourceCandidate, television: Boolean, choose: (So
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(source.providerLabel(), Modifier.weight(1f, fill = false), fontSize = RowNameFont, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold,
                         color = foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = .16f), RoundedCornerShape(0.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
+                    if (bestMatch) Text(BEST_MATCH_MARKER, Modifier.background(if (inverted) Palette.background else foreground.copy(alpha = foreground.alpha * .16f), RoundedCornerShape(0.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
                         color = if (inverted) Palette.text else Palette.accent, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                    if (download is SourceRowDownload.Saved) Text(DOWNLOADED_BADGE, Modifier.background(if (inverted) Palette.background else Palette.accent, RoundedCornerShape(0.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
+                        color = if (inverted) Palette.text else Palette.background, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                     if (didntStart) Text(DIDNT_START_LABEL, color = if (inverted) Palette.background else Palette.danger, fontSize = 11.sp, lineHeight = 14.sp,
                         fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                 }
+                when (download) {
+                    is SourceRowDownload.Saved -> Text(savedLine(download.bytes), color = if (inverted) Palette.background else Palette.accent,
+                        fontSize = RowDetailFont, lineHeight = RowDetailLine, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    is SourceRowDownload.Blocked -> Text(download.reason, color = if (inverted) Palette.background else Palette.secondary,
+                        fontSize = RowDetailFont, lineHeight = RowDetailLine, fontWeight = FontWeight.SemiBold)
+                    else -> Unit
+                }
                 SourceTextWindow(source.addonText(), active = focused || (pointer && interaction.pointerHovered()),
-                    style = LocalTextStyle.current.merge(TextStyle(fontSize = RowDetailFont, lineHeight = RowDetailLine, color = foreground.copy(alpha = .7f))))
+                    style = LocalTextStyle.current.merge(TextStyle(fontSize = RowDetailFont, lineHeight = RowDetailLine, color = foreground.copy(alpha = foreground.alpha * .7f))))
                 SourceTagLine(source, foreground, 11.sp, RowTagHeight, 7.dp, 6.dp, 1.dp, 4.dp)
+            }
+            if (download is SourceRowDownload.Saving) Row(Modifier.semantics(mergeDescendants = true) { contentDescription = "Downloading ${download.percent}%" },
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                DownloadGlyph(DownloadControlState.Downloading, download.fraction, 22.dp)
+                Text("${download.percent}%", color = foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
             }
             if (source.isPlayPending()) PendingActionSpinner(Modifier.size(22.dp), size = 22.dp, strokeWidth = 2.dp, color = foreground)
             else if (selected) Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.background), contentAlignment = Alignment.Center) {

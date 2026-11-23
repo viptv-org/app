@@ -10,8 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,7 +22,9 @@ import com.composables.icons.lucide.*
 import org.viptv.app.components.PopoverMenu
 import org.viptv.app.components.PopoverMenuDivider
 import org.viptv.app.components.PopoverMenuItem
+import org.viptv.app.components.holdMenu
 import org.viptv.app.components.pointerClickable
+import org.viptv.app.components.secondaryClickMenu
 import org.viptv.app.connection.seasonNumber
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.DownloadState
@@ -80,10 +84,18 @@ internal fun TitleDownloadAction(card: Card, episodes: List<Card>, season: Long?
         }
     }
     val name = if (series) "Download" else controlName(card, item, requested)
+    val hold = !series && state != DownloadControlState.Requested
+    val openMenu = { _: androidx.compose.ui.unit.IntOffset -> menu = true }
+    val described = Modifier.semantics {
+        contentDescription = name
+        if (hold) customActions = listOf(CustomAccessibilityAction(if (item == null) CHOOSE_SOURCE else CHANGE_SOURCE) {
+            if (item == null) actions.chooseSource(card) else actions.changeSource(item.id); true
+        })
+    }
     Box(modifier) {
         when (style) {
-            TitleDownloadStyle.Phone -> Column(Modifier.width(76.dp).pointerClickable(role = Role.Button, onClick = press)
-                .semantics { contentDescription = name }, horizontalAlignment = Alignment.CenterHorizontally,
+            TitleDownloadStyle.Phone -> Column(Modifier.width(76.dp).secondaryClickMenu(hold, openMenu).pointerClickable(role = Role.Button, onClick = press)
+                .holdMenu(hold, openMenu).then(described), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.size(44.dp).background(Color.White.copy(alpha = .08f), CircleShape), contentAlignment = Alignment.Center) {
                     DownloadGlyph(state, item?.fraction, 22.dp)
@@ -91,14 +103,14 @@ internal fun TitleDownloadAction(card: Card, episodes: List<Card>, season: Long?
                 Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body, maxLines = 1)
             }
             TitleDownloadStyle.Desktop -> Box(Modifier.size(44.dp).clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .12f))
-                .pointerClickable(role = Role.Button, shape = RoundedCornerShape(22.dp), onClick = press)
-                .semantics { contentDescription = name }, contentAlignment = Alignment.Center) {
+                .secondaryClickMenu(hold, openMenu).pointerClickable(role = Role.Button, shape = RoundedCornerShape(22.dp), onClick = press)
+                .holdMenu(hold, openMenu).then(described), contentAlignment = Alignment.Center) {
                 DownloadGlyph(state, item?.fraction, 22.dp)
             }
             TitleDownloadStyle.Tablet -> Row(Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(12.dp))
                 .background(Color.White.copy(alpha = .08f))
-                .pointerClickable(role = Role.Button, shape = RoundedCornerShape(12.dp), onClick = press)
-                .padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                .secondaryClickMenu(hold, openMenu).pointerClickable(role = Role.Button, shape = RoundedCornerShape(12.dp), onClick = press)
+                .holdMenu(hold, openMenu).then(described).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DownloadGlyph(state, item?.fraction, 18.dp)
                 Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -118,5 +130,6 @@ internal fun TitleDownloadAction(card: Card, episodes: List<Card>, season: Long?
                 PopoverMenuItem("Download series", Lucide.Library, onClick = close { actions.series(card, plan.series()) })
             }
         } else if (item != null) DownloadItemMenu(item, actions, menu) { menu = false }
+        else DownloadStartMenu(card, actions, menu) { menu = false }
     }
 }

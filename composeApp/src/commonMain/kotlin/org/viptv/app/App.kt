@@ -125,8 +125,9 @@ fun App(
     val engineDownloads = controller.downloads.takeIf { !television && !browser }
     val downloadActions = remember(controller, engineDownloads) {
         engineDownloads?.let { downloads ->
-            org.viptv.app.features.downloads.DownloadActions(downloads, controller::downloadTitle, controller::downloadSeason,
-                controller::downloadNext, controller::downloadSeries, controller::playDownload,
+            org.viptv.app.features.downloads.DownloadActions(downloads, { card, source -> controller.downloadTitle(card, source) }, controller::downloadSeason,
+                controller::downloadNext, controller::downloadSeries, controller::chooseDownloadSource, controller::changeDownloadSource,
+                controller::playDownload,
                 openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) })
         }
     }
@@ -474,7 +475,24 @@ private fun DetailsAndSources(current: Screen, state: ApplicationState, controll
             manageAddons = controller::openAddonsSettings,
             failures = state.detailFailures)
         if (drawerShown) {
-            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, controller::playSource, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings, configureSource = controller::configureSource) }
+            val downloads = org.viptv.app.features.downloads.LocalDownloadActions.current
+            val downloaded = remember(state.downloadedSources, state.downloads) {
+                state.downloadedSources.mapNotNull { (source, id) -> state.downloads.firstOrNull { it.id == id }?.let { source to it } }.toMap()
+            }
+            val choose = { source: org.viptv.engine.wire.SourceCandidate ->
+                val title = state.sourceTitle
+                val saved = downloaded[source.id]?.takeIf { it.state == org.viptv.app.downloads.DownloadState.Completed }
+                when {
+                    state.sourcesForDownload && title != null -> {
+                        downloads?.title(title, source) ?: controller.downloadTitle(title, source)
+                        controller.backSources()
+                    }
+                    saved != null -> controller.playDownload(saved.id)
+                    else -> controller.playSource(source)
+                }
+            }
+            val drawer = @Composable { SourcesScreen(state.sourceTitle, state.sources, state.busy && !state.findingSources, state.error, choose, controller::backSources, state.detail, television, tablet, loadingMore = state.findingSources, selectedSource = state.playingSource?.id, torrentOnlyProviders = state.torrentOnlySources, openingStage = state.openingStage, groups = state.sourceGroups, drawerVisible = showingSources, onClosed = { sourceDrawerOpen = false }, scrolled = controller::markSourcesScrolled, errorCode = state.errorCode, openGateways = controller::openGatewaysSettings, producers = state.sourceProducers, banner = state.sourcesBanner(), failed = state.failedSources(), opening = state.openingSource != null, retry = controller::retrySources, manageAddons = controller::openAddonsSettings, configureSource = controller::configureSource,
+                forDownload = state.sourcesForDownload, blockedSources = state.downloadableSources, downloadedSources = downloaded) }
             // Over the Details dialog the drawer needs a window layer of its own.
             if (browser && detailsUnderDrawer) org.viptv.app.features.sources.BrowserSourceDrawer(controller::backSources, drawer) else drawer()
         }
