@@ -11,7 +11,7 @@ internal data class PlaybackKey(val title: String?, val source: String?)
 internal fun playbackKey(title: Card?, source: SourceCandidate?): PlaybackKey? =
     if (title == null && source == null) null else PlaybackKey(title?.let(::cardLookupKey), source?.id)
 
-class PlaybackSegments internal constructor(private val input: PlaybackInput? = null, private val ranges: List<TvSkipRange> = emptyList()) {
+data class PlaybackSegments(private val input: PlaybackInput? = null, private val ranges: List<TvSkipRange> = emptyList()) {
     internal fun of(playback: PlaybackInput?): List<TvSkipRange> = if (playback != null && playback === input) ranges else emptyList()
 }
 
