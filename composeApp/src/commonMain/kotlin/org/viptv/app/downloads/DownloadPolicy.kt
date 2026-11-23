@@ -1,8 +1,13 @@
 package org.viptv.app.downloads
 
+import org.viptv.app.connection.ProfilePreferences
 import org.viptv.app.connection.RankedSources
 import org.viptv.app.connection.failsHardFilter
+import org.viptv.app.connection.subtitleMode
+import org.viptv.app.player.languageCode
+import org.viptv.app.player.signsOnlySubtitle
 import org.viptv.engine.wire.SourceCandidate
+import org.viptv.engine.wire.SubtitleCandidate
 
 internal const val DOWNLOAD_FREE_RESERVE_BYTES = 2L shl 30
 
@@ -26,12 +31,12 @@ internal fun evictionOrder(records: List<DownloadRecord>, protected: Set<String>
 }
 
 internal fun evictionPlan(records: List<DownloadRecord>, protected: Set<String>, neededBytes: Long, limitBytes: Long): List<DownloadRecord>? {
-    var used = records.sumOf { it.bytesDone }
+    var used = records.sumOf { it.storedBytes }
     if (used + neededBytes <= limitBytes) return emptyList()
     val plan = mutableListOf<DownloadRecord>()
     for (record in evictionOrder(records, protected)) {
         plan += record
-        used -= record.bytesDone
+        used -= record.storedBytes
         if (used + neededBytes <= limitBytes) return plan
     }
     return null
@@ -66,3 +71,51 @@ internal fun sameRelease(stale: SourceCandidate, rows: List<SourceCandidate>): S
             it.provider_id == stale.provider_id && it.label == stale.label &&
                 it.presentation?.size_bytes != null && it.presentation?.size_bytes == stale.presentation?.size_bytes
         }
+
+internal const val DOWNLOAD_NEEDS_CONVERSION = "Needs the server to convert it, so it can't be saved to this device."
+internal const val DOWNLOAD_TORRENT_ONLY = "Torrent sources can't be saved to this device."
+
+internal fun downloadBlockReason(source: SourceCandidate): String? = when {
+    source.delivery == "torrent" -> DOWNLOAD_TORRENT_ONLY
+    source.presentation?.delivery_format?.lowercase() in STREAMED_FORMATS -> DOWNLOAD_NEEDS_CONVERSION
+    else -> null
+}
+
+private val STREAMED_FORMATS = setOf("hls", "m3u8", "dash", "mpd")
+
+internal fun downloadOrder(candidates: List<SourceCandidate>, stale: SourceCandidate?, release: SourceCandidate?): List<SourceCandidate> {
+    val first = listOfNotNull(stale?.let { sameRelease(it, candidates) })
+    val binge = release?.binge_group?.let { group -> candidates.filter { it.binge_group == group && it.provider_id == release.provider_id } }.orEmpty()
+    val same = listOfNotNull(release?.let { sameRelease(it, candidates) })
+    return (first + binge + same + candidates).distinct()
+}
+
+internal fun downloadedSourceIds(records: List<DownloadRecord>, rows: List<SourceCandidate>): Map<String, String> =
+    records.filter { it.state != DownloadState.Failed }.mapNotNull { record ->
+        record.source?.let { sameRelease(it, rows) }?.let { it.id to record.id }
+    }.toMap()
+
+internal fun downloadSubtitleChoice(candidates: List<SubtitleCandidate>, preferences: ProfilePreferences, source: SourceCandidate?): List<SubtitleCandidate> {
+    val wanted = languageCode(preferences.preferred_subtitle_language) ?: languageCode(preferences.preferred_audio_language) ?: "en"
+    val inLanguage = candidates.filter { languageCode(it.language) == wanted }
+    val dialogue = inLanguage.firstOrNull { !signsOnlySubtitle(it.label, forced = false) }
+    val dubbed = source != null && ("dubbed" in source.audio_flags ||
+        source.audio_languages.any { languageCode(it) == (languageCode(preferences.preferred_audio_language) ?: "en") })
+    val signs = if (preferences.subtitleMode == "foreign" && dubbed) inLanguage.firstOrNull { signsOnlySubtitle(it.label, forced = false) } else null
+    return listOfNotNull(dialogue, signs)
+}
+
+private val SUBTITLE_MIMES = setOf("application/x-subrip", "application/x-ssa", "application/x-ass", "application/ttml+xml",
+    "application/x-quicktime-tx3g", "application/pgs", "application/vobsub", "application/dvbsubs", "application/x-media3-cues")
+
+internal fun downloadTrackKind(mime: String?): String? {
+    val value = mime?.lowercase() ?: return null
+    return when {
+        value.startsWith("audio/") -> "audio"
+        value.startsWith("text/") || value in SUBTITLE_MIMES -> "subtitle"
+        else -> null
+    }
+}
+
+internal fun downloadTrackLanguage(language: String?): String? =
+    language?.trim()?.takeIf { it.isNotEmpty() && it.lowercase() != "und" }

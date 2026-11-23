@@ -7,6 +7,7 @@ import org.viptv.app.player.PlaybackTracks
 import org.viptv.engine.wire.SourceCandidate
 
 internal fun ApplicationController.startBestMatch(ranked: RankedSources, target: SourceCandidate, context: RankingContext? = null, startOver: Boolean = false) {
+    mutable.value.sourceTitle?.let(::completedDownloadFor)?.let { playDownload(it, startOver); return }
     val reuse = context?.takeIf { it.reuse.present && ranked.reuseSupported }
     val ids = if (reuse != null) ranked.reuseIds.toSet()
         else ranked.automaticIds?.toSet()

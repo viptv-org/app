@@ -133,6 +133,7 @@ fun ApplicationController.backSources() {
     if (!awaitingTitle) cancelSourceDetail()
     updateState { state ->
         state.copy(screen = state.sourceReturnScreen, busy = false, findingSources = false, openingSource = null, sourcesStartOver = false,
+            sourcesForDownload = false,
             pendingAction = null, error = state.error.takeIf { awaitingTitle }, detailRetryable = if (awaitingTitle) state.detailRetryable else true)
     }
     rememberNavigation()
