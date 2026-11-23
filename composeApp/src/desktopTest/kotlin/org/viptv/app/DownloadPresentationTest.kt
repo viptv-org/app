@@ -1,6 +1,7 @@
 package org.viptv.app
 
 import org.viptv.app.FakeDownloads.Companion.GIB
+import org.viptv.app.state.canNavigateBack
 import org.viptv.app.FakeDownloads.Companion.NOW
 import org.viptv.app.FakeDownloads.Companion.episode
 import org.viptv.app.FakeDownloads.Companion.item
@@ -82,6 +83,11 @@ class DownloadPresentationTest {
         assertEquals(listOf("10 GB", "25 GB", "50 GB", "100 GB", "No limit"), storageLimitChoices(DownloadStorage(0, 500L * GIB)).map { it.second })
         assertEquals("After 1 day", deleteWatchedLabel(settings.deleteWatchedAfterMillis))
         assertEquals("50 GB", storageLimitLabel(settings.storageLimitBytes))
+    }
+
+    @Test fun offlineDownloadsIsTheRootSoBackLeavesTheApp() {
+        assertFalse(org.viptv.app.state.ApplicationState(screen = org.viptv.app.state.Screen.Downloads, offline = true, selectedProfile = "p1").canNavigateBack())
+        assertTrue(org.viptv.app.state.ApplicationState(screen = org.viptv.app.state.Screen.Downloads, offline = false, selectedProfile = "p1").canNavigateBack())
     }
 
     @Test fun seriesPlanSkipsDownloadedEpisodesAndStartsAtTheNextUnwatched() {

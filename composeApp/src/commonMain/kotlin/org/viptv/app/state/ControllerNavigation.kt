@@ -188,6 +188,7 @@ private fun ApplicationState.backStep(): BackStep = when (screen) {
         else -> BackStep.Home
     }
     else -> when {
+        screen == Screen.Downloads && offline -> BackStep.Root
         navBack.isNotEmpty() -> BackStep.PopHistory
         screen == Screen.Home -> BackStep.Root
         else -> BackStep.Home

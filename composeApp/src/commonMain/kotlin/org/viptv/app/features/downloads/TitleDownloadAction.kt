@@ -34,6 +34,8 @@ internal enum class TitleDownloadStyle { Phone, Tablet, Desktop }
 
 internal val NEXT_EPISODE_COUNTS = listOf(3, 5, 10)
 
+private const val WATCHED_FRACTION = 0.95
+
 internal class SeriesDownloadPlan(episodes: List<Card>, index: Map<String, DownloadItem>, nowMillis: Long) {
     private val released: List<Card> = lastReleasedOrder(episodes, nowMillis).let { last ->
         episodes.filter { !episodeUpcoming(it, last, nowMillis) }
@@ -43,13 +45,14 @@ internal class SeriesDownloadPlan(episodes: List<Card>, index: Map<String, Downl
 
     fun season(number: Long): List<Card> = wanted.filter { it.identity.episode?.seasonNumber() == number }
 
+    private val regular = released.filter { (it.identity.episode?.seasonNumber() ?: 0L) > 0L }
+
     fun next(count: Int): List<Card> {
-        val regular = released.filter { (it.identity.episode?.seasonNumber() ?: 0L) > 0L }
-        val start = regular.indexOfFirst { !it.watchedEpisode() }.takeIf { it >= 0 } ?: return emptyList()
-        return regular.drop(start).take(count).filter { it in wanted }
+        val lastWatched = regular.indexOfLast { it.watchedEpisode() || (it.progress ?: 0.0) >= WATCHED_FRACTION }
+        return regular.drop(lastWatched + 1).take(count).filter { it in wanted }
     }
 
-    fun series(): List<Card> = wanted
+    fun series(): List<Card> = regular.filter { it in wanted }
 }
 
 @Composable

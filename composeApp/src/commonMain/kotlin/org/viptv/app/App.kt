@@ -122,9 +122,9 @@ fun App(
             chooseSource = controller::chooseSource, playFromStart = controller::playTitleFromStart,
             markWatched = if (localMode) null else controller::toggleWatched)
     }
-    val platformDownloads = remember(television, browser) { if (television || browser) null else org.viptv.app.downloads.platformDownloads() }
-    val downloadActions = remember(controller, platformDownloads) {
-        platformDownloads?.let { downloads ->
+    val engineDownloads = controller.downloads.takeIf { !television && !browser }
+    val downloadActions = remember(controller, engineDownloads) {
+        engineDownloads?.let { downloads ->
             org.viptv.app.features.downloads.DownloadActions(downloads, controller::downloadTitle, controller::downloadSeason,
                 controller::downloadNext, controller::downloadSeries, controller::playDownload,
                 openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) })
