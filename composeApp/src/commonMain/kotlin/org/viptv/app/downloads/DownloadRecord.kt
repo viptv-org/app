@@ -26,6 +26,7 @@ internal data class DownloadRecord(
     val positionMillis: Long = 0,
     val durationMillis: Long? = null,
     val smart: Boolean = false,
+    val retryAtMillis: Long? = null,
     val subtitles: List<DownloadSubtitle> = emptyList(),
 ) {
     val fileName: String get() = downloadFileName(id)
@@ -46,7 +47,9 @@ internal data class DownloadRecord(
 }
 
 @Serializable
-internal data class DownloadSubtitle(val id: String, val language: String?, val label: String?, val fileName: String)
+internal data class DownloadSubtitle(val id: String, val providerId: String, val language: String, val label: String, val fileName: String) {
+    fun candidate() = org.viptv.engine.wire.SubtitleCandidate(id, providerId, language, label)
+}
 
 @Serializable
 internal data class OfflineProgress(val profileId: String, val card: Card, val positionMillis: Long, val durationMillis: Long?,

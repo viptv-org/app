@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <queries>
         <!-- The updater opens this app's "Install unknown apps" screen where the device has one. -->
         <intent>
@@ -38,6 +40,7 @@
         <service android:name="org.viptv.app.player.AndroidMediaSessionService" android:exported="true" android:foregroundServiceType="mediaPlayback">
             <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
         </service>
+        <service android:name="org.viptv.app.downloads.DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />
         <!-- app#139: Android replaced the app with a newer build; reopen it so the viewer lands back in VIPTV. -->
         <receiver android:name="org.viptv.app.updates.UpdateRelaunchReceiver" android:exported="false">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>

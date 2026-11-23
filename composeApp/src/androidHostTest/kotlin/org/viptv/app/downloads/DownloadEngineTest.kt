@@ -209,6 +209,7 @@ internal class MemoryFiles : DownloadFiles {
         }
     }
     override fun write(name: String, bytes: ByteArray) { data[name] = bytes }
+    override fun read(name: String) = data[name]
     override fun delete(name: String) { data.remove(name) }
     override fun path(name: String) = "/downloads/$name"
     override fun freeBytes() = free

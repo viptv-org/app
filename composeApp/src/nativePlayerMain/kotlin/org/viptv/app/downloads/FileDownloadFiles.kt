@@ -18,6 +18,8 @@ internal class FileDownloadFiles(private val directory: File, private val bookFi
 
     override fun write(name: String, bytes: ByteArray) = File(directory, name).writeBytes(bytes)
 
+    override fun read(name: String): ByteArray? = File(directory, name).takeIf { it.isFile }?.readBytes()
+
     override fun delete(name: String) { File(directory, name).delete() }
 
     override fun path(name: String): String = File(directory, name).absolutePath

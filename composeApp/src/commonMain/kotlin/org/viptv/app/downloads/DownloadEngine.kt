@@ -25,6 +25,7 @@ internal interface DownloadFiles {
     fun size(name: String): Long
     fun open(name: String, append: Boolean): DownloadSink
     fun write(name: String, bytes: ByteArray)
+    fun read(name: String): ByteArray?
     fun delete(name: String)
     fun path(name: String): String
     fun freeBytes(): Long
@@ -41,10 +42,13 @@ internal class DownloadResolution(val source: SourceCandidate, val url: String, 
     val mimeType: String?, val sizeBytes: Long?)
 
 internal fun interface DownloadResolver {
+    fun accepts(profileId: String): Boolean = true
     suspend fun resolve(record: DownloadRecord, settings: DownloadSettings): DownloadResolution
 }
 
 internal class DownloadUnavailable(message: String) : Exception(message)
+
+internal class DownloadDeferred(val retryAfterMillis: Long) : Exception()
 
 private class ExpiredUrl : Exception()
 private class OutOfSpace : Exception()
@@ -93,6 +97,8 @@ internal class DownloadEngine(
         scope.launch { while (true) { sweep(); delay(sweepMillis) } }
         scope.launch { work() }
     }
+
+    fun wakeUp() { wake.trySend(Unit) }
 
     fun records(): List<DownloadRecord> = synchronized(lock) { book.records }
 
@@ -157,15 +163,16 @@ internal class DownloadEngine(
     override fun localFile(id: String): String? =
         record(id)?.takeIf { it.state == DownloadState.Completed }?.let { files.path(it.fileName) }
 
-    fun subtitleFile(id: String, subtitleId: String): String? =
-        record(id)?.subtitles?.firstOrNull { it.id == subtitleId }?.let { files.path(it.fileName) }
+    fun subtitleBytes(id: String, subtitleId: String): ByteArray? =
+        record(id)?.subtitles?.firstOrNull { it.id == subtitleId }?.let { files.read(it.fileName) }
 
-    fun storeSubtitle(id: String, subtitleId: String, language: String?, label: String?, content: ByteArray) {
+    fun storeSubtitle(id: String, subtitle: org.viptv.engine.wire.SubtitleCandidate, content: ByteArray) {
         val record = record(id) ?: return
-        val name = downloadFileName("$id|subtitle|$subtitleId").removeSuffix(".media") + ".sub"
+        val name = downloadFileName("$id|subtitle|${subtitle.id}").removeSuffix(".media") + ".sub"
         files.write(name, content)
         change(record.id) { current ->
-            current.copy(subtitles = current.subtitles.filter { it.id != subtitleId } + DownloadSubtitle(subtitleId, language, label, name))
+            current.copy(subtitles = current.subtitles.filter { it.id != subtitle.id } +
+                DownloadSubtitle(subtitle.id, subtitle.provider_id, subtitle.language, subtitle.label, name))
         }
     }
 
@@ -204,7 +211,12 @@ internal class DownloadEngine(
     private suspend fun work() {
         while (true) {
             val next = pick()
-            if (next == null) { wake.receive(); continue }
+            if (next == null) {
+                val retryAt = records().filter { it.state == DownloadState.Queued }.mapNotNull { it.retryAtMillis }.minOrNull()
+                if (retryAt == null) wake.receive()
+                else withTimeoutOrNull((retryAt - clock()).coerceAtLeast(1)) { wake.receive() }
+                continue
+            }
             val job = scope.launch { run(next) }
             synchronized(lock) { running = next.id to job }
             job.join()
@@ -226,7 +238,8 @@ internal class DownloadEngine(
             pending.forEach { record -> change(record.id) { it.copy(state = DownloadState.WaitingForNetwork) } }
             return null
         }
-        return pending.firstOrNull { it.url != null || resolverValue != null }
+        val now = clock()
+        return pending.firstOrNull { (it.retryAtMillis ?: 0) <= now && (it.url != null || resolverValue?.accepts(it.profileId) == true) }
     }
 
     private suspend fun run(start: DownloadRecord) {
@@ -241,6 +254,10 @@ internal class DownloadEngine(
                 return
             } catch (error: CancellationException) { throw error }
             catch (error: DownloadUnavailable) { fail(record.id, error.message); return }
+            catch (error: DownloadDeferred) {
+                change(record.id) { it.copy(state = DownloadState.Queued, retryAtMillis = clock() + error.retryAfterMillis) }
+                return
+            }
             catch (_: OutOfSpace) {
                 change(record.id) { it.copy(state = DownloadState.WaitingForSpace) }
                 return
@@ -249,7 +266,7 @@ internal class DownloadEngine(
                 record = (record(record.id) ?: return).copy(url = null)
                 change(record.id) { it.copy(url = null, headers = emptyMap()) }
                 if (++expirations > 2) { fail(record.id, "The source link kept expiring. Try again later."); return }
-                if (resolverValue == null) { change(record.id) { it.copy(state = DownloadState.Queued) }; return }
+                if (resolverValue?.accepts(record.profileId) != true) { change(record.id) { it.copy(state = DownloadState.Queued) }; return }
             }
             catch (error: Exception) {
                 record = record(record.id) ?: return
@@ -267,8 +284,8 @@ internal class DownloadEngine(
     }
 
     private suspend fun resolve(record: DownloadRecord): DownloadRecord {
-        val resolver = resolverValue ?: throw ExpiredUrl()
-        change(record.id) { it.copy(state = DownloadState.Resolving, failure = null) }
+        val resolver = resolverValue?.takeIf { it.accepts(record.profileId) } ?: throw ExpiredUrl()
+        change(record.id) { it.copy(state = DownloadState.Resolving, failure = null, retryAtMillis = null) }
         val resolution = resolver.resolve(record, settingsFlow.value)
         val sameRelease = record.source != null && sameRelease(record.source, listOf(resolution.source)) != null
         val keepBytes = record.bytesDone > 0 && sameRelease
@@ -419,3 +436,4 @@ internal class DownloadEngine(
         const val REPORT_BYTES = 512L shl 10
     }
 }
+
