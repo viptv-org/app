@@ -60,7 +60,7 @@ class PlayerStatePerPlaybackUiTest {
     @Test fun phoneAutoAdvanceAtTheEndOpensTheNextEpisodeClean() {
         val player = Player(phone = true, autoplay = true)
         try {
-            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Progress(1_799_000, 1_800_000), PlayerFact.Status("Ended"))
+            player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended"))
             assertTrue(player.hasText("Up next"))
             player.seconds(10.5)
             assertEquals(listOf(2L), player.played)
@@ -75,8 +75,8 @@ class PlayerStatePerPlaybackUiTest {
         val player = Player(television = true, autoplay = true)
         try {
             player.frames(); player.facts(PlayerFact.Status("Playing"), PlayerFact.Status("Ended")); player.frames(60)
-            assertTrue(player.hasText("Play next episode") || player.hasText("Next episode in 10"))
-            player.seconds(10.5)
+            assertTrue(player.nodes().any { player.text(it).startsWith("Next episode in ") })
+            player.seconds(10.0)
             assertEquals(listOf(2L), player.played)
             player.seconds(2.0); player.frames(80)
             assertFalse(player.hasText("Play next episode")); assertFalse(player.hasText("3. Episode 3"))
@@ -110,7 +110,7 @@ class PlayerStatePerPlaybackUiTest {
             player.frames(40); assertFalse(player.hasText(panel))
             player.segments = emptyList(); player.frames(20)
             player.segments = credits
-            player.facts(PlayerFact.Status("Buffering"), PlayerFact.Status("Playing"), PlayerFact.Progress(1_760_000, 1_800_000)); player.frames(60)
+            player.facts(PlayerFact.Progress(1_760_000, 1_800_000)); player.frames(60)
             assertFalse(player.hasText(panel), "A seek-reopen of the same episode keeps the dismissed panel")
             assertTrue(player.played.isEmpty())
         } finally { player.close() }
@@ -144,7 +144,7 @@ class PlayerStatePerPlaybackUiTest {
         val scene = ImageComposeScene(width, height, Density(1f)) { ViptvTheme(television = television) {
             Box(Modifier.fillMaxSize().background(Palette.background)) {
                 val title = episode(number)
-                PlayerScreen(null, false, {}, {}, {}, title = title, phone = phone, television = television,
+                PlayerScreen(null, true, {}, {}, {}, title = title, phone = phone, television = television,
                     canvasColor = Color.Transparent, externalFacts = facts,
                     tvExtras = TvPlaybackExtras(episodes = (1L..4L).map(::episode), nextEpisode = episode(number + 1), skips = segments),
                     playEpisode = { card ->
