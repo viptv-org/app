@@ -19,9 +19,9 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     phone: Boolean, browser: Boolean, backChanged: ((() -> Unit)?) -> Unit,
     fullscreen: Boolean = false, toggleFullscreen: (() -> Unit)? = null) {
     val detail = state.detail
-    val loaded = detail?.episodes.orEmpty() + state.playbackSeason
+    val loaded = (detail?.episodes ?: state.downloadedEpisodes(state.sourceTitle)) + state.playbackSeason
     val episodes = playerEpisodes(state.sourceTitle, loaded)
-    val nextEpisode = nextEpisodeAfter(state.sourceTitle, loaded)
+    val nextEpisode = nextEpisodeAfter(state.sourceTitle, loaded) ?: state.nextEpisode
     LaunchedEffect(state.playback, state.selectedProfile, state.sourceTitle?.identity, state.sourceTitle?.provider_id, state.sourceTitle?.parent_identity) {
         controller.loadNextEpisode()
         controller.loadPlaybackSeason()

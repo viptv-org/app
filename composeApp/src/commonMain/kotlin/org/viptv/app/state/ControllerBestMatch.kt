@@ -22,6 +22,7 @@ internal fun ApplicationController.startBestMatch(ranked: RankedSources, target:
 internal fun ApplicationController.startFailed(origin: PlaybackFailureOrigin, input: PlaybackInput?, dolbyVision: Boolean = false,
     operation: String? = null, status: Int? = null) {
     if (!declarePlaybackFailure(origin, input, operation, status)) return
+    if (input?.downloadId() != null && streamInsteadOfDownload(origin, input)) return
     val cause = origin.failure
     val reason = cause.reason
     val session = mutable.value.bestMatch

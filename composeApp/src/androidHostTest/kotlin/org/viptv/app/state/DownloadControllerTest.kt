@@ -42,7 +42,9 @@ import org.viptv.app.downloads.DownloadState
 import org.viptv.app.downloads.DownloadUnavailable
 import org.viptv.app.downloads.MemoryFiles
 import org.viptv.app.downloads.downloadId
+import org.viptv.app.features.player.TvSkipKind
 import org.viptv.app.player.PlayerFact
+import org.viptv.app.player.PresentationProof
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.DetailSnapshot
 import org.viptv.engine.wire.EpisodeCoordinates
@@ -70,6 +72,8 @@ class DownloadControllerTest {
             provider_id = "catalog", title = "Episode $n", badges = emptyList(), parent_identity = series)
     }
     private var playbackAnswer: (JsonObject) -> Pair<HttpStatusCode, String> = { HttpStatusCode.OK to "{}" }
+    private var history = "[]"
+    private var segmentsAnswer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to """{"segments":[]}"""
     private val client = HttpClient(MockEngine { request ->
         val body = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()?.decodeToString().orEmpty()
         requests += request to body
@@ -80,6 +84,17 @@ class DownloadControllerTest {
                     seasons = listOf(EpisodeSeason(1, 4, 0)))), HttpStatusCode.OK, json)
             request.url.encodedPath == "/api/playback" -> playbackAnswer(Json.parseToJsonElement(body).jsonObject)
                 .let { (status, text) -> respond(text, status, json) }
+            request.url.encodedPath == "/api/profiles/12/history" ->
+                respond(if (request.url.parameters["offset"] == "0") history else "[]", HttpStatusCode.OK, json)
+            request.url.encodedPath == "/api/segments" -> respond(segmentsAnswer.second, segmentsAnswer.first, json)
+            request.url.encodedPath == "/api/profiles/12/continue/next" -> {
+                val asked = Json.parseToJsonElement(body).jsonObject.getValue("identity").jsonObject.getValue("id").jsonPrimitive.content
+                val next = episodes.getOrNull(episodes.indexOfFirst { it.identity.id == asked } + 1)
+                respond(if (next == null) """{"status":"Unavailable"}"""
+                    else """{"status":"Next","item":${Json.encodeToString(Card.serializer(), next)}}""", HttpStatusCode.OK, json)
+            }
+            request.url.encodedPath == "/api/profiles/12/playback-events" ->
+                respond("""{"state":"recorded","action":"${Json.parseToJsonElement(body).jsonObject.getValue("event").jsonPrimitive.content}","completed":false}""", HttpStatusCode.OK, json)
             else -> respond("{}", HttpStatusCode.OK, json)
         }
     }) { configureTransport() }
@@ -104,7 +119,7 @@ class DownloadControllerTest {
         val id = downloadId("12", episodes[0])
         app.updateState { it.copy(screen = Screen.Downloads) }
         app.playDownload(id)
-        val playing = app.state.first { it.screen == Screen.Player }
+        val playing = app.state.first { it.playback != null }
         assertTrue(playing.playback!!.uri.startsWith("file://"))
         app.observePlayback(PlayerFact.Progress(600_000, 1_000_000))
         app.saveProgress(false)
@@ -127,7 +142,7 @@ class DownloadControllerTest {
         val app = signedIn(engine)
         val id = downloadId("12", episodes[0])
         app.playDownload(id)
-        app.state.first { it.screen == Screen.Player }
+        app.state.first { it.playback != null }
         app.observePlayback(PlayerFact.Progress(990_000, 1_000_000))
         app.saveProgress(true)
         withTimeout(10_000) { engine.items.first { items -> items.size == 3 } }
@@ -162,7 +177,7 @@ class DownloadControllerTest {
         val engine = engine(MemoryFiles(), completed(episodes[0]))
         val app = signedIn(engine)
         app.playTitle(episodes[0])
-        val playing = app.state.first { it.screen == Screen.Player }
+        val playing = app.state.first { it.playback != null }
         assertTrue(playing.playback!!.uri.startsWith("file://"))
         assertTrue(requests.none { it.first.url.encodedPath.startsWith("/api/sources") || it.first.url.encodedPath == "/api/playback" })
     }
@@ -178,7 +193,7 @@ class DownloadControllerTest {
         assertEquals(mapOf("row-1" to downloadId("12", episodes[0])), marked.downloadedSources)
         assertEquals(emptyMap(), marked.downloadableSources)
         app.playSource(match)
-        assertTrue(app.state.first { it.screen == Screen.Player }.playback!!.uri.startsWith("file://"))
+        assertTrue(app.state.first { it.playback != null }.playback!!.uri.startsWith("file://"))
     }
 
     @Test fun downloadModeBlocksUnsupportedRowsAndDownloadsThePickedSource() = runBlocking<Unit> {
@@ -219,6 +234,162 @@ class DownloadControllerTest {
         app.downloadSeason(Card(series, provider_id = "catalog", title = "Show", badges = emptyList()), 1, picked)
         withTimeout(10_000) { engine.items.first { it.size == 4 } }
         assertTrue(engine.records().all { it.release == picked && !it.pinned })
+    }
+
+    @Test fun continueWatchingOpensTheDownloadAtTheAccountPositionAndBackReturnsThere() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]).copy(positionMillis = 100_000))
+        history = """[{"card":${Json.encodeToString(Card.serializer(), episodes[0])},"updated_at_millis":5,"position":300.0,"duration":1000.0,"resume_active":true}]"""
+        network.value = DownloadNetwork.Unmetered
+        val app = signedIn(engine)
+        app.playTitle(episodes[0])
+        val playing = app.state.first { it.playback != null }
+        assertTrue(playing.playback!!.uri.startsWith("file://"))
+        assertEquals(300_000, playing.playback!!.positionMillis)
+        assertEquals(episodes[0], playing.sourceTitle)
+        app.closePlayer()
+        assertEquals(Screen.Home, app.state.value.screen)
+
+        app.playDownload(downloadId("12", episodes[0]), startOver = true)
+        val fromStart = app.state.first { it.playback != null }
+        assertEquals(0, fromStart.playback!!.positionMillis)
+    }
+
+    @Test fun offlineResumeUsesTheDownloadRecord() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]).copy(positionMillis = 120_000))
+        val app = signedIn(engine)
+        app.playDownload(downloadId("12", episodes[0]))
+        assertEquals(120_000, app.state.first { it.playback != null }.playback!!.positionMillis)
+        assertTrue(requests.none { it.first.url.encodedPath == "/api/profiles/12/history" })
+    }
+
+    @Test fun skipsComeFromTheTitleSegmentsOnlineAndFromTheRecordOffline() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        segmentsAnswer = HttpStatusCode.OK to """{"segments":[{"kind":"intro","start_ms":1000,"end_ms":60000},{"kind":"credits","start_ms":900000,"end_ms":1000000,"mixed":true}]}"""
+        network.value = DownloadNetwork.Unmetered
+        val app = signedIn(engine)
+        val id = downloadId("12", episodes[0])
+        app.playDownload(id)
+        val online = withTimeout(10_000) { app.state.first { it.playbackSegments.of(it.playback).isNotEmpty() } }
+        assertEquals(listOf(TvSkipKind.Intro, TvSkipKind.Credits), online.playbackSegments.of(online.playback).map { it.kind })
+        val sent = Json.parseToJsonElement(requests.last { it.first.url.encodedPath == "/api/segments" }.second).jsonObject
+        assertEquals(setOf("card"), sent.keys)
+        assertEquals(2, engine.record(id)?.segments?.size)
+
+        app.closePlayer()
+        network.value = DownloadNetwork.None
+        segmentsAnswer = HttpStatusCode.TooManyRequests to """{"error":"x","error_code":"segments_rate_limited"}"""
+        app.playDownload(id)
+        val offline = withTimeout(10_000) { app.state.first { it.playback != null && it.playbackSegments.of(it.playback).isNotEmpty() } }
+        assertEquals(listOf(TvSkipKind.Intro, TvSkipKind.Credits), offline.playbackSegments.of(offline.playback).map { it.kind })
+        assertTrue(offline.playbackSegments.of(offline.playback).last().mixed)
+    }
+
+    @Test fun aFinishedDownloadStoresItsSegments() = runBlocking<Unit> {
+        segmentsAnswer = HttpStatusCode.OK to """{"segments":[{"kind":"recap","start_ms":0,"end_ms":30000}]}"""
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        signedIn(engine)
+        network.value = DownloadNetwork.Unmetered
+        withTimeout(10_000) { while (engine.record(downloadId("12", episodes[0]))?.segments == null) kotlinx.coroutines.delay(10) }
+        assertEquals("recap", engine.record(downloadId("12", episodes[0]))!!.segments!!.single().kind)
+    }
+
+    @Test fun nextEpisodePlaysTheNextDownloadLocallyAndStreamsOtherwise() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]), completed(episodes[1]))
+        network.value = DownloadNetwork.Unmetered
+        val app = signedIn(engine)
+        app.playDownload(downloadId("12", episodes[0]))
+        withTimeout(10_000) { app.state.first { it.nextEpisode == episodes[1] } }
+        app.playEpisode(episodes[1])
+        val second = withTimeout(10_000) { app.state.first { it.playback != null && it.sourceTitle == episodes[1] } }
+        assertTrue(second.playback!!.uri.startsWith("file://"))
+        withTimeout(10_000) { app.state.first { it.nextEpisode == episodes[2] } }
+        app.playEpisode(episodes[2])
+        val third = withTimeout(10_000) { app.state.first { it.sourceTitle == episodes[2] } }
+        assertTrue(third.playback?.uri?.startsWith("file://") != true)
+        assertEquals(null, third.playback)
+    }
+
+    @Test fun onlineLocalPlaybackSendsTrackingAndProgressLikeAStream() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        network.value = DownloadNetwork.Unmetered
+        val app = signedIn(engine)
+        app.playDownload(downloadId("12", episodes[0]))
+        val input = app.state.first { it.playback != null }.playback!!
+        app.observePlayback(PlayerFact.Progress(200_000, 1_000_000))
+        app.observePlaybackFor(input, PlayerFact.Presentation(PresentationProof.DesktopDrawCompleted))
+        withTimeout(10_000) { while (events().isEmpty()) kotlinx.coroutines.delay(10) }
+        val start = Json.parseToJsonElement(events().first()).jsonObject
+        assertEquals("start", start.getValue("event").jsonPrimitive.content)
+        app.saveProgress(false)?.join()
+        assertEquals(200_000, Json.parseToJsonElement(progressWrites().single()).jsonObject
+            .getValue("record").jsonObject.getValue("position_millis").jsonPrimitive.long)
+        assertTrue(engine.pendingProgress().isEmpty())
+        assertEquals(200_000, engine.record(downloadId("12", episodes[0]))?.positionMillis)
+    }
+
+    @Test fun offlineTheEndOfAnEpisodeOffersTheNextDownloadAndPlaysItLocally() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]), completed(episodes[2]))
+        val app = signedIn(engine)
+        app.playDownload(downloadId("12", episodes[0]))
+        val input = app.state.first { it.playback != null }.playback!!
+        val offered = withTimeout(10_000) { app.state.first { it.nextEpisode != null } }
+        assertEquals(episodes[2], offered.nextEpisode)
+        assertEquals(listOf(episodes[0], episodes[2]), offered.downloadedEpisodes(episodes[0]))
+        assertEquals(episodes[2], org.viptv.app.features.player.nextEpisodeAfter(episodes[0], offered.downloadedEpisodes(episodes[0])))
+        app.observePlaybackFor(input, PlayerFact.Status("Ended"))
+        app.playEpisode(offered.nextEpisode!!)
+        val next = withTimeout(10_000) { app.state.first { it.playback != null && it.sourceTitle == episodes[2] } }
+        assertTrue(next.playback!!.uri.startsWith("file://"))
+        assertTrue(requests.none { it.first.url.encodedPath.startsWith("/api/sources") || it.first.url.encodedPath == "/api/playback" })
+    }
+
+    @Test fun aFailedLocalFileStreamsTheSameEpisodeAtTheSamePositionWhenOnline() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        network.value = DownloadNetwork.Unmetered
+        val app = ApplicationController(scope, store, downloads = engine, bestMatchNoticeMillis = 50).also {
+            it.connection = RemoteConnection("https://watch.example", store, client, browserMode = false)
+            it.mutable.value = ApplicationState(screen = Screen.Home, selectedProfile = "12")
+        }
+        val stream = SourceCandidate("stream-1", "addon", "Show 1080p")
+        app.nextSourcePreparer = NextSourcePreparer { _, _, _, card, _, _ ->
+            assertEquals(episodes[0], card)
+            PreparedNextSource(stream, org.viptv.app.connection.RankedSources(listOf(stream), bestMatchFullyMatches = true))
+        }
+        val opened = Collections.synchronizedList(mutableListOf<Long?>())
+        app.leaseOpener = PlaybackLeaseOpener { remote, source, profile, _, position, _ ->
+            opened += position
+            org.viptv.app.connection.RemotePlaybackLease(org.viptv.app.player.PlaybackInput("lease-1", "https://cdn.test/${source.id}.m3u8",
+                positionMillis = position ?: 0, profileId = profile), 3600, remote, gateway = false)
+        }
+        app.playDownload(downloadId("12", episodes[0]))
+        val local = app.state.first { it.playback != null }.playback!!
+        app.observePlaybackFor(local, PlayerFact.Progress(420_000, 1_000_000))
+        app.observePlaybackFor(local, PlayerFact.Failed)
+        val notice = withTimeout(10_000) { app.state.first { it.fallbackNotice != null } }
+        assertEquals(stream, notice.fallbackNotice!!.next)
+        val streaming = withTimeout(10_000) { app.state.first { it.playback?.id == "lease-1" } }
+        assertEquals(listOf<Long?>(420_000), opened.toList())
+        assertEquals(stream, streaming.playingSource)
+        assertEquals(null, streaming.playbackFailure)
+        app.closePlayer()
+        assertEquals(Screen.Home, app.state.value.screen)
+    }
+
+    @Test fun offlineALocalFailureKeepsTheFailurePage() = runBlocking<Unit> {
+        val engine = engine(MemoryFiles(), completed(episodes[0]))
+        val app = signedIn(engine)
+        app.nextSourcePreparer = NextSourcePreparer { _, _, _, _, _, _ -> error("offline must not look for streams") }
+        app.playDownload(downloadId("12", episodes[0]))
+        val local = app.state.first { it.playback != null }.playback!!
+        app.observePlaybackFor(local, PlayerFact.Failed)
+        val failed = app.state.value
+        assertEquals(org.viptv.app.features.player.PlaybackFailure.Failed, failed.playbackFailure)
+        assertEquals(null, failed.fallbackNotice)
+        assertTrue(failed.playback!!.uri.startsWith("file://"))
+    }
+
+    private fun events() = synchronized(requests) {
+        requests.filter { it.first.url.encodedPath == "/api/profiles/12/playback-events" }.map { it.second }
     }
 
     private fun progressWrites() = synchronized(requests) {

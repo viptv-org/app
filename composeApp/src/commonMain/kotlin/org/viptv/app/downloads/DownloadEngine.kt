@@ -52,6 +52,11 @@ internal interface DownloadSubtitleFetcher {
     suspend fun fetch(record: DownloadRecord): List<Pair<SubtitleCandidate, ByteArray>>
 }
 
+internal interface DownloadSegmentFetcher {
+    fun accepts(profileId: String): Boolean
+    suspend fun fetch(record: DownloadRecord): List<DownloadSegment>
+}
+
 internal fun interface DownloadProbe {
     fun tracks(path: String): List<DownloadTrack>
 }
@@ -91,6 +96,8 @@ internal class DownloadEngine(
     private var resolverValue: DownloadResolver? = null
     private var subtitleFetcherValue: DownloadSubtitleFetcher? = null
     private val fetchingSubtitles = mutableSetOf<String>()
+    private var segmentFetcherValue: DownloadSegmentFetcher? = null
+    private val fetchingSegments = mutableSetOf<String>()
     private val probing = mutableSetOf<String>()
 
     override val items: StateFlow<List<DownloadItem>> = itemFlow.asStateFlow()
@@ -106,12 +113,16 @@ internal class DownloadEngine(
         get() = subtitleFetcherValue
         set(value) { subtitleFetcherValue = value; fetchPendingSubtitles() }
 
+    var segmentFetcher: DownloadSegmentFetcher?
+        get() = segmentFetcherValue
+        set(value) { segmentFetcherValue = value; fetchPendingSegments() }
+
     var playingId: String? = null
         private set
 
     init {
         publish()
-        scope.launch { network.drop(1).collect { requeueWaiting(); wake.trySend(Unit); fetchPendingSubtitles() } }
+        scope.launch { network.drop(1).collect { requeueWaiting(); wake.trySend(Unit); fetchPendingSubtitles(); fetchPendingSegments() } }
         scope.launch { while (true) { saves.receive(); save(); delay(saveDelayMillis) } }
         scope.launch { while (true) { sweep(); delay(sweepMillis) } }
         scope.launch { work() }
@@ -220,6 +231,10 @@ internal class DownloadEngine(
             current.copy(subtitles = current.subtitles.filter { it.id != subtitle.id } +
                 DownloadSubtitle(subtitle.id, subtitle.provider_id, subtitle.language, subtitle.label, name))
         }
+    }
+
+    fun storeSegments(id: String, segments: List<DownloadSegment>) {
+        change(id) { it.copy(segments = segments) }
     }
 
     fun playing(id: String?) {
@@ -420,6 +435,7 @@ internal class DownloadEngine(
         }
         probeTracks(done)
         fetchSubtitles(done)
+        fetchSegments(done)
         return done
     }
 
@@ -471,6 +487,25 @@ internal class DownloadEngine(
                 change(record.id) { if (it.revision == record.revision) it.copy(subtitlesFetched = true) else it }
             } finally {
                 synchronized(lock) { fetchingSubtitles.remove(record.id) }
+            }
+        }
+    }
+
+    private fun fetchPendingSegments() {
+        records().filter { it.state == DownloadState.Completed && it.segments == null }.forEach(::fetchSegments)
+    }
+
+    private fun fetchSegments(record: DownloadRecord) {
+        if (record.segments != null) return
+        val fetcher = segmentFetcherValue?.takeIf { it.accepts(record.profileId) } ?: return
+        if (network.value == DownloadNetwork.None) return
+        if (!synchronized(lock) { fetchingSegments.add(record.id) }) return
+        scope.launch {
+            try {
+                val fetched = try { fetcher.fetch(record) } catch (error: CancellationException) { throw error } catch (_: Exception) { return@launch }
+                storeSegments(record.id, fetched)
+            } finally {
+                synchronized(lock) { fetchingSegments.remove(record.id) }
             }
         }
     }

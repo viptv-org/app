@@ -52,7 +52,7 @@ internal fun interface NextSourcePreparer {
 internal fun ApplicationController.maintainNextEpisodePreparation(positionMillis: Long, durationMillis: Long?) {
     val state = mutable.value
     val target = state.nextEpisodePreparationTarget()
-    if (target == null) { cancelNextEpisodePreparation(); return }
+    if (target == null || completedDownloadFor(target) != null) { cancelNextEpisodePreparation(); return }
     val key = preparationKeyFor(target, state)
     if (key == nextEpisodePreparationKey && state.nextEpisodePreparation?.preparedAtMillis?.let { clockMillis() - it >= NEXT_PREPARED_SOURCE_TTL_MILLIS } != true) return
     cancelNextEpisodePreparation()

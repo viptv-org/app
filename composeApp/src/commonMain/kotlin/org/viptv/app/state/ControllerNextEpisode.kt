@@ -15,7 +15,9 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
     val state = mutable.value
     val input = state.playback
     val card = state.sourceTitle
-    val profile = state.selectedProfile
+    val owner = state.selectedProfile
+    val offline = input?.downloadId() != null && !downloadsOnline()
+    val profile = owner ?: input?.profileId?.takeIf { offline }
     val parent = card?.parent_identity
     if (state.screen != Screen.Player || input == null || input.live || profile == null || input.profileId != profile || card == null ||
         card.identity.kind != "series" || card.identity.episode == null || parent == null) {
@@ -31,14 +33,17 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
     val detail = state.detail
     fun current() = nextEpisodeGeneration == operation && nextEpisodeKey == key &&
         mutable.value.screen == Screen.Player && mutable.value.playback === input &&
-        mutable.value.selectedProfile == profile && mutable.value.sourceTitle?.identity == card.identity &&
+        mutable.value.selectedProfile == owner && mutable.value.sourceTitle?.identity == card.identity &&
         mutable.value.sourceTitle?.metadata_origin == key.origin && mutable.value.sourceTitle?.parent_identity == parent && mutable.value.sourceTitle?.provider_id == card.provider_id &&
         mutable.value.home?.scope?.owner() == key.homeScope && connection === key.remote && local === key.local
     updateState { next -> next.copy(nextEpisode = null, nextEpisodeStatus = ContinuationStatus.PENDING, nextEpisodeLoading = true) }
     nextEpisodeJob = scope.launch {
         try {
             val resolved = withTimeoutOrNull(12_000) {
-                if (key.remote != null) {
+                if (offline) {
+                    downloadedNextEpisode(profile, card)?.let { NextEpisodeResult(ContinuationStatus.NEXT, it) }
+                        ?: NextEpisodeResult(ContinuationStatus.UNAVAILABLE)
+                } else if (key.remote != null) {
                     try { key.remote.nextEpisode(profile, card) }
                     catch (error: RemoteFailure) {
                         if (error.status != 404) throw error
@@ -85,6 +90,7 @@ fun ApplicationController.loadNextEpisode(force: Boolean = false) {
 
 // The viewer chose this episode from the player, so a successor plays the best match even when the profile asks before every source pick.
 fun ApplicationController.playEpisode(card: Card) {
+    completedDownloadFor(card)?.let { playDownload(it); return }
     if (startPreparedNextEpisode(card)) return
     val state = mutable.value
     val successor = state.screen == Screen.Player && state.playback != null &&

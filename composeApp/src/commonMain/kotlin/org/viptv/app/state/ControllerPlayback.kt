@@ -28,16 +28,21 @@ internal fun ApplicationController.playSource(source: SourceCandidate, forceGate
 }
 
 internal fun ApplicationController.openSource(source: SourceCandidate, forceGateway: Boolean, positionMillis: Long? = null,
-    pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None, retryFullCapacity: Boolean = false) {
+    pausedAfterOpen: Boolean = false, choice: SourceChoice = SourceChoice.None, retryFullCapacity: Boolean = false, localCopy: String? = null) {
     declaredFailure = null
+    if (localCopy == null && mutable.value.bestMatch?.fromDownload != true) downloadReturn = null
     updateState { next -> next.copy(playingSource = source, openingSource = source, playbackFailure = null) }
     run {
         try {
             if (retryFullCapacity) retryingFullCapacity { openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice) }
-            else openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice)
+            else openSourceNow(source, forceGateway, positionMillis, pausedAfterOpen, choice, localCopy = localCopy)
         }
         catch (error: CancellationException) { throw error }
         catch (error: Exception) {
+            if (localCopy != null && downloadsOnline()) {
+                declarePlaybackFailure(PlaybackFailureOrigin.OpenFailed, null, error::class.simpleName)
+                if (streamInsteadOfDownload(PlaybackFailureOrigin.OpenFailed, null)) return@run
+            }
             if (mutable.value.bestMatch?.playingId == source.id && !firstFrameSeen)
                 startFailed(PlaybackFailureOrigin.OpenFailed, null, operation = error::class.simpleName, status = (error as? RemoteFailure)?.status)
             else { declareOpenFailure(error); throw error }
@@ -46,7 +51,7 @@ internal fun ApplicationController.openSource(source: SourceCandidate, forceGate
 }
 
 internal suspend fun ApplicationController.openSourceNow(requested: SourceCandidate, forceGateway: Boolean, positionMillis: Long?, pausedAfterOpen: Boolean,
-    choice: SourceChoice = SourceChoice.None, keepFinding: Boolean = false) {
+    choice: SourceChoice = SourceChoice.None, keepFinding: Boolean = false, localCopy: String? = null) {
     var source = requested
     progressJob?.join()
     val stopping = releaseRemotePlayback()
@@ -56,16 +61,18 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
     stopping?.join()
     val store = local
     val remote = connection
-    val profile = requireNotNull(mutable.value.selectedProfile)
+    val owner = mutable.value.selectedProfile
+    val profile = requireNotNull(owner ?: localCopy?.let { downloadEngine?.record(it)?.profileId })
     val title = mutable.value.sourceTitle
-    if (mutable.value.preferences == null) loadPreferences()
+    if (mutable.value.preferences == null && owner != null && (localCopy == null || downloadsOnline())) loadPreferences()
     val profilePreferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
     val reuseAudio = mutable.value.bestMatch?.reuseAudioLanguages?.get(source.id)
     val preferences = if (choice == SourceChoice.None && reuseAudio != null) profilePreferences.copy(preferred_audio_language = reuseAudio) else profilePreferences
     if (choice == SourceChoice.Manual) remote?.reuseAudioLanguages?.remove(source.id)
     suspend fun lease(candidate: SourceCandidate) =
         leaseOpener.open(requireNotNull(remote), candidate, profile, forceGateway, positionMillis) { text -> updateState { next -> next.copy(openingStage = text) } }
-    val lease = if (store == null) try {
+    val download = localCopy?.let { openDownload(it, profile, positionMillis) }
+    val lease = if (store == null && download == null) try {
         try { lease(source) }
         catch (stale: RemoteFailure) {
             if (!stale.expiredSourceGrant()) throw stale
@@ -74,10 +81,11 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
             lease(source)
         }
     } finally { updateState { next -> next.copy(openingStage = null) } } else null
-    val opened = store?.openSource(source.id) ?: requireNotNull(lease).input
+    val opened = download ?: store?.openSource(source.id) ?: requireNotNull(lease).input
     // An open outlives the picker that started it: another profile or title meanwhile owns the player.
-    if (mutable.value.selectedProfile != profile || mutable.value.sourceTitle?.let(::cardLookupKey) != title?.let(::cardLookupKey)) {
+    if (mutable.value.selectedProfile != owner || mutable.value.sourceTitle?.let(::cardLookupKey) != title?.let(::cardLookupKey)) {
         sourceChoice = SourceChoice.None
+        endDownloadPlayback(download)
         withContext(NonCancellable) { runCatching { lease?.close() } }
         return
     }
@@ -90,18 +98,21 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         remoteSeek = if (lease?.reopensForSeek == true) seekByReopening(source, profile) else null,
         subtitleContent = { id ->
             // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
-            if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
+            if (download != null) downloadSubtitleContent(download, card, id)
+            else if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
             else requireNotNull(remote).subtitleContent(id).encodeToByteArray().also { content -> mutable.value.playback?.let { storeDownloadSubtitle(it, card, id, content) } }
         })
     input.selectedAudioLanguage = opened.selectedAudioLanguage
+    if (download != null) input.updateProviderSubtitles(download.providerSubtitles.value)
     rememberPlaybackOffsets(input, profile, source)
     remotePlayback = lease
     CrashFacts.playbackAttempt = playbackAttempt(source, when {
+        download != null -> "local"
         store != null -> "direct"
         lease?.gateway == true -> "gateway"
         else -> "direct"
     })
-    tracking = if (lease != null && remote != null) {
+    tracking = if ((lease != null || (download != null && downloadsOnline())) && remote != null) {
         val events = RemotePlaybackEvents(remote, input, card)
         PlaybackTracking(scope) { event, position, duration, ended -> events.emit(event, position, duration, ended); Unit }
     } else null
@@ -116,16 +127,18 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
     loadNextEpisode()
     playbackSegmentsJob?.cancel()
     playbackSegmentsJob = scope.launch {
-        val segments = try { withTimeoutOrNull(8_000) { lease?.segments() } ?: emptyList() }
+        val segments = try { withTimeoutOrNull(8_000) { if (download != null) downloadSegments(input, card) else lease?.segments() } ?: emptyList() }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { emptyList() }
         if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = PlaybackSegments(input, segments)) }
     }
     subtitleDiscovery = scope.launch {
         try {
+            if (download != null && !downloadsOnline()) return@launch
             val snapshot = store?.subtitles(profile, card) ?: requireNotNull(remote).subtitles(card)
+            val stored = download?.providerSubtitles?.value.orEmpty()
             if (mutable.value.playback === input && mutable.value.selectedProfile == profile)
-                input.updateProviderSubtitles(snapshot.candidates)
+                input.updateProviderSubtitles((stored + snapshot.candidates).distinctBy { it.id })
         } catch (error: CancellationException) { throw error }
         catch (_: Exception) { }
     }

@@ -78,7 +78,7 @@ internal val PROGRESS_SAVE_INTERVAL = 15.seconds
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
     if (input.live) return null
-    if (input.downloadId() != null) return saveDownloadProgress(input, completed)
+    if (input.downloadId() != null && !downloadsOnline()) return saveDownloadProgress(input, completed)
     val sourceTitle=mutable.value.sourceTitle ?: return null
     val parent = mutable.value.detail?.item?.takeIf {
         it.identity.id == sourceTitle.parent_identity?.id && it.identity.kind == sourceTitle.parent_identity?.kind && it.metadata_origin == sourceTitle.metadata_origin
