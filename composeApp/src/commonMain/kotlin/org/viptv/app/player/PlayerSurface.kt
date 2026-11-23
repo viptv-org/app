@@ -17,7 +17,8 @@ class PlaybackInput(val id: String, val uri: String, val headers: Map<String, St
     val localTorrent: Boolean = false,
     val startChosen: Boolean = false,
     offsets: TimingOffsets = TimingOffsets(),
-    stats: PlaybackStats = PlaybackStats()) {
+    stats: PlaybackStats = PlaybackStats(),
+    val owner: Any? = null) {
     init { require(requiredAudioIndex == null || requiredAudioIndex >= 0) }
     internal var selectedAudioLanguage: String? = null
     var positionMillis: Long = positionMillis

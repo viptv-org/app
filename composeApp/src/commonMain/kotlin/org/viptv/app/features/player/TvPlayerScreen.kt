@@ -81,7 +81,7 @@ internal fun TvPlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -
     val audioPromptActive = audioPrompt != null && nextSource != null
     val audioRequester = remember { FocusRequester() }
     LaunchedEffect(audioPromptActive) { if (audioPromptActive) { withFrameNanos { }; audioRequester.requestFocus() } }
-    val creditsReached = extras.skips.endCreditsReached(state.position, extras.skipCredits, state.duration)
+    val creditsReached = state.progressed && extras.skips.endCreditsReached(state.position, extras.skipCredits, state.duration)
     LaunchedEffect(state, state.ended, state.endHandled, extras.nextEpisode, playEpisode != null, stopped, creditsReached) {
         state.offerNext(extras.nextEpisode != null && playEpisode != null, creditsReached)
     }

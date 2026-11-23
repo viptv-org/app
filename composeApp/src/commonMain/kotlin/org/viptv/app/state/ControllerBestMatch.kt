@@ -102,7 +102,7 @@ private fun ApplicationController.exhaustFallback(session: BestMatchSession) {
     playbackSegmentsJob?.cancel()
     releaseRemotePlayback()
     updateState { it.copy(bestMatch = session.copy(exhausted = true), fallbackNotice = null, audioNotice = null,
-        playback = null, playbackSegments = emptyList(), playingSource = null, openingSource = null, paused = false,
+        playback = null, playbackSegments = PlaybackSegments(), playingSource = null, openingSource = null, paused = false,
         presentation = null, screen = Screen.Sources, error = null, playbackFailure = null) }
     lastProgress = null
     firstFrameSeen = false

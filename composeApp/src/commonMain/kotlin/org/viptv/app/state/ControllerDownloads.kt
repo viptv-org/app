@@ -132,7 +132,7 @@ internal fun ApplicationController.playDownload(id: String, startOver: Boolean) 
     val resume = record.positionMillis.takeIf { !startOver && record.watchedAtMillis == null && it > 0 } ?: 0L
     val input = PlaybackInput("$DOWNLOAD_PLAYBACK_PREFIX$id", "file://$path", positionMillis = resume, profileId = record.profileId,
         durationMillis = record.durationMillis, preferences = preferences, diagnostics = playbackDiagnostics,
-        mimeType = record.mimeType, title = record.card.title, startChosen = true,
+        mimeType = record.mimeType, title = record.card.title, startChosen = true, owner = playbackKey(record.card, record.source),
         subtitleContent = { subtitle -> engine.subtitleBytes(id, subtitle) ?: ByteArray(0) })
     input.updateProviderSubtitles(record.subtitles.map { it.candidate() })
     downloadReturn = returnTo

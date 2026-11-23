@@ -183,7 +183,7 @@ data class ApplicationState(
     val startup: StartupProgress? = null,
     val playback: PlaybackInput? = null,
     val playbackFailure: PlaybackFailure? = null,
-    val playbackSegments: List<org.viptv.app.features.player.TvSkipRange> = emptyList(),
+    val playbackSegments: PlaybackSegments = PlaybackSegments(),
     val nextEpisode: Card? = null,
     val nextEpisodeStatus: org.viptv.engine.wire.ContinuationStatus? = null,
     val nextEpisodeLoading: Boolean = false,
