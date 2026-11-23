@@ -28,6 +28,9 @@ internal data class DownloadRecord(
     val smart: Boolean = false,
     val retryAtMillis: Long? = null,
     val subtitles: List<DownloadSubtitle> = emptyList(),
+    val tracks: List<DownloadTrack> = emptyList(),
+    val pinned: Boolean = false,
+    val release: SourceCandidate? = null,
 ) {
     val fileName: String get() = downloadFileName(id)
 
@@ -37,6 +40,9 @@ internal data class DownloadRecord(
         qualityHeight = source?.quality_height?.toInt(), failure = failure, addedAtMillis = addedAtMillis,
         watchedAtMillis = watchedAtMillis, expiresAtMillis = expiresAt(settings), keep = keep,
         lastPlayedAtMillis = lastPlayedAtMillis,
+        sourceProvider = source?.let { it.presentation?.provider_name?.takeIf(String::isNotBlank) ?: it.provider_id },
+        sourceDetail = source?.detail, format = downloadFormat(source, mimeType),
+        tracks = tracks + subtitles.map { DownloadTrack("subtitle", it.language, it.label, embedded = false) },
     )
 
     fun expiresAt(settings: DownloadSettings): Long? {
@@ -70,12 +76,13 @@ internal data class DownloadSettingsRecord(
     val storageLimitBytes: Long? = 50L shl 30,
     val deleteWatchedAfterMillis: Long? = 86_400_000L,
     val keepNextEpisodes: Int = 0,
+    val downloadSubtitles: Boolean = true,
 ) {
-    fun settings() = DownloadSettings(wifiOnly, maxQualityHeight, storageLimitBytes, deleteWatchedAfterMillis, keepNextEpisodes)
+    fun settings() = DownloadSettings(wifiOnly, maxQualityHeight, storageLimitBytes, deleteWatchedAfterMillis, keepNextEpisodes, downloadSubtitles)
 }
 
 internal fun DownloadSettings.record() =
-    DownloadSettingsRecord(wifiOnly, maxQualityHeight, storageLimitBytes, deleteWatchedAfterMillis, keepNextEpisodes)
+    DownloadSettingsRecord(wifiOnly, maxQualityHeight, storageLimitBytes, deleteWatchedAfterMillis, keepNextEpisodes, downloadSubtitles)
 
 internal fun downloadId(profileId: String, card: Card): String = "$profileId|${cardLookupKey(card)}"
 
@@ -87,3 +94,8 @@ internal fun downloadFileName(id: String): String {
 
 internal val DownloadState.active: Boolean
     get() = this != DownloadState.Completed && this != DownloadState.Failed
+
+internal fun downloadFormat(source: SourceCandidate?, mimeType: String?): String? =
+    source?.presentation?.container?.takeIf(String::isNotBlank)
+        ?: mimeType?.substringAfter('/')?.substringAfterLast('-')?.takeIf(String::isNotBlank)
+        ?: source?.presentation?.delivery_format?.takeIf(String::isNotBlank)

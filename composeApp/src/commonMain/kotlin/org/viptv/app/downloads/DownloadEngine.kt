@@ -54,7 +54,8 @@ private class ExpiredUrl : Exception()
 private class OutOfSpace : Exception()
 private class TransferFailed(val status: Int) : Exception("The download server answered $status.")
 
-internal class DownloadRequest(val profileId: String, val card: Card, val seriesTitle: String?, val smart: Boolean = false)
+internal class DownloadRequest(val profileId: String, val card: Card, val seriesTitle: String?, val smart: Boolean = false,
+    val source: SourceCandidate? = null, val release: SourceCandidate? = null)
 
 internal class DownloadEngine(
     private val files: DownloadFiles,
@@ -113,7 +114,8 @@ internal class DownloadEngine(
                 val id = ids[index]
                 val prior = known[id]
                 if (prior != null && prior.state != DownloadState.Failed) null
-                else DownloadRecord(id, request.profileId, request.card, request.seriesTitle, addedAtMillis = now + index, smart = request.smart)
+                else DownloadRecord(id, request.profileId, request.card, request.seriesTitle, addedAtMillis = now + index, smart = request.smart,
+                    source = request.source, pinned = request.source != null, release = request.release ?: request.source)
             }
             val replaced = added.map { it.id }.toSet()
             current.copy(records = current.records.filter { it.id !in replaced } + added)

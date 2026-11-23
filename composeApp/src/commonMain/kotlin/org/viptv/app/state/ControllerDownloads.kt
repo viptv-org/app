@@ -8,6 +8,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.downloads.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.SourceCandidate
 
 private const val DOWNLOAD_PLAYBACK_PREFIX = "download:"
 private const val WATCHED_FRACTION = 0.95
@@ -49,23 +50,30 @@ internal fun ApplicationController.offlineAtStart(): Boolean {
     return engine.network.value == DownloadNetwork.None && engine.records().isNotEmpty()
 }
 
-fun ApplicationController.downloadTitle(card: Card) {
+fun ApplicationController.downloadTitle(card: Card, source: SourceCandidate? = null) {
     val profile = mutable.value.selectedProfile ?: return
-    enqueueDownloads(listOf(DownloadRequest(profile, card, seriesTitleFor(card))))
+    enqueueDownloads(listOf(DownloadRequest(profile, card, seriesTitleFor(card), source = source)))
 }
 
-fun ApplicationController.downloadSeason(series: Card, season: Long) =
-    downloadEpisodes(series) { episodes -> episodes.filter { it.identity.episode?.season == season } }
+fun ApplicationController.chooseDownloadSource(card: Card) = chooseSource(card, startPlayback = false, forDownload = true)
 
-fun ApplicationController.downloadNext(series: Card, count: Int) =
-    downloadEpisodes(series) { episodes ->
+fun ApplicationController.changeDownloadSource(id: String) {
+    val record = downloadEngine?.record(id) ?: return
+    chooseDownloadSource(record.card)
+}
+
+fun ApplicationController.downloadSeason(series: Card, season: Long, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes -> episodes.filter { it.identity.episode?.season == season } }
+
+fun ApplicationController.downloadNext(series: Card, count: Int, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes ->
         val regular = episodes.filter { (it.identity.episode?.season ?: 1L) != 0L }
         val lastWatched = regular.indexOfLast { (it.progress ?: 0.0) >= WATCHED_FRACTION }
         regular.drop(lastWatched + 1).take(count)
     }
 
-fun ApplicationController.downloadSeries(series: Card) =
-    downloadEpisodes(series) { episodes -> episodes.filter { (it.identity.episode?.season ?: 1L) != 0L } }
+fun ApplicationController.downloadSeries(series: Card, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes -> episodes.filter { (it.identity.episode?.season ?: 1L) != 0L } }
 
 fun ApplicationController.playDownload(id: String) {
     val engine = downloadEngine ?: return
@@ -188,12 +196,12 @@ private fun ApplicationController.enqueueDownloads(requests: List<DownloadReques
     updateState { it.copy(downloads = engine.items.value) }
 }
 
-private fun ApplicationController.downloadEpisodes(series: Card, choose: (List<Card>) -> List<Card>) {
+private fun ApplicationController.downloadEpisodes(series: Card, release: SourceCandidate?, choose: (List<Card>) -> List<Card>) {
     val engine = downloadEngine ?: return
     val profile = mutable.value.selectedProfile ?: return
     val detail = mutable.value.detail?.takeIf { cardLookupKey(it.item) == cardLookupKey(series) }
     val known = detail?.let { choose(it.episodes) }.orEmpty()
-    if (known.isNotEmpty()) enqueueDownloads(known.map { DownloadRequest(profile, it, series.title) })
+    if (known.isNotEmpty()) enqueueDownloads(known.map { DownloadRequest(profile, it, series.title, release = release) })
     scope.launch {
         val episodes = try { seriesEpisodes(series) }
         catch (error: CancellationException) { throw error }
@@ -202,7 +210,7 @@ private fun ApplicationController.downloadEpisodes(series: Card, choose: (List<C
             return@launch
         }
         if (mutable.value.selectedProfile != profile) return@launch
-        engine.enqueue(choose(episodes).map { DownloadRequest(profile, it, series.title) })
+        engine.enqueue(choose(episodes).map { DownloadRequest(profile, it, series.title, release = release) })
         updateState { it.copy(downloads = engine.items.value) }
     }
 }

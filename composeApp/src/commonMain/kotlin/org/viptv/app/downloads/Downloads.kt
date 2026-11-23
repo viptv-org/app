@@ -1,9 +1,13 @@
 package org.viptv.app.downloads
 
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
 import org.viptv.engine.wire.Card
 
 enum class DownloadState { Queued, Resolving, Downloading, Paused, WaitingForNetwork, WaitingForSpace, Completed, Failed }
+
+@Serializable
+data class DownloadTrack(val kind: String, val language: String?, val label: String?, val embedded: Boolean)
 
 data class DownloadItem(
     val id: String,
@@ -21,6 +25,10 @@ data class DownloadItem(
     val expiresAtMillis: Long?,
     val keep: Boolean,
     val lastPlayedAtMillis: Long?,
+    val sourceProvider: String? = null,
+    val sourceDetail: String? = null,
+    val format: String? = null,
+    val tracks: List<DownloadTrack> = emptyList(),
 )
 
 data class DownloadStorage(val usedBytes: Long, val freeBytes: Long)
@@ -31,6 +39,7 @@ data class DownloadSettings(
     val storageLimitBytes: Long? = 50L shl 30,
     val deleteWatchedAfterMillis: Long? = 86_400_000L,
     val keepNextEpisodes: Int = 0,
+    val downloadSubtitles: Boolean = true,
 )
 
 interface Downloads {
