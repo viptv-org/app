@@ -51,7 +51,7 @@ private val PhoneHeroMetaLine = 19.dp
 @Composable
 internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit = {}, saved: Boolean = false,
     resumeEpisode: Card? = null, sourcePreview: DetailSourcePreview? = null, chooseSource: (Card) -> Unit = play,
-    playFromStart: ((Card) -> Unit)? = null) {
+    playFromStart: ((Card) -> Unit)? = null, downloadEpisodes: List<Card> = emptyList(), downloadSeason: Long? = null) {
     val art = card.landscape ?: card.poster
     Column(verticalArrangement = Arrangement.spacedBy((-60).dp)) {
         Box(Modifier.fillMaxWidth().height(PhoneHeroArt)) {
@@ -116,6 +116,8 @@ internal fun PhoneDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> U
                     }
                     Text(if (mutations.isPending(mutationTarget)) "Saving…" else "My List", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Palette.body)
                 }
+                org.viptv.app.features.downloads.TitleDownloadAction(card, downloadEpisodes, downloadSeason,
+                    org.viptv.app.features.downloads.TitleDownloadStyle.Phone)
             }
             MutationFailure(mutationTarget, Modifier.fillMaxWidth())
             card.description.providerText()?.let { Text(it, fontSize = 14.sp, lineHeight = 21.sp, color = Palette.body,

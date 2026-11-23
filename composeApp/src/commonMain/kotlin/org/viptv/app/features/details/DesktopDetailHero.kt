@@ -43,7 +43,7 @@ import org.viptv.app.format.providerText
 @Composable
 internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
     playFromStart: ((Card) -> Unit)? = null, chooseSource: (Card) -> Unit = play, sourceLabel: String? = null,
-    resumeEpisode: Card? = null) {
+    resumeEpisode: Card? = null, downloadEpisodes: List<Card> = emptyList(), downloadSeason: Long? = null) {
     val art = card.landscape ?: card.poster
     Box(Modifier.fillMaxWidth()) {
         art?.let { url ->
@@ -58,7 +58,7 @@ internal fun DesktopDetailHero(card: Card, play: (Card) -> Unit, save: (Card) ->
                 card.description.providerText()?.let { Text(it, fontSize = 15.sp, lineHeight = (15 * 1.45).sp, color = Palette.body,
                     maxLines = 3, overflow = TextOverflow.Ellipsis) }
                 HeroStarring(card, 14.sp, 20.sp)
-                DesktopHeroActions(card, resumeEpisode, play, save, saved, playFromStart, chooseSource, sourceLabel)
+                DesktopHeroActions(card, resumeEpisode, play, save, saved, playFromStart, chooseSource, sourceLabel, downloadEpisodes, downloadSeason)
             }
             art?.let { url ->
                 Box(Modifier.width(682.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp))
@@ -102,7 +102,7 @@ private fun DesktopMetaChip(value: String) {
 
 @Composable
 private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) -> Unit, save: (Card) -> Unit, saved: Boolean,
-    playFromStart: ((Card) -> Unit)?, chooseSource: (Card) -> Unit, sourceLabel: String?) {
+    playFromStart: ((Card) -> Unit)?, chooseSource: (Card) -> Unit, sourceLabel: String?, downloadEpisodes: List<Card>, downloadSeason: Long?) {
     val resumeCard = resumeEpisode ?: card.takeIf(::resuming)
     val progress = resumeCard?.progress
     val partway = resuming(resumeCard)
@@ -141,6 +141,8 @@ private fun DesktopHeroActions(card: Card, resumeEpisode: Card?, play: (Card) ->
                 if (mutations.isPending(mutationTarget)) MutationSpinner(22.dp, scale = 1f)
                 else Icon(if (saved) Lucide.Check else Lucide.Plus, null, Modifier.size(22.dp), tint = Palette.text)
             }
+            org.viptv.app.features.downloads.TitleDownloadAction(card, downloadEpisodes, downloadSeason,
+                org.viptv.app.features.downloads.TitleDownloadStyle.Desktop)
             HeroRestart(card, resumeEpisode, playFromStart)
         }
         MutationFailure(mutationTarget)

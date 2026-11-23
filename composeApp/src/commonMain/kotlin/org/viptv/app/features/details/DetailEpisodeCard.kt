@@ -37,7 +37,7 @@ import org.viptv.engine.wire.Card
 
 @Composable
 internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Unit, modifier: Modifier = Modifier, tablet: Boolean = false,
-    playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true, stateCaption: Boolean = true) {
+    playing: Boolean = false, comingUp: Boolean = false, showAirDate: Boolean = true, stateCaption: Boolean = true, download: Boolean = false) {
     var showUpcoming by remember { mutableStateOf(false) }
     Column(modifier.clip(RoundedCornerShape(8.dp)).pointerClickable(shape = RoundedCornerShape(8.dp)) {
         if (comingUp) showUpcoming = true else play(episode)
@@ -45,6 +45,7 @@ internal fun DetailEpisodeCard(episode: Card, phone: Boolean, play: (Card) -> Un
         if (phone) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             EpisodeArtwork(episode, Modifier.width(if (tablet) 176.dp else 136.dp).aspectRatio(16f / 9), comingUp)
             EpisodeCaption(episode, Modifier.weight(1f), true, playing, comingUp, showAirDate, stateCaption)
+            if (download && !comingUp) org.viptv.app.features.downloads.EpisodeDownloadControl(episode)
         } else {
             EpisodeArtwork(episode, Modifier.fillMaxWidth().aspectRatio(16f / 9), comingUp)
             EpisodeCaption(episode, Modifier.fillMaxWidth(), false, playing, comingUp, showAirDate, stateCaption)

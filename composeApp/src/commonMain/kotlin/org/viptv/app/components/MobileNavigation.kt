@@ -30,7 +30,7 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
         Row(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(32.dp))
             .background(Color(0xFF292827).copy(alpha = .94f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(32.dp))
             .padding(4.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            phoneTabDestinations.forEach { destination ->
+            phoneTabDestinations.withDownloads(LocalDownloadsShown.current, Screen.Library).forEach { destination ->
                 val pillFill = animateColorAsState(
                     if (selected == destination.screen) Color.White.copy(alpha = .09f) else Color.Transparent,
                     responseSpec(), label = "Bottom nav pill fill").value

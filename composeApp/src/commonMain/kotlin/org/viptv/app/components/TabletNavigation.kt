@@ -37,7 +37,7 @@ internal fun TabletNavigation(selected: Screen, profile: Profile?, navigate: (Sc
             if (!short) Box(Modifier.padding(bottom = 12.dp)) { BrandMark(40.dp) }
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (short) 4.dp else 24.dp)) {
-                phoneDestinations.forEach { entry ->
+                phoneDestinations.withDownloads(LocalDownloadsShown.current, Screen.Library).forEach { entry ->
                     val railFill = animateColorAsState(
                         if (selected == entry.screen) Color.White.copy(alpha = .16f) else Color.Transparent,
                         responseSpec(), label = "Tablet rail fill").value

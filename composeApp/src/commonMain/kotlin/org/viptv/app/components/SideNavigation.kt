@@ -28,7 +28,8 @@ import org.viptv.app.resources.ic_remote_zip
 
 @Composable
 fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
-    val destinations = if (LocalAnimeAvailable.current) desktopDestinations else desktopDestinations.filter { it.screen != Screen.Anime }
+    val destinations = (if (LocalAnimeAvailable.current) desktopDestinations else desktopDestinations.filter { it.screen != Screen.Anime })
+        .withDownloads(LocalDownloadsShown.current, Screen.History)
     Column(Modifier.width(72.dp).fillMaxHeight().verticalScroll(rememberScrollState()).background(Palette.background), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(12.dp))
         destinations.forEach { destination ->

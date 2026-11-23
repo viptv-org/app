@@ -53,6 +53,7 @@ import org.viptv.app.components.rememberListEntrance
 private const val LIBRARY_TITLE_KEY = "library:title"
 private const val LIBRARY_CONTROLS_KEY = "library:controls"
 private const val LIBRARY_HISTORY_KEY = "library:history"
+private const val LIBRARY_DOWNLOADS_KEY = "library:downloads"
 private const val LIBRARY_CARD_TYPE = "library:card"
 private const val CONTINUE_CARD_TYPE = "continue:card"
 internal const val REMOVE_LIBRARY_LABEL = "Remove from My List"
@@ -96,7 +97,8 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
             val gridCards = visible.distinctBy(::cardLookupKey)
             val continueCards = remember(section?.page?.cards) { section?.page?.cards.orEmpty().distinctBy(::cardLookupKey) }
             val shown = if (saved) gridCards else continueCards
-            val cardsAfter = if (saved) { if (phone) 2 else 3 } else CONTINUE_CARDS_AFTER
+            val downloads = org.viptv.app.features.downloads.LocalDownloadActions.current
+            val cardsAfter = if (saved) { (if (phone) 2 else 3) + (if (downloads != null) 1 else 0) } else CONTINUE_CARDS_AFTER
             val grid = rememberLazyGridState()
             val entrance = rememberListEntrance(gridCards.isNotEmpty())
             val restore = rememberPageRestore(if (saved) "library" else "continue")
@@ -149,6 +151,9 @@ internal fun LibraryScreen(cards: List<Card>, available: Boolean, television: Bo
                                 }
                                 if (LocalBarsFadeContent.current && scrolled) ScrollEdgeFade(ScrollEdge.Top)
                             }
+                        }
+                        if (saved && downloads != null) item(LIBRARY_DOWNLOADS_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_DOWNLOADS_KEY) {
+                            org.viptv.app.features.downloads.DownloadsEntry(downloads, Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_DOWNLOADS_KEY) { pinned })
                         }
                         if (saved) item(LIBRARY_HISTORY_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = LIBRARY_HISTORY_KEY) {
                             Surface(onClick = history, modifier = Modifier.padding(bottom = 8.dp).fadeAsCollapsed(grid, LIBRARY_HISTORY_KEY) { pinned },

@@ -80,7 +80,11 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                                     Spacer(Modifier.width(8.dp)); Text(heroPlayLabel(heroEpisode), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
                                 HeroRestart(card, heroEpisode, playFromStart, fontSize = 15.sp)
-                                FavoriteAction(card, saved, save)
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+                                    FavoriteAction(card, saved, save)
+                                    org.viptv.app.features.downloads.TitleDownloadAction(card, detail.episodes, selected?.number,
+                                        org.viptv.app.features.downloads.TitleDownloadStyle.Tablet)
+                                }
                             }
                         }
                         if (failures.isNotEmpty() && !busy) item(key = "addon-failure") {
@@ -101,7 +105,7 @@ internal fun TabletDetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: 
                         seasons.find { group -> group.number == it }?.nextOffset?.let(loadPage)
                     } }
                     items(season.episodes, key = ::episodeKey) { episode ->
-                        DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth(), tablet = true, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                        DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth(), tablet = true, comingUp = episodeUpcoming(episode, latestReleased, airDateNow), download = true)
                     }
                     if (pageError != null) item(key = "page-failure") {
                         DetailInlineFailure(pageError, retryPage, Modifier.padding(top = 16.dp))
