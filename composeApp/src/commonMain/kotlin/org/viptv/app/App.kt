@@ -267,6 +267,9 @@ fun App(
                         if (phone) PhoneHeader(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (tablet) TabletHeader(navigationScreen)
                     }
+                    if (offlineBanner) Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+                        org.viptv.app.features.downloads.OfflineBanner({ controller.navigate(Screen.Downloads) })
+                    }
 
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
@@ -367,10 +370,6 @@ fun App(
                   } }
                   if (bottomBar) Box(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
                       PhoneBottomBar(navigationScreen, controller::navigate, hidden = phoneScroll.barHidden)
-                  }
-                  if (offlineBanner) {
-                      org.viptv.app.features.downloads.OfflineBanner({ controller.navigate(Screen.Downloads) },
-                          Modifier.align(androidx.compose.ui.Alignment.TopCenter).padding(horizontal = 16.dp, vertical = 8.dp))
                   }
                   if (bannerSince != null) {
                       BackendBanner(television, phone, bottomBar, bannerSince, state.backendRetrySeconds,

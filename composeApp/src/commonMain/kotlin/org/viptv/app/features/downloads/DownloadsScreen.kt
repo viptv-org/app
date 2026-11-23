@@ -240,7 +240,7 @@ internal fun DownloadsEntry(actions: DownloadActions, modifier: Modifier = Modif
 
 @Composable
 internal fun OfflineBanner(openDownloads: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier.widthIn(max = 520.dp).fillMaxWidth(), RoundedCornerShape(20.dp), color = Palette.surface, shadowElevation = 20.dp) {
+    Surface(modifier.widthIn(max = 520.dp).fillMaxWidth(), RoundedCornerShape(20.dp), color = Palette.surface) {
         Row(Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(Palette.raised, CircleShape), contentAlignment = Alignment.Center) {
