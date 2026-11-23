@@ -28,7 +28,7 @@ object AndroidDownloads {
         if (processName() != application.packageName) return
         val directory = File(application.getExternalFilesDir(null) ?: application.filesDir, "downloads")
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val created = DownloadEngine(FileDownloadFiles(directory), HttpClient(OkHttp), networkState(application), scope)
+        val created = DownloadEngine(FileDownloadFiles(directory), HttpClient(OkHttp), networkState(application), scope, probe = MediaExtractorProbe)
         engine = created
         scope.launch {
             created.items.map { items -> items.any { it.state == DownloadState.Resolving || it.state == DownloadState.Downloading } }

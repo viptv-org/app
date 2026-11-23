@@ -8,6 +8,7 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +24,7 @@ import org.viptv.engine.wire.EpisodeCoordinates
 import org.viptv.engine.wire.MediaIdentity
 import org.viptv.engine.wire.SourceCandidate
 import org.viptv.engine.wire.SourcePresentation
+import org.viptv.engine.wire.SubtitleCandidate
 import java.util.Collections
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -166,6 +168,124 @@ class DownloadEngineTest {
         assertEquals(5_000, second.pendingProgress().single().positionMillis)
     }
 
+    @Test fun anExplicitSourceIsResolvedAsGiven() = runBlocking<Unit> {
+        val picked = source.copy(id = "picked", label = "Show.S01E01.720p.Other", source_fingerprint = "fp-picked")
+        val seen = Collections.synchronizedList(mutableListOf<DownloadRecord>())
+        val engine = engineResolving(MemoryFiles(), { record -> seen += record; url(1).let { DownloadResolution(record.source!!, it.url, it.headers, it.mimeType, it.sizeBytes) } }) {
+            serve(it.headers[HttpHeaders.Range])
+        }
+        val id = engine.enqueue(listOf(DownloadRequest("p", episode(1), "Show", source = picked))).single()
+        val done = engine.awaitState(id, DownloadState.Completed)
+        assertTrue(seen.single().pinned)
+        assertEquals(picked, seen.single().source)
+        assertEquals("Show.S01E01.720p.Other", done.sourceLabel)
+        assertEquals("addon", done.sourceProvider)
+    }
+
+    @Test fun changingTheSourceKeepsTheOldFileUntilTheNewOneCompletes() = runBlocking<Unit> {
+        val files = MemoryFiles()
+        val gate = CompletableDeferred<Unit>()
+        val replacement = source.copy(id = "s2", label = "Show.S01E01.2160p", source_fingerprint = "fp-2")
+        val engine = engineResolving(files, { record -> DownloadResolution(record.source ?: source, "https://media.test/file/${record.revision}", emptyMap(), "video/mp4", payload.size.toLong()) }) { request ->
+            if (request.url.toString().endsWith("/1")) gate.await()
+            serve(request.headers[HttpHeaders.Range])
+        }
+        val id = engine.enqueue(listOf(DownloadRequest("p", episode(1), "Show"))).single()
+        engine.awaitState(id, DownloadState.Completed)
+        val oldFile = engine.record(id)!!.fileName
+        assertTrue(engine.replaceSource(id, replacement))
+        engine.awaitState(id, DownloadState.Downloading)
+        assertContentEquals(payload, files.bytes(oldFile))
+        assertEquals(payload.size.toLong(), engine.storage.value.usedBytes)
+        gate.complete(Unit)
+        val done = engine.awaitState(id, DownloadState.Completed)
+        assertEquals("Show.S01E01.2160p", done.sourceLabel)
+        withTimeout(10_000) { while (files.size(oldFile) > 0) kotlinx.coroutines.delay(10) }
+        assertContentEquals(payload, files.bytes(engine.record(id)!!.fileName))
+        assertNull(engine.record(id)!!.previous)
+    }
+
+    @Test fun aFailedSourceChangeRestoresTheOldDownload() = runBlocking<Unit> {
+        val files = MemoryFiles()
+        val engine = engineResolving(files, { record ->
+            if (record.revision > 0) throw DownloadUnavailable("This source can't be downloaded.")
+            url(1)
+        }) { serve(it.headers[HttpHeaders.Range]) }
+        val id = engine.enqueue(listOf(DownloadRequest("p", episode(1), "Show"))).single()
+        engine.awaitState(id, DownloadState.Completed)
+        val oldFile = engine.record(id)!!.fileName
+        engine.replaceSource(id, source.copy(id = "s2", label = "Other", source_fingerprint = "fp-2"))
+        val restored = withTimeout(10_000) { engine.items.first { list -> list.any { it.id == id && it.state == DownloadState.Completed && it.failure != null } } }
+            .first { it.id == id }
+        assertEquals(source.label, restored.sourceLabel)
+        assertEquals(oldFile, engine.record(id)!!.fileName)
+        assertContentEquals(payload, files.bytes(oldFile))
+        assertTrue(restored.failure!!.contains("can't be downloaded"))
+    }
+
+    @Test fun subtitlesAreFetchedAndStoredOnCompletion() = runBlocking<Unit> {
+        val files = MemoryFiles()
+        val calls = Collections.synchronizedList(mutableListOf<String>())
+        val engine = engine(files, { url(1) }) { serve(it.headers[HttpHeaders.Range]) }
+        engine.subtitleFetcher = subtitles(calls)
+        val id = engine.enqueue(listOf(DownloadRequest("p", episode(1), "Show"))).single()
+        val item = withTimeout(10_000) { engine.items.first { list -> list.any { it.id == id && it.tracks.isNotEmpty() } } }.first { it.id == id }
+        assertEquals(listOf(DownloadTrack("subtitle", "en", "English", embedded = false)), item.tracks)
+        assertTrue(engine.subtitleBytes(id, "os-en")!!.decodeToString().contains("Hi"))
+        assertEquals(listOf(id), calls.toList())
+    }
+
+    @Test fun theSubtitleSettingTurnsFetchingOff() = runBlocking<Unit> {
+        val calls = Collections.synchronizedList(mutableListOf<String>())
+        val engine = engine(MemoryFiles(), { url(1) }) { serve(it.headers[HttpHeaders.Range]) }
+        engine.updateSettings(DownloadSettings(downloadSubtitles = false))
+        engine.subtitleFetcher = subtitles(calls)
+        val id = engine.enqueue(listOf(DownloadRequest("p", episode(1), "Show"))).single()
+        engine.awaitState(id, DownloadState.Completed)
+        engine.wakeUp()
+        kotlinx.coroutines.delay(200)
+        assertTrue(calls.isEmpty())
+        assertTrue(engine.record(id)!!.subtitles.isEmpty())
+        engine.updateSettings(DownloadSettings(downloadSubtitles = true))
+        withTimeout(10_000) { while (engine.record(id)?.subtitlesFetched != true) kotlinx.coroutines.delay(10) }
+        assertEquals(listOf(id), calls.toList())
+    }
+
+    @Test fun theTrackProbeFillsTracks() = runBlocking<Unit> {
+        val probed = Collections.synchronizedList(mutableListOf<String>())
+        val probe = DownloadProbe { path -> probed += path
+            listOf(DownloadTrack("audio", "jpn", null, true), DownloadTrack("audio", "eng", null, true), DownloadTrack("subtitle", "eng", null, true)) }
+        val engine = engine(MemoryFiles(), { url(1) }, probe = probe) { serve(it.headers[HttpHeaders.Range]) }
+        val id = engine.enqueue(listOf(DownloadRequest("p", movie(), null))).single()
+        val item = withTimeout(10_000) { engine.items.first { list -> list.any { it.id == id && it.tracks.size == 3 } } }.first { it.id == id }
+        assertEquals(listOf("jpn", "eng"), item.tracks.filter { it.kind == "audio" }.map { it.language })
+        assertEquals(listOf("/downloads/${engine.record(id)!!.fileName}"), probed.toList())
+        assertEquals("mp4", item.format)
+    }
+
+    @Test fun earlierDownloadsWithoutTracksAreProbedOnceAtStartAndWhenOpened() = runBlocking<Unit> {
+        val files = MemoryFiles()
+        val old = DownloadRecord(downloadId("p", movie()), "p", movie(), state = DownloadState.Completed, bytesDone = 10, bytesTotal = 10, addedAtMillis = 1)
+        files.write(old.fileName, ByteArray(10))
+        files.writeBook(kotlinx.serialization.json.Json.encodeToString(DownloadBook.serializer(), DownloadBook(listOf(old))))
+        val probed = Collections.synchronizedList(mutableListOf<String>())
+        val probe = DownloadProbe { path -> probed += path; listOf(DownloadTrack("audio", "jpn", null, true)) }
+        val engine = engine(files, { url(1) }, probe = probe) { serve(it.headers[HttpHeaders.Range]) }
+        val item = withTimeout(10_000) { engine.items.first { list -> list.any { it.id == old.id && it.tracks.isNotEmpty() } } }.first { it.id == old.id }
+        assertEquals(listOf(DownloadTrack("audio", "jpn", null, true)), item.tracks)
+        engine.probeIfMissing(old.id)
+        kotlinx.coroutines.delay(100)
+        assertEquals(1, probed.size)
+
+        val silent = DownloadRecord(downloadId("p", episode(1)), "p", episode(1), state = DownloadState.Completed, bytesDone = 10, bytesTotal = 10, addedAtMillis = 1)
+        val laterFiles = MemoryFiles().also { it.write(silent.fileName, ByteArray(10)); it.writeBook(kotlinx.serialization.json.Json.encodeToString(DownloadBook.serializer(), DownloadBook(listOf(silent.copy(probed = true))))) }
+        val calls = Collections.synchronizedList(mutableListOf<String>())
+        val later = engine(laterFiles, { url(1) }, probe = DownloadProbe { calls += it; emptyList() }) { serve(it.headers[HttpHeaders.Range]) }
+        later.probeIfMissing(silent.id)
+        kotlinx.coroutines.delay(100)
+        assertTrue(calls.isEmpty())
+    }
+
     private fun MockRequestHandleScope.serve(range: String?) = if (range == null)
         respond(payload, HttpStatusCode.OK, headersOf(HttpHeaders.ContentLength, payload.size.toString()))
     else {
@@ -176,10 +296,23 @@ class DownloadEngineTest {
 
     private fun url(n: Int) = DownloadResolution(source, "https://media.test/file/$n", emptyMap(), "video/mp4", payload.size.toLong())
 
-    private fun engine(files: MemoryFiles, resolve: () -> DownloadResolution, owner: CoroutineScope = scope, handler: suspend MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData): DownloadEngine {
+    private fun engine(files: MemoryFiles, resolve: () -> DownloadResolution, owner: CoroutineScope = scope, probe: DownloadProbe? = null,
+        handler: suspend MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData): DownloadEngine =
+        engineResolving(files, { _ -> resolve() }, owner, probe, handler)
+
+    private fun engineResolving(files: MemoryFiles, resolve: suspend (DownloadRecord) -> DownloadResolution, owner: CoroutineScope = scope,
+        probe: DownloadProbe? = null, handler: suspend MockRequestHandleScope.(HttpRequestData) -> io.ktor.client.request.HttpResponseData): DownloadEngine {
         val client = HttpClient(MockEngine { request -> requests += request; handler(request) })
-        return DownloadEngine(files, client, network, owner, clock = { now }, retryDelays = listOf(10, 10, 10), saveDelayMillis = 10)
-            .also { it.resolver = DownloadResolver { _, _ -> resolve() } }
+        return DownloadEngine(files, client, network, owner, clock = { now }, retryDelays = listOf(10, 10, 10), saveDelayMillis = 10, probe = probe)
+            .also { it.resolver = DownloadResolver { record, _ -> resolve(record) } }
+    }
+
+    private fun subtitles(calls: MutableList<String>, available: Boolean = true) = object : DownloadSubtitleFetcher {
+        override fun accepts(profileId: String) = available
+        override suspend fun fetch(record: DownloadRecord): List<Pair<SubtitleCandidate, ByteArray>> {
+            calls += record.id
+            return listOf(SubtitleCandidate("os-en", "opensubtitles", "en", "English") to "1\n00:00:01,000 --> 00:00:02,000\nHi".encodeToByteArray())
+        }
     }
 
     private suspend fun DownloadEngine.awaitState(id: String, state: DownloadState): DownloadItem =

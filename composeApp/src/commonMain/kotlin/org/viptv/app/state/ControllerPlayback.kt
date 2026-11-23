@@ -18,6 +18,8 @@ fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Bool
 
 internal fun ApplicationController.playSource(source: SourceCandidate, forceGateway: Boolean, choice: SourceChoice) {
     val current = mutable.value.sources.firstOrNull { it.id == source.id } ?: return
+    if (mutable.value.sourcesForDownload && mutable.value.screen == Screen.Sources) { pickDownloadSource(current); return }
+    if (!forceGateway && playLocalCopy(current)) return
     if (!beginPendingSource(source)) return
     cancelSeekReopen()
     val restart = takeStartOver() || mutable.value.bestMatch?.let { it.exhausted && it.startOver } == true

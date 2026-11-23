@@ -8,6 +8,7 @@ import org.viptv.app.connection.*
 import org.viptv.app.downloads.*
 import org.viptv.app.player.PlaybackInput
 import org.viptv.engine.wire.Card
+import org.viptv.engine.wire.SourceCandidate
 
 private const val DOWNLOAD_PLAYBACK_PREFIX = "download:"
 private const val WATCHED_FRACTION = 0.95
@@ -19,11 +20,17 @@ val ApplicationController.downloads: Downloads? get() = downloadEngine
 internal fun ApplicationController.startDownloads() {
     val engine = downloadEngine ?: return
     engine.resolver = RemoteDownloadResolver(this)
+    engine.subtitleFetcher = RemoteDownloadSubtitles(this)
     scope.launch {
         mutable.collect { state ->
             val items = engine.items.value
             val offline = engine.network.value == DownloadNetwork.None
             if (state.downloads != items || state.offline != offline) updateState { it.copy(downloads = items, offline = offline) }
+            val downloaded = downloadedSourcesFor(engine, state)
+            val downloadable = if (state.sourcesForDownload) state.sources.associate { it.id to downloadBlockReason(it) } else emptyMap()
+            if (state.downloadedSources != downloaded || state.downloadableSources != downloadable)
+                updateState { it.copy(downloadedSources = downloadedSourcesFor(engine, it),
+                    downloadableSources = if (it.sourcesForDownload) it.sources.associate { row -> row.id to downloadBlockReason(row) } else emptyMap()) }
         }
     }
     scope.launch { engine.items.collect { items -> updateState { it.copy(downloads = items) } } }
@@ -49,28 +56,72 @@ internal fun ApplicationController.offlineAtStart(): Boolean {
     return engine.network.value == DownloadNetwork.None && engine.records().isNotEmpty()
 }
 
-fun ApplicationController.downloadTitle(card: Card) {
+fun ApplicationController.downloadTitle(card: Card, source: SourceCandidate? = null) {
     val profile = mutable.value.selectedProfile ?: return
-    enqueueDownloads(listOf(DownloadRequest(profile, card, seriesTitleFor(card))))
+    enqueueDownloads(listOf(DownloadRequest(profile, card, seriesTitleFor(card), source = source)))
 }
 
-fun ApplicationController.downloadSeason(series: Card, season: Long) =
-    downloadEpisodes(series) { episodes -> episodes.filter { it.identity.episode?.season == season } }
+fun ApplicationController.chooseDownloadSource(card: Card) = chooseSource(card, startPlayback = false, forDownload = true)
 
-fun ApplicationController.downloadNext(series: Card, count: Int) =
-    downloadEpisodes(series) { episodes ->
+fun ApplicationController.changeDownloadSource(id: String) {
+    val record = downloadEngine?.record(id) ?: return
+    chooseDownloadSource(record.card)
+}
+
+fun ApplicationController.downloadSeason(series: Card, season: Long, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes -> episodes.filter { it.identity.episode?.season == season } }
+
+fun ApplicationController.downloadNext(series: Card, count: Int, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes ->
         val regular = episodes.filter { (it.identity.episode?.season ?: 1L) != 0L }
         val lastWatched = regular.indexOfLast { (it.progress ?: 0.0) >= WATCHED_FRACTION }
         regular.drop(lastWatched + 1).take(count)
     }
 
-fun ApplicationController.downloadSeries(series: Card) =
-    downloadEpisodes(series) { episodes -> episodes.filter { (it.identity.episode?.season ?: 1L) != 0L } }
+fun ApplicationController.downloadSeries(series: Card, source: SourceCandidate? = null) =
+    downloadEpisodes(series, source) { episodes -> episodes.filter { (it.identity.episode?.season ?: 1L) != 0L } }
 
-fun ApplicationController.playDownload(id: String) {
+private fun downloadedSourcesFor(engine: DownloadEngine, state: ApplicationState): Map<String, String> {
+    val title = state.sourceTitle ?: return emptyMap()
+    val profile = state.selectedProfile ?: return emptyMap()
+    if (state.sources.isEmpty()) return emptyMap()
+    return downloadedSourceIds(listOfNotNull(engine.record(downloadId(profile, title))), state.sources)
+}
+
+internal fun ApplicationController.completedDownloadFor(card: Card): String? {
+    val engine = downloadEngine ?: return null
+    val profile = mutable.value.selectedProfile ?: return null
+    return engine.record(downloadId(profile, card))?.takeIf { it.state == DownloadState.Completed }?.id
+}
+
+internal fun ApplicationController.pickDownloadSource(source: SourceCandidate) {
+    val engine = downloadEngine ?: return
+    val state = mutable.value
+    val card = state.sourceTitle ?: return
+    val profile = state.selectedProfile ?: return
+    downloadBlockReason(source)?.let { reason -> updateState { it.copy(notice = AppNotice(reason)) }; return }
+    if (source.id in state.downloadedSources) return
+    val existing = engine.record(downloadId(profile, card))
+    if (existing != null) engine.replaceSource(existing.id, source) else downloadTitle(card, source)
+    backSources()
+}
+
+internal fun ApplicationController.playLocalCopy(source: SourceCandidate): Boolean {
+    val id = mutable.value.downloadedSources[source.id] ?: return false
+    if (downloadEngine?.record(id)?.state != DownloadState.Completed) return false
+    playDownload(id)
+    return true
+}
+
+fun ApplicationController.downloadOpened(id: String) { downloadEngine?.probeIfMissing(id) }
+
+fun ApplicationController.playDownload(id: String) = playDownload(id, startOver = false)
+
+internal fun ApplicationController.playDownload(id: String, startOver: Boolean) {
     val engine = downloadEngine ?: return
     val record = engine.record(id)?.takeIf { it.state == DownloadState.Completed } ?: return
     val path = engine.localFile(id) ?: return
+    engine.probeIfMissing(id)
     val returnTo = mutable.value.screen.takeIf { it != Screen.Player } ?: Screen.Downloads
     cancelSeekReopen()
     job?.cancel()
@@ -78,7 +129,7 @@ fun ApplicationController.playDownload(id: String) {
     if (mutable.value.playback != null && !completionSeen) saveProgress(false, final = true)
     releasePlaybackSession()
     val preferences = mutable.value.preferences?.preferences ?: ProfilePreferences()
-    val resume = record.positionMillis.takeIf { record.watchedAtMillis == null && it > 0 } ?: 0L
+    val resume = record.positionMillis.takeIf { !startOver && record.watchedAtMillis == null && it > 0 } ?: 0L
     val input = PlaybackInput("$DOWNLOAD_PLAYBACK_PREFIX$id", "file://$path", positionMillis = resume, profileId = record.profileId,
         durationMillis = record.durationMillis, preferences = preferences, diagnostics = playbackDiagnostics,
         mimeType = record.mimeType, title = record.card.title, startChosen = true,
@@ -188,12 +239,12 @@ private fun ApplicationController.enqueueDownloads(requests: List<DownloadReques
     updateState { it.copy(downloads = engine.items.value) }
 }
 
-private fun ApplicationController.downloadEpisodes(series: Card, choose: (List<Card>) -> List<Card>) {
+private fun ApplicationController.downloadEpisodes(series: Card, release: SourceCandidate?, choose: (List<Card>) -> List<Card>) {
     val engine = downloadEngine ?: return
     val profile = mutable.value.selectedProfile ?: return
     val detail = mutable.value.detail?.takeIf { cardLookupKey(it.item) == cardLookupKey(series) }
     val known = detail?.let { choose(it.episodes) }.orEmpty()
-    if (known.isNotEmpty()) enqueueDownloads(known.map { DownloadRequest(profile, it, series.title) })
+    if (known.isNotEmpty()) enqueueDownloads(known.map { DownloadRequest(profile, it, series.title, release = release) })
     scope.launch {
         val episodes = try { seriesEpisodes(series) }
         catch (error: CancellationException) { throw error }
@@ -202,7 +253,7 @@ private fun ApplicationController.downloadEpisodes(series: Card, choose: (List<C
             return@launch
         }
         if (mutable.value.selectedProfile != profile) return@launch
-        engine.enqueue(choose(episodes).map { DownloadRequest(profile, it, series.title) })
+        engine.enqueue(choose(episodes).map { DownloadRequest(profile, it, series.title, release = release) })
         updateState { it.copy(downloads = engine.items.value) }
     }
 }
@@ -246,8 +297,18 @@ internal class RemoteDownloadResolver(private val controller: ApplicationControl
         val context = rankingContext(controller.seriesMemoryOf(profile, record.card), controller.sourceMemory.affinity(profile), controller.capability)
         val outcome = remote.sources(record.card, SourceReuseContext(), context.device)
         val ranked = remote.rankSources(profile, outcome.candidates, context)
+        val pinned = record.source?.takeIf { record.pinned }
+        if (pinned != null) {
+            val candidate = sameRelease(pinned, ranked.rows) ?: pinned
+            downloadBlockReason(candidate)?.let { throw DownloadUnavailable(it) }
+            val delivery = try { remote.admitDownload(candidate) }
+                catch (_: DownloadSourceUnsupported) { throw DownloadUnavailable(DOWNLOAD_NEEDS_CONVERSION) }
+            controller.rememberStartedSource(profile, record.card, candidate)
+            return DownloadResolution(candidate, delivery.url, delivery.headers, delivery.mimeType
+                ?: org.viptv.app.player.playbackMimeType(candidate.presentation?.delivery_format), delivery.sizeBytes)
+        }
         val candidates = downloadCandidates(ranked, settings.maxQualityHeight)
-        val ordered = record.source?.let { stale -> sameRelease(stale, candidates) }?.let { listOf(it) + (candidates - it) } ?: candidates
+        val ordered = downloadOrder(candidates, record.source, record.release)
         for (candidate in ordered) {
             val delivery = try { remote.admitDownload(candidate) } catch (_: DownloadSourceUnsupported) { continue }
             controller.rememberStartedSource(profile, record.card, candidate)
@@ -256,5 +317,17 @@ internal class RemoteDownloadResolver(private val controller: ApplicationControl
         }
         throw DownloadUnavailable(if (candidates.isEmpty()) "No source for this title can be downloaded at this quality."
             else "No source for this title can be downloaded to this device.")
+    }
+}
+
+internal class RemoteDownloadSubtitles(private val controller: ApplicationController) : DownloadSubtitleFetcher {
+    override fun accepts(profileId: String): Boolean =
+        controller.connection != null && controller.mutable.value.selectedProfile == profileId
+
+    override suspend fun fetch(record: DownloadRecord): List<Pair<org.viptv.engine.wire.SubtitleCandidate, ByteArray>> {
+        val remote = controller.connection ?: throw IllegalStateException("offline")
+        val preferences = controller.mutable.value.preferences?.preferences ?: ProfilePreferences()
+        val chosen = downloadSubtitleChoice(remote.subtitles(record.card).candidates, preferences, record.source)
+        return chosen.map { it to remote.subtitleContent(it.id).encodeToByteArray() }
     }
 }
