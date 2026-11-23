@@ -200,7 +200,7 @@ class DownloadEngineTest {
         gate.complete(Unit)
         val done = engine.awaitState(id, DownloadState.Completed)
         assertEquals("Show.S01E01.2160p", done.sourceLabel)
-        assertEquals(0, files.size(oldFile))
+        withTimeout(10_000) { while (files.size(oldFile) > 0) kotlinx.coroutines.delay(10) }
         assertContentEquals(payload, files.bytes(engine.record(id)!!.fileName))
         assertNull(engine.record(id)!!.previous)
     }
@@ -261,6 +261,29 @@ class DownloadEngineTest {
         assertEquals(listOf("jpn", "eng"), item.tracks.filter { it.kind == "audio" }.map { it.language })
         assertEquals(listOf("/downloads/${engine.record(id)!!.fileName}"), probed.toList())
         assertEquals("mp4", item.format)
+    }
+
+    @Test fun earlierDownloadsWithoutTracksAreProbedOnceAtStartAndWhenOpened() = runBlocking<Unit> {
+        val files = MemoryFiles()
+        val old = DownloadRecord(downloadId("p", movie()), "p", movie(), state = DownloadState.Completed, bytesDone = 10, bytesTotal = 10, addedAtMillis = 1)
+        files.write(old.fileName, ByteArray(10))
+        files.writeBook(kotlinx.serialization.json.Json.encodeToString(DownloadBook.serializer(), DownloadBook(listOf(old))))
+        val probed = Collections.synchronizedList(mutableListOf<String>())
+        val probe = DownloadProbe { path -> probed += path; listOf(DownloadTrack("audio", "jpn", null, true)) }
+        val engine = engine(files, { url(1) }, probe = probe) { serve(it.headers[HttpHeaders.Range]) }
+        val item = withTimeout(10_000) { engine.items.first { list -> list.any { it.id == old.id && it.tracks.isNotEmpty() } } }.first { it.id == old.id }
+        assertEquals(listOf(DownloadTrack("audio", "jpn", null, true)), item.tracks)
+        engine.probeIfMissing(old.id)
+        kotlinx.coroutines.delay(100)
+        assertEquals(1, probed.size)
+
+        val silent = DownloadRecord(downloadId("p", episode(1)), "p", episode(1), state = DownloadState.Completed, bytesDone = 10, bytesTotal = 10, addedAtMillis = 1)
+        val laterFiles = MemoryFiles().also { it.write(silent.fileName, ByteArray(10)); it.writeBook(kotlinx.serialization.json.Json.encodeToString(DownloadBook.serializer(), DownloadBook(listOf(silent.copy(probed = true))))) }
+        val calls = Collections.synchronizedList(mutableListOf<String>())
+        val later = engine(laterFiles, { url(1) }, probe = DownloadProbe { calls += it; emptyList() }) { serve(it.headers[HttpHeaders.Range]) }
+        later.probeIfMissing(silent.id)
+        kotlinx.coroutines.delay(100)
+        assertTrue(calls.isEmpty())
     }
 
     private fun MockRequestHandleScope.serve(range: String?) = if (range == null)

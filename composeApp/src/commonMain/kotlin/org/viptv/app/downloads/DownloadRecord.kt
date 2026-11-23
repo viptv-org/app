@@ -34,6 +34,7 @@ internal data class DownloadRecord(
     val revision: Int = 0,
     val previous: DownloadPrevious? = null,
     val subtitlesFetched: Boolean = false,
+    val probed: Boolean = false,
 ) {
     val fileName: String get() = downloadFileName(id, revision)
 

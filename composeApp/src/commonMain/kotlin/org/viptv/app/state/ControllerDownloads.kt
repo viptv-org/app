@@ -113,12 +113,15 @@ internal fun ApplicationController.playLocalCopy(source: SourceCandidate): Boole
     return true
 }
 
+fun ApplicationController.downloadOpened(id: String) { downloadEngine?.probeIfMissing(id) }
+
 fun ApplicationController.playDownload(id: String) = playDownload(id, startOver = false)
 
 internal fun ApplicationController.playDownload(id: String, startOver: Boolean) {
     val engine = downloadEngine ?: return
     val record = engine.record(id)?.takeIf { it.state == DownloadState.Completed } ?: return
     val path = engine.localFile(id) ?: return
+    engine.probeIfMissing(id)
     val returnTo = mutable.value.screen.takeIf { it != Screen.Player } ?: Screen.Downloads
     cancelSeekReopen()
     job?.cancel()

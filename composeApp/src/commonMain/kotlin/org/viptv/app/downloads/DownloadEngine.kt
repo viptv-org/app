@@ -91,6 +91,7 @@ internal class DownloadEngine(
     private var resolverValue: DownloadResolver? = null
     private var subtitleFetcherValue: DownloadSubtitleFetcher? = null
     private val fetchingSubtitles = mutableSetOf<String>()
+    private val probing = mutableSetOf<String>()
 
     override val items: StateFlow<List<DownloadItem>> = itemFlow.asStateFlow()
     override val storage: StateFlow<DownloadStorage> = storageFlow.asStateFlow()
@@ -114,6 +115,11 @@ internal class DownloadEngine(
         scope.launch { while (true) { saves.receive(); save(); delay(saveDelayMillis) } }
         scope.launch { while (true) { sweep(); delay(sweepMillis) } }
         scope.launch { work() }
+        records().filter { it.state == DownloadState.Completed && !it.probed }.forEach(::probeTracks)
+    }
+
+    fun probeIfMissing(id: String) {
+        record(id)?.takeIf { it.state == DownloadState.Completed && !it.probed }?.let(::probeTracks)
     }
 
     fun wakeUp() { wake.trySend(Unit); fetchPendingSubtitles() }
@@ -436,10 +442,15 @@ internal class DownloadEngine(
 
     private fun probeTracks(record: DownloadRecord) {
         val probe = probe ?: return
+        if (!synchronized(lock) { probing.add(record.id) }) return
         val path = files.path(record.fileName)
         scope.launch {
-            val tracks = try { probe.tracks(path) } catch (error: CancellationException) { throw error } catch (_: Exception) { return@launch }
-            change(record.id) { if (it.revision == record.revision) it.copy(tracks = tracks) else it }
+            try {
+                val tracks = try { probe.tracks(path) } catch (error: CancellationException) { throw error } catch (_: Exception) { null }
+                change(record.id) { if (it.revision == record.revision) it.copy(tracks = tracks ?: it.tracks, probed = true) else it }
+            } finally {
+                synchronized(lock) { probing.remove(record.id) }
+            }
         }
     }
 
