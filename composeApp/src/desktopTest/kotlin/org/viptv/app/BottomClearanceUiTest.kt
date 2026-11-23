@@ -37,6 +37,8 @@ import org.viptv.app.features.calendar.CalendarEntry
 import org.viptv.app.features.calendar.CalendarScreen
 import org.viptv.app.features.continuewatching.ContinueWatchingPage
 import org.viptv.app.features.details.DetailsScreen
+import org.viptv.app.features.downloads.DownloadDetailsSheet
+import org.viptv.app.downloads.DownloadState
 import org.viptv.app.features.history.HistoryScreen
 import org.viptv.app.features.home.HomeScreen
 import org.viptv.app.features.library.LibraryScreen
@@ -168,6 +170,35 @@ class BottomClearanceUiTest {
             val shift = (unrestrained.lowest - cleared.lowest).toFloat()
             assertTrue(abs(shift - BottomBarHeight.value) <= 1f,
                 "${case.name}: the clearance moves the last content from ${unrestrained.lowest} to ${cleared.lowest}, not by the bar's ${BottomBarHeight.value}")
+        }
+    }
+
+    private fun sheets() = listOf(
+        Case("Download details") {
+            val downloads = FakeDownloads(listOf(FakeDownloads.item(FakeDownloads.episode(1, 1), DownloadState.Completed, done = 2L * FakeDownloads.GIB)))
+            DownloadDetailsSheet(downloads.items.value.single(), downloads.actions()) {}
+        },
+    )
+
+    @Test fun everySheetKeepsItsActionsAboveTheBar() {
+        val barTop = HEIGHT - BottomBarHeight.value
+        for (case in sheets()) {
+            val scene = ImageComposeScene(WIDTH, HEIGHT, Density(1f)) {
+                ViptvTheme(false) { Surface(Modifier.fillMaxSize(), color = Palette.background) {
+                    CompositionLocalProvider(LocalBottomBarFades provides true, LocalBottomClearance provides bottomBarClearance()) {
+                        case.content()
+                    }
+                } }
+            }
+            try {
+                frames(scene)
+                val actions = nodes(scene).filter { it.config.contains(SemanticsActions.OnClick) && label(it).isNotEmpty() }
+                assertTrue(actions.isNotEmpty(), "${case.name}: no actions")
+                actions.forEach { action ->
+                    assertTrue(action.boundsInRoot.bottom <= barTop + .5f,
+                        "${case.name}: ${label(action)} ends at ${action.boundsInRoot.bottom}, behind the bar whose box starts at $barTop")
+                }
+            } finally { scene.close() }
         }
     }
 

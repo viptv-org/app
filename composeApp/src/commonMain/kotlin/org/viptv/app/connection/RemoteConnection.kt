@@ -417,9 +417,22 @@ open class RemoteConnection(
             }
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) { onBackendReachability?.invoke(false); throw error }
-        onBackendReachability?.invoke(true)
+        onBackendReachability?.invoke(!response.gatewayUnreachable())
         return response
     }
+
+    private fun HttpResponse.gatewayUnreachable(): Boolean {
+        val code = status.value
+        return code in 520..530 || ((code == 502 || code == 504) && contentType()?.match(ContentType.Application.Json) != true)
+    }
+
+    internal suspend fun probeHealth(timeoutMillis: Long): Boolean = try {
+        ensureOpen()
+        val response = send("/api/health", HttpMethod.Get, null, null, null, timeoutMillis)
+        response.bodyAsText()
+        response.status.isSuccess() && !response.gatewayUnreachable()
+    } catch (error: CancellationException) { throw error }
+    catch (_: Exception) { false }
 
     private suspend fun requestJson(path: String, method: HttpMethod = HttpMethod.Get, body: JsonElement? = null): JsonElement =
         decode(send(path, method, body, accessToken, csrf))

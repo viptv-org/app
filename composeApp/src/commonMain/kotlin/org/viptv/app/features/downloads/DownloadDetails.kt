@@ -32,6 +32,7 @@ import com.composables.icons.lucide.X
 import org.viptv.app.components.AccessibleIconButton
 import org.viptv.app.components.SheetHandle
 import org.viptv.app.components.dismissScrim
+import org.viptv.app.components.pageBottomClearance
 import org.viptv.app.components.pointerClickable
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.DownloadState
@@ -92,7 +93,7 @@ internal fun DownloadSheetFrame(title: String, dismiss: () -> Unit, content: @Co
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
         else Modifier.align(Alignment.Center).padding(24.dp).widthIn(max = 560.dp).fillMaxWidth().heightIn(max = maxHeight - 48.dp)
             .clip(RoundedCornerShape(18.dp))
-        Column(panel.background(Palette.surface).semantics { paneTitle = title }
+        Column(panel.background(Palette.surface).then(if (sheet) Modifier.pageBottomClearance() else Modifier).semantics { paneTitle = title }
             .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown && (event.key == Key.Back || event.key == Key.Escape)) { dismiss(); true } else false

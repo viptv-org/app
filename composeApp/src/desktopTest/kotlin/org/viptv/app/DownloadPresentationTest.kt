@@ -56,6 +56,18 @@ class DownloadPresentationTest {
             storageLine(DownloadStorage((12.4 * GIB).toLong(), 31L * GIB), settings.copy(storageLimitBytes = null)))
     }
 
+    @Test fun sizesUnderAGigabyteUseMegabytes() {
+        val mib = 1L shl 20
+        assertEquals("15 MB", sizeLabel(15L * mib))
+        assertEquals("0 MB", sizeLabel(0))
+        assertEquals("1 GB", sizeLabel(GIB))
+        assertEquals("1080p · 15 MB", line(DownloadState.Completed, done = 15L * mib, total = 15L * mib))
+        assertEquals("40% · 6 of 15 MB", line(DownloadState.Downloading, done = 6L * mib, total = 15L * mib))
+        assertEquals("25% · 512 MB of 2 GB", line(DownloadState.Downloading, done = 512L * mib, total = 2L * GIB))
+        assertEquals("15 MB used · 31 GB free on this device",
+            storageLine(DownloadStorage(15L * mib, 31L * GIB), settings.copy(storageLimitBytes = null)))
+    }
+
     @Test fun deleteWatchedSkipsKeptAndUnfinishedItems() {
         val watched = item(episode(1, 1), DownloadState.Completed, watchedAt = NOW, expiresAt = NOW + 1)
         val kept = item(episode(1, 2), DownloadState.Completed, watchedAt = NOW, keep = true)

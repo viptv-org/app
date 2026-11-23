@@ -106,6 +106,19 @@ class StartupRetryTest {
         }
     }
 
+    @Test fun anUnreachableSavedSessionKeepsTheStartupScreen() = runBlocking<Unit> {
+        val fixture = Fixture(this, saved)
+        fixture.failWith = { throw IOException("no route to host") }
+        try {
+            fixture.launch()
+            val stalled = fixture.controller.state.value
+            assertTrue(startupUnreachable(stalled, browser = false), "a connectivity failure keeps the startup screen, not sign-in")
+            assertFalse(startupUnreachable(stalled, browser = true), "the browser keeps its own sign-in form")
+            delay(200)
+            assertEquals(1, fixture.refreshes(), "without offline mode the retry waits for Try again or a return to the app")
+        } finally { fixture.controller.disconnect() }
+    }
+
     @Test fun twoFailedAttemptsThenSuccessReachHomeWithoutShowingAnError() = runBlocking<Unit> {
         val fixture = Fixture(this, saved, delays = listOf(0L, 0L, 0L))
         fixture.failWith = { attempt -> if (attempt <= 2) throw IOException("the network is not up yet") }

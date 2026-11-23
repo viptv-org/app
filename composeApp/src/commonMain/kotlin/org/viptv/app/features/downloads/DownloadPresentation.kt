@@ -59,7 +59,17 @@ internal fun gigabytes(bytes: Long): String {
     return if (tenths % 10 == 0L) "${tenths / 10}" else "${tenths / 10}.${tenths % 10}"
 }
 
-internal fun sizeLabel(bytes: Long): String = "${gigabytes(bytes)} GB"
+private const val MIB = 1L shl 20
+
+internal fun sizeLabel(bytes: Long): String = if (bytes < GIB) "${megabytes(bytes)} MB" else "${gigabytes(bytes)} GB"
+
+private fun megabytes(bytes: Long): Long = kotlin.math.round(bytes.coerceAtLeast(0).toDouble() / MIB).toLong()
+
+private fun sizeAmount(bytes: Long, total: Long): String = when {
+    bytes >= GIB && total >= GIB -> gigabytes(bytes)
+    bytes < GIB && total < GIB -> megabytes(bytes).toString()
+    else -> sizeLabel(bytes)
+}
 
 internal fun expiryLabel(remainingMillis: Long): String {
     val minutes = (remainingMillis.coerceAtLeast(0) + 59_999) / 60_000
@@ -74,7 +84,7 @@ internal fun downloadStateLine(item: DownloadItem, settings: DownloadSettings, n
     DownloadState.Queued -> "Queued"
     DownloadState.Resolving -> "Finding a source"
     DownloadState.Downloading -> item.bytesTotal?.takeIf { it > 0 }
-        ?.let { total -> "${item.percent()}% · ${gigabytes(item.bytesDone)} of ${sizeLabel(total)}" }
+        ?.let { total -> "${item.percent()}% · ${sizeAmount(item.bytesDone, total)} of ${sizeLabel(total)}" }
         ?: sizeLabel(item.bytesDone)
     DownloadState.Paused -> "Paused · ${item.percent()}%"
     DownloadState.WaitingForNetwork -> if (settings.wifiOnly) "Waiting for Wi‑Fi" else "Waiting for a connection"

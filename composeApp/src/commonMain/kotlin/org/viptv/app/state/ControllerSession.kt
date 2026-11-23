@@ -1,13 +1,13 @@
 package org.viptv.app.state
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.viptv.app.connection.*
 
 fun ApplicationController.restore(localDatabase: String? = null) = run {
     startupDatabase = localDatabase
     if (offlineAtStart()) {
-        offlineStart = true
-        updateState { it.copy(starting = false, screen = Screen.Downloads, offline = true) }
+        startOffline()
         return@run
     }
     updateState { it.copy(starting = true) }
@@ -38,7 +38,7 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
         return@run
     }
     val saved = (savedConnection as? SavedConnection.Remote)?.session ?: return@run
-    val restored = launchRestore(operation, connect = {
+    val connect: suspend () -> RemoteConnection? = {
         try { remoteFactory(saved.origin, sessionStore) }
         catch (_: IllegalArgumentException) {
             withNativeSessionStoreLock(sessionStore) {
@@ -46,20 +46,48 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
             }
             null
         }
-    }, restore = { remote -> remote.restoreFromStore() })
-    if (generation != operation) return@run
-    if (restored == null) { connection?.close(); connection = null; return@run }
-    if (offlineStart && restored.selected != null) {
-        offlineStart = false
-        accept(restored, Screen.Downloads)
+    }
+    if (!downloadEngine?.records().isNullOrEmpty()) {
+        restoreOrGoOffline(operation, connect() ?: return@run)
         return@run
     }
+    val restored = launchRestore(operation, connect, { remote -> remote.restoreFromStore() }, retryUnattended = true)
+    if (generation != operation) return@run
+    if (restored == null) { connection?.close(); connection = null; return@run }
     accept(restored)
     resumeNavigation()
 }
 
+internal class PendingRestore(val remote: RemoteConnection, val result: Deferred<Result<Bootstrap>>)
+
+private fun ApplicationController.pendingRestore(remote: RemoteConnection) = PendingRestore(remote, scope.async {
+    try { Result.success(remote.restoreFromStore()) }
+    catch (error: CancellationException) { throw error }
+    catch (error: Exception) { Result.failure(error) }
+})
+
+// The device refresh can't be cancelled without tearing a token rotation, so start-up stops waiting instead.
+private suspend fun ApplicationController.restoreOrGoOffline(operation: Long, remote: RemoteConnection) {
+    val pending = pendingRestore(remote)
+    val early = withTimeoutOrNull(offlineStartMillis) { pending.result.await() }
+    if (generation != operation) { pending.result.cancel(); remote.close(); return }
+    val failure = early?.exceptionOrNull() as? Exception
+    when {
+        early == null -> startOffline(pending)
+        failure == null -> { connection = remote; accept(early.getOrThrow()); resumeNavigation() }
+        failure.rejectsSavedSession() -> { remote.close(); rejectSavedSession(failure) }
+        else -> { remote.close(); startOffline() }
+    }
+}
+
+private fun ApplicationController.rejectSavedSession(failure: Exception) {
+    val expired = failure is RemoteFailure && failure.sessionExpired
+    updateState { it.copy(startupRetryable = !expired, error = if (expired) "Session expired. Sign in again." else failureMessage(failure)) }
+}
+
 private suspend fun ApplicationController.launchRestore(operation: Long, connect: suspend () -> RemoteConnection?,
-    restore: suspend (RemoteConnection) -> Bootstrap?): Bootstrap? {
+    restore: suspend (RemoteConnection) -> Bootstrap?, retryDelays: List<Long> = startupRetryDelays,
+    retryUnattended: Boolean = false): Bootstrap? {
     var attempt = 0
     while (true) {
         val remote = connect() ?: return null
@@ -78,7 +106,8 @@ private suspend fun ApplicationController.launchRestore(operation: Long, connect
             remote.close(); connection = null
             error
         }
-        if (!failure.retriesStartup() || attempt >= startupRetryDelays.size) {
+        if (!failure.retriesStartup() || attempt >= retryDelays.size) {
+            if (retryUnattended && downloadEngine != null && !failure.rejectsSavedSession()) scheduleStartupRetry()
             when (failure) {
                 is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
                     error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
@@ -89,7 +118,7 @@ private suspend fun ApplicationController.launchRestore(operation: Long, connect
             }
             return null
         }
-        delay(startupRetryDelays[attempt++])
+        delay(retryDelays[attempt++])
     }
 }
 
@@ -101,13 +130,92 @@ private fun Exception.retriesStartup(): Boolean = when (this) {
     else -> true
 }
 
+private fun Exception.rejectsSavedSession(): Boolean =
+    (this is RemoteFailure && sessionExpired) || this is LocalFailure || this is IllegalArgumentException
+
+internal fun ApplicationController.reconnectDelay(failures: Int): Long =
+    reconnectDelays[(failures - 1).coerceIn(0, reconnectDelays.lastIndex)]
+
+private fun ApplicationController.scheduleStartupRetry() {
+    startupRetryJob?.cancel()
+    val failures = ++startupFailures
+    startupRetryJob = scope.launch {
+        withTimeoutOrNull(reconnectDelay(failures)) { reconnectWake.receive() }
+        retryStartup()
+    }
+}
+
 // A saved session the server or the network failed to reach is retried from here: no sign-in and no new process.
 fun ApplicationController.retryStartup() {
+    if (offlineStart) { reconnectWake.trySend(Unit); return }
     if (!mutable.value.startupRetryable || mutable.value.busy) return
+    updateState { it.copy(starting = true) }
     restore(startupDatabase)
 }
 
+internal fun ApplicationController.startOffline(pending: PendingRestore? = null) {
+    offlineStart = true
+    updateState { it.copy(starting = false, screen = Screen.Downloads, offline = true, error = null, startupRetryable = false) }
+    reconnectJob?.cancel()
+    reconnectJob = scope.launch {
+        var failures = 0
+        var inFlight = pending
+        while (offlineStart) {
+            if (failures > 0) withTimeoutOrNull(reconnectDelay(failures)) { reconnectWake.receive() }
+            if (inFlight == null) downloadEngine?.network?.first { it != org.viptv.app.downloads.DownloadNetwork.None }
+            if (!offlineStart || connection != null || local != null) { inFlight?.let { it.result.cancel(); it.remote.close() }; return@launch }
+            if (reconnectOnce(inFlight)) return@launch
+            inFlight = null
+            failures++
+        }
+    }
+}
+
+private suspend fun ApplicationController.reconnectOnce(pending: PendingRestore?): Boolean {
+    val attempt = pending ?: savedRemote()?.let(::pendingRestore)
+    if (attempt == null) {
+        offlineStart = false
+        restore(startupDatabase)
+        return true
+    }
+    val remote = attempt.remote
+    val outcome = try { attempt.result.await() }
+        catch (error: CancellationException) { attempt.result.cancel(); remote.close(); throw error }
+    val failure = outcome.exceptionOrNull() as? Exception
+    if (failure != null) {
+        remote.close()
+        if (!failure.rejectsSavedSession()) return false
+        offlineStart = false
+        mutable.value = ApplicationState(error = if (failure is RemoteFailure && failure.sessionExpired) "Session expired. Sign in again." else failureMessage(failure))
+        return true
+    }
+    val restored = outcome.getOrThrow()
+    try { mutable.first { it.screen != Screen.Player } }
+    catch (error: CancellationException) { remote.close(); throw error }
+    if (!offlineStart || connection != null || local != null) { remote.close(); return true }
+    offlineStart = false
+    connection = remote
+    accept(restored, mutable.value.screen.takeIf { restored.selected != null })
+    return true
+}
+
+private suspend fun ApplicationController.savedRemote(): RemoteConnection? {
+    val saved = try { (sessionStore.savedConnection() as? SavedConnection.Remote)?.session }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { null }
+    return saved?.let { session -> try { remoteFactory(session.origin, sessionStore) } catch (_: IllegalArgumentException) { null } }
+}
+
+private fun ApplicationController.stopReconnecting() {
+    offlineStart = false
+    reconnectJob?.cancel(); reconnectJob = null
+    startupRetryJob?.cancel(); startupRetryJob = null
+    startupFailures = 0
+    healthProbe?.cancel(); healthProbe = null
+}
+
 fun ApplicationController.connect(origin: String, username: String, password: String) {
+    stopReconnecting()
     discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
@@ -180,6 +288,7 @@ fun ApplicationController.leaveLocal() {
 }
 
 fun ApplicationController.disconnect() {
+    stopReconnecting()
     discardStremioImport()
     cancelDevicePairing()
     libraryImportRefresh?.cancel()
@@ -204,6 +313,7 @@ fun ApplicationController.disconnect() {
 }
 
 fun ApplicationController.signOut() = run {
+    stopReconnecting()
     discardStremioImport()
     libraryImportRefresh?.cancel()
     calendarReread?.cancel(); calendarReread = null
@@ -223,6 +333,7 @@ fun ApplicationController.signOut() = run {
 
 internal fun ApplicationController.expireSession(remote: RemoteConnection?, device: LocalConnection?) {
     if (remote == null || connection !== remote || local !== device) return
+    stopReconnecting()
     releasePlaybackSession()
     resetLiveRequests()
     connection = null
@@ -231,6 +342,8 @@ internal fun ApplicationController.expireSession(remote: RemoteConnection?, devi
 }
 
 internal fun ApplicationController.accept(value: Bootstrap, screen: Screen? = null, busy: Boolean = false) {
+    startupRetryJob?.cancel(); startupRetryJob = null
+    startupFailures = 0
     startSnapshot(value)
     val switchesProfile = value.selected != null && value.selected != mutable.value.selectedProfile
     mutable.value = ApplicationState(screen = screen ?: if (value.selected == null) Screen.Profiles else Screen.Home, busy = busy,

@@ -46,7 +46,8 @@ object AndroidDownloads {
     private fun networkState(context: Context): StateFlow<DownloadNetwork> {
         val manager = context.getSystemService(ConnectivityManager::class.java)
         fun kind(capabilities: NetworkCapabilities?): DownloadNetwork = when {
-            capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) -> DownloadNetwork.None
+            capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) -> DownloadNetwork.None
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) -> DownloadNetwork.Unmetered
             else -> DownloadNetwork.Metered
         }

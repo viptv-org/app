@@ -28,7 +28,7 @@ internal fun ApplicationController.startDownloads() {
     scope.launch {
         mutable.collect { state ->
             val items = engine.items.value
-            val offline = engine.network.value == DownloadNetwork.None
+            val offline = serverOffline(state)
             if (state.downloads != items || state.offline != offline) updateState { it.copy(downloads = items, offline = offline) }
             val downloaded = downloadedSourcesFor(engine, state)
             val downloadable = if (state.sourcesForDownload) state.sources.associate { it.id to downloadBlockReason(it) } else emptyMap()
@@ -40,10 +40,10 @@ internal fun ApplicationController.startDownloads() {
     scope.launch { engine.items.collect { items -> updateState { it.copy(downloads = items) } } }
     scope.launch {
         engine.network.collect { network ->
-            updateState { it.copy(offline = network == DownloadNetwork.None) }
+            updateState { it.copy(offline = serverOffline(it)) }
             if (network != DownloadNetwork.None) {
+                if (offlineStart) reconnectWake.trySend(Unit)
                 syncOfflineProgress()
-                if (offlineStart && connection == null && mutable.value.screen == Screen.Downloads) restore(startupDatabase)
             }
         }
     }
@@ -142,8 +142,18 @@ internal fun ApplicationController.playDownload(id: String, startOver: Boolean) 
 
 private fun DownloadRecord.localSource(): SourceCandidate = source ?: SourceCandidate(id, "download", card.title)
 
-internal fun ApplicationController.downloadsOnline(): Boolean =
-    connection != null && downloadEngine?.network?.value != DownloadNetwork.None
+internal fun ApplicationController.serverOffline(state: ApplicationState = mutable.value): Boolean {
+    val engine = downloadEngine ?: return false
+    return engine.network.value == DownloadNetwork.None || offlineStart || state.backendUnreachableSince != null
+}
+
+internal fun ApplicationController.downloadsOnline(): Boolean = connection != null && !serverOffline()
+
+internal fun ApplicationController.offlineWithoutCopy(): Boolean {
+    if (!serverOffline()) return false
+    showNotice(org.viptv.app.features.downloads.OFFLINE_BANNER)
+    return true
+}
 
 internal suspend fun ApplicationController.openDownload(id: String, profile: String, positionMillis: Long?): PlaybackInput {
     val engine = requireNotNull(downloadEngine)
@@ -319,7 +329,7 @@ private fun ApplicationController.noteWatched(input: PlaybackInput, profile: Str
 
 internal suspend fun ApplicationController.syncOfflineProgress() {
     val engine = downloadEngine ?: return
-    if (engine.network.value == DownloadNetwork.None) return
+    if (serverOffline()) return
     offlineProgressGate.withLock {
         val remote = connection ?: return
         val profile = mutable.value.selectedProfile ?: return
