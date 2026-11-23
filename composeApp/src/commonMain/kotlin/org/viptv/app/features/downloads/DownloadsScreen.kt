@@ -168,6 +168,7 @@ internal fun DownloadRow(item: DownloadItem, actions: DownloadActions, settings:
     var menu by remember { mutableStateOf(false) }
     val failed = item.state == DownloadState.Failed
     val expiring = item.state == DownloadState.Completed && item.watched && !item.keep && item.expiresAtMillis != null
+    Column(Modifier.fillMaxWidth()) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).pointerClickable(shape = RoundedCornerShape(12.dp)) {
         if (item.state == DownloadState.Completed) actions.play(item.id) else menu = true
     }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -185,15 +186,18 @@ internal fun DownloadRow(item: DownloadItem, actions: DownloadActions, settings:
             Text(downloadStateLine(item, settings, nowMillis), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 color = if (failed || item.state == DownloadState.WaitingForSpace) Palette.danger else Palette.secondary)
             if (failed) item.failure?.let { Text(it, fontSize = 13.sp, color = Palette.secondary, maxLines = 2) }
-            if (failed) Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PillButton("Try again", { actions.retry(item) })
-                PillButton("Remove", { actions.downloads.delete(item.id) })
-            } else if (expiring) PillButton("Keep", { actions.downloads.keep(item.id, true) }, Modifier.padding(top = 4.dp))
         }
         Box {
             DownloadControl(item.card, item, actions)
             DownloadItemMenu(item, actions, menu) { menu = false }
         }
+    }
+    if (failed || expiring) Row(Modifier.padding(start = 124.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (failed) {
+            PillButton("Try again", { actions.retry(item) })
+            PillButton("Remove", { actions.downloads.delete(item.id) })
+        } else PillButton("Keep", { actions.downloads.keep(item.id, true) })
+    }
     }
 }
 

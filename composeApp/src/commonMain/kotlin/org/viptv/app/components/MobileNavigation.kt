@@ -30,7 +30,9 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
         Row(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(32.dp))
             .background(Color(0xFF292827).copy(alpha = .94f)).border(1.dp, Color.White.copy(alpha = .1f), RoundedCornerShape(32.dp))
             .padding(4.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            phoneTabDestinations.withDownloads(LocalDownloadsShown.current, Screen.Library).forEach { destination ->
+            val tabs = phoneTabDestinations.withDownloads(LocalDownloadsShown.current, Screen.Library)
+            val tracking = if (tabs.size > phoneTabDestinations.size) (-0.25).sp else androidx.compose.ui.unit.TextUnit.Unspecified
+            tabs.forEach { destination ->
                 val pillFill = animateColorAsState(
                     if (selected == destination.screen) Color.White.copy(alpha = .09f) else Color.Transparent,
                     responseSpec(), label = "Bottom nav pill fill").value
@@ -39,7 +41,8 @@ fun BottomNavigation(selected: Screen, navigate: (Screen) -> Unit) {
                     .pointerClickable(shape = RoundedCornerShape(28.dp)) { navigate(destination.screen) }, horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center) {
                     Icon(destination.icon, destination.label, Modifier.size(22.dp), tint = if (selected == destination.screen) Palette.text else Palette.secondary)
-                    Text(destination.label, color = Palette.text, fontSize = 10.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(destination.label, color = Palette.text, fontSize = 10.sp, lineHeight = 14.sp, letterSpacing = tracking,
+                        maxLines = 1, softWrap = false, overflow = TextOverflow.Visible)
                 }
             }
         }
