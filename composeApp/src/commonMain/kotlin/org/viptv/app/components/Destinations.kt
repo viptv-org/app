@@ -13,6 +13,13 @@ internal val LocalAnimeAvailable = compositionLocalOf { true }
 
 internal val LocalHeaderPills = compositionLocalOf { false }
 
+internal val LocalDownloadsShown = compositionLocalOf { false }
+
+internal val downloadsDestination = Destination(Screen.Downloads, "Downloads", Lucide.Download)
+
+internal fun List<Destination>.withDownloads(shown: Boolean, after: Screen): List<Destination> =
+    if (!shown) this else flatMap { if (it.screen == after) listOf(it, downloadsDestination) else listOf(it) }
+
 internal val TabletMinSide = 600.dp
 
 internal fun phoneShell(width: Dp, height: Dp, television: Boolean, touch: Boolean) =

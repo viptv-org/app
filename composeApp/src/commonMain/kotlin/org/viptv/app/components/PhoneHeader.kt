@@ -22,7 +22,7 @@ internal fun PhoneHeader(screen: Screen, profile: Profile?, navigate: (Screen) -
     val remote = LocalHeaderRemote.current?.takeIf { RemoteHeaderPages.shows(screen) }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (screen in listOf(Screen.Library, Screen.Live, Screen.Calendar)) Text(when (screen) { Screen.Library -> "My List"; Screen.Live -> "Live"; else -> "Calendar" }, fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else Brand(28.dp, 20.sp, 9.dp)
+            if (screen in listOf(Screen.Library, Screen.Live, Screen.Calendar, Screen.Downloads)) Text(when (screen) { Screen.Library -> "My List"; Screen.Live -> "Live"; Screen.Downloads -> "Downloads"; else -> "Calendar" }, fontSize = 28.sp, letterSpacing = (-0.56).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else Brand(28.dp, 20.sp, 9.dp)
             Spacer(Modifier.weight(1f))
             remote?.invoke()
             if (remote != null) Spacer(Modifier.width(8.dp))

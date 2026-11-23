@@ -122,7 +122,17 @@ fun App(
             chooseSource = controller::chooseSource, playFromStart = controller::playTitleFromStart,
             markWatched = if (localMode) null else controller::toggleWatched)
     }
-    val bannerSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) }
+    val engineDownloads = controller.downloads.takeIf { !television && !browser }
+    val downloadActions = remember(controller, engineDownloads) {
+        engineDownloads?.let { downloads ->
+            org.viptv.app.features.downloads.DownloadActions(downloads, controller::downloadTitle, controller::downloadSeason,
+                controller::downloadNext, controller::downloadSeries, controller::playDownload,
+                openPage = { controller.navigate(Screen.Downloads) }, notice = { controller.showNotice(it) })
+        }
+    }
+    val downloadIndex = downloadActions?.let { org.viptv.app.features.downloads.rememberDownloadIndex(it) } ?: emptyMap()
+    val offlineBanner = downloadActions != null && state.offline && offlineBannerScreen(state.screen)
+    val bannerSince = state.backendUnreachableSince?.takeIf { state.backendBannerShown && backendBannerScreen(state.screen) && !offlineBanner }
     val notice = state.notice?.takeIf { backendBannerScreen(state.screen) }
     val bannerFocus = remember { TvBannerFocus() }
     val noticeFocus = remember { TvNoticeFocus() }
@@ -161,7 +171,10 @@ fun App(
         LocalCardActions provides cardActions, LocalWatchOnTv provides watchOnTvState,
         LocalPendingAction provides state.pendingAction,
         org.viptv.app.components.LocalPendingMutation provides pendingMutation,
-        org.viptv.app.features.details.LocalEpisodeFiller provides episodeFiller) {
+        org.viptv.app.features.details.LocalEpisodeFiller provides episodeFiller,
+        org.viptv.app.features.downloads.LocalDownloadActions provides downloadActions,
+        org.viptv.app.features.downloads.LocalDownloadIndex provides downloadIndex,
+        LocalDownloadsShown provides (downloadActions != null)) {
     ViptvTheme(television, pointer = browser || desktopChrome, activationKeys = surface.bindsActivationKeys) {
         BoxWithConstraints(Modifier.fillMaxSize()
             // Observed, never consumed: an aged Home waits until the viewer stops interacting.
@@ -254,6 +267,9 @@ fun App(
                         if (phone) PhoneHeader(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
                         else if (tablet) TabletHeader(navigationScreen)
                     }
+                    if (offlineBanner) Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+                        org.viptv.app.features.downloads.OfflineBanner({ controller.navigate(Screen.Downloads) })
+                    }
 
                     Row(Modifier.weight(1f)) {
                         if (tablet && state.screen !in listOf(Screen.Details, Screen.Sources)) TabletNavigation(navigationScreen, state.profiles.find { it.id == state.selectedProfile }, controller::navigate)
@@ -306,6 +322,11 @@ fun App(
                             }
                             Screen.Library -> routes.SaveableStateProvider("${state.selectedProfile}:library") {
                                 org.viptv.app.features.library.LibraryRoute(state, controller, television)
+                            }
+                            Screen.Downloads -> routes.SaveableStateProvider("${state.selectedProfile}:downloads") {
+                                downloadActions?.let { actions ->
+                                    org.viptv.app.features.downloads.DownloadsScreen(actions, state.offline, { controller.navigate(Screen.Home) }, showTitle = !phone)
+                                }
                             }
                             Screen.ContinueWatching -> routes.SaveableStateProvider("${state.selectedProfile}:continue") {
                                 org.viptv.app.features.continuewatching.ContinueWatchingRoute(state, controller, television)
@@ -410,7 +431,9 @@ private fun navHighlightPage(detailReturnScreen: Screen): Screen =
 
 private val DETAIL_BACKDROP_PAGES = setOf(
     Screen.Home, Screen.Discover, Screen.Movies, Screen.Series, Screen.Anime, Screen.Search,
-    Screen.Calendar, Screen.Live, Screen.Library, Screen.ContinueWatching, Screen.History, Screen.Settings)
+    Screen.Calendar, Screen.Live, Screen.Library, Screen.ContinueWatching, Screen.History, Screen.Settings, Screen.Downloads)
+
+internal fun offlineBannerScreen(screen: Screen): Boolean = backendBannerScreen(screen) && screen != Screen.Downloads
 
 // Details, Sources and Player are not pages, so a backdrop without a real page behind it falls back to Home.
 private fun detailBackdrop(detailReturnScreen: Screen): Screen =

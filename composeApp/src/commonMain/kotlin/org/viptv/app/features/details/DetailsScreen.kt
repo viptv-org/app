@@ -98,10 +98,10 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
             detail?.let { value ->
                 item(key = "hero") {
                     if (phone) PhoneDetailHero(value.item, sources, save, saved, heroEpisode, sourcePreview = sourcePreview, chooseSource = chooseSource,
-                        playFromStart = playFromStart)
+                        playFromStart = playFromStart, downloadEpisodes = value.episodes, downloadSeason = selected?.number)
                     else Box(Modifier.padding(bottom = 20.dp)) {
                         DesktopDetailHero(value.item, sources, save, saved, playFromStart, chooseSource = chooseSource,
-                            sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode)
+                            sourceLabel = defaultSourceLabel, resumeEpisode = heroEpisode, downloadEpisodes = value.episodes, downloadSeason = selected?.number)
                     }
                 }
                 if (failures.isNotEmpty() && !busy && error == null) item(key = "addon-failure") {
@@ -132,9 +132,9 @@ fun DetailsScreen(detail: DetailSnapshot?, busy: Boolean, error: String?, back: 
                                 }
                             }
                             if (phone) itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                DetailEpisodeCard(resume.shown(episode), true, { chooseSource(episode) }, Modifier.fillMaxWidth().padding(horizontal = gutter).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow), download = true)
                             } else itemsIndexed(season.episodes, key = { _, episode -> episodeKey(episode) }) { index, episode ->
-                                DesktopEpisodeRow(resume.shown(episode), { chooseSource(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow))
+                                DesktopEpisodeRow(resume.shown(episode), { chooseSource(episode) }, modifier = Modifier.padding(if (desktop) PaddingValues(start = 40.dp, end = 40.dp) else PaddingValues(horizontal = gutter)).listItemEntrance(index, entrance.animate).graphicsLayer { alpha = reveal.value }, comingUp = episodeUpcoming(episode, latestReleased, airDateNow), download = true)
                             }
                         }
                         if (value.recommendations.isNotEmpty() && (!desktop && section == DetailSection.Related || desktop)) item(key = "related") {

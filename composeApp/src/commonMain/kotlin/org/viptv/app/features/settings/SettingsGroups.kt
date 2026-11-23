@@ -26,6 +26,7 @@ internal enum class SettingsRow(val group: SettingsGroup, val key: String, val l
     SubtitlesAudio(SettingsGroup.Playback, "Subtitles & audio", "Subtitles & audio", Lucide.Captions),
 
     Display(SettingsGroup.ThisDevice, "Display", "Display", Lucide.Monitor),
+    Downloads(SettingsGroup.ThisDevice, downloadsSection, downloadsSection, Lucide.Download),
     WatchOnTv(SettingsGroup.ThisDevice, "Watch on TV", "Watch on TV", Lucide.Cast),
     About(SettingsGroup.ThisDevice, "About", "About", Lucide.Info),
     Help(SettingsGroup.ThisDevice, "Help", "Help", Lucide.Info),
@@ -59,13 +60,14 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     devices: Boolean, addDevice: Boolean, information: Boolean,
     householdPin: Boolean = false, sourceIntegrations: Boolean = false, deleteAccount: Boolean = false,
     linkedServices: Boolean = false, password: Boolean = false, xtreamConnections: Boolean = false,
-    vodMatches: Boolean = false, gateways: Boolean = false, watchOnTv: Boolean = false): Set<SettingsRow> = buildSet {
+    vodMatches: Boolean = false, gateways: Boolean = false, watchOnTv: Boolean = false, downloads: Boolean = false): Set<SettingsRow> = buildSet {
     add(SettingsRow.Profile)
     if (linkedServices) add(SettingsRow.LinkedServices)
     if (parental) add(SettingsRow.ParentalControls)
     if (stremioImport) add(SettingsRow.ImportFromStremio)
     if (playback) { add(SettingsRow.Playback); add(SettingsRow.SubtitlesAudio) }
     if (watchOnTv) add(SettingsRow.WatchOnTv)
+    if (downloads) add(SettingsRow.Downloads)
     if (information) { add(SettingsRow.About); add(SettingsRow.Help) }
     if (account) add(SettingsRow.Account)
     if (password) add(SettingsRow.Password)
@@ -80,6 +82,8 @@ internal fun availableRows(parental: Boolean, stremioImport: Boolean, playback: 
     add(SettingsRow.SignOut)
     if (deleteAccount) add(SettingsRow.DeleteAccount)
 }
+
+internal const val downloadsSection = "Downloads"
 
 internal const val changeConnectionTitle = "Change connection?"
 

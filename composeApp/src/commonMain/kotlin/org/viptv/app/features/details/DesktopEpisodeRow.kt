@@ -31,7 +31,7 @@ import org.viptv.app.theme.Palette
 import org.viptv.engine.wire.Card
 
 @Composable
-internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boolean = false, modifier: Modifier = Modifier, comingUp: Boolean = false, showAirDate: Boolean = true) {
+internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boolean = false, modifier: Modifier = Modifier, comingUp: Boolean = false, showAirDate: Boolean = true, download: Boolean = false) {
     val number = episode.identity.episode?.episode?.toString().orEmpty()
     val watched = (episode.progress ?: 0.0) >= 1.0 || episode.badges.contains("Watched")
     var showUpcoming by remember { mutableStateOf(false) }
@@ -77,6 +77,7 @@ internal fun DesktopEpisodeRow(episode: Card, play: (Card) -> Unit, browser: Boo
                 else -> episode.subtitle ?: ""
             }, fontSize = 13.sp, color = Palette.secondary)
         }
+        if (download && !comingUp) org.viptv.app.features.downloads.EpisodeDownloadControl(episode)
     }
     if (showUpcoming) EpisodeUpcomingDialog(episode, { showUpcoming = false })
 }

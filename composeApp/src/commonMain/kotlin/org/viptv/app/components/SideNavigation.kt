@@ -28,7 +28,9 @@ import org.viptv.app.resources.ic_remote_zip
 
 @Composable
 fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
-    val destinations = if (LocalAnimeAvailable.current) desktopDestinations else desktopDestinations.filter { it.screen != Screen.Anime }
+    val destinations = (if (LocalAnimeAvailable.current) desktopDestinations else desktopDestinations.filter { it.screen != Screen.Anime })
+        .withDownloads(LocalDownloadsShown.current, Screen.History)
+    val tracking = if (destinations.any { it.screen == Screen.Downloads }) (-0.25).sp else androidx.compose.ui.unit.TextUnit.Unspecified
     Column(Modifier.width(72.dp).fillMaxHeight().verticalScroll(rememberScrollState()).background(Palette.background), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(12.dp))
         destinations.forEach { destination ->
@@ -51,7 +53,8 @@ fun SideNavigation(selected: Screen, navigate: (Screen) -> Unit) {
                 if (destination.screen == Screen.Live) Icon(painterResource(Res.drawable.ic_remote_zip), destination.label, Modifier.size(20.dp), tint = tint)
                 else Icon(destination.icon, destination.label, Modifier.size(20.dp), tint = tint)
                 Spacer(Modifier.height(3.dp))
-                Text(destination.label, fontSize = 10.sp, lineHeight = 12.sp, color = Palette.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(destination.label, fontSize = 10.sp, lineHeight = 12.sp, letterSpacing = tracking, color = Palette.text, maxLines = 1,
+                    softWrap = false, overflow = TextOverflow.Visible)
             }
             if (destination.screen != Screen.Calendar) Spacer(Modifier.height(4.dp))
         }
