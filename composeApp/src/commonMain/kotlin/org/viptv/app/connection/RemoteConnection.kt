@@ -423,7 +423,7 @@ open class RemoteConnection(
 
     private fun HttpResponse.gatewayUnreachable(): Boolean {
         val code = status.value
-        return code in 520..530 || (code in 502..504 && contentType()?.match(ContentType.Application.Json) != true)
+        return code in 520..530 || ((code == 502 || code == 504) && contentType()?.match(ContentType.Application.Json) != true)
     }
 
     internal suspend fun probeHealth(timeoutMillis: Long): Boolean = try {

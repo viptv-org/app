@@ -107,7 +107,7 @@ private suspend fun ApplicationController.launchRestore(operation: Long, connect
             error
         }
         if (!failure.retriesStartup() || attempt >= retryDelays.size) {
-            if (retryUnattended && !failure.rejectsSavedSession()) scheduleStartupRetry()
+            if (retryUnattended && downloadEngine != null && !failure.rejectsSavedSession()) scheduleStartupRetry()
             when (failure) {
                 is RemoteFailure -> updateState { next -> next.copy(startupRetryable = !failure.sessionExpired,
                     error = if (failure.sessionExpired) "Session expired. Sign in again." else failure.message) }
@@ -149,6 +149,7 @@ private fun ApplicationController.scheduleStartupRetry() {
 fun ApplicationController.retryStartup() {
     if (offlineStart) { reconnectWake.trySend(Unit); return }
     if (!mutable.value.startupRetryable || mutable.value.busy) return
+    updateState { it.copy(starting = true) }
     restore(startupDatabase)
 }
 

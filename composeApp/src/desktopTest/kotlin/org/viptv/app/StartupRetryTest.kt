@@ -8,7 +8,6 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.first
 import org.viptv.app.connection.*
 import org.viptv.app.state.*
 import java.io.IOException
@@ -18,8 +17,7 @@ import kotlin.test.*
 class StartupRetryTest {
     private val saved = SavedRemoteSession("https://fixture.example", "r1")
 
-    private class Fixture(scope: CoroutineScope, private val session: SavedRemoteSession, delays: List<Long> = emptyList(),
-        reconnect: List<Long> = listOf(60_000L)) {
+    private class Fixture(scope: CoroutineScope, private val session: SavedRemoteSession, delays: List<Long> = emptyList()) {
         val requests = EngineRequests<String>()
         var failWith: (Int) -> Unit = {}
         var gate: CompletableDeferred<Unit>? = null
@@ -35,7 +33,7 @@ class StartupRetryTest {
         val controller: ApplicationController
 
         init {
-            controller = ApplicationController(scope, store, startupRetryDelays = delays, reconnectDelays = reconnect, remoteFactory = { origin, storage ->
+            controller = ApplicationController(scope, store, startupRetryDelays = delays, remoteFactory = { origin, storage ->
                 // A connection closes its own client, so every restore builds its own.
                 RemoteConnection(origin, storage, HttpClient(MockEngine { request -> answer(request.url.encodedPath) }) { configureTransport() },
                     browserMode = false)
@@ -108,32 +106,16 @@ class StartupRetryTest {
         }
     }
 
-    @Test fun anUnreachableSavedSessionKeepsTheStartupScreenAndRetriesOnItsOwn() = runBlocking<Unit> {
-        val fixture = Fixture(this, saved, reconnect = listOf(50L))
+    @Test fun anUnreachableSavedSessionKeepsTheStartupScreen() = runBlocking<Unit> {
+        val fixture = Fixture(this, saved)
         fixture.failWith = { throw IOException("no route to host") }
         try {
             fixture.launch()
             val stalled = fixture.controller.state.value
             assertTrue(startupUnreachable(stalled, browser = false), "a connectivity failure keeps the startup screen, not sign-in")
             assertFalse(startupUnreachable(stalled, browser = true), "the browser keeps its own sign-in form")
-            withTimeout(5_000) { while (fixture.refreshes() < 3) delay(10) }
-
-            fixture.failWith = {}
-            val restored = withTimeout(5_000) { fixture.controller.state.first { it.screen == Screen.Home } }
-            assertEquals("p1", restored.selectedProfile)
-            assertFalse(startupUnreachable(restored, browser = false))
-            assertEquals(0, fixture.logins(), "No sign-in is needed")
-        } finally { fixture.controller.disconnect() }
-    }
-
-    @Test fun anExpiredSessionIsNotRetriedOnItsOwn() = runBlocking<Unit> {
-        val fixture = Fixture(this, saved, reconnect = listOf(20L))
-        fixture.failWith = { throw RemoteFailure(401, "Sign in to continue.", sessionExpired = true) }
-        try {
-            fixture.launch()
-            assertFalse(startupUnreachable(fixture.controller.state.value, browser = false), "an expired session shows sign-in")
             delay(200)
-            assertEquals(1, fixture.refreshes())
+            assertEquals(1, fixture.refreshes(), "without offline mode the retry waits for Try again or a return to the app")
         } finally { fixture.controller.disconnect() }
     }
 

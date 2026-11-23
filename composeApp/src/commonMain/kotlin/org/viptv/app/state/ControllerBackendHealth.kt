@@ -22,13 +22,14 @@ internal fun ApplicationController.backendOutcome(reachable: Boolean) {
 }
 
 private fun ApplicationController.probeBackend() {
+    if (downloadEngine == null) return
     val remote = connection ?: return
     if (healthProbe?.isActive == true) return
     healthProbe = scope.launch {
         while (connection === remote && mutable.value.backendUnreachableSince != null) {
-            remote.probeHealth(healthProbeTimeoutMillis)
-            if (mutable.value.backendUnreachableSince == null) return@launch
             delay(backend.retrySeconds * 1_000L)
+            if (connection !== remote || mutable.value.backendUnreachableSince == null) return@launch
+            remote.probeHealth(healthProbeTimeoutMillis)
         }
     }
 }

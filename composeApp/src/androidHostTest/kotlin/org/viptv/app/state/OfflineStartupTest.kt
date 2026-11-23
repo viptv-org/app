@@ -9,7 +9,6 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +31,7 @@ import org.viptv.app.downloads.DownloadState
 import org.viptv.app.downloads.MemoryFiles
 import org.viptv.app.downloads.downloadId
 import org.viptv.app.features.downloads.OFFLINE_BANNER
+import org.viptv.app.startupUnreachable
 import org.viptv.engine.wire.Card
 import org.viptv.engine.wire.EpisodeCoordinates
 import org.viptv.engine.wire.MediaIdentity
@@ -65,7 +65,7 @@ class OfflineStartupTest {
         val json = headersOf(HttpHeaders.ContentType, "application/json")
         when (server) {
             Server.Down -> throw IOException("connection refused")
-            Server.Hanging -> awaitCancellation()
+            Server.Hanging -> { delay(1_000); throw IOException("timed out") }
             Server.Expired -> if (path == "/api/auth/device/refresh") throw RemoteFailure(401, "Sign in to continue.", sessionExpired = true)
                 else respond("{}", HttpStatusCode.OK, json)
             Server.Up -> when (path) {
@@ -133,6 +133,36 @@ class OfflineStartupTest {
         app.closePlayer()
         val restored = withTimeout(5_000) { app.state.first { it.selectedProfile == "12" } }
         assertEquals(Screen.Downloads, restored.screen)
+    }
+
+    @Test fun withoutDownloadsAStalledSessionKeepsTheStartupScreenAndRetriesOnItsOwn() = runBlocking<Unit> {
+        server = Server.Down
+        val app = ApplicationController(scope, store, startupRetryDelays = emptyList(),
+            remoteFactory = { origin, storage -> RemoteConnection(origin, storage, client, browserMode = false) },
+            reconnectDelays = listOf(50L), downloads = DownloadEngine(MemoryFiles(), client, network, scope))
+        app.restore()
+        withTimeout(5_000) { while (requests.count { it == "/api/auth/device/refresh" } < 3) delay(10) }
+        repeat(20) {
+            val state = app.state.value
+            assertTrue(startupUnreachable(state, browser = false) || state.starting, "never the sign-in screen: $state")
+            delay(10)
+        }
+        server = Server.Up
+        val restored = withTimeout(5_000) { app.state.first { it.screen == Screen.Home } }
+        assertEquals("12", restored.selectedProfile)
+        assertTrue(requests.none { it.contains("login") })
+    }
+
+    @Test fun anExpiredSessionWithoutDownloadsIsNotRetriedOnItsOwn() = runBlocking<Unit> {
+        server = Server.Expired
+        val app = ApplicationController(scope, store, remoteFactory = { origin, storage -> RemoteConnection(origin, storage, client, browserMode = false) },
+            reconnectDelays = listOf(20L), downloads = DownloadEngine(MemoryFiles(), client, network, scope))
+        app.restore()
+        try { withTimeout(5_000) { app.state.first { it.error != null } } }
+        catch (error: kotlinx.coroutines.TimeoutCancellationException) { throw AssertionError("${app.state.value} $requests", error) }
+        delay(200)
+        assertEquals(1, requests.count { it == "/api/auth/device/refresh" })
+        assertFalse(startupUnreachable(app.state.value, browser = false))
     }
 
     @Test fun offlineAtRuntimePlaysDownloadsLocallyAndExplainsTheRest() = runBlocking<Unit> {
