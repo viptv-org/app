@@ -113,13 +113,14 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
     var restorePanel by remember(playbackKey) { mutableStateOf<PhonePlaybackPanel?>(null) }
     var ended by remember(playbackKey) { mutableStateOf(false) }
     var endHandled by remember(playbackKey) { mutableStateOf(false) }
+    var progressed by remember(playbackKey) { mutableStateOf(preview != null) }
     val episodesFocus = remember { FocusRequester() }; val nextFocus = remember { FocusRequester() }
     val episodes = if (input?.live != true) phonePlaybackEpisodes(title, tvExtras.episodes) else emptyList()
     val next = tvExtras.nextEpisode.takeIf { input?.live != true }
     val seriesEpisode = input?.live != true && title?.identity?.episode != null
     val episodeTitle = phone && seriesEpisode
     val activeSkip = tvExtras.skips.firstOrNull { position in it.startMillis until it.endMillis }
-    val creditsReached = tvExtras.skips.endCreditsReached(position, tvExtras.skipCredits, duration)
+    val creditsReached = progressed && tvExtras.skips.endCreditsReached(position, tvExtras.skipCredits, duration)
     val playNext = { next?.let { playEpisode?.invoke(it) }; Unit }
     val openEpisodes = if (seriesEpisode) ({ phonePanel = PhonePlaybackPanel.Episodes; interaction++; Unit }) else null
     val nextEnabled = next != null && playEpisode != null
@@ -212,6 +213,7 @@ fun PlayerScreen(input: PlaybackInput?, paused: Boolean, toggle: () -> Unit,
             }
             is PlayerFact.Buffered -> buffered = fact.ranges
             is PlayerFact.Progress -> {
+                progressed = true
                 duration = fact.durationMillis ?: duration
                 if (seekTarget == null || kotlin.math.abs(fact.positionMillis - seekTarget!!) <= 1500 || seekMark.elapsedNow().inWholeSeconds >= SeekAbandonSeconds) {
                     position = fact.positionMillis; seekTarget = null

@@ -50,7 +50,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
     val stopping = releaseRemotePlayback()
     this.sourceChoice = choice
     firstFrameSeen = false
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = if (keepFinding) next.findingSources else false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = PlaybackSegments(), presentation = null, findingSources = if (keepFinding) next.findingSources else false) }
     stopping?.join()
     val store = local
     val remote = connection
@@ -84,7 +84,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         opened.revision, timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title, startChosen = positionMillis != null,
-        offsets = sourceMemory.offsets(profile, source), stats = opened.stats,
+        offsets = sourceMemory.offsets(profile, source), stats = opened.stats, owner = playbackKey(card, source),
         remoteSeek = if (lease?.reopensForSeek == true) seekByReopening(source, profile) else null,
         subtitleContent = { id ->
             // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
@@ -117,7 +117,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         val segments = try { withTimeoutOrNull(8_000) { lease?.segments() } ?: emptyList() }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { emptyList() }
-        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = segments) }
+        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = PlaybackSegments(input, segments)) }
     }
     subtitleDiscovery = scope.launch {
         try {
@@ -138,7 +138,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
         timelineOffsetMillis = opened.timelineOffsetMillis, durationMillis = opened.durationMillis, preferences = preferences, live = opened.live,
         diagnostics = playbackDiagnostics, mimeType = opened.mimeType ?: org.viptv.app.player.playbackMimeType(source.presentation?.delivery_format),
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title,
-        offsets = sourceMemory.offsets(profile, source), stats = opened.stats,
+        offsets = sourceMemory.offsets(profile, source), stats = opened.stats, owner = playbackKey(card, source),
         remoteSeek = if (lease.reopensForSeek) seekByReopening(source, profile) else null,
         subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray().also { content -> mutable.value.playback?.let { storeDownloadSubtitle(it, card, id, content) } } })
     rememberPlaybackOffsets(input, profile, source)
@@ -160,7 +160,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
         val segments = try { withTimeoutOrNull(8_000) { lease.segments() } ?: emptyList() }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) { emptyList() }
-        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = segments) }
+        if (mutable.value.playback === input) updateState { next -> next.copy(playbackSegments = PlaybackSegments(input, segments)) }
     }
     subtitleDiscovery = scope.launch {
         try {
@@ -306,7 +306,7 @@ fun ApplicationController.closePlayer() {
     releasePlaybackSession()
     if(!completionSeen) saveProgress(false, final = true)
     declaredFailure = null
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = returnTo, error = null, playbackFailure = null, busy = false, openingSource = null, pendingAction = null) }
+    updateState { next -> next.copy(playback = null, playbackSegments = PlaybackSegments(), screen = returnTo, error = null, playbackFailure = null, busy = false, openingSource = null, pendingAction = null) }
     lastProgress=null
     afterPlayback(live)
 }

@@ -28,22 +28,23 @@ internal fun PlayerRoute(state: ApplicationState, controller: ApplicationControl
     }
     val fallback = state.sources.firstOrNull { it.id != state.playingSource?.id } ?: state.playingSource
     val fallbackNotice = state.fallbackNotice
-    val preferences = state.playback?.preferences ?: state.preferences?.preferences
+    val current = state.currentPlayback()
+    val preferences = current.input?.preferences ?: state.preferences?.preferences
     val title = state.sourceTitle?.let { card ->
         val episode = card.identity.episode
         if (episode != null && detail != null) card.copy(title = detail.item.title,
             subtitle = "S${episode.seasonNumber()} E${episode.episode} · ${card.title}") else card
     }
-    PlayerScreen(state.playback, state.paused, controller::pausePlayback,
-        { fact -> controller.observePlaybackFor(state.playback, fact) }, controller::closePlayer,
+    PlayerScreen(current.input, state.paused, controller::pausePlayback,
+        { fact -> controller.observePlaybackFor(current.input, fact) }, controller::closePlayer,
         title, phone = phone, canvasColor = if (browser) Color.Transparent else Color.Black, television = television,
         tvExtras = TvPlaybackExtras(sourceLabel = state.playingSource?.providerLabel(),
             sourceQuality = state.playingSource?.qualityLabel(), episodes = episodes,
-            skips = state.playbackSegments, skipIntros = preferences?.skip_intros != false, skipCredits = preferences?.skipCredits != false,
+            skips = current.segments, skipIntros = preferences?.skip_intros != false, skipCredits = preferences?.skipCredits != false,
             nextEpisode = nextEpisode.takeIf { preferences?.next_episode_button != false }, fallbackLabel = fallback?.label),
         chooseSources = controller::closePlayer, playEpisode = controller::playEpisode,
         retry = fallback?.let { { controller.retrySource(it) } }, backChanged = backChanged,
-        playbackKey = state.playingSource?.id ?: state.sourceTitle?.identity,
+        playbackKey = current.key,
         trackChosen = controller::rememberTrackChoice, openSettings = controller::openPlayerSettings,
         preferences = state.preferences?.preferences, updatePreferences = controller::savePlaybackPreferences,
         autoplayNext = rememberDevicePlaybackState().value.autoplayNext, reduceMotion = rememberReducedMotion(),

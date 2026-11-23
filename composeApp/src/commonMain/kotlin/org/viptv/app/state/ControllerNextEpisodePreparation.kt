@@ -166,7 +166,7 @@ private suspend fun ApplicationController.promotePreparedDelivery(source: Source
     progressJob?.join()
     val outgoingId = remotePlayback?.input?.id
     val (outgoing, settled) = detachRemotePlaybackForPromotion()
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), presentation = null, findingSources = false) }
+    updateState { next -> next.copy(playback = null, playbackSegments = PlaybackSegments(), presentation = null, findingSources = false) }
     settled?.join()
     val profile = requireNotNull(mutable.value.selectedProfile)
     val promoted = try {

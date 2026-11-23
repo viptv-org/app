@@ -28,6 +28,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     var showEpisodes by mutableStateOf(false)
     var ended by mutableStateOf(false)
     var endHandled by mutableStateOf(false)
+    var progressed by mutableStateOf(false)
     var scrub by mutableStateOf<Long?>(if (scene == TvPlayerScene.Scrub) 1300000 else null)
     var timelineFocused by mutableStateOf(false)
     var rootFocused by mutableStateOf(false)
@@ -59,6 +60,7 @@ internal class TvPlayerState(input: PlaybackInput?, initial: List<PlayerFact>, s
     fun observe(fact: PlayerFact) {
         when (fact) {
             is PlayerFact.Progress -> {
+                progressed = true
                 duration = fact.durationMillis ?: duration
                 val target = seekTarget
                 if (target == null || kotlin.math.abs(fact.positionMillis - target) <= 1500 || seekStarted.elapsedNow() >= 10.seconds) {
