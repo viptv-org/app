@@ -230,11 +230,7 @@ internal fun ApplicationController.storeDownloadSubtitle(input: PlaybackInput, c
     if (content.isNotEmpty()) engine.storeSubtitle(record.id, subtitle, content)
 }
 
-internal fun ApplicationController.closeDownloadScreen(): Screen? {
-    val input = mutable.value.playback ?: return null
-    input.downloadId() ?: return null
-    return (downloadReturn ?: Screen.Downloads).also { downloadReturn = null }
-}
+internal fun ApplicationController.closeDownloadScreen(): Screen? = downloadReturn.also { downloadReturn = null }
 
 internal fun ApplicationController.saveDownloadProgress(input: PlaybackInput, completed: Boolean): Job? {
     val id = input.downloadId() ?: return null
