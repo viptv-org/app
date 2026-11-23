@@ -37,12 +37,14 @@ interface Downloads {
     val items: StateFlow<List<DownloadItem>>
     val storage: StateFlow<DownloadStorage>
     val settings: StateFlow<DownloadSettings>
+    val evictionNotice: StateFlow<Int>
     fun updateSettings(settings: DownloadSettings)
     fun pause(id: String)
     fun resume(id: String)
     fun cancel(id: String)
     fun delete(id: String)
     fun keep(id: String, keep: Boolean)
+    fun dismissEvictionNotice()
     fun localFile(id: String): String?
 }
 
