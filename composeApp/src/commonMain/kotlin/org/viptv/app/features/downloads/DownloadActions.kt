@@ -8,7 +8,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
-import kotlinx.coroutines.delay
+import org.viptv.app.components.frameDelay
 import org.viptv.app.connection.epochMillis
 import org.viptv.app.downloads.DownloadItem
 import org.viptv.app.downloads.Downloads
@@ -61,7 +61,7 @@ internal fun rememberDownloadIndex(actions: DownloadActions): Map<String, Downlo
     val index = remember(items) { items.associateBy { downloadKey(it.card) } }
     LaunchedEffect(index.keys) {
         actions.settle(index.keys)
-        delay(REQUEST_HOLD_MILLIS)
+        frameDelay(REQUEST_HOLD_MILLIS)
         actions.settle(index.keys)
     }
     return index

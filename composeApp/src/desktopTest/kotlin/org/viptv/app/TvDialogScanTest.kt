@@ -13,6 +13,7 @@ class TvDialogScanTest {
 
     // Screens the TV layout never composes: each has its own Tv* screen or a Tv* dialog beside it.
     private val phoneAndDesktopOnly = mapOf(
+        "features/downloads/DownloadSettingsPage.kt" to "the downloads choices; TV has no downloads and App never provides them there",
         "features/entry/MobilePinScreen.kt" to "the phone PIN page; TV draws TvPinScreen",
         "features/entry/MobileProfileEdit.kt" to "the phone profile editor; TV draws TvProfileEditScreen",
         "features/entry/ServerAddressDialog.kt" to "the phone and desktop sign-in address; TV draws TvServerAddressDialog",

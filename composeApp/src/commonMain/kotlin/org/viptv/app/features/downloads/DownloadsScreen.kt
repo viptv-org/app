@@ -8,8 +8,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface as PlainSurface
+import org.viptv.app.components.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,7 +109,7 @@ private fun groupIndex(showTitle: Boolean, evicted: Boolean, groups: List<Downlo
 @Composable
 private fun DownloadsNotice(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, body: String?,
     buttons: List<Pair<String, () -> Unit>>?, dismiss: (() -> Unit)?) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
+    PlainSurface(shape = RoundedCornerShape(16.dp), color = Palette.surface) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = if (dismiss != null) 4.dp else 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(Palette.raised, CircleShape), contentAlignment = Alignment.Center) {
@@ -240,7 +241,7 @@ internal fun DownloadsEntry(actions: DownloadActions, modifier: Modifier = Modif
 
 @Composable
 internal fun OfflineBanner(openDownloads: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier.widthIn(max = 520.dp).fillMaxWidth(), RoundedCornerShape(20.dp), color = Palette.surface) {
+    PlainSurface(modifier.widthIn(max = 520.dp).fillMaxWidth(), RoundedCornerShape(20.dp), color = Palette.surface) {
         Row(Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(Palette.raised, CircleShape), contentAlignment = Alignment.Center) {
