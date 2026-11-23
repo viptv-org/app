@@ -127,7 +127,7 @@ class DownloadsUiTest {
             }
             click(clickable(scene, CHANGE_SOURCE))
             frames(scene)
-            assertEquals(listOf("change:${saved.id}"), fake.calls)
+            assertEquals(listOf("opened:${saved.id}", "change:${saved.id}"), fake.calls, "opening the sheet asks for a track probe")
             assertFalse(DOWNLOAD_DETAILS_TITLE in texts(scene), "Change source closes the sheet")
         } finally { scene.close() }
     }

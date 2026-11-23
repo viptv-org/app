@@ -41,7 +41,8 @@ class FakeDownloads(items: List<DownloadItem> = emptyList(), storage: DownloadSt
         play = { calls += "play:$it" },
         openPage = { calls += "open" },
         notice = { calls += "notice:$it" },
-        clock = clock)
+        clock = clock,
+        detailsOpened = { calls += "opened:$it" })
 
     companion object {
         const val GIB = 1L shl 30

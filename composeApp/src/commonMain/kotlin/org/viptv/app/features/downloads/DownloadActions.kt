@@ -32,6 +32,7 @@ internal class DownloadActions(
     val openPage: () -> Unit,
     val notice: (String) -> Unit,
     val clock: () -> Long = ::epochMillis,
+    val detailsOpened: (String) -> Unit = {},
 ) {
     private val requested = mutableStateMapOf<String, Long>()
 
