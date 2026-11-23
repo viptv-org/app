@@ -22,7 +22,7 @@ data class AddonConfigureRequest(val addon: String, val name: String, val link: 
     val expiresInSeconds: Long = 300L, val failure: String? = null)
 
 enum class Screen { Connect, RecoveryCodes, Profiles, ProfilePin, ProfileEdit, Home, Discover, Movies, Series, Anime, Calendar, Search, Details, Sources, Player, Live, Library, History, Settings,
-    ContinueWatching }
+    ContinueWatching, Downloads }
 data class ApplicationState(
     val starting: Boolean = false,
     val startupRetryable: Boolean = false,
@@ -190,6 +190,8 @@ data class ApplicationState(
     val presentation: PlayerFact.Presentation? = null,
     val history: List<HistoryDisplay> = emptyList(),
     val pendingCrashReport: CrashReport? = null,
+    val downloads: List<org.viptv.app.downloads.DownloadItem> = emptyList(),
+    val offline: Boolean = false,
 )
 
 // A page that drops the catalog it cached keeps what belongs to the session: where Back goes, the settings page,
@@ -212,6 +214,7 @@ internal fun ApplicationState.keepShell(): ApplicationState = ApplicationState(
     updateRequired = updateRequired, backendUnreachableSince = backendUnreachableSince,
     backendRetrySeconds = backendRetrySeconds, backendBannerDismissed = backendBannerDismissed,
     pendingCrashReport = pendingCrashReport,
+    downloads = downloads, offline = offline,
 )
 
 internal val ApplicationState.animeAvailable: Boolean

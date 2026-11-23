@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.seconds
 
 internal fun ApplicationController.releaseRemotePlayback(): Job? {
+    endDownloadPlayback(mutable.value.playback)
     cancelNextEpisode()
     cancelPlaybackSeason()
     cancelPlaybackStall()
@@ -77,6 +78,7 @@ internal val PROGRESS_SAVE_INTERVAL = 15.seconds
 internal fun ApplicationController.saveProgress(completed: Boolean, final: Boolean = false): Job? {
     val input=mutable.value.playback ?: return null
     if (input.live) return null
+    if (input.downloadId() != null) return saveDownloadProgress(input, completed)
     val sourceTitle=mutable.value.sourceTitle ?: return null
     val parent = mutable.value.detail?.item?.takeIf {
         it.identity.id == sourceTitle.parent_identity?.id && it.identity.kind == sourceTitle.parent_identity?.kind && it.metadata_origin == sourceTitle.metadata_origin
@@ -89,6 +91,7 @@ internal fun ApplicationController.saveProgress(completed: Boolean, final: Boole
     val position=if(completed && snapshot.durationMillis!=null) snapshot.durationMillis else snapshot.positionMillis
     if(position<=0)return null
     val write=ProgressWrite(++progressSequence, input, title, position, snapshot.durationMillis, completed, remote, store)
+    noteStreamedProgress(input, sourceTitle, position, snapshot.durationMillis, completed)
     progressSavedAt=freshness.time.markNow()
     return scope.launch(start = if (final) CoroutineStart.UNDISPATCHED else CoroutineStart.DEFAULT) {
         withContext(if (final) NonCancellable else currentCoroutineContext()) { settleProgress(write) }

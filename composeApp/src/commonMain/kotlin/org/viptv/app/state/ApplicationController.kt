@@ -28,7 +28,9 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val progressRetryDelays: List<Long> = listOf(2_000L, 4_000L, 8_000L, 15_000L, 30_000L, 60_000L),
     internal val seekReopenSettleMillis: Long = 700L,
     internal val seekCapacityRetryDelays: List<Long> = listOf(500L, 1_000L, 1_500L, 2_000L),
-    internal val launchOrigin: () -> String? = ::browserOrigin) {
+    internal val launchOrigin: () -> String? = ::browserOrigin,
+    downloads: org.viptv.app.downloads.Downloads? = org.viptv.app.downloads.platformDownloads()) {
+    internal val downloadEngine = downloads as? org.viptv.app.downloads.DownloadEngine
     internal val mutable = MutableStateFlow(ApplicationState(starting = true))
     val state = mutable.asStateFlow()
     internal val deviceLink = MutableStateFlow<DeviceCodeLink?>(null)
@@ -144,6 +146,12 @@ class ApplicationController(internal val scope: CoroutineScope, internal val ses
     internal val seriesMemory = mutableMapOf<SeriesMemoryKey, SeriesMemory>()
     internal val fillerCache = mutableMapOf<String, Map<Long, org.viptv.app.connection.FillerKind>>()
     internal var episodeFillerJob: Job? = null
+    internal var downloadReturn: Screen? = null
+    internal var downloadWatchNoted: Any? = null
+    internal val offlineProgressGate = Mutex()
+    internal var offlineStart = false
+
+    init { startDownloads() }
 
     // The quiet lane and Back wait on the controller's operation job, so a write that must not be reloaded under
     // hands claims it instead of leaving it pointing at nothing; the write then owns the busy its claim replaced.

@@ -89,7 +89,7 @@ internal suspend fun ApplicationController.openSourceNow(requested: SourceCandid
         subtitleContent = { id ->
             // A device-local store owns its subtitles: a missing track is empty, never a remote call it cannot make.
             if (store != null) store.subtitleContent(id, opened) ?: ByteArray(0)
-            else requireNotNull(remote).subtitleContent(id).encodeToByteArray()
+            else requireNotNull(remote).subtitleContent(id).encodeToByteArray().also { content -> mutable.value.playback?.let { storeDownloadSubtitle(it, card, id, content) } }
         })
     input.selectedAudioLanguage = opened.selectedAudioLanguage
     rememberPlaybackOffsets(input, profile, source)
@@ -140,7 +140,7 @@ internal suspend fun ApplicationController.adoptPromotedPlayback(lease: RemotePl
         requiredAudioIndex = opened.requiredAudioIndex, localTorrent = opened.localTorrent, title = card.title,
         offsets = sourceMemory.offsets(profile, source), stats = opened.stats,
         remoteSeek = if (lease.reopensForSeek) seekByReopening(source, profile) else null,
-        subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray() })
+        subtitleContent = { id -> remote.subtitleContent(id).encodeToByteArray().also { content -> mutable.value.playback?.let { storeDownloadSubtitle(it, card, id, content) } } })
     rememberPlaybackOffsets(input, profile, source)
     remotePlayback = lease
     CrashFacts.playbackAttempt = playbackAttempt(source, if (lease.gateway) "gateway" else "direct")
@@ -296,6 +296,7 @@ internal fun ApplicationController.cancelPlaybackStall() {
 }
 
 fun ApplicationController.closePlayer() {
+    val returnTo = closeDownloadScreen() ?: Screen.Sources
     cancelSeekReopen()
     job?.cancel()
     playbackSegmentsJob?.cancel()
@@ -305,7 +306,7 @@ fun ApplicationController.closePlayer() {
     releasePlaybackSession()
     if(!completionSeen) saveProgress(false, final = true)
     declaredFailure = null
-    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = Screen.Sources, error = null, playbackFailure = null, busy = false, openingSource = null, pendingAction = null) }
+    updateState { next -> next.copy(playback = null, playbackSegments = emptyList(), screen = returnTo, error = null, playbackFailure = null, busy = false, openingSource = null, pendingAction = null) }
     lastProgress=null
     afterPlayback(live)
 }

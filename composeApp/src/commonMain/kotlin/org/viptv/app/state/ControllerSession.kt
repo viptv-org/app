@@ -5,6 +5,11 @@ import org.viptv.app.connection.*
 
 fun ApplicationController.restore(localDatabase: String? = null) = run {
     startupDatabase = localDatabase
+    if (offlineAtStart()) {
+        offlineStart = true
+        updateState { it.copy(starting = false, screen = Screen.Downloads, offline = true) }
+        return@run
+    }
     updateState { it.copy(starting = true) }
     val operation = generation
     val origin = launchOrigin()
@@ -44,6 +49,11 @@ fun ApplicationController.restore(localDatabase: String? = null) = run {
     }, restore = { remote -> remote.restoreFromStore() })
     if (generation != operation) return@run
     if (restored == null) { connection?.close(); connection = null; return@run }
+    if (offlineStart && restored.selected != null) {
+        offlineStart = false
+        accept(restored, Screen.Downloads)
+        return@run
+    }
     accept(restored)
     resumeNavigation()
 }
